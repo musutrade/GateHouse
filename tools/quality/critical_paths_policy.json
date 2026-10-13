@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "mandatory": {
+    "process.cancellation": ["linux", "macos"],
+    "process.tree_cleanup": ["linux", "macos", "windows"],
+    "report.integrity": ["linux", "macos", "windows"],
+    "parser.json_false_positive": ["linux", "macos"],
+    "gate.failure_report": ["linux", "macos", "windows"],
+    "service.lease_ownership": ["linux", "macos", "windows"]
+  }
+}

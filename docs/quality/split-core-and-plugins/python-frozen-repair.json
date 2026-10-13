@@ -1,0 +1,33 @@
+{
+  "schema": "python-frozen-repair-evidence/v1",
+  "date": "2026-10-11",
+  "change": "split-core-and-plugins",
+  "review": "Reviewed compatibility repair under docs/quality/python-retention.md. The collector protocol schema moved to the core host-contract catalogue (schema/collector-protocol.schema.json). harness_evidence._shape gained an optional directory argument. collector_runner resolves the host contract from the installed app/schema layout first and falls back to the source schema root, so the assembled runtime and the checkout both load the same bytes. The packaging manifest now ships schema/collector-protocol.schema.json as app/schema/collector-protocol.schema.json. Path resolution and packaging only: no decision, measurement, evidence or transport semantics changed, and the generic-core corpus bytes are unchanged.",
+  "modules": [
+    {
+      "module": "tools/quality/harness_evidence.py",
+      "before": "f08736199f6e192b8e3ab3c9269ce2743f5624940561663919f99790545281e2",
+      "after": "fcb07569d8fa386fb11324003ba939a9bf2522a7baf60a7ef9194ac703414368",
+      "delta": "optional directory parameter on _shape; default SCHEMA_DIR preserved"
+    },
+    {
+      "module": "tools/quality/collector_runner.py",
+      "before": "f79a21dadc950d2cf54a97c0bb7a73d2990f7329e084037d505946db51e057e9",
+      "after": "9dc0321243e388295572c49c0848310da0ff8bf7ba29f006446ed102b8646dcb",
+      "delta": "host_schema_directory prefers the installed app/schema layout and falls back to the source schema root; _shape passes that directory"
+    }
+  ],
+  "evidence": {
+    "full_suite": {
+      "command": "python3 -m unittest discover -s tools/quality/tests",
+      "tests": 511,
+      "passed": 511,
+      "failed": 0
+    },
+    "install_layout": {
+      "command": "python3 -m unittest discover -s tools/quality/tests -p 'test_rust_collector_runtime.py'",
+      "result": "InstalledLayoutTests resolves the host contract from an assembled app/schema runtime without the full Rust toolchain or RUST_COLLECTOR_RUNTIME"
+    },
+    "frozen_corpus": "tools/quality/fixtures/generic-core corpus and negative matrix replay with unchanged expected outputs"
+  }
+}

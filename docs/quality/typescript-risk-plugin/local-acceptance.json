@@ -1,0 +1,33 @@
+{
+  "date": "2026-09-15",
+  "plugin": "typescript-risk@0.1.0-rc.1",
+  "core": "harness-gate 0.4.5",
+  "unit_tests": 12,
+  "core_and_transport_tests": 3,
+  "independent_install": true,
+  "package_sha256": "e00a3aebf3679a1892deba21c13c6f07c5b379e914701425e9b2b406c15ff93e",
+  "cases": [
+    {
+      "case": "case-1",
+      "state": "pass",
+      "report_sha256": "6a08ba4b2b8521f4e0f8b989ccc2545f029345f3829f3678933640119781ecdb"
+    },
+    {
+      "case": "case-2",
+      "state": "fail",
+      "report_sha256": "c63fbf077e87a666084c503a59ff81a60b1057fba809e7f332ee6bac2804dc4f"
+    },
+    {
+      "case": "case-3",
+      "state": "fail",
+      "report_sha256": "02a2657528fa04ede631b889f3eefb8a808201a8fff441c5c915bfdffa5de83d"
+    },
+    {
+      "case": "case-4",
+      "state": "measurement_error",
+      "report_sha256": "9e399e3be42748707c5e42f98d3de92fdd024ef92c08cfcaa5fae729eed16ee0"
+    }
+  ],
+  "scope": "native original-TypeScript fixtures; not full Angular or project certification",
+  "retained_local_directory": "/home/gem/Harness-Gate-ts-crap/target/typescript-plugin-acceptance-20260915"
+}

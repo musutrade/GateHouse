@@ -1,0 +1,5 @@
+schema: spec-driven
+status: implemented
+created: 2026-08-29
+goal: Make the CLI crate's rustdoc build succeed on docs.rs without exposing a public runtime API
+skip_specs: true

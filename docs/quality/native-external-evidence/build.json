@@ -1,0 +1,129 @@
+{
+  "schema": "native-external-plugin-build/v1",
+  "version": "0.1.0-rc.4",
+  "payload": {
+    "bin/harness-gate-rust-native-driver": {
+      "sha256": "64b95cbde3de9411cc7c6f55d7035b3af5c7d8d5cc61225bb94be18af33f9428",
+      "bytes": 290376,
+      "mode": 493
+    },
+    "app/native_external.py": {
+      "sha256": "1d52b2822ef7892ca19fe2eb036f4f8736589ca5057a78b74e4ded360bc44d74",
+      "bytes": 13215,
+      "mode": 420
+    },
+    "app/rust_native_driver.py": {
+      "sha256": "d543f6796afccce77c902aff5b00de478e5466bf783ab28060d383bb3579a5de",
+      "bytes": 39942,
+      "mode": 420
+    },
+    "app/rust_native_classify.py": {
+      "sha256": "b83b1c799dea5e68b24e4b5aaff3db6947e12cda464e66532804285a9010b6f6",
+      "bytes": 12985,
+      "mode": 420
+    },
+    "app/rust_native_policy.py": {
+      "sha256": "72872de33986555d44c2ae99beecbf71a7e851352da37db60815ac9eab4b192b",
+      "bytes": 12668,
+      "mode": 420
+    },
+    "app/rust_collector_project.py": {
+      "sha256": "46cad81095517941d9fcdf7606a56e3ce3666eddf38f55b437f92224ef048456",
+      "bytes": 13063,
+      "mode": 420
+    },
+    "app/harness_evidence.py": {
+      "sha256": "f08736199f6e192b8e3ab3c9269ce2743f5624940561663919f99790545281e2",
+      "bytes": 12457,
+      "mode": 420
+    },
+    "app/project_model.py": {
+      "sha256": "d1d493bbd4566b8aaf469d0f28fdee89a3c3a3e3ebfe3e1068b9d93e90d1b196",
+      "bytes": 10952,
+      "mode": 420
+    },
+    "app/quality_evidence.py": {
+      "sha256": "8938ce2fc2d49caf2e3f3dac284fe3d07a13a3da9cbd8e1e729f011e2d5d145e",
+      "bytes": 17574,
+      "mode": 420
+    },
+    "app/schema/capability-requirements.schema.json": {
+      "sha256": "763da8a3a15cde9c338e8ca076e52488f5d0795ff61e05f8018b61cdc63c40ea",
+      "bytes": 1153,
+      "mode": 420
+    },
+    "app/schema/collector-protocol.schema.json": {
+      "sha256": "a3c23c578783dd4cbb1f4be3bb41a5c3552aee563e89116a5ff53fd4c159e545",
+      "bytes": 2260,
+      "mode": 420
+    },
+    "app/schema/harness-evidence.schema.json": {
+      "sha256": "fbd0b737f73f8d65f196581859fcdf18d8d47da522c98d1020c22d2e0660d406",
+      "bytes": 15076,
+      "mode": 420
+    },
+    "app/schema/policy-exceptions.schema.json": {
+      "sha256": "da3c0439d1a7484cef7571e9fd5bd5e3446f64419d51a7556ea69c7a004ead78",
+      "bytes": 1000,
+      "mode": 420
+    },
+    "app/schema/policy.schema.json": {
+      "sha256": "3d3cb56ee6f5010bcc0a1a27284fcac69fb6cc59d91471d853af2bd570d82ba6",
+      "bytes": 7922,
+      "mode": 420
+    },
+    "app/schema/project-config.schema.json": {
+      "sha256": "1c8c334f3eedee4d96d97136d4f8e8aad00631f9b34feb5c6935047a29dd4cee",
+      "bytes": 462,
+      "mode": 420
+    },
+    "app/schema/project-model.schema.json": {
+      "sha256": "fd6274e0f1f03a02c9ee701eccde3f117ff6f75d5d145e18a3f835995449282a",
+      "bytes": 8230,
+      "mode": 420
+    },
+    "app/schema/quality-evidence.schema.json": {
+      "sha256": "ceb99d0e3c76a482985f064ce547019864353838d6eb040d4f54d2b91bfbad11",
+      "bytes": 6535,
+      "mode": 420
+    },
+    "app/schema/rust-collector-delivery.schema.json": {
+      "sha256": "25b196707810bb48e36f7ee7740f459126f0b1f958af4466517f934b8d764266",
+      "bytes": 12499,
+      "mode": 420
+    },
+    "app/schema/rust-collector-plugin.schema.json": {
+      "sha256": "432ee89d57eb08b1a0606d544391d8d5ef704948fc4a37d9f3bd96246a4ed8ef",
+      "bytes": 12279,
+      "mode": 420
+    },
+    "app/schema/rust-project-collector-binding.schema.json": {
+      "sha256": "597dee67ba6befbc2aa91686c77b66afaaf794b59e5891a497d1be54d3eebe03",
+      "bytes": 4084,
+      "mode": 420
+    },
+    "app/schema/subject-mappings.schema.json": {
+      "sha256": "6a139b941278287af42f220004d4761742ce8d22c7b3bbcf9148fc9405510eaa",
+      "bytes": 1330,
+      "mode": 420
+    },
+    "LICENSE": {
+      "sha256": "62399c94d31514ccada99be5e88bc55166008a53692ac137f0fc9d838f7eb9dc",
+      "bytes": 415707,
+      "mode": 420
+    }
+  },
+  "original_driver_sha256": "d2615e1199b78a95908b81907070e47a4b23ea76092b56a4222071da80c32749",
+  "payload_id": "fabfadf433b43972f8b5942f17b441aa9f967e1b5ea4768771d000e4df713f20",
+  "binary": "/mnt/dev-ssd/workspaces/native-core-style-release/target/native-reviewed-package/harness-gate-rust-collector-linux-amd64",
+  "binary_sha256": "ad2f9648512fc7b1fecce229e305d92968d09d28d5bd57b49f5579bdd1b928b4",
+  "external_dependencies": [
+    "Rust 1.97.1 8bab26f4f68e0e26f0bb7960be334d5b520ea452",
+    "matching rustc_driver/LLVM libraries and sysroot",
+    "LLVM coverage tools 22.1.6",
+    "Python >=3.12",
+    "system linker"
+  ],
+  "bundled_toolchains": false,
+  "measurement_engine": "rust-native-production-mir-block/1"
+}

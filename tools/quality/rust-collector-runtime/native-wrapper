@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+root=${0%/*}/..
+root=$(CDPATH= cd -- "$root" && pwd)
+unset PYTHONHOME PYTHONPATH PYTHONSTARTUP LD_PRELOAD
+export LD_LIBRARY_PATH="$root/lib:$root/rust/lib"
+exec "$root/python/bin/python3" -I -S -B "$root/app/native_wrapper.py" "$@"

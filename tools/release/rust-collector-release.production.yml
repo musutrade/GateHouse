@@ -1,0 +1,129 @@
+# REVIEW TEMPLATE. Install at .github/workflows/rust-collector-release.yml only
+# after controller review and provisioning. This file cannot run as a workflow.
+name: Rust collector protected publication
+on:
+  workflow_dispatch:
+    inputs:
+      approval_sha256:
+        description: Independently reviewed publication-approval.json digest
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: rust-collector-production
+  cancel-in-progress: false
+jobs:
+  protection:
+    if: github.repository == 'musutrade/Harness-Gate' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Fail before approval if the collector environment is absent or weak
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PYTHONPATH=tools/release python3 - <<'PY'
+          import os
+          import collector_release_policy as p
+          c = p.core.GitHubClient('https://api.github.com', p.assets.REPOSITORY, os.environ['GH_TOKEN'])
+          p.protected_environment(c.get_json('/repos/' + p.assets.REPOSITORY + '/environments/' + p.ENVIRONMENT))
+          PY
+  publish:
+    needs: protection
+    environment: rust-collector-release
+    # Ephemeral operator-provisioned runner matching the approved exact ABI.
+    runs-on:
+      group: harness-gate-rust-collector-release
+      labels: rust-collector-release
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      APPROVAL_SHA256: ${{ inputs.approval_sha256 }}
+      APPROVAL_PACKET: ${{ vars.COLLECTOR_APPROVAL_PACKET }}
+      SOURCE_SHA: ${{ github.sha }}
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target/collector-production/cargo
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Rebuild pinned inputs and compare every approved unsigned byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/release/production_collector_release.py assemble \
+            --packet "$APPROVAL_PACKET" --packet-sha256 "$APPROVAL_SHA256" \
+            --source "$SOURCE_SHA" --directory target/collector-production/assets
+          PYTHONPATH=tools/release python3 - <<'PYVERSION' >> "$GITHUB_ENV"
+          from pathlib import Path
+          import collector_assets as assets
+          manifest = assets.read(Path('target/collector-production/assets/manifest.json'))
+          print('TAG=rust-collector-v' + assets.version(manifest['collector']['version']))
+          PYVERSION
+      - name: Create independent immutable tag after approval and successful checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=tools/release python3 - <<'PYTAG'
+          import os
+          import production_collector_release as release
+          release.create_or_verify_tag(os.environ['TAG'], os.environ['SOURCE_SHA'])
+          PYTAG
+          git fetch --no-tags origin "refs/tags/$TAG:refs/tags/$TAG"
+      - name: Check actual tag eligibility and sign inventory with RSA and Sigstore
+        shell: bash
+        env:
+          COLLECTOR_RSA_PRIVATE_KEY: ${{ secrets.COLLECTOR_RSA_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          key=$(mktemp)
+          trap 'rm -f -- "$key"' EXIT
+          printf '%s\n' "$COLLECTOR_RSA_PRIVATE_KEY" > "$key"
+          unset COLLECTOR_RSA_PRIVATE_KEY
+          python3 tools/release/production_collector_release.py sign \
+            --packet "$APPROVAL_PACKET" --packet-sha256 "$APPROVAL_SHA256" \
+            --source "$SOURCE_SHA" --directory target/collector-production/assets --private-key "$key"
+      - name: Publish exactly six assets as a draft and independently download and verify
+        env:
+          GODEBUG: http2client=0
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" --repo musutrade/Harness-Gate --verify-tag --draft --prerelease \
+            --title "$TAG" --notes "Independent Rust collector RC; exact compatibility and trust requirements apply." \
+            target/collector-production/assets/collector.tar \
+            target/collector-production/assets/manifest.json \
+            target/collector-production/assets/sbom.spdx.json \
+            target/collector-production/assets/provenance.json \
+            target/collector-production/assets/release-inventory.json \
+            target/collector-production/assets/release-inventory.sig
+          gh release download "$TAG" --repo musutrade/Harness-Gate --dir target/collector-production/downloaded
+          python3 tools/release/production_collector_release.py verify \
+            --packet "$APPROVAL_PACKET" --packet-sha256 "$APPROVAL_SHA256" \
+            --source "$SOURCE_SHA" --directory target/collector-production/downloaded \
+            --expected-directory target/collector-production/assets \
+            --receipt target/collector-production/draft-verification.json
+          gh release edit "$TAG" --repo musutrade/Harness-Gate --draft=false
+          gh release download "$TAG" --repo musutrade/Harness-Gate --dir target/collector-production/published-download
+          python3 tools/release/production_collector_release.py verify \
+            --packet "$APPROVAL_PACKET" --packet-sha256 "$APPROVAL_SHA256" \
+            --source "$SOURCE_SHA" --directory target/collector-production/published-download \
+            --expected-directory target/collector-production/assets \
+            --receipt target/collector-production/published-verification.json
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: collector-publication-${{ github.sha }}
+          path: |
+            target/collector-production/assets
+            target/collector-production/*-verification.json
+          if-no-files-found: warn
+          retention-days: 90

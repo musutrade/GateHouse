@@ -1,0 +1,52 @@
+{
+  "status": "pass",
+  "verified_at": "2026-09-22T10:18:58.014782+00:00",
+  "source_commit": "3e7b49f32b2b4afa79c8bf1edbb55ed5e2e96ee2",
+  "platform": "Linux x86_64",
+  "installer_source": "https://raw.githubusercontent.com/musutrade/Harness-Gate/v0.4.7/install.sh",
+  "installer_sha256": "4014ea611f15b5fda0caa08c3f0f593c679696f2111c941f6011679eb360cb06",
+  "core_version": "0.4.7",
+  "core_sha256": "b6976fa07f8ee65cdfbbe1e87c2c7e3592fcf38f1ed0d1c2e57a6e7ff49a85e9",
+  "native_default_version": "0.1.0-rc.7",
+  "native_sha256": "663823010a6830ce1abd326317ce1983495103a69d647bed886a7ad65bc25b38",
+  "checks": [
+    "exact-tag installer source",
+    "signed combined installation in a fresh private directory",
+    "installed binaries match public inventory",
+    "external toolchain doctor",
+    "public installed runtime modules match release source",
+    "all runtime tests completed without skips",
+    "installed binaries unchanged after tests"
+  ],
+  "test_harness": "Test files from the tagged source run against installed public runtime modules. The Python reference transport uses an explicit repository PYTHONPATH; it is not a Node plugin runtime dependency.",
+  "runtime_tests": [
+    {
+      "component": "native-rust-collector",
+      "version": "0.1.0-rc.7",
+      "tests": 23,
+      "skipped": 0
+    },
+    {
+      "component": "typescript-risk",
+      "version": "0.1.0-rc.4",
+      "tests": 20,
+      "skipped": 0
+    },
+    {
+      "component": "http-json-contract",
+      "version": "0.1.0-rc.5",
+      "tests": 19,
+      "skipped": 0
+    },
+    {
+      "component": "rust-source-risk",
+      "version": "0.1.0-rc.6",
+      "tests": 20,
+      "skipped": 0
+    }
+  ],
+  "test_count": 82,
+  "node": "v24.18.0",
+  "python": "3.14.4",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)"
+}

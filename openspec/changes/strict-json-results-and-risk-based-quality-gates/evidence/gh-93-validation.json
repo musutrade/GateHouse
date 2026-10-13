@@ -1,0 +1,172 @@
+{
+  "issue": "GH-93",
+  "date_utc": "2026-09-07",
+  "baseline_commit": "98d57503c8ddf2f7b1073ead6d06fd14a60ff73a",
+  "provenance_note": "Measured working tree identified by source hashes; final delivery commit recorded by PR and Symphony handoff. No baseline acceptance or broad coverage threshold claimed.",
+  "target": "x86_64-unknown-linux-gnu",
+  "profile": "dev",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo_llvm_cov": "cargo-llvm-cov 0.9.0",
+  "coverage_command": "CARGO_TARGET_DIR=target/gh-93-coverage cargo llvm-cov --manifest-path tools/harness-gate/Cargo.toml --locked --test failure_paths_test --json --output-path target/quality/gh-93/cli-coverage.json",
+  "coverage_tests": {
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  },
+  "instrumented_binary": {
+    "path": "target/gh-93-coverage/llvm-cov-target/debug/harness-gate",
+    "size_bytes": 101991896,
+    "sha256": "8cb08244ec7d5f72a4ba7c8c3827fe21cf9d866f86ed5126fa6cd6acad096ff4"
+  },
+  "raw_profile_count": 103,
+  "raw_profile_inventory": {
+    "path": "target/quality/gh-93/cli-profile-inventory.json",
+    "size_bytes": 22296,
+    "sha256": "55ddb40c0da74e8aa74c6730252d6cef199fc57474e1872c06bed74e8b1c8f68"
+  },
+  "coverage_export": {
+    "path": "target/quality/gh-93/cli-coverage.json",
+    "size_bytes": 1883132,
+    "sha256": "fa505ce8c86102729e82a8a433088ee15ad508e19babf97f02e33053e8b52a1b"
+  },
+  "source_inventory": {
+    "path": "target/quality/gh-93/source-inventory.json",
+    "size_bytes": 16241,
+    "sha256": "2ac73d16142181dd4c661d005ffe617ebba9ca2aadfba2409853209e02857cda"
+  },
+  "changed_rust_sources": [
+    {
+      "path": "tools/harness-gate/src/config/validation/mod.rs",
+      "size_bytes": 52522,
+      "sha256": "6842cb0699380ea777ff9d06111a8276009989af4d5ba2f2a6de0f5440fbfe4b"
+    },
+    {
+      "path": "tools/harness-gate/src/service/lease.rs",
+      "size_bytes": 55203,
+      "sha256": "21192d57f52741f9eb8fd5477b595c960cb8e21881cbedecdd742b7b9ecff021"
+    },
+    {
+      "path": "tools/harness-gate/src/verify/tests.rs",
+      "size_bytes": 23454,
+      "sha256": "edeed13483430222bd9b95eca498d38e739c96896f15c8f14a87c040e9382f29"
+    },
+    {
+      "path": "tools/harness-gate/tests/failure_paths_test.rs",
+      "size_bytes": 23271,
+      "sha256": "9c2b3a8d7ac01d5b2660529efc8ed832388d185350897066aa8dd99c8374a912"
+    }
+  ],
+  "app_files": [
+    {
+      "path": "tools/harness-gate/src/app/commands.rs",
+      "lines": {
+        "count": 185,
+        "covered": 62,
+        "percent": 33.513513513513516
+      },
+      "regions": {
+        "count": 294,
+        "covered": 96,
+        "notcovered": 198,
+        "percent": 32.6530612244898
+      }
+    },
+    {
+      "path": "tools/harness-gate/src/app/mod.rs",
+      "lines": {
+        "count": 168,
+        "covered": 52,
+        "percent": 30.952380952380953
+      },
+      "regions": {
+        "count": 258,
+        "covered": 74,
+        "notcovered": 184,
+        "percent": 28.68217054263566
+      }
+    },
+    {
+      "path": "tools/harness-gate/src/app/output.rs",
+      "lines": {
+        "count": 23,
+        "covered": 0,
+        "percent": 0.0
+      },
+      "regions": {
+        "count": 27,
+        "covered": 0,
+        "notcovered": 27,
+        "percent": 0.0
+      }
+    }
+  ],
+  "executed_app_functions": [
+    {
+      "symbol": "_RNvNtNtCs8kfaU0XvDfp_12harness_gate3app8commands10run_config",
+      "execution_count": 1
+    },
+    {
+      "symbol": "_RNvNtNtCs8kfaU0XvDfp_12harness_gate3app8commands3run",
+      "execution_count": 57
+    },
+    {
+      "symbol": "_RNvNtCs8kfaU0XvDfp_12harness_gate3app24print_human_config_error",
+      "execution_count": 1
+    },
+    {
+      "symbol": "_RNvNtCs8kfaU0XvDfp_12harness_gate3app3run",
+      "execution_count": 102
+    },
+    {
+      "symbol": "_RNCNvNtNtCs8kfaU0XvDfp_12harness_gate3app8commands10run_config0B7_",
+      "execution_count": 1
+    },
+    {
+      "symbol": "_RNCNvNtNtCs8kfaU0XvDfp_12harness_gate3app8commands3runs_0B7_",
+      "execution_count": 14
+    }
+  ],
+  "branch_coverage": "unsupported: --branch was not requested",
+  "logs": [
+    {
+      "path": "target/quality/gh-93/nextest.log",
+      "size_bytes": 40295,
+      "sha256": "66cf24113ffe7576f11d2370bf643000655aa7fba72dabd2eebee378588b2627"
+    },
+    {
+      "path": "target/quality/gh-93/fmt.log",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target/quality/gh-93/clippy.log",
+      "size_bytes": 4352,
+      "sha256": "988b13f6fc23eab7d16a5e9c98d96e325fe704b18e9b189b2df1d53dffea2e5b"
+    },
+    {
+      "path": "target/quality/gh-93/python.log",
+      "size_bytes": 13221,
+      "sha256": "98fd77b9448b05bcfd36bb29fb7b3b4935b9e8692e8bd519c3abddc3dea9a9b2"
+    },
+    {
+      "path": "target/quality/gh-93/docs.log",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target/quality/gh-93/openspec.log",
+      "size_bytes": 67,
+      "sha256": "31f34d2d60f42c4c87a493d04f7bd845b5cdb5a10ecc133861f7a8d24c4f44b5"
+    },
+    {
+      "path": "target/quality/gh-93/cli-coverage.log",
+      "size_bytes": 977,
+      "sha256": "09fc1fda026e7ce9a3e1993baa3e6bbe134ba6d87ab0bdf0ca7e934cd6e3cc4d"
+    }
+  ],
+  "docs_consistency": {
+    "path": "target/quality/docs-consistency.json",
+    "size_bytes": 1217,
+    "sha256": "0c929b85f0c34ca88b64f08162b4646685ab6442f008a954fce68efb57a3fd93"
+  }
+}

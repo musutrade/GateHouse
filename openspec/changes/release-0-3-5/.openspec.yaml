@@ -1,0 +1,5 @@
+schema: spec-driven
+status: implemented
+created: 2026-09-01
+goal: Publish the corrected release workflow and package as harness-gate 0.3.5
+skip_specs: true

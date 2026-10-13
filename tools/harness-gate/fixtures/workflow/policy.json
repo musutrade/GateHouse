@@ -1,0 +1,14 @@
+{
+  "schema": "harness-policy/v1",
+  "rules": [{
+    "id": "app.coverage",
+    "scope": {"kind": "component", "component": "app"},
+    "metric": "coverage.line",
+    "operator": "ge",
+    "limit": {"type": "ratio", "covered": 4, "total": 5},
+    "required": true,
+    "on_violation": "fail",
+    "remediation_classes": ["increase_meaningful_coverage"],
+    "ratchet": {"deny_regression": true, "allow_legacy_debt": true}
+  }]
+}

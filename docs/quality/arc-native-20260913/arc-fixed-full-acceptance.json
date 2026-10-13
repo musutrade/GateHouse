@@ -1,0 +1,56 @@
+{
+  "schema": "arc-complete-quality-acceptance/v1",
+  "status": "pass",
+  "quality_outcome": "fail",
+  "reason": "actual coverage and CRAP thresholds remain enforced",
+  "source_commit": "859daa95b180c88f86fb817418e6b6ff5a5b1123",
+  "base_commit": "d5e113ec2d49cd7dc30aaf2a14db016ba9d7ca94",
+  "core": {
+    "package_version": "0.4.1",
+    "source_commit": "8b98cef668246740fcd2efbde3ec9be0c9c69b75",
+    "sha256": "aa69aba368768ab1dccd3279ff791b3f78ac96bdc5b8dc0ef750ced1a4f2e8b1",
+    "profile": "release-small",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "released": false,
+    "fixes": [
+      "staged partial host-state input",
+      "large native JSON report finalization"
+    ]
+  },
+  "measurement_sha256": "c3e17d97984ab8832a736b3ea6d475f8f6e0f38a88f20f2d63c49561748189b4",
+  "execution_steps_passed": 27,
+  "quality_records": 1921,
+  "producers": {
+    "backend": "collected",
+    "frontend": "collected",
+    "frontend-api": "collected"
+  },
+  "baseline_status": "available",
+  "timings": {
+    "arc-fixed-full-host-prepare": {
+      "seconds": 4.76395378401503,
+      "exit": 0,
+      "log_sha256": "0508cd514ef1e5b62c05a17576a9ffa353d5dc3bc983c016fdc5f9b71521d717"
+    },
+    "arc-fixed-full-verify": {
+      "seconds": 303.6323529629735,
+      "exit": 1,
+      "log_sha256": "28971ff29fbd93cb6a3171a7d13bd8091852f0afdd1babd7c6e91421b6c2c949"
+    }
+  },
+  "native_recompile": false,
+  "environment_observations": [
+    {
+      "process": "api_flow",
+      "DATABASE_URL_present": false,
+      "TEST_DATABASE_URL_present": true
+    }
+  ],
+  "service_status": [
+    {
+      "id": "test-postgres",
+      "status": "CLEANED"
+    }
+  ],
+  "test_result_sha256": "48f2fee9de2014509da3ffc844e1fc06ad8767e25688e99e49e9ff2aba1e9487"
+}

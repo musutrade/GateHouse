@@ -1,0 +1,15 @@
+{
+  "status": "pass",
+  "scope": "Imported backend execution service isolation, independent of full-quality state",
+  "external_test_database_name": "production",
+  "expected_failure_code": "SERVICE_LEASE_FAILURE",
+  "observed_failure": "service \"test-postgres\" previously failed: test database name must end with _test or -test",
+  "service_status": [
+    {
+      "id": "test-postgres",
+      "status": "CLEANED"
+    }
+  ],
+  "quality_state": "missing in isolated routing fixture; not a full-quality acceptance receipt",
+  "report_sha256": "c109654b0a17a29ff1e8f7c2b48198fdd54a20c74638d85016b31b97906a9968"
+}

@@ -1,0 +1,648 @@
+{
+  "source_commit": "e5a1ee5f7ec6dbae461355106d469384581d4607",
+  "binary_sha256": "0630afe6724522ebada1a2b0254c773063e4c72ac992eaec59f260206079b862",
+  "certified_llvm_mapping": false,
+  "files": [
+    {
+      "path": "backend/src/access.rs",
+      "sha256": "b7435d0d8bfdecd7a7eb1c47e03dd0860a035f57933a1b8839d6bf4c3e24fd9f",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 7
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 7
+      }
+    },
+    {
+      "path": "backend/src/app_metrics.rs",
+      "sha256": "3a50033fbd9199f2dcd91aea6dc5c3f1b6d8730a4fa59d4b8c91dfb2687096bf",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 5
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro describe_counter at LineColumn { line: 27, column: 8 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro describe_histogram at LineColumn { line: 28, column: 8 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro describe_gauge at LineColumn { line: 32, column: 8 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro describe_gauge at LineColumn { line: 33, column: 8 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro describe_gauge at LineColumn { line: 34, column: 8 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro gauge at LineColumn { line: 42, column: 4 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro gauge at LineColumn { line: 43, column: 4 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro gauge at LineColumn { line: 44, column: 4 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro counter at LineColumn { line: 66, column: 4 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro histogram at LineColumn { line: 67, column: 4 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/auth.rs",
+      "sha256": "2e96693655b4a0e7ac694ebdd2f52ff3673609dca40df4b79d7b97db65f62095",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 39
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 39
+      }
+    },
+    {
+      "path": "backend/src/bin/archive_audit_logs.rs",
+      "sha256": "8943ad51e50c832507b43330f5b05d4a9558460061639af43441ca34e174e40e",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 13
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro anyhow :: anyhow at LineColumn { line: 71, column: 21 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: bail at LineColumn { line: 74, column: 8 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 86, column: 23 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 87, column: 41 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 116, column: 27 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/bin/bootstrap_admin.rs",
+      "sha256": "7aff1997cd1aa3c27cdf3cf82bc9b217a5c682ccfaf332ddda4d326f903be08e",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 4
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro anyhow :: anyhow at LineColumn { line: 15, column: 21 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/bin/export_openapi.rs",
+      "sha256": "216bebb2a4ad7384bef35746f493c8f863edd8f39a4b095b9ff5bedb97ccec62",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 2
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 2
+      }
+    },
+    {
+      "path": "backend/src/bin/migrate.rs",
+      "sha256": "95a58e3dea48f960e843a96793ab93a25a5c35c04c023e3abecbe5bf79fceeca",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 1
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 1
+      }
+    },
+    {
+      "path": "backend/src/config.rs",
+      "sha256": "c3aca3740e1550d4b4392b7e18c98fefb302e1871f6c9752bbc9a69e5107af22",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 31
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro bail at LineColumn { line: 190, column: 21 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 212, column: 12 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 245, column: 12 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 248, column: 12 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 253, column: 12 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 258, column: 27 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 269, column: 12 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 277, column: 16 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 282, column: 12 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 290, column: 12 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 348, column: 8 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 361, column: 8 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 371, column: 23 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 383, column: 16 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/db.rs",
+      "sha256": "8d876c46be5f69b038a1b69a6c1290a7aa07d961cc4e734d9f27f2e6f3a95953",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 18
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro sqlx :: migrate at LineColumn { line: 8, column: 28 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: bail at LineColumn { line: 104, column: 12 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 138, column: 21 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 147, column: 21 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: bail at LineColumn { line: 150, column: 8 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 160, column: 21 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 169, column: 21 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: bail at LineColumn { line: 172, column: 8 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/error.rs",
+      "sha256": "b4543b56633d7b35c01d0ff217c2347fe2b79ed47351692d238b530569aa39c7",
+      "legacy": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported production macro error at LineColumn { line: 90, column: 16 }: expected an expression\""
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro anyhow :: anyhow at LineColumn { line: 60, column: 23 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/handlers/audit_logs.rs",
+      "sha256": "6859553dec2780e2c87faed58f2f27acf41f62b09606d834941648fd2916143a",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 1
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 1
+      }
+    },
+    {
+      "path": "backend/src/handlers/auth.rs",
+      "sha256": "a94d8079b8d38309285eb46f3ba83e64ecdee2cad61bd99880198d4ab113c7e9",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 18
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 18
+      }
+    },
+    {
+      "path": "backend/src/handlers/dashboard.rs",
+      "sha256": "3120bdde53a93658deb0038182a051a3710d81d70812c382891aba62234585ed",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 1
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 1
+      }
+    },
+    {
+      "path": "backend/src/handlers/departments.rs",
+      "sha256": "bf8735bd29590acd676cc9695aa6b4780f0079acd39ea690d772b55cd5dd88b1",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 6
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 6
+      }
+    },
+    {
+      "path": "backend/src/handlers/mod.rs",
+      "sha256": "cac0665b703f8632abc54b8b407fbc31d3494930d3ce8c80a60832b23fecc3bc",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 0
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 0
+      }
+    },
+    {
+      "path": "backend/src/handlers/permissions.rs",
+      "sha256": "89758826f05aa315657c299d095f3ce0884eb6d4cb4f2067da0a9bc10e5aa43d",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 1
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 1
+      }
+    },
+    {
+      "path": "backend/src/handlers/roles.rs",
+      "sha256": "265a5ed338ff5dd9600258f9f55bd8b367e95c7eea9a0df76b149cd038b1ab14",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 9
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 9
+      }
+    },
+    {
+      "path": "backend/src/handlers/users.rs",
+      "sha256": "986b9266b912d57cb610ddb1350ecd51574fe4ec39f6aa5f70ceff36d82b6a7c",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 14
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 14
+      }
+    },
+    {
+      "path": "backend/src/lib.rs",
+      "sha256": "2a5a93e5784c8d6d56a2be1cbf353aba2eebebc5d7e8bf39ba9a0fcc1ec2fe59",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 6
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 6
+      }
+    },
+    {
+      "path": "backend/src/main.rs",
+      "sha256": "349487123333cfdf6393c7dc53d46365ed79ae58b47cdb825fa537f994aac0f3",
+      "legacy": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported production macro error at LineColumn { line: 31, column: 8 }: expected an expression\\nunsupported production macro error at LineColumn { line: 42, column: 12 }: expected an expression\\nunsupported production macro error at LineColumn { line: 56, column: 12 }: expected an expression\\nunsupported production macro select at LineColumn { line: 141, column: 4 }: expected `,`\""
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro anyhow :: anyhow at LineColumn { line: 18, column: 29 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/mfa.rs",
+      "sha256": "8cf859c48184375b8872e88368cfb6263cf4726bb02f9c855fc68f931abb915d",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 13
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro bail at LineColumn { line: 47, column: 12 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 50, column: 12 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 59, column: 25 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 76, column: 33 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 82, column: 25 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro bail at LineColumn { line: 92, column: 12 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 98, column: 33 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 104, column: 25 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 117, column: 29 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/models.rs",
+      "sha256": "f0f302e1025a8d77c698282be61b6a9892d0206c21bf2f5f98c7c3181176a1cf",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 7
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 7
+      }
+    },
+    {
+      "path": "backend/src/openapi.rs",
+      "sha256": "683c860cab2b042560142470e0709f6a44e8d704b624a4307c499c8a585bc9b8",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 44
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 44
+      }
+    },
+    {
+      "path": "backend/src/permissions/departments.rs",
+      "sha256": "81410a125985c7128daaccd7a788e8896578e0db7062e9e8a386dc828b4e5523",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 0
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 0
+      }
+    },
+    {
+      "path": "backend/src/permissions.rs",
+      "sha256": "407a58ff5cade409d1a42a11b99ca564c87e6aac12c93b032ad7aab72dd54017",
+      "legacy": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported production macro macro_rules at LineColumn { line: 7, column: 0 }: expected an expression\""
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro macro_rules at LineColumn { line: 7, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro define_permission at LineColumn { line: 17, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro define_permission at LineColumn { line: 18, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro define_permission at LineColumn { line: 19, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro define_permission at LineColumn { line: 20, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro define_permission at LineColumn { line: 21, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro define_permission at LineColumn { line: 22, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro define_permission at LineColumn { line: 23, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro define_permission at LineColumn { line: 24, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro define_permission at LineColumn { line: 25, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro define_permission at LineColumn { line: 26, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/repositories/audit_logs.rs",
+      "sha256": "ed9b98622b90da02e5781d1df575066940a11ad3576df5f7ec92a177375856bb",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 5
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 5
+      }
+    },
+    {
+      "path": "backend/src/repositories/auth_sessions.rs",
+      "sha256": "f4bd8d29b190a7f1a19c75d06d3f29483107ff6c303bf67b891f6eae2206b783",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 9
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 9
+      }
+    },
+    {
+      "path": "backend/src/repositories/departments.rs",
+      "sha256": "12f582f2c7304bb9218a53e414cea39b894581fa6d6363075a0aca3b9680896f",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 7
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 7
+      }
+    },
+    {
+      "path": "backend/src/repositories/mfa.rs",
+      "sha256": "36408304e4c5fcbf4aa743f0fdc46e75b273831357cc6d2f83ecaedf1e855e6d",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 25
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 25
+      }
+    },
+    {
+      "path": "backend/src/repositories/mod.rs",
+      "sha256": "706084a2789e781f73e303745a157567f77e82cee163a7f256aabcaafbf2f335",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 0
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 0
+      }
+    },
+    {
+      "path": "backend/src/repositories/module_unlock.rs",
+      "sha256": "9505187f299b6bd992be8ed7142e7d3ff64180fa8c2c7e8eb9584840724736fb",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 3
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 3
+      }
+    },
+    {
+      "path": "backend/src/repositories/organizations.rs",
+      "sha256": "88f2fab0dea1c14bfef86ee4985c0d2a5f4aa6054a939fa43059eadd64e94e65",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 1
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 1
+      }
+    },
+    {
+      "path": "backend/src/repositories/permissions.rs",
+      "sha256": "5c38859b38cabfbd4fa402af922a3f19140ed58e37f31ef9721b25bb82164297",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 7
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 7
+      }
+    },
+    {
+      "path": "backend/src/repositories/roles.rs",
+      "sha256": "89398de4a73f54ea3fe70d8f3346b8c3edfb4b67fef61c855395a49e92e26378",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 12
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 12
+      }
+    },
+    {
+      "path": "backend/src/repositories/step_up.rs",
+      "sha256": "11d395fce7e52f2c569e494bfe77f18c64bff6e12f1b5988fd2669038e32fed5",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 3
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 3
+      }
+    },
+    {
+      "path": "backend/src/repositories/users.rs",
+      "sha256": "036b221ca83a9276ab6a09db5ae0a55dd257ca6ac1632f96bed642b90edf16a2",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 18
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 18
+      }
+    },
+    {
+      "path": "backend/src/services/audit_logs.rs",
+      "sha256": "778a45cd85b51c58b63bf5693378bfc057cdabfd516d38efbcee8c64c4379a52",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 10
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro tokio :: try_join at LineColumn { line: 29, column: 28 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/services/auth.rs",
+      "sha256": "a177dced834ef9a82f4b33c04f4d6ed55d4318c1351fd1557bae96dbf6629af8",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 38
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 38
+      }
+    },
+    {
+      "path": "backend/src/services/departments.rs",
+      "sha256": "f85340acab4b4db3c4a95e2e7aba0c2e7326229df0984d3a69d0bf66b7a2b69c",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 21
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 21
+      }
+    },
+    {
+      "path": "backend/src/services/mfa.rs",
+      "sha256": "3ef4f82c25deffbedf5c93decb493a6e5a9f6735e98280aef8f733dc5c48ed97",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 45
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 45
+      }
+    },
+    {
+      "path": "backend/src/services/mod.rs",
+      "sha256": "abe0c74f0c9d01093b5f293b9b36f05d4a2b5cd5a645f752b7332dc619fc5a94",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 0
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 0
+      }
+    },
+    {
+      "path": "backend/src/services/module_unlock.rs",
+      "sha256": "47e305412295d3d3858360a61d37c86cd216937b976aedcafb214a51f693a484",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 4
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 4
+      }
+    },
+    {
+      "path": "backend/src/services/permissions.rs",
+      "sha256": "3f9ed06a7b13c0f0d198781c0729e3a602058cd0145d56c99f539fe96996cdde",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 4
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro tokio :: try_join at LineColumn { line: 12, column: 40 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/services/roles.rs",
+      "sha256": "b6a8fd8d72c0c0a53a2a93f92ef5057c9164971a81bf17ca6aacda3e669e2dc6",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 27
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 27
+      }
+    },
+    {
+      "path": "backend/src/services/step_up.rs",
+      "sha256": "66eba53323b4edef5c34cb3c0e851649d0dbe8925ecd6a9253d430bd3f8af8c9",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 6
+      },
+      "native": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 6
+      }
+    },
+    {
+      "path": "backend/src/services/users.rs",
+      "sha256": "0e09f5fddee0b77a6cb644efbde939e1bc7d7bfdc154f46cb8c787420340e1bf",
+      "legacy": {
+        "exit_code": 0,
+        "errors": "",
+        "symbols": 35
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro tokio :: try_join at LineColumn { line: 42, column: 32 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    },
+    {
+      "path": "backend/src/telemetry.rs",
+      "sha256": "c7f0c2865756dd6bdaa2e92ea37dfb8f700223425c2f7d706169108be5e98763",
+      "legacy": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported production macro task_local at LineColumn { line: 36, column: 0 }: expected `|`\\nunsupported production macro error at LineColumn { line: 153, column: 8 }: expected an expression\\nunsupported production macro info_span at LineColumn { line: 164, column: 4 }: expected an expression\\nunsupported production macro info_span at LineColumn { line: 182, column: 12 }: expected an expression\\nunsupported production macro error at LineColumn { line: 210, column: 20 }: expected `,`\\nunsupported production macro warn at LineColumn { line: 219, column: 20 }: expected `,`\\nunsupported production macro info at LineColumn { line: 228, column: 20 }: expected `,`\""
+      },
+      "native": {
+        "exit_code": 1,
+        "errors": "Error: \"unsupported native macro tokio :: task_local at LineColumn { line: 36, column: 0 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 85, column: 29 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\\nunsupported native macro anyhow :: anyhow at LineColumn { line: 97, column: 29 }: macro requires explicit grammar/expansion provenance; aliases are not resolved\""
+      }
+    }
+  ]
+}

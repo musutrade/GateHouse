@@ -1,0 +1,5 @@
+schema: spec-driven
+status: implemented
+created: 2026-08-27
+goal: Close merged refactor documentation without changing production behavior
+skip_specs: true

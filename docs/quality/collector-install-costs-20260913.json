@@ -1,0 +1,237 @@
+{
+  "auto": {
+    "cache_bytes": 166726298,
+    "mode": "auto",
+    "native_self_check": true,
+    "network_bytes": 0,
+    "object_count": 360,
+    "offline_acquired_component_bytes": 166726298,
+    "runtime_allocated_bytes": 1315344384,
+    "seconds": 90.4787729330128
+  },
+  "core": {
+    "commit": "7693ba27a421bfa3a4a20d72e59b61a784eb8952",
+    "sha256": "ba2adc1fbdb13afd6817834dca7ea9f171288469c45bb82e267e843719fe15da",
+    "version": "0.4.2"
+  },
+  "explicit_compatible": {
+    "download_bytes": 0,
+    "download_objects": [],
+    "native_self_check": true,
+    "reuse_objects": 2891,
+    "runtime_allocated_bytes": 1315336192,
+    "seconds": 56.15182259399444
+  },
+  "installed_archives_absent": true,
+  "limitations": [
+    "Offline acquisition, network bytes zero; no production Sigstore acceptance.",
+    "Peak preparation is an analytical payload bound; total transient peak was not sampled.",
+    "Only one supplied compiler; second native toolchain upgrade not executed.",
+    "A fresh private runtime on an existing host is not clean-host certification."
+  ],
+  "local_artifacts": {
+    "target/gh-255/costs-run2/auto-report.json": {
+      "bytes": 143967,
+      "sha256": "e0f57dbfda12c89f2d76aff49f727b0c9cdf9db2126c84e0c5468c54c12e0d27"
+    },
+    "target/gh-255/costs-run2/compatible-report.json": {
+      "bytes": 692,
+      "sha256": "bd0128391bfa376d2fa15ceed83c98179020ccd6ab91f74797c60104b34efbe6"
+    },
+    "target/gh-255/costs-run2/report.json": {
+      "bytes": 3599486,
+      "sha256": "8c929e14d662ed2dedeb1ba9824c956ee9a70b4ae47046ebdd3a3db4def3d813"
+    },
+    "target/gh-255/costs-run2/transport-1/transport.json": {
+      "bytes": 4970210,
+      "sha256": "2d1d75b75a213c5c942f283395ad0f5d760860894cec652a56644d4b5e878ee6"
+    },
+    "target/gh-255/costs-run2/transport-2/transport.json": {
+      "bytes": 4970170,
+      "sha256": "6ec2909e1d3dd6c170edf2585d1203d807e5a96f11df1b3a7b995c8950e2296e"
+    },
+    "target/gh-255/costs-run2/transport-3/transport.json": {
+      "bytes": 4970170,
+      "sha256": "9a4bedc73703d28dfec8737d1adb2a27e77bc0d5853eaff68aea808ad6ccc748"
+    },
+    "target/gh-255/costs-run2/transport-4/transport.json": {
+      "bytes": 4970170,
+      "sha256": "35a5e93f39415b8081ad81c6bdae5e08be49c809e17c19e0e315214a22b09e6b"
+    }
+  },
+  "migration": {
+    "after": {
+      "objects": {
+        "files": 2891,
+        "logical_bytes": 1303302025,
+        "unique_allocated_bytes": 0
+      },
+      "staging": {
+        "files": 0,
+        "logical_bytes": 0,
+        "unique_allocated_bytes": 0
+      },
+      "total_allocated_bytes": 1315278848,
+      "versions": {
+        "files": 2946,
+        "logical_bytes": 1691079175,
+        "unique_allocated_bytes": 1315278848
+      }
+    },
+    "before": {
+      "objects": {
+        "files": 0,
+        "logical_bytes": 0,
+        "unique_allocated_bytes": 0
+      },
+      "staging": {
+        "files": 0,
+        "logical_bytes": 0,
+        "unique_allocated_bytes": 0
+      },
+      "total_allocated_bytes": 3382693888,
+      "versions": {
+        "files": 2946,
+        "logical_bytes": 3375868404,
+        "unique_allocated_bytes": 3382693888
+      }
+    },
+    "reclaimed_allocated_bytes": 2067415040,
+    "versions": [
+      "0.1.0-rc.1"
+    ]
+  },
+  "network_bytes": 0,
+  "production_acceptance": false,
+  "retained_tool_identity": {
+    "rust/bin/cargo": {
+      "same_inode": true,
+      "sha256": "828980723df339d62434390e9fb8ef8831036583343ae2316b7ab5646b5c1953"
+    },
+    "rust/bin/rustc": {
+      "same_inode": true,
+      "sha256": "d3a664c970a9fd8361b64194861bebc1ae37b9054e5ee3400dc1c9e691797eea"
+    }
+  },
+  "retained_versions": [
+    "0.1.0-rc.2",
+    "0.1.0-rc.3",
+    "0.1.0-rc.4"
+  ],
+  "rollback": {
+    "version": "0.1.0-rc.3"
+  },
+  "runs": [
+    {
+      "cache_bytes": 432174999,
+      "expanded_temporary_allocated_bytes": 1309999104,
+      "network_bytes": 0,
+      "object_count": 2891,
+      "offline_acquired_component_bytes": 432174999,
+      "peak_preparation_allocated_upper_bound": 3024331872,
+      "runtime_allocated_bytes": 1315344384,
+      "seconds": 338.1504410050111,
+      "signed_metadata_bytes": 1830806,
+      "version": "0.1.0-rc.1"
+    },
+    {
+      "cache_bytes": 432316544,
+      "changed_objects": [
+        {
+          "download_bytes": 237,
+          "expanded_size": 299,
+          "name": "5b614bf8f4ccf57458521fc8fd9de638cf6d960bea5c0036a30f19de54e4da8c.gz",
+          "object": "5b614bf8f4ccf57458521fc8fd9de638cf6d960bea5c0036a30f19de54e4da8c",
+          "reason": "missing exact compatible bytes",
+          "sha256": "2a1fdbd014055ee10447eef80d2cf2487000ce0454ca9ac37b9c41252ec8a4e9",
+          "size": 237
+        },
+        {
+          "download_bytes": 141308,
+          "expanded_size": 488508,
+          "name": "8014265febb0536dbd7b44fd259e01e2be54b450a582e3174cff5cc2484f3fce.gz",
+          "object": "8014265febb0536dbd7b44fd259e01e2be54b450a582e3174cff5cc2484f3fce",
+          "reason": "missing exact compatible bytes",
+          "sha256": "85c42116f6c6299cc834a4035d20103573826f5b4eeb03a4c5f06b774fb510d3",
+          "size": 141308
+        }
+      ],
+      "expanded_temporary_allocated_bytes": 495616,
+      "network_bytes": 0,
+      "object_count": 2,
+      "offline_acquired_component_bytes": 141545,
+      "peak_preparation_allocated_upper_bound": 1720661088,
+      "runtime_allocated_bytes": 1321177088,
+      "seconds": 102.042555144988,
+      "signed_metadata_bytes": 1830806,
+      "version": "0.1.0-rc.2"
+    },
+    {
+      "cache_bytes": 432458088,
+      "changed_objects": [
+        {
+          "download_bytes": 237,
+          "expanded_size": 299,
+          "name": "3c66e52ad9d4778ffe3ce716cc210261876f79c326e0dc8356fe45490316e871.gz",
+          "object": "3c66e52ad9d4778ffe3ce716cc210261876f79c326e0dc8356fe45490316e871",
+          "reason": "missing exact compatible bytes",
+          "sha256": "e9637dae6256845c833578fc7e9d29b05ca89ca9fe21eb7e49508e9fb61920de",
+          "size": 237
+        },
+        {
+          "download_bytes": 141307,
+          "expanded_size": 488508,
+          "name": "dcc588dc36aa24d087497ad979894f0242f2c3a90c603cc879a4e180700ec68c.gz",
+          "object": "dcc588dc36aa24d087497ad979894f0242f2c3a90c603cc879a4e180700ec68c",
+          "reason": "missing exact compatible bytes",
+          "sha256": "dc9c6c5b0633c33943ebd194478f4b01881b36b3c82caf06e738aef2552380b8",
+          "size": 141307
+        }
+      ],
+      "expanded_temporary_allocated_bytes": 495616,
+      "network_bytes": 0,
+      "object_count": 2,
+      "offline_acquired_component_bytes": 141544,
+      "peak_preparation_allocated_upper_bound": 1726493792,
+      "runtime_allocated_bytes": 1327009792,
+      "seconds": 107.15278898598626,
+      "signed_metadata_bytes": 1830806,
+      "version": "0.1.0-rc.3"
+    },
+    {
+      "cache_bytes": 432599631,
+      "changed_objects": [
+        {
+          "download_bytes": 237,
+          "expanded_size": 299,
+          "name": "18b4344edd79c415606cd95f1c83bbd0a4c32ad354fbd71121eeac182d8140dc.gz",
+          "object": "18b4344edd79c415606cd95f1c83bbd0a4c32ad354fbd71121eeac182d8140dc",
+          "reason": "missing exact compatible bytes",
+          "sha256": "cc18a51f520ffc27426936c3d7fa746a5002824283b929dfef5c3a1057b6a94d",
+          "size": 237
+        },
+        {
+          "download_bytes": 141306,
+          "expanded_size": 488508,
+          "name": "a5b22f5dac7dac08c8cfad66947654cd1b29bf91d3dbb38b15611908f05d1d9d.gz",
+          "object": "a5b22f5dac7dac08c8cfad66947654cd1b29bf91d3dbb38b15611908f05d1d9d",
+          "reason": "missing exact compatible bytes",
+          "sha256": "a6d8073165c2c28b4d7eec18e58e1debb22e297ae2aa54e9e811a796b3a78e4a",
+          "size": 141306
+        }
+      ],
+      "expanded_temporary_allocated_bytes": 495616,
+      "network_bytes": 0,
+      "object_count": 2,
+      "offline_acquired_component_bytes": 141543,
+      "peak_preparation_allocated_upper_bound": 1732326496,
+      "runtime_allocated_bytes": 1327009792,
+      "seconds": 153.0348825340625,
+      "signed_metadata_bytes": 1830806,
+      "version": "0.1.0-rc.4"
+    }
+  ],
+  "runtime_archive_bytes": 1688197120,
+  "schema": "collector-native-storage-diagnostic/v1",
+  "signature": "disposable local RSA, test eligibility; no Sigstore certification"
+}

@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-08-27
+goal: Decompose the secret scanner into private responsibility-based modules without changing scan behavior
+skip_specs: true

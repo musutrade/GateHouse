@@ -1,0 +1,323 @@
+{
+  "schema": "arc-original-ci-cost-reference/v1",
+  "run_url": "https://github.com/musutrade/arc-admin/actions/runs/34731883530",
+  "head_commit": "8dab1b88d9bd64240c453f681e87cba2babe5660",
+  "scope": "Observed hosted original multijob topology; execution only, no native quality collection. Different hardware/cache from local complete-quality sample; no direct speedup ratio.",
+  "jobs": [
+    {
+      "name": "Dependency review",
+      "conclusion": "success",
+      "started_at": "2026-09-13T01:59:10Z",
+      "completed_at": "2026-09-13T01:59:19Z",
+      "job_wall_seconds": 9.0,
+      "runner_name": "GitHub Actions 1000010054",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "seconds": 2.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "seconds": 2.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/dependency-review-action@v5",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "seconds": 0.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "seconds": 0.0,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "name": "Detect change scope",
+      "conclusion": "success",
+      "started_at": "2026-09-13T01:59:10Z",
+      "completed_at": "2026-09-13T01:59:48Z",
+      "job_wall_seconds": 38.0,
+      "runner_name": "GitHub Actions 1000010053",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "seconds": 4.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "\u5b89\u88c5\u9879\u76ee\u56fa\u5b9a Rust \u5de5\u5177\u94fe",
+          "seconds": 9.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Detect verification scope",
+          "seconds": 21.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload scope report",
+          "seconds": 0.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "seconds": 0.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "seconds": 0.0,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "name": "Quality gate",
+      "conclusion": "success",
+      "started_at": "2026-09-13T01:59:50Z",
+      "completed_at": "2026-09-13T02:02:32Z",
+      "job_wall_seconds": 162.0,
+      "runner_name": "GitHub Actions 1000010055",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "seconds": 6.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Install frontend dependencies",
+          "seconds": 8.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "\u5b89\u88c5\u9879\u76ee\u56fa\u5b9a Rust \u5de5\u5177\u94fe",
+          "seconds": 8.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify development workflow",
+          "seconds": 134.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "\u9a8c\u8bc1\u539f\u751f\u91c7\u96c6\u5668\u5951\u7ea6",
+          "seconds": 0.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload quality reports",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "seconds": 0.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "seconds": 0.0,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "name": "Backend verification",
+      "conclusion": "success",
+      "started_at": "2026-09-13T01:59:51Z",
+      "completed_at": "2026-09-13T02:05:11Z",
+      "job_wall_seconds": 320.0,
+      "runner_name": "GitHub Actions 1000010056",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Initialize containers",
+          "seconds": 12.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "\u5b89\u88c5\u9879\u76ee\u56fa\u5b9a Rust \u5de5\u5177\u94fe",
+          "seconds": 9.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run backend checks and tests",
+          "seconds": 294.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload backend report",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "seconds": 0.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Stop containers",
+          "seconds": 0.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "seconds": 0.0,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "name": "Frontend verification",
+      "conclusion": "success",
+      "started_at": "2026-09-13T01:59:50Z",
+      "completed_at": "2026-09-13T02:03:30Z",
+      "job_wall_seconds": 220.0,
+      "runner_name": "GitHub Actions 1000010057",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "seconds": 2.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Initialize containers",
+          "seconds": 17.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "seconds": 7.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Install frontend dependencies",
+          "seconds": 5.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "\u5b89\u88c5\u9879\u76ee\u56fa\u5b9a Rust \u5de5\u5177\u94fe",
+          "seconds": 7.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Prepare Doctor prerequisites",
+          "seconds": 0.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify CI environment",
+          "seconds": 18.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Audit production dependencies",
+          "seconds": 0.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Playwright browser",
+          "seconds": 24.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run frontend checks and tests",
+          "seconds": 132.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload frontend report",
+          "seconds": 1.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "seconds": 0.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "seconds": 0.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Stop containers",
+          "seconds": 3.0,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "seconds": 0.0,
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}

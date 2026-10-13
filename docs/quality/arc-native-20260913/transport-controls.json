@@ -1,0 +1,89 @@
+{
+  "schema": "arc-integrated-quality-negatives/v1",
+  "status": "pass",
+  "core_sha256": "fb2d79704b4fd31b7372484b5af1f20651906f21020ff1f42027ff9bc39dc0dd",
+  "source_commit": "8dab1b88d9bd64240c453f681e87cba2babe5660",
+  "measurement_sha256": "b51c163b473b50b337e34dec62159f288b058225210ee907e133109ffb14e4e8",
+  "records": 1921,
+  "cases": [
+    {
+      "name": "untrusted-native-bundle",
+      "expected_exit": 1,
+      "actual_exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "8484da94087e48e2eb312ceacd39bb83c155a61d8cb6b40e56079da5d6eea85e"
+    },
+    {
+      "name": "missing-native-artifacts",
+      "expected_exit": 1,
+      "actual_exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ebc259a162769e8b6123ee778ce1c470d7aaf50dac5a804eb4083f03cebcdba7"
+    },
+    {
+      "name": "changed-test-input",
+      "expected_exit": 1,
+      "actual_exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "f0de88e069a9d037d128c7d9cc8d29fb5e574a9593c1b262c6adb8d3137120b8"
+    },
+    {
+      "name": "prepare-host",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "stdout_sha256": "627478f9110f5a483a171a37a60b074168f11f1e0eada7dad2ceefeae020fd60",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "expired-authenticated-request",
+      "expected_exit": 1,
+      "actual_exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "91ecc788538162b2611e21008733dbc2db5130c0c0923fee559cf74736981243"
+    },
+    {
+      "name": "positive-native-collection",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "positive-retention",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tampered-raw-artifact",
+      "expected_exit": 1,
+      "actual_exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "3b034049d00a4d41cce3e6b0026995687dbc7e06c796e93de151a86a1a8edf2e"
+    },
+    {
+      "name": "missing-raw-artifact",
+      "expected_exit": 1,
+      "actual_exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "658fc668313f785d2f0a78eb38972bb16372e9423bef42570ac758e5997e5689"
+    },
+    {
+      "name": "stale-native-context",
+      "expected_exit": 1,
+      "actual_exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "8cff8449a4dea818ba398c2d773086571a6d2fbe882379bb4bdcb054550d94a0"
+    },
+    {
+      "name": "missing-required-capability",
+      "expected_exit": 1,
+      "actual_exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "cb67276e4ec60aa10168c0bed5e8b080944fb32cdc7364f2339b8012397bab37"
+    }
+  ],
+  "native_recompile": false,
+  "existing_runtime_and_capture_preserved": true
+}

@@ -1,0 +1,270 @@
+# Arc-Admin shadow configuration; install beside the GH-202 imported flow.
+# Reference capabilities are setup metadata, never evidence for Arc-Admin source.
+version = 1
+
+[project]
+id = "arc-admin"
+name = "arc-admin"
+
+[components.backend]
+flow_components = ["backend"]
+source_roots = ["backend/src"]
+artifact_root = ".harness-gate/reports/evidence/backend"
+
+[components.frontend]
+flow_components = ["frontend"]
+source_roots = ["frontend/src"]
+artifact_root = ".harness-gate/reports/evidence/frontend"
+
+[subjects]
+
+[relationships.frontend-api]
+kind = "api-contract"
+
+[relationships.frontend-api.from]
+kind = "component"
+id = "frontend"
+
+[relationships.frontend-api.to]
+kind = "component"
+id = "backend"
+
+[collectors.backend]
+protocol = "harness-collector-request/v1"
+request = ".harness-gate/runtime/backend-request.json"
+
+[[collectors.backend.produces]]
+capability = "coverage.line"
+series = "measurement-series/v1:4fa98f3128d8c3ac0dd5279ba9b4f4f9ae83cc3538575cfd5a6be1599a95dd98"
+
+[collectors.backend.produces.target]
+kind = "component"
+id = "backend"
+
+[[collectors.backend.produces]]
+capability = "coverage.region"
+series = "measurement-series/v1:4fa98f3128d8c3ac0dd5279ba9b4f4f9ae83cc3538575cfd5a6be1599a95dd98"
+
+[collectors.backend.produces.target]
+kind = "component"
+id = "backend"
+
+[[collectors.backend.produces]]
+capability = "risk.crap"
+series = "measurement-series/v1:4fa98f3128d8c3ac0dd5279ba9b4f4f9ae83cc3538575cfd5a6be1599a95dd98"
+
+[collectors.backend.produces.target]
+kind = "component"
+id = "backend"
+
+[collectors.frontend]
+protocol = "harness-collector-request/v1"
+request = ".harness-gate/runtime/frontend-request.json"
+
+[[collectors.frontend.produces]]
+capability = "coverage.line"
+series = "measurement-series/v1:aafce3307210d37f5a1a09f98a7b33b04dfb34e4a269a4d2b78feadf349ff6f1"
+
+[collectors.frontend.produces.target]
+kind = "component"
+id = "frontend"
+
+[[collectors.frontend.produces]]
+capability = "coverage.function"
+series = "measurement-series/v1:aafce3307210d37f5a1a09f98a7b33b04dfb34e4a269a4d2b78feadf349ff6f1"
+
+[collectors.frontend.produces.target]
+kind = "component"
+id = "frontend"
+
+[[collectors.frontend.produces]]
+capability = "risk.crap"
+series = "measurement-series/v1:aafce3307210d37f5a1a09f98a7b33b04dfb34e4a269a4d2b78feadf349ff6f1"
+
+[collectors.frontend.produces.target]
+kind = "component"
+id = "frontend"
+
+[collectors.frontend-api]
+protocol = "harness-collector-request/v1"
+request = ".harness-gate/runtime/frontend-api-request.json"
+
+[[collectors.frontend-api.produces]]
+capability = "contract.breaking_changes"
+series = "measurement-series/v1:0b7ab5d8cf69f7a5fcd4df7e7ffe8acb0483d92a67cabcf3eafc3c05adce78ae"
+
+[collectors.frontend-api.produces.target]
+kind = "relationship"
+id = "frontend-api"
+
+[[collectors.frontend-api.produces]]
+capability = "contract.client_drift"
+series = "measurement-series/v1:0b7ab5d8cf69f7a5fcd4df7e7ffe8acb0483d92a67cabcf3eafc3c05adce78ae"
+
+[collectors.frontend-api.produces.target]
+kind = "relationship"
+id = "frontend-api"
+
+[[collectors.frontend-api.produces]]
+capability = "contract.compatible"
+series = "measurement-series/v1:0b7ab5d8cf69f7a5fcd4df7e7ffe8acb0483d92a67cabcf3eafc3c05adce78ae"
+
+[collectors.frontend-api.produces.target]
+kind = "relationship"
+id = "frontend-api"
+
+[policies."backend.coverage.line"]
+policy_file = ".harness-gate/packs/backend/policy.json"
+rule = "backend.coverage.line"
+
+[policies."backend.coverage.line".expectation]
+capability = "coverage.line"
+series = "measurement-series/v1:4fa98f3128d8c3ac0dd5279ba9b4f4f9ae83cc3538575cfd5a6be1599a95dd98"
+
+[policies."backend.coverage.line".expectation.target]
+kind = "component"
+id = "backend"
+
+[policies."backend.coverage.region"]
+policy_file = ".harness-gate/packs/backend/policy.json"
+rule = "backend.coverage.region"
+
+[policies."backend.coverage.region".expectation]
+capability = "coverage.region"
+series = "measurement-series/v1:4fa98f3128d8c3ac0dd5279ba9b4f4f9ae83cc3538575cfd5a6be1599a95dd98"
+
+[policies."backend.coverage.region".expectation.target]
+kind = "component"
+id = "backend"
+
+[policies."backend.risk.crap"]
+policy_file = ".harness-gate/packs/backend/policy.json"
+rule = "backend.risk.crap"
+
+[policies."backend.risk.crap".expectation]
+capability = "risk.crap"
+series = "measurement-series/v1:4fa98f3128d8c3ac0dd5279ba9b4f4f9ae83cc3538575cfd5a6be1599a95dd98"
+
+[policies."backend.risk.crap".expectation.target]
+kind = "component"
+id = "backend"
+
+[policies."frontend-api.contract.breaking_changes"]
+policy_file = ".harness-gate/packs/frontend-api/policy.json"
+rule = "frontend-api.contract.breaking_changes"
+
+[policies."frontend-api.contract.breaking_changes".expectation]
+capability = "contract.breaking_changes"
+series = "measurement-series/v1:0b7ab5d8cf69f7a5fcd4df7e7ffe8acb0483d92a67cabcf3eafc3c05adce78ae"
+
+[policies."frontend-api.contract.breaking_changes".expectation.target]
+kind = "relationship"
+id = "frontend-api"
+
+[policies."frontend-api.contract.client_drift"]
+policy_file = ".harness-gate/packs/frontend-api/policy.json"
+rule = "frontend-api.contract.client_drift"
+
+[policies."frontend-api.contract.client_drift".expectation]
+capability = "contract.client_drift"
+series = "measurement-series/v1:0b7ab5d8cf69f7a5fcd4df7e7ffe8acb0483d92a67cabcf3eafc3c05adce78ae"
+
+[policies."frontend-api.contract.client_drift".expectation.target]
+kind = "relationship"
+id = "frontend-api"
+
+[policies."frontend-api.contract.compatible"]
+policy_file = ".harness-gate/packs/frontend-api/policy.json"
+rule = "frontend-api.contract.compatible"
+
+[policies."frontend-api.contract.compatible".expectation]
+capability = "contract.compatible"
+series = "measurement-series/v1:0b7ab5d8cf69f7a5fcd4df7e7ffe8acb0483d92a67cabcf3eafc3c05adce78ae"
+
+[policies."frontend-api.contract.compatible".expectation.target]
+kind = "relationship"
+id = "frontend-api"
+
+[policies."frontend.coverage.function"]
+policy_file = ".harness-gate/packs/frontend/policy.json"
+rule = "frontend.coverage.function"
+
+[policies."frontend.coverage.function".expectation]
+capability = "coverage.function"
+series = "measurement-series/v1:aafce3307210d37f5a1a09f98a7b33b04dfb34e4a269a4d2b78feadf349ff6f1"
+
+[policies."frontend.coverage.function".expectation.target]
+kind = "component"
+id = "frontend"
+
+[policies."frontend.coverage.line"]
+policy_file = ".harness-gate/packs/frontend/policy.json"
+rule = "frontend.coverage.line"
+
+[policies."frontend.coverage.line".expectation]
+capability = "coverage.line"
+series = "measurement-series/v1:aafce3307210d37f5a1a09f98a7b33b04dfb34e4a269a4d2b78feadf349ff6f1"
+
+[policies."frontend.coverage.line".expectation.target]
+kind = "component"
+id = "frontend"
+
+[policies."frontend.risk.crap"]
+policy_file = ".harness-gate/packs/frontend/policy.json"
+rule = "frontend.risk.crap"
+
+[policies."frontend.risk.crap".expectation]
+capability = "risk.crap"
+series = "measurement-series/v1:aafce3307210d37f5a1a09f98a7b33b04dfb34e4a269a4d2b78feadf349ff6f1"
+
+[policies."frontend.risk.crap".expectation.target]
+kind = "component"
+id = "frontend"
+
+[profiles.full]
+assurance = "complete"
+collectors = [
+    "backend",
+    "frontend",
+    "frontend-api",
+]
+policies = [
+    "backend.coverage.line",
+    "backend.coverage.region",
+    "backend.risk.crap",
+    "frontend-api.contract.breaking_changes",
+    "frontend-api.contract.client_drift",
+    "frontend-api.contract.compatible",
+    "frontend.coverage.function",
+    "frontend.coverage.line",
+    "frontend.risk.crap",
+]
+
+[profiles.full.workflow]
+baseline_request = ".harness-gate/runtime/full-baseline-request.json"
+state = ".harness-gate/runtime/full-state.json"
+trusted_keys = ".harness-gate/runtime/trusted-keys.json"
+
+[profiles.hook]
+assurance = "partial"
+collectors = []
+policies = []
+
+[profiles.hook.workflow]
+state = ".harness-gate/runtime/hook-state.json"
+trusted_keys = ".harness-gate/runtime/trusted-keys.json"
+
+[baseline]
+required = true
+
+[baseline.provider]
+kind = "git"
+reference = "origin/main"
+merge_base = true
+
+[reporting]
+output = ".harness-gate/reports/quality"
+formats = [
+    "human",
+    "json",
+]

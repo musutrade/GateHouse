@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-08-27
+goal: Reduce fixture duplication and make Git/scope ownership explicit without
+  changing CLI behavior
+skip_specs: true

@@ -1,0 +1,9 @@
+{
+  "ecosystem": "nebula-unregistered-2049",
+  "collector": "quasar-observer",
+  "capability": "quasar.payload_bytes",
+  "normalized_capability": "bundle.size",
+  "series": "quasar-payload-bytes",
+  "tool": "quasar-meter",
+  "binding": "stargazer"
+}

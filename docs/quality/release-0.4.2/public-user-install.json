@@ -1,0 +1,40 @@
+{
+  "schema": "core-and-collector-public-install/v1",
+  "status": "pass",
+  "date": "2026-09-13",
+  "source_commit": "718bc5a1ea82f8364f91fc72f179ea0db689f6b5",
+  "core": {
+    "version": "0.4.2",
+    "sha256": "eda5179d96b32269124150980ffcaa7e57878605133bc6ead51e5aeb8a6ad0a0",
+    "release_url": "https://github.com/musutrade/Harness-Gate/releases/tag/v0.4.2",
+    "exact_preapproved_artifact": true,
+    "public_sha256_and_sigstore_verified": true
+  },
+  "crate": {
+    "version": "0.4.2",
+    "checksum": "0cf22fddc34242c4e6eb59369573e0ba7fe994cc13ca70f9a19ffdabddf7784e",
+    "published": true
+  },
+  "collector": "0.1.0-rc.3",
+  "installer": "0.1.0-rc.4",
+  "installer_sha256": "fdd277b6ec48ec89b4155d0df5d2bf6f8e6c2b15c41f0ea711cdb7eee479298a",
+  "installer_sigstore_verified": true,
+  "core_verifier_provisioning": "Previously independently pinned cosign reused on invocation PATH",
+  "root_installer_commit": "9ffa2b829ec25ca54fcb00a9bc720284c3913924",
+  "root_installer_sha256": "ae2a878c62718bc23eb9cb25fe4c6e2967a72f6eb8ad3bf66e9de0323ac233c4",
+  "public_installer_commands": [
+    "bash install.sh --version v0.4.2 --install-dir ~/.local/share/harness-gate/versions/v0.4.2/bin",
+    "bash install.sh --rust-only"
+  ],
+  "core_public_install_receipt_sha256": "646ca87485d606bc60f0604d773d2b380c22e2ccc6bedb5102d281ea66a6f1c9",
+  "selected_version": "0.1.0-rc.3",
+  "public_launcher_runtime_complete": true,
+  "doctor_scope": "Runtime and exact host inventory only; authenticated Core compatibility is in the independently reviewed RC3 matrix",
+  "installed_manifest_sha256": "c8e3452ecd767ee70e85f5c2d139d56aa9e9fd2ea801cf056d275a08e46b7fae",
+  "installation_log_sha256": "dad54a8f0917d218fe60798b77d5df67c78f720e52ee5c4b1f9b06b9cba18fd5",
+  "same_abi_required": true,
+  "previous_core_and_collector_versions_preserved": true,
+  "native_capture_paths_preserved": true,
+  "path_command": "/home/gem/.cargo/bin/harness-gate",
+  "path_target": "/home/gem/.local/share/harness-gate/versions/v0.4.2/bin/harness-gate"
+}

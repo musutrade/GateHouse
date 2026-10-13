@@ -1,0 +1,86 @@
+[package]
+name = "harness-gate"
+version = "0.4.8"
+edition = "2021"
+rust-version = "1.88"
+authors = ["Harness-Gate Contributors"]
+description = "Configurable development workflow and architecture guard CLI"
+readme = "../../README.md"
+homepage = "https://github.com/musutrade/GateHouse"
+repository = "https://github.com/musutrade/GateHouse"
+license = "MIT"
+keywords = ["workflow", "ci", "quality-gate", "lint", "testing"]
+categories = ["development-tools", "command-line-utilities"]
+
+[package.metadata.docs.rs]
+all-features = true
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+anyhow = "1.0"
+thiserror = "2.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.151", features = ["arbitrary_precision", "raw_value"] }
+unicode-normalization = "0.1"
+quick-xml = "0.41"
+schemars = "0.8"
+toml = "1.1.4"
+rayon = "1.12"
+ignore = "0.4.33"
+libc = "0.2"
+regex = "1.13.1"
+globset = "0.4.20"
+clap = { version = "4.6", default-features = false, features = [
+    "std",
+    "derive",
+    "help",
+    "usage",
+    "error-context",
+] }
+chrono = { version = "0.4", default-features = false, features = [
+    "std",
+    "clock",
+] }
+url = "2.5"
+ureq = "3.4"
+tera = "1.20.0"
+sha2 = "0.10"
+ed25519-dalek = "3.0"
+base64 = "0.23"
+tempfile = "3.27"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = [
+    "Win32_Foundation",
+    "Win32_System_Threading",
+] }
+
+[profile.dev]
+# Cargo's dev defaults (incremental = true, codegen-units = 256, opt-level = 0) are
+# already tuned for iteration: measured 1.1s incremental rebuild, 0.5s `cargo check`.
+# Only debug info is dialed back - level 1 keeps line numbers for panic backtraces
+# (the main diagnostic for test failures) while cutting a full build 19.5s -> 17.9s
+# and target/debug 511 MB -> 425 MB.
+debug = 1
+
+[profile.release]
+strip = true          # Remove debug symbols for smaller binary
+lto = true            # Link-time optimization for better performance
+codegen-units = 4     # 4 parallelizes this crate's codegen (79.31s -> 68.96s, -13.0%,
+                      # measured back-to-back on one machine). Historical binary-size
+                      # measurements are not the canonical baseline; see docs/benchmarks/phase-1.
+                      # cu=16 regresses to 78.1s as fat LTO becomes the serial bottleneck
+opt-level = 3         # Maximum optimization for speed (balanced with size)
+
+[profile.release-small]
+inherits = "release"
+opt-level = "z"       # Optimize for size
+panic = "abort"       # No unwinding support for smaller binary
+codegen-units = 1     # Pinned back to 1: distribution builds trade compile time for size.
+                      # Compare exact bytes only within the same target/toolchain series.
+
+# The migration runner reuses the shipped generic semantics.
+[workspace]
+members = ["quality-replay"]
+default-members = [".", "quality-replay"]
+resolver = "2"

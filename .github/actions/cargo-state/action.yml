@@ -1,0 +1,43 @@
+name: Cargo state boundaries
+description: Resolve Cargo targets and isolate disposable caches by build identity
+inputs:
+  class:
+    description: Job class, never shared between instrumentation and ordinary builds
+    required: true
+  profiles:
+    description: Profiles and feature selection used by the job
+    required: true
+  cache-target:
+    description: Experimental compiled cache; disabled after hosted misses (GH-169)
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - name: Resolve and verify Cargo directory and identity
+      id: state
+      shell: bash
+      env:
+        CI_CARGO_CLASS: ${{ inputs.class }}
+        CI_CARGO_PROFILES: ${{ inputs.profiles }}
+      run: python tools/quality/ci_cargo.py --class "$CI_CARGO_CLASS" --profiles "$CI_CARGO_PROFILES"
+    - name: Cache downloaded Cargo sources
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+      with:
+        path: |
+          ${{ steps.state.outputs.cargo-home }}/registry/index/
+          ${{ steps.state.outputs.cargo-home }}/registry/cache/
+          ${{ steps.state.outputs.cargo-home }}/git/db/
+        key: cargo-sources-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.state.outputs.lock }}
+    - name: Cache disposable compilation state
+      if: ${{ inputs.cache-target == 'true' }}
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+      with:
+        path: ${{ steps.state.outputs.target }}
+        key: cargo-target-v1-${{ steps.state.outputs.identity }}-${{ github.sha }}
+        restore-keys: cargo-target-v1-${{ steps.state.outputs.identity }}-
+    - name: Retain Cargo cache boundary evidence
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+      with:
+        name: cargo-state-${{ github.job }}-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: target/quality/cache/*.json
+        if-no-files-found: error

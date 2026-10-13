@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-08-27
+goal: Publish the merged 0.2.0 functionality and make release failures visible
+skip_specs: true

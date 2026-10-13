@@ -1,0 +1,17 @@
+{
+  "schema": "core-public-signature-install/v1",
+  "status": "pass",
+  "version": "0.4.2",
+  "source_commit": "718bc5a1ea82f8364f91fc72f179ea0db689f6b5",
+  "sha256": "eda5179d96b32269124150980ffcaa7e57878605133bc6ead51e5aeb8a6ad0a0",
+  "release_run": 34738554209,
+  "release_url": "https://github.com/musutrade/Harness-Gate/releases/tag/v0.4.2",
+  "exact_preapproved_artifact": true,
+  "public_sha256_and_sigstore_verified": true,
+  "root_installer_commit": "718bc5a1ea82f8364f91fc72f179ea0db689f6b5",
+  "root_installer_sha256": "fc437537b4d2feff93b5a9d7383e49be2ebe8545b8714a72f8e8d73f92280d0c",
+  "command": "bash install.sh --version v0.4.2 --install-dir ~/.local/share/harness-gate/versions/v0.4.2/bin",
+  "installation_log_sha256": "19f190bed86043c48173d6c074630b49b3629206856af6d8d50f88fb0df1ab00",
+  "previous_version_preserved": true,
+  "global_path_switched": false
+}

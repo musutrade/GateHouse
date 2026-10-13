@@ -1,0 +1,139 @@
+{
+  "schema": "arc-complete-quality-cost-observation/v1",
+  "status": "pass",
+  "kind": "One bounded local decision-workload observation with reviewed native evidence replay",
+  "input_parity": {
+    "status": "pass",
+    "original_execution_commit": "f7cbaccd6a1c13260d1a3171c8a065f0508f5aad",
+    "unified_commit": "859daa95b180c88f86fb817418e6b6ff5a5b1123",
+    "same_native_source_test_tool_inputs": 300,
+    "same_quality_configuration_files": 5,
+    "measurement_sha256": "c3e17d97984ab8832a736b3ea6d475f8f6e0f38a88f20f2d63c49561748189b4",
+    "scope": "Same pinned source/test/tool/config bytes; Git commits differ only in acceptance documentation and local nonce ignore rule. Original execution uses unchanged .arc-flow workflow."
+  },
+  "original_three_job_execution": {
+    "schema": "arc-local-original-topology-execution/v1",
+    "status": "pass",
+    "source_commit": "f7cbaccd6a1c13260d1a3171c8a065f0508f5aad",
+    "wall_seconds": 345.8513957860414,
+    "jobs": {
+      "backend": {
+        "exit": 0,
+        "seconds": 345.85048722999636,
+        "log_sha256": "4eed9ecf875e8dfa645bfcd9688a0a0cdf257dd9faad2e2748b3944bdbcb1c1d",
+        "execution_steps": 6,
+        "report_sha256": "20e3d04db5a350813a6146303ad5886ac1d1d53ec8aeba33e4784849726b182b"
+      },
+      "frontend": {
+        "exit": 0,
+        "seconds": 263.75728715996956,
+        "log_sha256": "6adffaa087585f815fd99c0356c922d9b0474168feb51872b2835e3dfcaeff8e",
+        "execution_steps": 8,
+        "report_sha256": "eb96d717e7beb4630823cc729277446dcfe709a43dda4cfb731f9cd79144d7eb"
+      },
+      "workflow": {
+        "exit": 0,
+        "seconds": 237.520659189031,
+        "log_sha256": "8757747c8738eff1aa9d8236c209600ef14055a06cbafcba1d3412f928656919",
+        "execution_steps": 17,
+        "report_sha256": "5692bf2a8c896f7fc2a73c8d2f6473c30bd7927d6a286a73e4559b467be39366"
+      }
+    },
+    "setup": {
+      "backend": {
+        "exit": 0,
+        "seconds": 0.06862055003875867,
+        "log_sha256": "18ba62763220edd322f2c4e3122417ab9a58154b1fd7b23224cb52b3d9f6f042"
+      },
+      "frontend": {
+        "exit": 0,
+        "seconds": 0.06604657700518146,
+        "log_sha256": "18ba62763220edd322f2c4e3122417ab9a58154b1fd7b23224cb52b3d9f6f042"
+      },
+      "workflow": {
+        "exit": 0,
+        "seconds": 0.06650661595631391,
+        "log_sha256": "18ba62763220edd322f2c4e3122417ab9a58154b1fd7b23224cb52b3d9f6f042"
+      }
+    },
+    "dependencies": {
+      "backend": {
+        "not_required": true
+      },
+      "frontend": {
+        "exit": 0,
+        "seconds": 10.187527653994039,
+        "log_sha256": "0f0521931c979d6657e7ca77ac290ef1d3ac7f342685cf169c0a2ade4d92701f"
+      },
+      "workflow": {
+        "exit": 0,
+        "seconds": 10.149093576008454,
+        "log_sha256": "0f0521931c979d6657e7ca77ac290ef1d3ac7f342685cf169c0a2ade4d92701f"
+      }
+    },
+    "topology": "Three independent worktrees and concurrent original backend/frontend/workflow cargo flow jobs; same component boundaries as current CI. Quality aggregation is recorded separately.",
+    "cache": "Host preexisting common Cargo target/cache; shared Cargo build locks included. npm ci per frontend/workflow job; shared npm download cache. No private hosted-runner cache equivalence claimed.",
+    "database": "Project-managed isolated PostgreSQL lease per required job",
+    "native_producer_launches": 0
+  },
+  "original_quality_tail": {
+    "status": "pass",
+    "quality_outcome": "fail",
+    "baseline_status": "available",
+    "baseline_commit": "d5e113ec2d49cd7dc30aaf2a14db016ba9d7ca94",
+    "source_commit": "859daa95b180c88f86fb817418e6b6ff5a5b1123",
+    "measurement_sha256": "c3e17d97984ab8832a736b3ea6d475f8f6e0f38a88f20f2d63c49561748189b4",
+    "evidence_records": 1921,
+    "timings": {
+      "host": {
+        "seconds": 4.4697144030360505,
+        "exit": 0
+      },
+      "collect": {
+        "seconds": 6.645924685057253,
+        "exit": 0
+      },
+      "baseline": {
+        "seconds": 5.856375814997591,
+        "exit": 0
+      },
+      "evaluate": {
+        "seconds": 21.51296232896857,
+        "exit": 1
+      }
+    },
+    "total_seconds": 38.484977232059464,
+    "report_sha256": "2448718a904c4cf9e7af0fceb774ab5255cd3c92a53beec98692239342648c58",
+    "scope": "Native quality aggregation added after original three-job execution; same reviewed measurement bundle, original evidence and thresholds as unified full sample. Explicit replay, no fresh native producer launches."
+  },
+  "original_phase_sum_seconds": 384.33637301810086,
+  "unified_host_prepare_seconds": 4.76395378401503,
+  "unified_verify_seconds": 303.6323529629735,
+  "unified_phase_sum_seconds": 308.39630674698856,
+  "decision_outcomes_identical": true,
+  "verification_steps": {
+    "original_including_prelude": 31,
+    "unified_including_prelude": 27,
+    "business_steps_each": 25
+  },
+  "limitations": [
+    "Original three jobs share the host Cargo cache and build locks; hosted CI has separately provisioned runners.",
+    "Order: original execution, original quality aggregation, failed released-Core full attempt, then fixed candidate full. Cache warmed during the sequence; phase sums exclude intervention and build gaps.",
+    "Both sides reuse the same reviewed native captures. First native compile/sampling, release download/signature installation and candidate compilation costs are outside these intervals.",
+    "Original quality aggregation uses released Core 0.4.1; unified full uses the source-pinned release-small candidate because 0.4.1 cannot finalize the large report. Output topology differs.",
+    "Single observation, not a statistical benchmark, cold-cache comparison, universal speedup or authority-transfer justification."
+  ],
+  "hosted_original_reference": "original-topology-cost-reference.json",
+  "unified_core": {
+    "package_version": "0.4.1",
+    "source_commit": "8b98cef668246740fcd2efbde3ec9be0c9c69b75",
+    "sha256": "aa69aba368768ab1dccd3279ff791b3f78ac96bdc5b8dc0ef750ced1a4f2e8b1",
+    "profile": "release-small",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "released": false,
+    "fixes": [
+      "staged partial host-state input",
+      "large native JSON report finalization"
+    ]
+  }
+}

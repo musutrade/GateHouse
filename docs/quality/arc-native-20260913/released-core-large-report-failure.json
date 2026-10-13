@@ -1,0 +1,42 @@
+{
+  "status": "fail",
+  "failure_code": "E1404",
+  "phase": "report-publication",
+  "core_version": "0.4.1",
+  "core_sha256": "fb2d79704b4fd31b7372484b5af1f20651906f21020ff1f42027ff9bc39dc0dd",
+  "source_commit": "859daa95b180c88f86fb817418e6b6ff5a5b1123",
+  "baseline_commit": "d5e113ec2d49cd7dc30aaf2a14db016ba9d7ca94",
+  "quality_project_report_bytes": 72060628,
+  "quality_project_report_sha256": "f9ba0ecd64716367173d828c4b2651a210aefad6a52ea91efdba2cffb0321c11",
+  "error": "Core-generated native quality JSON exceeds the 16 MiB untrusted text-file redaction limit",
+  "environment": [
+    {
+      "process": "api_flow",
+      "DATABASE_URL_present": false,
+      "TEST_DATABASE_URL_present": true
+    }
+  ],
+  "service_cleanup": {
+    "core_pid": 891579,
+    "expected": "Container absent after full command exits",
+    "containers_observed": [
+      "fefc0bbfe053 harness-gate-arc-admin-test-postgres-891579-1789268062693"
+    ],
+    "status": "pass",
+    "remaining_containers": []
+  },
+  "complete_verification_receipt": false,
+  "stale_legacy_alias_rejected": true,
+  "timings": {
+    "arc-full-host-prepare": {
+      "seconds": 4.416372500942089,
+      "exit": 0,
+      "log_sha256": "a3a821a649c356f836691c68d31acd2542dbb55411737fb5d77be6ed5ccc9c54"
+    },
+    "arc-full-verify": {
+      "seconds": 334.6797721190378,
+      "exit": 1,
+      "log_sha256": "4a938a164c57de33a5ba7ecf63d3768cd24c567841393ae97931a4ef253ee2dd"
+    }
+  }
+}

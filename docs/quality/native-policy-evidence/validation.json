@@ -1,0 +1,65 @@
+{
+  "schema": "native-project-policy-validation/v1",
+  "status": "pass",
+  "source_base": "e5b329250cf35b57769bd6be78fa3da8159bd2a5",
+  "inputs": {
+    "tools/quality/rust_native_config.py": "35f982f5d1ec9cdbcc89e5a66be66bd8ad7c2e62e16b86607c89ddd75bd73245",
+    "tools/quality/rust_native_policy.py": "58ab5e810bb8862914e82f6b3933b759625e84eac7545858f0bae04a58fa099f",
+    "tools/quality/rust-native-plugin/native_external.py": "64b5bafc0cce945aa8ef670ea4309c04c2d7af4f11d6e9ecde1e92c191e439b6",
+    "tools/quality/rust-native-plugin/accept.py": "b60c280b0bf3981f8e95c73967644d88c60e4871dae35e3e8ad01db9ab9d62b2"
+  },
+  "plugin": {
+    "version": "0.1.0-rc.6",
+    "sha256": "db380cf0a59860b8146e18b928cd6ab6fd618b9cb202357afcdb94b1bb591850",
+    "bytes": 1350256,
+    "published": false
+  },
+  "core": {
+    "version": "0.4.4",
+    "sha256": "57dc44cf888a0548440fb88231458c5b4b9fa1c53ddeb4251d141276ed0d56d9",
+    "profile": "dev",
+    "published": false
+  },
+  "host": {
+    "target": "x86_64-unknown-linux-gnu",
+    "rust": "1.97.1",
+    "llvm": "22.1.6",
+    "python": "3.14.4"
+  },
+  "checks": {
+    "native_packaged": {
+      "passed": 22,
+      "skipped": 0,
+      "seconds": 147.222
+    },
+    "release_contracts": {
+      "passed": 90
+    },
+    "installer_integrity": "pass",
+    "cli_contracts": {
+      "passed": 20
+    },
+    "docs_consistency": "pass",
+    "openspec_strict": "pass",
+    "frozen_corpus_and_python_inventory": {
+      "passed": 5
+    }
+  },
+  "cases": [
+    "CRAP 1: ceiling 1/2 fails, 1 passes; aggregate changes on identical facts",
+    "CRAP 56: ceiling 111/2 fails; 56 and 60 pass without clamping",
+    "CRAP 7 to 56 fails non-regression even with ceiling 100",
+    "unchanged debt remains visible and can be forbidden by policy",
+    "invalid/missing/duplicate policy, invalid rational, scope/series mismatch and concurrent configuration changes block"
+  ],
+  "notes": [
+    "Full Python suite initially had one missing module-inventory row; the corrected inventory/corpus subset passed. Hosted required CI must pass independently.",
+    "Original raw engine and driver sources are unchanged; normalized projection identity records changed adapter source.",
+    "Unsigned local Linux development evidence; four-platform hosted/tag acceptance and publication are separate."
+  ],
+  "retained_artifacts": "/mnt/dev-ssd/workspaces/native-policy-config/target/native-acceptance/tmpueu00bo8",
+  "logs": {
+    "release-tests.log": "e92d66e26c2cab7179b6e6350a8294b26f43fb82f72c9879112427f7f2d8f20a",
+    "native-acceptance.log": "403d969db2879d2f7da8affa417aea6e4d2be4593417903b9eef9168a75d8dd8"
+  }
+}

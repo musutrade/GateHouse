@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-08-27
+goal: Complete audit boundary decomposition without changing audit behavior
+skip_specs: true

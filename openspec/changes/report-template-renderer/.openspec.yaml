@@ -1,0 +1,5 @@
+schema: spec-driven
+status: proposed
+created: 2026-08-29
+goal: Define a reviewed report-template renderer contract without widening input paths implicitly
+skip_specs: true

@@ -1,0 +1,411 @@
+version = 2
+rule = "critical-path-source-v2"
+
+[[paths]]
+id = "process.timeout"
+module = "process"
+test = "process::tests::timeout_terminates_the_task"
+platforms = ["linux", "macos"]
+platform_note = "Unix fixture uses POSIX commands/signals; Windows is excluded by the reviewed policy, not by tool availability."
+observable = "TaskResult.timed_out=true, passed=false, and the log exists"
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-07"
+binary = "harness-gate"
+assertions = ["assert!(!result.passed);", "assert!(result.timed_out);", "assert!(log.is_file());"]
+[paths.source]
+path = "src/process/task.rs"
+symbol = "run"
+start = 192
+end = 380
+sha256 = "bbb7f1d90d741f41c6cb761f1433f4cb7c8ca168fac0082bd366a9377ae149a8"
+[paths.test_source]
+path = "src/process/tests.rs"
+symbol = "timeout_terminates_the_task"
+start = 34
+end = 46
+sha256 = "e4df8a76ec42569ad1fc189b51f132f8977efb2eaeeb915a64c5d76405b2691e"
+[[paths.probes]]
+line = 253
+column = 24
+text = "break (terminate(&mut child)?, true, false);"
+
+[[paths]]
+id = "process.cancellation"
+module = "process"
+test = "verification_cleanup_cancel_and_report_precedence_retains_resource_evidence"
+platforms = ["linux", "macos"]
+platform_note = "Unix fixture uses POSIX commands/signals; Windows is excluded by the reviewed policy, not by tool availability."
+observable = "Cancelled CLI exits 1, report passed=false, child PID is gone, and sealed invocation evidence is retained; fake cleanup runtime failure remains visible."
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-07"
+binary = "failure_paths_test"
+assertions = ["\"cancelled child still alive\"", "assert_eq!(json[\"passed\"], false);", "assert_sealed_evidence(&json);"]
+[paths.source]
+path = "src/process/task.rs"
+symbol = "run"
+start = 192
+end = 380
+sha256 = "bbb7f1d90d741f41c6cb761f1433f4cb7c8ca168fac0082bd366a9377ae149a8"
+[paths.test_source]
+path = "tests/failure_paths_test.rs"
+symbol = "verification_cleanup_cancel_and_report_precedence_retains_resource_evidence"
+start = 575
+end = 812
+sha256 = "52ddee154904a475bb10f05b119321959187063d3627aa5d7bfedb0667759d31"
+[[paths.probes]]
+line = 250
+column = 24
+text = "break (terminate(&mut child)?, false, true);"
+
+[[paths]]
+id = "process.tree_cleanup"
+module = "process"
+test = "process::tests::timeout_terminates_process_tree_without_a_descendant_leak"
+platforms = ["linux", "macos", "windows"]
+platform_note = "Runs on all supported host platforms; no external daemon required."
+observable = "TaskResult.timed_out=true and passed=false; the descendant was ready before cleanup and does not acknowledge a probe sent after Task::run returns."
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-14"
+binary = "harness-gate"
+assertions = ["assert!(result.timed_out, \"fixture must reach the timeout boundary\");", "assert!(!result.passed);", "marker.with_extension(\"ready\").exists(),", "fs::write(marker.with_extension(\"probe\"), b\"probe\").expect(\"send liveness probe\");", "assert!(!marker.exists(), \"timed-out task left a descendant process\");"]
+[paths.source]
+path = "src/process/task.rs"
+symbol = "run"
+start = 192
+end = 380
+sha256 = "bbb7f1d90d741f41c6cb761f1433f4cb7c8ca168fac0082bd366a9377ae149a8"
+[paths.test_source]
+path = "src/process/tests.rs"
+symbol = "timeout_terminates_process_tree_without_a_descendant_leak"
+start = 179
+end = 220
+sha256 = "e4df8a76ec42569ad1fc189b51f132f8977efb2eaeeb915a64c5d76405b2691e"
+[[paths.probes]]
+line = 253
+column = 24
+text = "break (terminate(&mut child)?, true, false);"
+
+[[paths]]
+id = "step.non_zero"
+module = "verify"
+test = "verify::tests::non_zero_step_retains_exit_detail_and_log"
+platforms = ["linux", "macos"]
+platform_note = "Unix fixture uses POSIX commands/signals; Windows is excluded by the reviewed policy, not by tool availability."
+observable = "Failure result retains exit-code detail and log path"
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-07"
+binary = "harness-gate"
+assertions = ["assert!(!step.passed);", "assert_eq!(step.detail.as_deref(), Some(\"exit code 7\"));", "assert!(PathBuf::from(&step.log).is_file());"]
+[paths.source]
+path = "src/verify/steps.rs"
+symbol = "execute"
+start = 392
+end = 457
+sha256 = "7d97f5fc813e6e77253a32c0374446f64b520096bd28425f3ef45f31bc3320f4"
+[paths.test_source]
+path = "src/verify/tests.rs"
+symbol = "non_zero_step_retains_exit_detail_and_log"
+start = 301
+end = 318
+sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
+[[paths.probes]]
+line = 456
+column = 5
+text = "Ok(result)"
+
+[[paths]]
+id = "service.environment_failure"
+module = "service"
+test = "verify::tests::service_failure_does_not_skip_unrelated_steps"
+platforms = ["linux", "macos", "windows"]
+observable = "Requesting step fails with service detail and unrelated step is represented"
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-07"
+platform_note = "Runs on all supported host platforms; no external daemon required."
+binary = "harness-gate"
+assertions = ["assert!(!report.passed);"]
+[paths.source]
+path = "src/verify/steps.rs"
+symbol = "run_configured_step"
+start = 18
+end = 131
+sha256 = "7d97f5fc813e6e77253a32c0374446f64b520096bd28425f3ef45f31bc3320f4"
+[paths.test_source]
+path = "src/verify/tests.rs"
+symbol = "service_failure_does_not_skip_unrelated_steps"
+start = 45
+end = 88
+sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
+[[paths.probes]]
+line = 70
+column = 21
+text = "failure_code: Some(FailureCode::ServiceLeaseFailure),"
+
+[[paths]]
+id = "gate.failure_report"
+module = "verify"
+test = "verify::tests::gate_failure_writes_compatible_report"
+platforms = ["linux", "macos", "windows"]
+observable = "Built-in gate failure stops configured steps and writes test_result report"
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-07"
+platform_note = "Runs on all supported host platforms; no external daemon required."
+binary = "harness-gate"
+assertions = ["assert!(!report.passed);", "step.label == \"secret scan\" && !step.passed", ".join(\".harness-gate/reports/test_result.json\")"]
+[paths.source]
+path = "src/verify/mod.rs"
+symbol = "run_selected"
+start = 182
+end = 340
+sha256 = "12d7fdce72abbd6d7692f8483dcb3bf990856be732d70920afb9dc964f136447"
+[paths.test_source]
+path = "src/verify/tests.rs"
+symbol = "gate_failure_writes_compatible_report"
+start = 552
+end = 574
+sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
+[[paths.probes]]
+line = 322
+column = 5
+text = "publish_report(&report, &invocation_project, project, &mut progress)?;"
+
+[[paths]]
+id = "config.invalid"
+module = "config"
+test = "test_config_check_invalid"
+platforms = ["linux", "macos", "windows"]
+observable = "Invalid configuration fails before execution"
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-07"
+platform_note = "Runs on all supported host platforms; no external daemon required."
+binary = "integration_test"
+assertions = ["assert_failure(&output);"]
+[paths.source]
+path = "src/config/loader.rs"
+symbol = "from_source_with_diagnostics"
+start = 75
+end = 97
+sha256 = "9ef912226e2168f22d1e7979952c097cbfa4d0cf98ae5eac8dc8fae0b41c8f78"
+[paths.test_source]
+path = "tests/integration_test.rs"
+symbol = "test_config_check_invalid"
+start = 114
+end = 125
+sha256 = "71b8eb53defc51863c70aa8d95c928d86de72bc8a1dcb41b658c5b04b573853c"
+[[paths.probes]]
+line = 83
+column = 32
+text = "let mut config: Self = toml::from_str(&source)"
+
+[[paths]]
+id = "parser.failure"
+module = "verify"
+test = "verify::tests::parser_failure_marks_step_failed"
+platforms = ["linux", "macos"]
+platform_note = "Unix fixture uses POSIX commands/signals; Windows is excluded by the reviewed policy, not by tool availability."
+observable = "Parser failure produces a failed task result"
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-07"
+binary = "harness-gate"
+assertions = ["assert!(!step.passed);", "Some(\"RESULT_ZERO\")"]
+[paths.source]
+path = "src/verify/steps.rs"
+symbol = "execute"
+start = 392
+end = 457
+sha256 = "7d97f5fc813e6e77253a32c0374446f64b520096bd28425f3ef45f31bc3320f4"
+[paths.test_source]
+path = "src/verify/tests.rs"
+symbol = "parser_failure_marks_step_failed"
+start = 347
+end = 380
+sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
+[[paths.probes]]
+line = 439
+column = 21
+text = "FailureCode::ResultZero"
+
+[[paths]]
+id = "report.write_failure"
+module = "verify"
+test = "verify::tests::report_write_failure_returns_error"
+platforms = ["linux", "macos", "windows"]
+observable = "Report write failure returns the report error boundary"
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-07"
+platform_note = "Runs on all supported host platforms; no external daemon required."
+binary = "harness-gate"
+assertions = ["assert!(matches!(error, VerifyError::Report { .. }));"]
+[paths.source]
+path = "src/verify/report.rs"
+symbol = "write_report_file"
+start = 1243
+end = 1253
+sha256 = "8f4e46f879d2e1f3a952632dbfa5bc8471f9744e560dbc664a80e50724cf3fb0"
+
+[paths.test_source]
+path = "src/verify/tests.rs"
+symbol = "report_write_failure_returns_error"
+start = 604
+end = 613
+sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
+[[paths.probes]]
+line = 1244
+column = 5
+text = "report_target(project, relative)?;"
+
+[[paths]]
+id = "report.integrity"
+module = "verify"
+observable = "A real invocation manifest verifies before log tampering and rejects changed bytes afterward."
+platforms = ["linux", "macos", "windows"]
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-07"
+platform_note = "Runs on all supported host platforms; no external daemon required."
+binary = "harness-gate"
+test = "verify::report::tests::manifest_records_digests_and_detects_tampering"
+assertions = ["assert!(verify_manifest(&invocation_project).is_err());"]
+[paths.source]
+path = "src/verify/report.rs"
+symbol = "verify_manifest_without_result"
+start = 1822
+end = 1909
+sha256 = "8f4e46f879d2e1f3a952632dbfa5bc8471f9744e560dbc664a80e50724cf3fb0"
+
+[paths.test_source]
+path = "src/verify/report.rs"
+symbol = "manifest_records_digests_and_detects_tampering"
+start = 3407
+end = 3460
+sha256 = "8f4e46f879d2e1f3a952632dbfa5bc8471f9744e560dbc664a80e50724cf3fb0"
+
+[[paths.probes]]
+line = 1905
+column = 13
+text = "bail!(\"artifact digest or size changed: {}\", artifact.path);"
+
+[[paths]]
+id = "parser.json_false_positive"
+module = "verify"
+observable = "Error/numeric/unrelated/ambiguous JSON causes CLI exit 1, RESULT_PARSE_FAILURE, failed report and incomplete parser."
+platforms = ["linux", "macos"]
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-07"
+platform_note = "Unix fixture uses POSIX commands/signals; Windows is excluded by the reviewed policy, not by tool availability."
+binary = "critical_paths_test"
+test = "json_false_positive_cli_fails_with_incomplete_parser_report"
+assertions = ["assert_eq!(output.status.code(), Some(1), \"{payload}\");", "assert_eq!(report[\"passed\"], false, \"{payload}\");", "assert_eq!(step[\"failure_code\"], \"RESULT_PARSE_FAILURE\");", "assert_eq!(step[\"parser\"][\"complete\"], false);"]
+[paths.source]
+path = "src/verify/parser.rs"
+symbol = "count_json_results"
+start = 302
+end = 332
+sha256 = "75ae046db0b72a7c2d984283c5145e5e8a6e323412745046065de75ed3c2dc9b"
+[paths.test_source]
+path = "tests/critical_paths_test.rs"
+symbol = "json_false_positive_cli_fails_with_incomplete_parser_report"
+start = 7
+end = 92
+sha256 = "9969ff4f735d5a1fb65bf699fc6854ab436c2cf9a25756465f679f9342a9da4e"
+[[paths.probes]]
+line = 315
+column = 13
+text = "\"JSON test results contain no supported result array\""
+
+[[paths]]
+id = "service.lease_ownership"
+module = "service"
+observable = "Fake Docker/Podman ownership uncertainty retains the lease marker and performs zero removals; no real container claim."
+platforms = ["linux", "macos", "windows"]
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-09-07"
+platform_note = "Runs on all supported host platforms; no external daemon required."
+binary = "harness-gate"
+test = "service::lease::tests::fake_docker_and_podman_cleanup_requires_fresh_complete_ownership"
+assertions = ["assert_failed_without_remove(&project, &path, &fake, \"runtime object identity changed\");", "assert_failed_without_remove(&project, &path, &fake, \"ownership label\");"]
+[paths.source]
+path = "src/service/lease.rs"
+symbol = "verify_runtime_record"
+start = 976
+end = 1008
+sha256 = "5bd48ad410133713f527abf5d1fffb28bb731d71204381bb26053d7edee54463"
+[paths.test_source]
+path = "src/service/lease.rs"
+symbol = "fake_docker_and_podman_cleanup_requires_fresh_complete_ownership"
+start = 1816
+end = 1903
+sha256 = "5bd48ad410133713f527abf5d1fffb28bb731d71204381bb26053d7edee54463"
+[[paths.probes]]
+line = 1000
+column = 9
+text = "bail!(\"runtime object identity changed since the lease was recorded\");"
+
+[[paths]]
+id = "adapter.replay_window"
+module = "process"
+test = "process::adapter::tests::replay_retention_covers_the_entire_accepted_window"
+platforms = ["linux", "macos", "windows"]
+platform_note = "Deterministic signed request and filesystem tests run on all supported hosts without external services."
+observable = "Used nonces stay blocked through the entire accepted expiry/skew window"
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-10-04"
+binary = "harness-gate"
+assertions = ["assert_eq!(", "now <= 131_000"]
+[paths.source]
+path = "src/process/adapter.rs"
+symbol = "claim"
+start = 193
+end = 223
+sha256 = "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0"
+[paths.test_source]
+path = "src/process/adapter.rs"
+symbol = "replay_retention_covers_the_entire_accepted_window"
+start = 2044
+end = 2078
+sha256 = "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0"
+[[paths.probes]]
+line = 205
+column = 9
+text = "state.seen.retain(|_, expiry| *expiry >= now_ms);"
+
+[[paths]]
+id = "adapter.atomic_durable_nonce"
+module = "process"
+test = "process::adapter::tests::durable_nonce_claims_are_atomic_between_independent_hosts"
+platforms = ["linux", "macos", "windows"]
+platform_note = "Deterministic signed request and filesystem tests run on all supported hosts without external services."
+observable = "Independent hosts authorize at most one signed nonce and persist before launch"
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-10-04"
+binary = "harness-gate"
+assertions = [".map(|t| usize::from(t.join().unwrap()))", ".sum::<usize>()"]
+[paths.source]
+path = "src/process/replay.rs"
+symbol = "claim"
+start = 103
+end = 128
+sha256 = "f7a87b71cebaaf93e80a3927cce9fa0fc7592f4f0c206076458359eaaf6f7ff6"
+[paths.test_source]
+path = "src/process/adapter.rs"
+symbol = "durable_nonce_claims_are_atomic_between_independent_hosts"
+start = 2102
+end = 2127
+sha256 = "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0"
+[[paths.probes]]
+line = 126
+column = 9
+text = "platform::sync_directory(&self.directory).map_err(failure)?;"

@@ -1,0 +1,11 @@
+{
+  "status": "pass",
+  "release_url": "https://github.com/musutrade/Harness-Gate/releases/tag/rust-collector-v0.1.0-rc.1",
+  "source": "7165558f5e9f5ca5a0de8c9cd33a11d733909f48",
+  "approval_sha256": "86833481f8e28d8af05880f92e0d20e40e264b304943b07cf07a9364eacb1c37",
+  "original_workflow": "34692373716",
+  "original_workflow_conclusion": "failure",
+  "recovery": "operator continuation; original production verifier unchanged",
+  "draft_receipt_sha256": "89db7aeac1d0364e46b265af718dc8ac4100599548f768456b001190d44b18aa",
+  "published_receipt_sha256": "89db7aeac1d0364e46b265af718dc8ac4100599548f768456b001190d44b18aa"
+}

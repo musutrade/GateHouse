@@ -1,0 +1,67 @@
+{
+  "schema": "native-project-policy-validation/v1",
+  "status": "pass",
+  "source_base": "e5b329250cf35b57769bd6be78fa3da8159bd2a5",
+  "inputs": {
+    "tools/quality/rust_native_config.py": "4e1c80301839111098ffa17fb27830aabdd253f3088e0541b0884b24fb24edef",
+    "tools/quality/rust_native_policy.py": "7d44632b9f82284628ba6fe1742823b390644632a482a80f2bf0decd317cbcda",
+    "tools/quality/rust-native-plugin/native_external.py": "64b5bafc0cce945aa8ef670ea4309c04c2d7af4f11d6e9ecde1e92c191e439b6",
+    "tools/quality/rust-native-plugin/accept.py": "36629d8d093bd5310cbb832ecbcc264d1060b15a8a06ab5d6c71fb788570411b"
+  },
+  "plugin": {
+    "version": "0.1.0-rc.6",
+    "sha256": "b70748756c7e7b3e5f51a643af2140dc9ed7a860d1e4b5fe161c69ca9a3b4454",
+    "bytes": 1350256,
+    "published": false
+  },
+  "core": {
+    "version": "0.4.4",
+    "sha256": "57dc44cf888a0548440fb88231458c5b4b9fa1c53ddeb4251d141276ed0d56d9",
+    "profile": "dev",
+    "published": false
+  },
+  "host": {
+    "target": "x86_64-unknown-linux-gnu",
+    "rust": "1.97.1",
+    "llvm": "22.1.6",
+    "python": "3.14.4"
+  },
+  "checks": {
+    "native_packaged": {
+      "passed": 22,
+      "skipped": 0,
+      "seconds": 150.435
+    },
+    "release_contracts": {
+      "passed": 90
+    },
+    "installer_integrity": "pass",
+    "cli_contracts": {
+      "passed": 20
+    },
+    "docs_consistency": "pass",
+    "openspec_strict": "pass",
+    "frozen_corpus_and_python_inventory": {
+      "passed": 5
+    }
+  },
+  "cases": [
+    "CRAP 1: ceiling 1/2 fails, 1 passes; aggregate changes on identical facts",
+    "CRAP 56: ceiling 111/2 fails; 56 and 60 pass without clamping",
+    "CRAP 7 to 56 fails non-regression even with ceiling 100",
+    "unchanged debt remains visible and can be forbidden by policy",
+    "invalid/missing/duplicate policy, invalid rational, scope/series mismatch and concurrent configuration changes block",
+    "An explicit debt ratchet and required baseline provider are mandatory; omission never inherits a compatibility default"
+  ],
+  "notes": [
+    "Full Python suite initially had one missing module-inventory row; the corrected inventory/corpus subset passed. Hosted required CI must pass independently.",
+    "Original raw engine and driver sources are unchanged; normalized projection identity records changed adapter source.",
+    "Unsigned local Linux development evidence; four-platform hosted/tag acceptance and publication are separate.",
+    "Supersedes the initial local candidate for the explicit-ratchet follow-up; the initial receipt and log remain retained."
+  ],
+  "retained_artifacts": "/mnt/dev-ssd/workspaces/native-policy-config/target/native-acceptance/tmpspe3e1sr",
+  "logs": {
+    "native-acceptance-explicit.log": "33a60bc3068496e7424ab705af088e335f7d2dc92e438a06ca06abd6b9bd0d06",
+    "release-tests.log": "e92d66e26c2cab7179b6e6350a8294b26f43fb82f72c9879112427f7f2d8f20a"
+  }
+}

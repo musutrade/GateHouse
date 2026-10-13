@@ -1,0 +1,40 @@
+{
+  "schema": "typescript-independent-chain-evidence/v1",
+  "date": "2026-10-11",
+  "baseline": "87b74c6 with the split-core-and-plugins working tree",
+  "plugin": "typescript-risk@0.1.0-rc.4",
+  "core": "harness-gate 0.4.7",
+  "runtime": {
+    "node": "24.18.0",
+    "typescript": "6.0.2",
+    "istanbul-lib-instrument": "6.0.3"
+  },
+  "artifact": {
+    "name": "harness-gate-typescript-collector-0.1.0-rc.4.tgz",
+    "sha256": "afe0c12a40eba48fdfde671711fe0fc6835e17e7ff6dd2be474c126ace2a7fd5",
+    "pinned_reference": "installed package version plus tarball sha256; core consumes the executable by path, never the source"
+  },
+  "unit_tests": {
+    "tests": 17,
+    "passed": 17,
+    "failed": 0
+  },
+  "core_and_transport_tests": {
+    "tests": 4,
+    "passed": 4,
+    "failed": 0,
+    "binary": "tools/harness-gate/target/debug/harness-gate",
+    "collector": "<consumer>/node_modules/.bin/harness-gate-typescript-collector"
+  },
+  "commands": [
+    "cargo build --manifest-path tools/harness-gate/Cargo.toml",
+    "npm ci --ignore-scripts   # in tools/quality/typescript-risk",
+    "npm test   # in tools/quality/typescript-risk",
+    "npm pack --ignore-scripts --json --pack-destination <artifacts>   # in tools/quality/typescript-risk",
+    "npm install --ignore-scripts --omit=dev --prefix <consumer> <artifacts>/harness-gate-typescript-collector-0.1.0-rc.4.tgz",
+    "<consumer>/node_modules/.bin/harness-gate-typescript-collector --version",
+    "HARNESS_GATE_BINARY=<core> HARNESS_GATE_EXPECTED_VERSION=0.4.7 HARNESS_GATE_TYPESCRIPT_CLI=<consumer>/node_modules/.bin/harness-gate-typescript-collector node --test test-core.cjs"
+  ],
+  "independence": "The collector existed only as the clean-installed package; the installed executable reported harness-gate-typescript-collector 0.1.0-rc.4 and Core 0.4.7 decided the exact 10 boundary, rejected changed retained bytes, validated the generic transport with the independent executable, and rejected a tampered project binding before publishing.",
+  "scope": "rc.4 native original-TypeScript fixtures and released Core; not full Angular compilation, production host isolation or signed publication"
+}

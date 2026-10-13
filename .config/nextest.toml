@@ -1,0 +1,27 @@
+# nextest configuration for harness-gate
+
+[profile.default]
+# Number of retries for failed tests
+retries = 0
+
+# Test threads - auto-detect based on CPU cores
+test-threads = "num-cpus"
+
+# Slow test timeout
+slow-timeout = { period = "60s", terminate-after = 3 }
+
+# Test output configuration
+status-level = "pass"
+final-status-level = "fail"
+
+# Fail fast - stop on first failure in CI
+fail-fast = false
+
+[profile.ci]
+# CI-specific profile
+retries = 1  # Retry once for flaky tests in CI
+fail-fast = false
+test-threads = "num-cpus"
+
+# Timeout configuration for CI
+slow-timeout = { period = "60s", terminate-after = 3 }

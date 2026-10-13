@@ -1,0 +1,51 @@
+{
+  "approval_sha256": "86833481f8e28d8af05880f92e0d20e40e264b304943b07cf07a9364eacb1c37",
+  "assets": [
+    {
+      "digest": {
+        "sha256": "344969493fedfdf544255ad12cac7e1fd0e4cf10b4b187d2bc51975fd8451d29"
+      },
+      "name": "collector.tar",
+      "size": 1061498880
+    },
+    {
+      "digest": {
+        "sha256": "2d7264d2dfaed8f9775ccf746fc010d55c2a34a8f310b2801c23ef9299c68f77"
+      },
+      "name": "manifest.json",
+      "size": 494395
+    },
+    {
+      "digest": {
+        "sha256": "e72eb0fd1c7526f8e0fe218064a497dbb3d78c61fee050b991959b5db6e82031"
+      },
+      "name": "sbom.spdx.json",
+      "size": 1156729
+    },
+    {
+      "digest": {
+        "sha256": "bb0234f0dffed3afa58b53a301e8bbf08021df97c58838579c1b6ac7955596f2"
+      },
+      "name": "provenance.json",
+      "size": 1897
+    },
+    {
+      "digest": {
+        "sha256": "ce247349861ae4cfe28ba80857b9e1ecb74dcf491555115674c49991b71f08ec"
+      },
+      "name": "release-inventory.json",
+      "size": 787
+    },
+    {
+      "digest": {
+        "sha256": "8181202f8f8b6ddd140eda4d4899aba5f49eeecb712316f6c527e648e0da8321"
+      },
+      "name": "release-inventory.sig",
+      "size": 12039
+    }
+  ],
+  "schema": "rust-collector-download-verification/v1",
+  "source_commit": "7165558f5e9f5ca5a0de8c9cd33a11d733909f48",
+  "status": "pass",
+  "tag": "rust-collector-v0.1.0-rc.1"
+}

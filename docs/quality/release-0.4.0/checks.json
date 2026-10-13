@@ -1,0 +1,82 @@
+[
+  {
+    "name": "nextest",
+    "command": [
+      "cargo",
+      "nextest",
+      "run",
+      "--manifest-path",
+      "tools/harness-gate/Cargo.toml",
+      "--locked",
+      "--no-fail-fast"
+    ],
+    "exit_code": 0,
+    "seconds": 237.21310113597428
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "tools/harness-gate/Cargo.toml",
+      "--locked",
+      "--all-targets",
+      "--all-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "seconds": 27.467731984041166
+  },
+  {
+    "name": "python",
+    "command": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tools/quality/tests",
+      "-v"
+    ],
+    "exit_code": 0,
+    "seconds": 186.65610554697923
+  },
+  {
+    "name": "contracts",
+    "command": [
+      "python3",
+      "tools/quality/contracts.py",
+      "--output",
+      "/mnt/dev-ssd/workspaces/harness-gate-release-0.4.0/target/release-0.4.0/contracts.json"
+    ],
+    "exit_code": 0,
+    "seconds": 2.9593109950073995
+  },
+  {
+    "name": "docs",
+    "command": [
+      "python3",
+      "tools/quality/docs_consistency.py",
+      "--output",
+      "/mnt/dev-ssd/workspaces/harness-gate-release-0.4.0/target/release-0.4.0/docs.json"
+    ],
+    "exit_code": 0,
+    "seconds": 3.2254268770338967
+  },
+  {
+    "name": "package",
+    "command": [
+      "cargo",
+      "package",
+      "--manifest-path",
+      "tools/harness-gate/Cargo.toml",
+      "--locked",
+      "--allow-dirty"
+    ],
+    "exit_code": 0,
+    "seconds": 54.9806478919927
+  }
+]

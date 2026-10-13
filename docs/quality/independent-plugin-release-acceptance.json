@@ -1,0 +1,238 @@
+{
+  "schema": "independent-plugin-publication-acceptance/v1",
+  "date": "2026-10-13",
+  "status": "pass",
+  "repository": "musutrade/GateProbes",
+  "source_commit": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+  "main_ci_run": "https://github.com/musutrade/GateProbes/actions/runs/38337521708",
+  "core_contract": {
+    "release": "v0.4.8",
+    "repository": "musutrade/Harness-Gate",
+    "binary": "harness-gate-linux-amd64",
+    "sha256": "888fa1527eae37e3163aac2e1479e91ec03a0c8380b3c49da6e9266575597418",
+    "version": "0.4.8",
+    "source_commit": "dcc9194d4c01c4994983af505cf1191774fea70e",
+    "platforms": {
+      "linux": {
+        "binary": "harness-gate-linux-amd64",
+        "sha256": "888fa1527eae37e3163aac2e1479e91ec03a0c8380b3c49da6e9266575597418"
+      },
+      "macos-amd64": {
+        "binary": "harness-gate-macos-amd64",
+        "sha256": "46b6af24d20fadea0527a0f101daea4ecd765f7f3e6223ef027ff494310bab61"
+      },
+      "macos-arm64": {
+        "binary": "harness-gate-macos-arm64",
+        "sha256": "9236792048eac3c497b5cfa9c457ac4ba6c6d339323e5861f8638dbd46a32e95"
+      },
+      "windows-amd64": {
+        "binary": "harness-gate-windows-amd64.exe",
+        "sha256": "b7a481ff27f479b292a9fd0bca19e2120af41d85624bb857b17031a9278cb077"
+      }
+    }
+  },
+  "scope": "Linux x86_64; Node 24.18.0; Rust source-risk 1.97.1. Downloaded release bytes, not locally rebuilt packages. No new measurement or cross-platform certification.",
+  "verification_commands": [
+    "cosign verify-blob --signature <subject>.sig --certificate <subject>.crt --certificate-oidc-issuer https://token.actions.githubusercontent.com --certificate-identity <exact tag workflow identity> <subject>",
+    "gh attestation verify <subject> --repo musutrade/GateProbes --cert-identity <exact tag workflow identity> --source-ref refs/tags/<tag> --source-digest f9834a988e9e55ec99b7ebe81fb67a9ca16b2928 --signer-digest f9834a988e9e55ec99b7ebe81fb67a9ca16b2928 --deny-self-hosted-runners --format json",
+    "python3 tools/release/release_inventory.py verify --dist <downloaded-assets> --inventory <downloaded-assets>/release-inventory.json --attested <each verified subject>"
+  ],
+  "negative_identity_checks": [
+    {
+      "case": "wrong-repository",
+      "status": "rejected",
+      "exit_code": 1
+    },
+    {
+      "case": "wrong-tag",
+      "status": "rejected",
+      "exit_code": 1
+    }
+  ],
+  "releases": [
+    {
+      "status": "pass",
+      "verified_at": "2026-10-13T02:56:42.118202+00:00",
+      "plugin": "typescript-risk",
+      "tag": "typescript-risk-v0.1.0-rc.4",
+      "source_commit": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+      "release_url": "https://github.com/musutrade/GateProbes/releases/tag/typescript-risk-v0.1.0-rc.4",
+      "immutable": true,
+      "asset_count": 12,
+      "exact_inventory": true,
+      "signature_identity": "https://github.com/musutrade/GateProbes/.github/workflows/collector-release.yml@refs/tags/typescript-risk-v0.1.0-rc.4",
+      "attestation_source_ref": "refs/tags/typescript-risk-v0.1.0-rc.4",
+      "attestation_source_digest": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+      "verified_subjects": [
+        "SHA256SUMS",
+        "harness-gate-typescript-collector-0.1.0-rc.4.tgz",
+        "harness-gate-typescript-collector-0.1.0-rc.4.tgz.sbom.cdx.json",
+        "release-inventory.json"
+      ],
+      "assets": [
+        {
+          "kind": "package",
+          "name": "harness-gate-typescript-collector-0.1.0-rc.4.tgz",
+          "sha256": "f640afea87e7ea1c1c2c2051ca5ac0bd4c6574fe3e73bef0bcbfe75c655354ff",
+          "size_bytes": 18931
+        },
+        {
+          "kind": "sbom",
+          "name": "harness-gate-typescript-collector-0.1.0-rc.4.tgz.sbom.cdx.json",
+          "sha256": "6ed5746cd37c421153b53263e73e035bef0b100f99831b91d7bb4dc7153343a3",
+          "size_bytes": 3535
+        }
+      ],
+      "release_run": "https://github.com/musutrade/GateProbes/actions/runs/38339077287",
+      "release_run_conclusion": "success",
+      "release_inventory_sha256": "fac26d3165a6380121440303824aebe36f07662d9a9f04bd59bed14d73718ae3",
+      "installation": {
+        "status": "pass",
+        "platform": "Linux x86_64",
+        "source": "downloaded and independently signature-verified public release archive",
+        "rust_toolchain": null,
+        "tests": 21,
+        "core_contract_passed": true,
+        "log_sha256": "292b44be0e7884592f84a8e6d370bd282d7e9a5c67ec2766c778d7a46cab02aa"
+      }
+    },
+    {
+      "status": "pass",
+      "verified_at": "2026-10-13T02:56:42.126742+00:00",
+      "plugin": "http-json-contract",
+      "tag": "http-json-contract-v0.1.0-rc.5",
+      "source_commit": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+      "release_url": "https://github.com/musutrade/GateProbes/releases/tag/http-json-contract-v0.1.0-rc.5",
+      "immutable": true,
+      "asset_count": 12,
+      "exact_inventory": true,
+      "signature_identity": "https://github.com/musutrade/GateProbes/.github/workflows/collector-release.yml@refs/tags/http-json-contract-v0.1.0-rc.5",
+      "attestation_source_ref": "refs/tags/http-json-contract-v0.1.0-rc.5",
+      "attestation_source_digest": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+      "verified_subjects": [
+        "SHA256SUMS",
+        "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz",
+        "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz.sbom.cdx.json",
+        "release-inventory.json"
+      ],
+      "assets": [
+        {
+          "kind": "package",
+          "name": "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz",
+          "sha256": "32e87b070a0f2c3d8b14cf3360dc1aec0386389f698825749964b835bafe2839",
+          "size_bytes": 16532
+        },
+        {
+          "kind": "sbom",
+          "name": "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz.sbom.cdx.json",
+          "sha256": "cbe9a2e1b05aedc589e62f0a2a96418b69b62ff23317e90dadbd842d59e20c7d",
+          "size_bytes": 3486
+        }
+      ],
+      "release_run": "https://github.com/musutrade/GateProbes/actions/runs/38338985149",
+      "release_run_conclusion": "success",
+      "release_inventory_sha256": "80e454da2f505e1981ef18495b67f5924a0ecb64b10507e75418e793d506bb99",
+      "installation": {
+        "status": "pass",
+        "platform": "Linux x86_64",
+        "source": "downloaded and independently signature-verified public release archive",
+        "rust_toolchain": null,
+        "tests": 21,
+        "core_contract_passed": true,
+        "log_sha256": "2e142c25e139543df4581c4db71867555b7e5bd953802944f73077fb6aa8b475"
+      }
+    },
+    {
+      "status": "pass",
+      "verified_at": "2026-10-13T02:56:42.258523+00:00",
+      "plugin": "rust-source-risk",
+      "tag": "rust-source-risk-v0.1.0-rc.7",
+      "source_commit": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+      "release_url": "https://github.com/musutrade/GateProbes/releases/tag/rust-source-risk-v0.1.0-rc.7",
+      "immutable": true,
+      "asset_count": 12,
+      "exact_inventory": true,
+      "signature_identity": "https://github.com/musutrade/GateProbes/.github/workflows/collector-release.yml@refs/tags/rust-source-risk-v0.1.0-rc.7",
+      "attestation_source_ref": "refs/tags/rust-source-risk-v0.1.0-rc.7",
+      "attestation_source_digest": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+      "verified_subjects": [
+        "SHA256SUMS",
+        "harness-gate-rust-source-risk-0.1.0-rc.7-linux-amd64.tar.gz",
+        "harness-gate-rust-source-risk-0.1.0-rc.7-linux-amd64.tar.gz.sbom.cdx.json",
+        "release-inventory.json"
+      ],
+      "assets": [
+        {
+          "kind": "package",
+          "name": "harness-gate-rust-source-risk-0.1.0-rc.7-linux-amd64.tar.gz",
+          "sha256": "8df6daecf61fb332283a2fd88e04fae6897dc0bf137abb45807fc59185e41a4c",
+          "size_bytes": 968142
+        },
+        {
+          "kind": "sbom",
+          "name": "harness-gate-rust-source-risk-0.1.0-rc.7-linux-amd64.tar.gz.sbom.cdx.json",
+          "sha256": "11792d1c5c5cc10d6f7ab06b6ffaf0cb22056d161ebb8acb03f47db47adba312",
+          "size_bytes": 5179
+        }
+      ],
+      "release_run": "https://github.com/musutrade/GateProbes/actions/runs/38338987066",
+      "release_run_conclusion": "success",
+      "release_inventory_sha256": "f444ebe39ddd505fa42151c56894fc0c5110de1a0469e331a694d5315afb2de2",
+      "installation": {
+        "status": "pass",
+        "platform": "Linux x86_64",
+        "source": "downloaded and independently signature-verified public release archive",
+        "rust_toolchain": "1.97.1",
+        "tests": 26,
+        "core_contract_passed": true,
+        "log_sha256": "f4d3cd7b59c0697d5cdc5efc65cafb780ba93dc1c5f1851f390f92897bca51fb"
+      }
+    },
+    {
+      "status": "pass",
+      "verified_at": "2026-10-13T02:56:42.830249+00:00",
+      "plugin": "rust-measure",
+      "tag": "rust-measure-v0.3.1",
+      "source_commit": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+      "release_url": "https://github.com/musutrade/GateProbes/releases/tag/rust-measure-v0.3.1",
+      "immutable": true,
+      "asset_count": 12,
+      "exact_inventory": true,
+      "signature_identity": "https://github.com/musutrade/GateProbes/.github/workflows/collector-release.yml@refs/tags/rust-measure-v0.3.1",
+      "attestation_source_ref": "refs/tags/rust-measure-v0.3.1",
+      "attestation_source_digest": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+      "verified_subjects": [
+        "SHA256SUMS",
+        "harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz",
+        "harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz.sbom.cdx.json",
+        "release-inventory.json"
+      ],
+      "assets": [
+        {
+          "kind": "package",
+          "name": "harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz",
+          "sha256": "5d3130b8d6673b9e32133be88fa69e4404f1d4ecc5ae022f7abf008c9b06302f",
+          "size_bytes": 1073235
+        },
+        {
+          "kind": "sbom",
+          "name": "harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz.sbom.cdx.json",
+          "sha256": "3305b5abb1154ef96f7c28058fccb0a06efc2522d86a9efef91052ffb0d4b50d",
+          "size_bytes": 5458
+        }
+      ],
+      "release_run": "https://github.com/musutrade/GateProbes/actions/runs/38338989282",
+      "release_run_conclusion": "success",
+      "release_inventory_sha256": "2913ee7d418503f05d17a2dbd8529e70ed1cc49f148adb9ba9096e0210507c48",
+      "installation": {
+        "status": "pass",
+        "platform": "Linux x86_64",
+        "source": "downloaded and independently signature-verified public release archive",
+        "rust_toolchain": null,
+        "tests": null,
+        "core_contract_passed": true,
+        "log_sha256": "e97ea6b1b87cceff83372bd54e1151ce4200bf5a4bb3c192636c0fac97c926bf"
+      }
+    }
+  ]
+}

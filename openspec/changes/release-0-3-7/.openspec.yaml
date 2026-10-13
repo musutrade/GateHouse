@@ -1,0 +1,5 @@
+schema: spec-driven
+status: implemented
+created: 2026-09-03
+goal: Publish Harness-Gate 0.3.7 with accepted post-remediation documentation records and Windows CI stabilization
+skip_specs: true

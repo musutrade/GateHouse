@@ -1,0 +1,330 @@
+{
+  "date": "2026-09-13",
+  "scope": "Linux critical-path collection only; not the whole CI job",
+  "original_cli_seconds": 446.58355271001346,
+  "updated_collection_seconds": 111.78824075998273,
+  "preliminary_updated_collection_seconds": 80.85456159897149,
+  "updated_build_seconds": 93.4873759939801,
+  "updated_tests_seconds": 6.045202798093669,
+  "same_compilation_sources": true,
+  "same_inventory": true,
+  "same_probe_facts": true,
+  "original_project_compilation_count": 12,
+  "updated_project_compilation_count": 1,
+  "jobs": 2,
+  "cargo_build_jobs": 4,
+  "summary": {
+    "failures": [],
+    "passed": 12,
+    "percent": 100.0,
+    "platform": "linux",
+    "status": "pass",
+    "total": 12
+  },
+  "tools": {
+    "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+    "commit": "02e25ef95586bf53194fe9f5a4b9ae7bb8b0cb91",
+    "llvm-cov": "cargo-llvm-cov 0.9.0",
+    "logical_cpus": 8,
+    "machine": "x86_64",
+    "nextest": "cargo-nextest 0.9.143 (60fa45f63 2026-08-04)\nrelease: 0.9.143\ncommit-hash: 60fa45f638ffc3f35e74afa65737f45fcd32db2a\ncommit-date: 2026-08-04\nhost: x86_64-unknown-linux-gnu",
+    "os": "Linux-7.0.0-31-generic-x86_64-with-glibc2.43",
+    "processor": "",
+    "python": "3.14.4",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "target": "x86_64-unknown-linux-gnu",
+    "timestamp_utc": "2026-09-13T12:49:37.020229+00:00"
+  },
+  "policy_semantics": "unchanged",
+  "limitations": [
+    "Shared host with concurrent workloads; timings are indicative, not a controlled CI benchmark.",
+    "Original stopwatch includes CLI evaluation; updated stopwatch measures collection including successful build cleanup.",
+    "Linux was exercised; macOS/Windows and hosted CI were not run."
+  ],
+  "checks": {
+    "quality_script_tests": 352,
+    "critical_path_tests": 23,
+    "docs_consistency": "pass"
+  },
+  "original_receipt": "/mnt/dev-ssd/workspaces/critical-path-serial-baseline/target/quality/serial-result.json",
+  "updated_receipt": "/mnt/dev-ssd/workspaces/critical-path-parallel-e4c6a1fa/target/quality/final-result.json",
+  "collector_sha256": "e255f1d71774f19323a860083e9db83a79c7e3e483a16d0df2f741aae5b8aecd",
+  "probe_facts": [
+    {
+      "id": "process.timeout",
+      "status": "pass",
+      "binary": "harness-gate",
+      "test": "process::tests::timeout_terminates_the_task",
+      "probes": [
+        {
+          "column": 24,
+          "line": 253,
+          "text": "break (terminate(&mut child)?, true, false);"
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 24,
+            "line": 253,
+            "text": "break (terminate(&mut child)?, true, false);"
+          },
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "process.cancellation",
+      "status": "pass",
+      "binary": "failure_paths_test",
+      "test": "verification_cleanup_cancel_and_report_precedence_retains_resource_evidence",
+      "probes": [
+        {
+          "column": 24,
+          "line": 250,
+          "text": "break (terminate(&mut child)?, false, true);"
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 24,
+            "line": 250,
+            "text": "break (terminate(&mut child)?, false, true);"
+          },
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "process.tree_cleanup",
+      "status": "pass",
+      "binary": "harness-gate",
+      "test": "process::tests::timeout_terminates_process_tree_without_a_descendant_leak",
+      "probes": [
+        {
+          "column": 24,
+          "line": 253,
+          "text": "break (terminate(&mut child)?, true, false);"
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 24,
+            "line": 253,
+            "text": "break (terminate(&mut child)?, true, false);"
+          },
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "step.non_zero",
+      "status": "pass",
+      "binary": "harness-gate",
+      "test": "verify::tests::non_zero_step_retains_exit_detail_and_log",
+      "probes": [
+        {
+          "column": 5,
+          "line": 456,
+          "text": "Ok(result)"
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 5,
+            "line": 456,
+            "text": "Ok(result)"
+          },
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "service.environment_failure",
+      "status": "pass",
+      "binary": "harness-gate",
+      "test": "verify::tests::service_failure_does_not_skip_unrelated_steps",
+      "probes": [
+        {
+          "column": 21,
+          "line": 70,
+          "text": "failure_code: Some(FailureCode::ServiceLeaseFailure),"
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 21,
+            "line": 70,
+            "text": "failure_code: Some(FailureCode::ServiceLeaseFailure),"
+          },
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "gate.failure_report",
+      "status": "pass",
+      "binary": "harness-gate",
+      "test": "verify::tests::gate_failure_writes_compatible_report",
+      "probes": [
+        {
+          "column": 5,
+          "line": 322,
+          "text": "publish_report(&report, &invocation_project, project, &mut progress)?;"
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 5,
+            "line": 322,
+            "text": "publish_report(&report, &invocation_project, project, &mut progress)?;"
+          },
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "config.invalid",
+      "status": "pass",
+      "binary": "integration_test",
+      "test": "test_config_check_invalid",
+      "probes": [
+        {
+          "column": 32,
+          "line": 48,
+          "text": "let mut config: Self = toml::from_str(&source)"
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 32,
+            "line": 48,
+            "text": "let mut config: Self = toml::from_str(&source)"
+          },
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "parser.failure",
+      "status": "pass",
+      "binary": "harness-gate",
+      "test": "verify::tests::parser_failure_marks_step_failed",
+      "probes": [
+        {
+          "column": 21,
+          "line": 439,
+          "text": "FailureCode::ResultZero"
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 21,
+            "line": 439,
+            "text": "FailureCode::ResultZero"
+          },
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "report.write_failure",
+      "status": "pass",
+      "binary": "harness-gate",
+      "test": "verify::tests::report_write_failure_returns_error",
+      "probes": [
+        {
+          "column": 5,
+          "line": 1166,
+          "text": "report_target(project, relative)?;"
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 5,
+            "line": 1166,
+            "text": "report_target(project, relative)?;"
+          },
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "report.integrity",
+      "status": "pass",
+      "binary": "harness-gate",
+      "test": "verify::report::tests::manifest_records_digests_and_detects_tampering",
+      "probes": [
+        {
+          "column": 13,
+          "line": 1821,
+          "text": "bail!(\"artifact digest or size changed: {}\", artifact.path);"
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 13,
+            "line": 1821,
+            "text": "bail!(\"artifact digest or size changed: {}\", artifact.path);"
+          },
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "parser.json_false_positive",
+      "status": "pass",
+      "binary": "critical_paths_test",
+      "test": "json_false_positive_cli_fails_with_incomplete_parser_report",
+      "probes": [
+        {
+          "column": 13,
+          "line": 315,
+          "text": "\"JSON test results contain no supported result array\""
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 13,
+            "line": 315,
+            "text": "\"JSON test results contain no supported result array\""
+          },
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "service.lease_ownership",
+      "status": "pass",
+      "binary": "harness-gate",
+      "test": "service::lease::tests::fake_docker_and_podman_cleanup_requires_fresh_complete_ownership",
+      "probes": [
+        {
+          "column": 9,
+          "line": 797,
+          "text": "bail!(\"runtime object identity changed since the lease was recorded\");"
+        }
+      ],
+      "hits": [
+        {
+          "probe": {
+            "column": 9,
+            "line": 797,
+            "text": "bail!(\"runtime object identity changed since the lease was recorded\");"
+          },
+          "count": 2
+        }
+      ]
+    }
+  ]
+}

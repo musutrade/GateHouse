@@ -1,0 +1,104 @@
+{
+  "status": "pass",
+  "verified_at": "2026-09-22T10:14:41.159443+00:00",
+  "tag": "v0.4.7",
+  "source_commit": "3e7b49f32b2b4afa79c8bf1edbb55ed5e2e96ee2",
+  "release_url": "https://github.com/musutrade/Harness-Gate/releases/tag/v0.4.7",
+  "asset_count": 39,
+  "exact_inventory": true,
+  "notes_match_tagged_source": true,
+  "signature_identity": "https://github.com/musutrade/Harness-Gate/.github/workflows/release.yml@refs/tags/v0.4.7",
+  "attestation_source_ref": "refs/tags/v0.4.7",
+  "attestation_source_digest": "3e7b49f32b2b4afa79c8bf1edbb55ed5e2e96ee2",
+  "verified_subjects": [
+    "SHA256SUMS",
+    "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz",
+    "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz.sbom.cdx.json",
+    "harness-gate-linux-amd64",
+    "harness-gate-macos-amd64",
+    "harness-gate-macos-arm64",
+    "harness-gate-rust-source-risk-0.1.0-rc.6-linux-amd64.tar.gz",
+    "harness-gate-rust-source-risk-0.1.0-rc.6-linux-amd64.tar.gz.sbom.cdx.json",
+    "harness-gate-typescript-collector-0.1.0-rc.4.tgz",
+    "harness-gate-typescript-collector-0.1.0-rc.4.tgz.sbom.cdx.json",
+    "harness-gate-windows-amd64.exe",
+    "harness-gate.sbom.cdx.json",
+    "release-inventory.json"
+  ],
+  "assets": [
+    {
+      "kind": "package",
+      "name": "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz",
+      "sha256": "9146390200174a1f932be5fffb12d21444b1c7d7f26dbf14dcb48c5cfadb3b7a",
+      "size_bytes": 15905
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz.sbom.cdx.json",
+      "sha256": "7faf39cc062c44272297727540267d98ac16202aecff6115b7b85c5bc7dc7b80",
+      "size_bytes": 3500
+    },
+    {
+      "kind": "binary",
+      "name": "harness-gate-linux-amd64",
+      "sha256": "b6976fa07f8ee65cdfbbe1e87c2c7e3592fcf38f1ed0d1c2e57a6e7ff49a85e9",
+      "size_bytes": 10265064
+    },
+    {
+      "kind": "binary",
+      "name": "harness-gate-macos-amd64",
+      "sha256": "e36df9a22dd711f5421c6807651441f9437f1c1ed120b681a5e661bf966a0951",
+      "size_bytes": 8169136
+    },
+    {
+      "kind": "binary",
+      "name": "harness-gate-macos-arm64",
+      "sha256": "76c1cfed8ff6d44c35d4cb3ab1c8d3407671789eb9eeafb7bc54d6808f4a5c92",
+      "size_bytes": 6716000
+    },
+    {
+      "kind": "package",
+      "name": "harness-gate-rust-source-risk-0.1.0-rc.6-linux-amd64.tar.gz",
+      "sha256": "965fdaf8687c8e615b7f481222ca6cccf24f3687214b9f17ea4a88f2aef6db57",
+      "size_bytes": 965618
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate-rust-source-risk-0.1.0-rc.6-linux-amd64.tar.gz.sbom.cdx.json",
+      "sha256": "0a539095fc93ea5538e628f9e76fd0662e49c1ebccf644f2fcfaf6410bb06fbb",
+      "size_bytes": 5179
+    },
+    {
+      "kind": "package",
+      "name": "harness-gate-typescript-collector-0.1.0-rc.4.tgz",
+      "sha256": "d6a969e790ad6fcacd08ce80cc17f3333edc41254107bff5d4edc99b836b9a25",
+      "size_bytes": 18801
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate-typescript-collector-0.1.0-rc.4.tgz.sbom.cdx.json",
+      "sha256": "adb1a400d12c0c58d9858342564bc7dbc45e5a2126f54aa6ad9b6a656d055f3c",
+      "size_bytes": 3549
+    },
+    {
+      "kind": "binary",
+      "name": "harness-gate-windows-amd64.exe",
+      "sha256": "a1257bfae07956793da795266736f450c37bb420e849acf3f841374a814a4a90",
+      "size_bytes": 8335360
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate.sbom.cdx.json",
+      "sha256": "d5e84fc2458a9deb52894e43269a22b712c74a8afdc5cc8978c1c896895b8e99",
+      "size_bytes": 73296
+    }
+  ],
+  "publication_run": {
+    "id": 35713634774,
+    "html_url": "https://github.com/musutrade/Harness-Gate/actions/runs/35713634774",
+    "head_sha": "3e7b49f32b2b4afa79c8bf1edbb55ed5e2e96ee2",
+    "head_branch": "v0.4.7",
+    "status": "completed",
+    "conclusion": "success"
+  }
+}

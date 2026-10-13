@@ -1,0 +1,112 @@
+{
+  "schema": "release-ownership/v1",
+  "description": "Ownership of release and install machinery for the core/plugin split. GateHouse keeps the core release workflow and core install entry; GateProbes owns collector packaging, signing, installation and release. Shared tools have one editable source in GateHouse.",
+  "owners": {
+    "gatehouse": [
+      ".github/workflows/release.yml",
+      "install.sh"
+    ],
+    "gateprobes": [
+      "tools/release/bootstrap_collector.sh",
+      "tools/release/build_collector_bootstrap.py",
+      "tools/release/build_user_installer.py",
+      "tools/release/collector_assets.py",
+      "tools/release/collector_components.py",
+      "tools/release/collector_dry_run.py",
+      "tools/release/collector_light_install.py",
+      "tools/release/collector_maintenance.py",
+      "tools/release/collector_receipt.py",
+      "tools/release/collector_release_policy.py",
+      "tools/release/collector_sigstore.py",
+      "tools/release/collector_store.py",
+      "tools/release/collector_transport.py",
+      "tools/release/download_collector_release.py",
+      "tools/release/friendly_collector_install.py",
+      "tools/release/install_collector.py",
+      "tools/release/package_independent_collectors.py",
+      "tools/release/prepare_collector_candidate.py",
+      "tools/release/production_collector_release.py",
+      "tools/release/production_installer.py",
+      "tools/release/publish_user_installer.py",
+      "tools/release/rust-collector-release.production.yml",
+      "tools/release/sign_collector_candidate.py",
+      "tools/release/stage_collector_candidate.py"
+    ]
+  },
+  "shared": {
+    "tools/release/generate-sbom.py": "gatehouse",
+    "tools/release/release_inventory.py": "gatehouse",
+    "tools/release/release_policy.py": "gatehouse"
+  },
+  "generated_copies": {
+    "tools/release/release_policy.py": {
+      "plugin_repository": "musutrade/GateProbes",
+      "plugin_path": "tools/release/release_policy.py",
+      "revision": "dcc9194d4c01c4994983af505cf1191774fea70e",
+      "sha256": "19640e4d97e5e02a759ce267a1bb6a5663fcbda6ae7a9e4a2a2829c4dcebf21e"
+    },
+    "tools/release/release_inventory.py": {
+      "plugin_repository": "musutrade/GateProbes",
+      "plugin_path": "tools/release/release_inventory.py",
+      "revision": "dcc9194d4c01c4994983af505cf1191774fea70e",
+      "sha256": "0993aee8cd44a2d1106394719d7c8bfacf7f034e669cf49b6a887b70a2c8d45d"
+    }
+  },
+  "workflows": {
+    ".github/workflows/arc-admin-cost-trial.yml": {
+      "owner": "gatehouse",
+      "disposition": "core-retained",
+      "note": "Core trial cost workflow; unaffected by the split."
+    },
+    ".github/workflows/ci.yml": {
+      "owner": "gatehouse",
+      "disposition": "core-retained",
+      "note": "Core CI and its required aggregate; consumes pinned plugin artifacts."
+    },
+    ".github/workflows/frontend-advisory.yml": {
+      "owner": "gatehouse",
+      "disposition": "core-retained",
+      "note": "Core advisory workflow; unaffected by the split."
+    },
+    ".github/workflows/quality-baseline-refresh.yml": {
+      "owner": "gatehouse",
+      "disposition": "core-retained",
+      "note": "Core quality-baseline refresh; unaffected by the split."
+    },
+    ".github/workflows/release.yml": {
+      "owner": "gatehouse",
+      "disposition": "core-retained",
+      "note": "Core release chain; keeps the Harness-Gate Sigstore identity."
+    },
+    ".github/workflows/rust-collector-release.yml": {
+      "owner": "gatehouse",
+      "disposition": "paused-not-migrated",
+      "note": "Legacy bundled-runtime RSA/Sigstore six-asset production chain. Its own hold step suspends signing/publication and requires a reviewed measurement migration; this is not the RC8 native plugin chain. GateProbes owns any future revival, but no RSA key, runner group, environment or publication is provisioned, and migration is not planned while paused.",
+      "revival_owner": "gateprobes"
+    },
+    ".github/workflows/rust-generic-shadow.yml": {
+      "owner": "gatehouse",
+      "disposition": "core-retained",
+      "note": "Rust reference equivalence shadow; stays in core (5.5)."
+    }
+  },
+  "shared_copy_rule": "Gatehouse owns the single editable source. When GateProbes is created it carries generated copies of these files from a pinned GateHouse revision; it never edits its own copy independently.",
+  "plugin_release_identity": "Declared by GateProbes: its own repository, tag prefix, workflow path and environment rules. A URL substitution must never implicitly change the signed identity GateHouse trusts.",
+  "unowned_note": "tools/release/tests follows the scripts it covers and splits with them; it is not classified here.",
+  "retired_workflows": {
+    "retired/workflows/native-collector-release.yml": {
+      "owner": "gatehouse",
+      "disposition": "retired-restorable",
+      "was": ".github/workflows/native-collector-release.yml",
+      "restore_commit": "6aaa234249574c9a321a8819213b4c936c02605e",
+      "note": "Superseded by the GateProbes native collector chain (rc.8 verified, run 38218575101). Current main no longer triggers it and pull requests and main pushes no longer start it. This does not prohibit creating tags; a tag pointing at a historical commit still runs the workflow as it existed at that commit. Historical releases, signatures and tags are retained. Restore by moving the file back to .github/workflows/ after reverting this record."
+    },
+    "retired/workflows/rust-measure-native.yml": {
+      "owner": "gatehouse",
+      "disposition": "retired-restorable",
+      "was": ".github/workflows/rust-measure-native.yml",
+      "restore_commit": "4ec65a7666511cb80c89d7d369a56ec71cb878df",
+      "note": "Built the plugin analyzer from core source on Windows/macOS. Core acceptance now uses the pinned Linux amd64 measurer release; cross-platform analyzer builds belong to GateProbes. Inactive: no pull request or main push triggers it. Restore by moving the file back after reverting this record."
+    }
+  }
+}

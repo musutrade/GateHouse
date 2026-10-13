@@ -1,0 +1,20 @@
+{
+  "schema": "rust-collector-public-user-install/v1",
+  "status": "pass",
+  "date": "2026-09-13",
+  "source_commit": "19d7ed59851d5f042730eb5cb7cf9e0aa67a1345",
+  "core": {
+    "version": "0.4.1",
+    "sha256": "fb2d79704b4fd31b7372484b5af1f20651906f21020ff1f42027ff9bc39dc0dd"
+  },
+  "collector": "0.1.0-rc.2",
+  "installer": "0.1.0-rc.3",
+  "installer_sha256": "e69025454cedd659ad91d2522c7636e6c4a53c164e477ffafd2ca75d8cf17760",
+  "installer_sigstore_verified": true,
+  "public_installer_command": "bash install.sh --rust-only",
+  "selected_version": "0.1.0-rc.2",
+  "installed_manifest_sha256": "23568455acafcfb28731d3d0242c257592a4d456b31e965b0f31ac44cdc6341e",
+  "installation_log_sha256": "f736f88b49e9143fd576cca9b3bac1c395a209aa4f18d60b02954625eaccaf9b",
+  "same_abi_required": true,
+  "previous_version_preserved": true
+}

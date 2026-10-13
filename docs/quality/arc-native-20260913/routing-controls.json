@@ -1,0 +1,62 @@
+{
+  "status": "pass",
+  "source_commit": "e0dcc46d1990e1f3a987841a355723ef09d3dee7",
+  "cases": [
+    {
+      "path": ".harness-gate/routing-probe.txt",
+      "expected_components": [
+        "backend",
+        "frontend",
+        "workflow"
+      ],
+      "original_staged": [
+        "backend",
+        "frontend",
+        "workflow"
+      ],
+      "core_staged": [
+        "backend",
+        "frontend",
+        "workflow"
+      ],
+      "index_content_retained_after_worktree_delete": true,
+      "working_tree_changed_files": [
+        ".harness-gate/routing-probe.txt"
+      ]
+    },
+    {
+      "path": "backend/routing-probe.txt",
+      "expected_components": [
+        "backend"
+      ],
+      "original_staged": [
+        "backend"
+      ],
+      "core_staged": [
+        "backend"
+      ],
+      "index_content_retained_after_worktree_delete": true,
+      "working_tree_changed_files": [
+        "backend/routing-probe.txt"
+      ]
+    },
+    {
+      "path": "frontend/routing-probe.txt",
+      "expected_components": [
+        "frontend"
+      ],
+      "original_staged": [
+        "frontend"
+      ],
+      "core_staged": [
+        "frontend"
+      ],
+      "index_content_retained_after_worktree_delete": true,
+      "working_tree_changed_files": [
+        "frontend/routing-probe.txt"
+      ]
+    }
+  ],
+  "ci_scope_command": "cargo flow scope --base <event base> --json; source .github/workflows/ci.yml",
+  "thresholds_changed": false
+}

@@ -1,0 +1,28 @@
+name: Verified regression data
+description: Restore exact test inputs from pinned Release assets
+inputs:
+  groups:
+    description: Space-separated pinned data groups
+    default: quality-history arc-admin-replay regression-corpus
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+      with:
+        python-version: '3.x'
+    - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+      with:
+        path: ~/.cache/gatehouse-test-data
+        key: regression-data-${{ runner.os }}-${{ hashFiles('test-data/manifest.json') }}
+    - name: Verify and restore regression inputs
+      shell: bash
+      env:
+        TEST_DATA_GROUPS: ${{ inputs.groups }}
+      run: |
+        python3 - <<'PYTHON'
+        import os, subprocess, sys
+        args = [sys.executable, 'tools/maintenance/test_data.py']
+        for group in os.environ['TEST_DATA_GROUPS'].split():
+            args.extend(['--group', group])
+        subprocess.run(args, check=True)
+        PYTHON

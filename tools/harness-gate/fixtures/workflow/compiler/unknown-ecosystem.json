@@ -1,0 +1,112 @@
+{
+  "artifact_root": "target/evidence",
+  "artifacts": {
+    "raw.json": "ee13b97dd259ba41d4e7d6adbb7f63756a81d4f5adf361bdbaad5b74ff8f6451"
+  },
+  "components": {
+    "app": {
+      "id": "app",
+      "metadata": {
+        "ecosystem": "nebula-unregistered-2049",
+        "framework": "orbit",
+        "language": "quasar"
+      },
+      "path": ".",
+      "source_boundaries": [
+        {
+          "id": "source",
+          "metadata": {},
+          "path": "src",
+          "role": "production"
+        }
+      ],
+      "targets": [
+        {
+          "boundaries": [
+            "source"
+          ],
+          "id": "default",
+          "metadata": {}
+        }
+      ]
+    }
+  },
+  "config_files": {},
+  "exceptions": [],
+  "expected": {
+    "base_commit": "0000000000000000000000000000000000000000",
+    "commit": "1111111111111111111111111111111111111111",
+    "run": "compiler-fixture",
+    "target": "default"
+  },
+  "mappings": null,
+  "profile": "full",
+  "relationship_kinds": {},
+  "schema": "quality-trusted-state/v1",
+  "selection": {
+    "changed_subject": [
+      "module"
+    ],
+    "critical_subject": []
+  },
+  "series": {
+    "coverage": {
+      "collector": {
+        "name": "quasar-spectrometer",
+        "version": "1"
+      },
+      "id": "measurement-series/v1:06031bf8e888e5fd4414bfc74aebdd38097229a216053c6d3375cf024465506d",
+      "metrics": [
+        {
+          "name": "coverage.line",
+          "type": "ratio"
+        },
+        {
+          "name": "quasar.pulses",
+          "type": "count"
+        }
+      ],
+      "name": "quasar-pulse-series",
+      "normalization": {
+        "name": "fixture",
+        "version": "1"
+      },
+      "rule": {
+        "name": "line-coverage",
+        "version": "1"
+      },
+      "runtime": {
+        "name": "orbit",
+        "version": "1"
+      },
+      "source_identity": {
+        "name": "subject-identity",
+        "version": "1"
+      },
+      "target": "default",
+      "tool": {
+        "name": "pulse-counter",
+        "version": "18"
+      }
+    }
+  },
+  "subject_kinds": {
+    "module": "file/v1"
+  },
+  "subjects": {
+    "module": [
+      {
+        "boundary": "source",
+        "component": "app",
+        "discriminator": "module",
+        "id": "subject-identity/v1:070fec48ac7866f74365b57215dfc47b0395a77165d7b075f6a18a3997a64ae4",
+        "identity_version": "subject-identity/v1",
+        "kind": "file/v1",
+        "metadata": {},
+        "path": "src/lib.rs",
+        "source_sha256": "5e0a6af76181b77032ef291474aab99538433cb86eb2b8ad88f3c0cfb2577a51",
+        "target": "default"
+      }
+    ]
+  }
+}
