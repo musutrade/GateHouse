@@ -65,7 +65,7 @@ semantics, gate names, branch protection or release authority.
 
 ## 4. Remove compatibility paths and handle the rest
 
-- [ ] 4.1 [P1][M] Keep the `harness-gate` command, crate and legacy install entry working through the move; acceptance: existing install and verify commands still succeed.
+- [x] 4.1 [P1][M] Keep the `harness-gate` command, crate and legacy install entry working through the move; acceptance: existing install and verify commands still succeed.
 - [x] 4.2 [P1][M] Isolate the Postgres recipe (`service/postgres.rs`, `ExternalValuePolicy::IsolatedPostgres`) out of the generic config model; acceptance: no Postgres-specific rule remains in the generic core config, and generic process execution/resource reclamation still work.
 
 > **4.2 complete (2026-10-12):** Postgres-specific code is centralized in the
@@ -273,3 +273,14 @@ remaining plugins, and the release/signing identity switch last.
 > This supersedes the earlier deferral of 6.4; 4.1/6.4 remain pending until
 > migration, baseline continuity, protection and installation acceptance pass.
 > See `externalize-repository-data` for the implementation and evidence.
+
+> **GateHouse source migration and 4.1 complete (2026-10-13):** protected
+> GateHouse PR #1 imports the lean source without old Git ancestry, retaining
+> the CLI/crate names and explicit original measurement lineage. Fresh clone,
+> source-only build, all 497 Rust tests and real historical v0.4.8 installation,
+> signature checks, init/config/verify pass. See
+> [migration acceptance](../../../docs/gatehouse-migration-acceptance.md).
+> Naming under 6.4 is complete; 6.4 stays unchecked for the first future Core
+> GateHouse publication's actual signing/provenance acceptance. Future signer
+> routing is contract-tested, not presented as a new signing ceremony. The
+> paused bundled-product disposition under 4.3 remains unchanged.

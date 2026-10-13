@@ -53,3 +53,5 @@ PRs belong to GateHouse. Existing installations continue to use their immutable
 version and can reinstall that version from the original owner. Source rollback
 uses a reviewed GateHouse revert or the recorded legacy revision; no old Git
 history is force-pushed into the lean repository.
+
+Actual clone, build and compatibility results: [migration acceptance](gatehouse-migration-acceptance.md).
