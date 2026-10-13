@@ -15,6 +15,7 @@ only collector-specific fixtures go to GateProbes.
 | `tools/quality/fixtures/collectors` | core | Synthetic generic transport cases (no ecosystem toolchain) |
 | `tools/quality/fixtures/complexity` | core | Complexity analyzer control subset |
 | `tools/quality/fixtures/contracts` | core | Synthetic cross-component contract gates |
+| `tools/quality/fixtures/core-typescript-policy.json` | core | Exact normalized policy/preset facts proven against the original Angular/V8 producer; source/artifact bytes come from verified immutable generic evidence data |
 | `tools/quality/fixtures/generic-core` | core | Frozen decision-engine compatibility corpus |
 | `tools/quality/fixtures/harness-evidence` | core | Generic normalized evidence |
 | `tools/quality/fixtures/json-results` | core | Strict JSON result helpers |

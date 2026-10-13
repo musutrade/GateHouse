@@ -1,0 +1,89 @@
+{
+  "schema": "plugin-handoff-cost/v1",
+  "ci_run": "https://github.com/musutrade/GateProbes/actions/runs/38406597322",
+  "revision": "a762f0c4c7da3945367b870bccc39aac8069132f",
+  "jobs": [
+    {
+      "job": "Classify change",
+      "job_id": 115327743370,
+      "conclusion": "success",
+      "wall_seconds": 7.0
+    },
+    {
+      "job": "Legacy compatibility ownership",
+      "job_id": 115327813248,
+      "conclusion": "success",
+      "wall_seconds": 62.0
+    },
+    {
+      "job": "External preset compatibility",
+      "job_id": 115327813270,
+      "conclusion": "success",
+      "wall_seconds": 5.0
+    },
+    {
+      "job": "Lightweight checks",
+      "job_id": 115327813284,
+      "conclusion": "success",
+      "wall_seconds": 4.0
+    },
+    {
+      "job": "Plugin checks (rust-source-risk)",
+      "job_id": 115327813376,
+      "conclusion": "success",
+      "wall_seconds": 34.0
+    },
+    {
+      "job": "Plugin checks (rust-native-plugin)",
+      "job_id": 115327813407,
+      "conclusion": "success",
+      "wall_seconds": 184.0
+    },
+    {
+      "job": "Plugin checks (http-json-contract)",
+      "job_id": 115327813454,
+      "conclusion": "success",
+      "wall_seconds": 62.0
+    },
+    {
+      "job": "Plugin checks (rust-native-plugin)",
+      "job_id": 115327813467,
+      "conclusion": "success",
+      "wall_seconds": 102.0
+    },
+    {
+      "job": "Plugin checks (typescript-risk)",
+      "job_id": 115327813520,
+      "conclusion": "success",
+      "wall_seconds": 15.0
+    },
+    {
+      "job": "Plugin checks (rust-native-plugin)",
+      "job_id": 115327813553,
+      "conclusion": "success",
+      "wall_seconds": 107.0
+    },
+    {
+      "job": "Plugin checks (rust-native-plugin)",
+      "job_id": 115327813686,
+      "conclusion": "success",
+      "wall_seconds": 270.0
+    },
+    {
+      "job": "Plugin checks (rust-measure)",
+      "job_id": 115327813688,
+      "conclusion": "success",
+      "wall_seconds": 38.0
+    },
+    {
+      "job": "Required Quality Aggregate",
+      "job_id": 115330017409,
+      "conclusion": "success",
+      "wall_seconds": 6.0
+    }
+  ],
+  "compatibility_execution_seconds": 44.317,
+  "extra_core_plugin_matrix_jobs": 0,
+  "artifact_retention_days": 7,
+  "job_timeout_minutes": 15
+}

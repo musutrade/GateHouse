@@ -61,7 +61,7 @@ command used `--work target/quality/gh134/native-v2` and the default retained pa
 
 ## Negative matrix
 
-The [acceptance tests](../../../tools/quality/tests/test_typescript_acceptance.py)
+The [acceptance tests](https://github.com/musutrade/GateProbes/blob/a762f0c4c7da3945367b870bccc39aac8069132f/compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_acceptance.py)
 also run the existing collector rejection suite against the fresh regression-head
 archive, through internal and subprocess transports.
 

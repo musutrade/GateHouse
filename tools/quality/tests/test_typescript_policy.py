@@ -10,7 +10,7 @@ import shutil
 import tarfile
 import unittest
 
-import test_typescript_reference as frontend
+import core_typescript_fixture as frontend
 from test_policy_engine import rule
 import harness_evidence as evidence
 import policy_engine as engine
@@ -19,36 +19,19 @@ import rust_reference as rust
 
 
 class TypeScriptPolicyTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        frontend.TypeScriptCollectorTests.setUpClass()
-
     def setUp(self):
-        self.fixture = frontend.TypeScriptCollectorTests()
-        self.fixture.setUp()
-        self.addCleanup(self.fixture.doCleanups)
-        f = self.fixture
-        self.records = f.run_adapter()
-        self.context = dict(project=f.project, source_root=f.workspace,
-                            artifact_root=f.output, expected=copy.deepcopy(f.request['context']))
-        f.request['context'] = dict(commit='b' * 40, base_commit='c' * 40,
-                                    target='node-jsdom', run='gh132-base-replay')
-        f.output = f.root / 'base-output'
-        f.output.mkdir()
-        f.request['output_root'] = str(f.output)
-        f.rebind()
-        self.base = f.run_adapter()
-        sources = f.root / 'base-sources'
-        shutil.copytree(f.workspace, sources)
-        self.base_context = dict(project=copy.deepcopy(f.project), source_root=sources,
-                                 artifact_root=f.output, expected=copy.deepcopy(f.request['context']))
+        self.fixture = frontend.PolicyFixture(self)
+        self.records = copy.deepcopy(self.fixture.document['head']['records'])
+        self.base = copy.deepcopy(self.fixture.document['base']['records'])
+        self.context = self.fixture.contexts['head']
+        self.base_context = self.fixture.contexts['base']
         self.head = next(r for r in self.records if r['subject']['path'].endswith('/pricing.ts')
                          and r['subject']['kind'] == 'file/v1')
         self.prior = next(r for r in self.base if r['subject']['id'] == self.head['subject']['id'])
         self.policy = {'schema': 'harness-policy/v1', 'rules': [rule(
             scope={'kind': 'subject', 'subject': self.head['subject']['id']},
             ratchet={'deny_regression': True, 'allow_legacy_debt': True})]}
-        self.mappings = {'schema': 'subject-mappings/v1', 'project': f.project['id'], 'mappings': []}
+        self.mappings = {'schema': 'subject-mappings/v1', 'project': self.context['project']['id'], 'mappings': []}
 
     def evaluate(self, **options):
         arguments = dict(base_records=self.base, base_context=self.base_context, mappings=self.mappings)

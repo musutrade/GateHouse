@@ -8,7 +8,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import typescript_semantics as ts
+import core_typescript_fixture as ts
 
 ROOT = Path(__file__).resolve().parents[3]
 PRESETS = ROOT / 'tools/harness-gate/fixtures/preset-compat'
@@ -32,16 +32,11 @@ class PresetPackTests(unittest.TestCase):
         self.assertEqual(pack['files']['.harness-gate/packs/${binding}/policy.json']['rules'], rules)
 
     def test_typescript_uses_native_series_and_unsupported_crap(self):
-        fixture = FIXTURES / 'typescript-angular'
-        bundle = ts.read_bundle((fixture / 'evidence/native.tar.gz').read_bytes(),
-                                (fixture / 'semantics/source-index.json').read_bytes(),
-                                read(fixture / 'semantics/receipt.json'),
-                                {p.relative_to(fixture / 'app').as_posix(): p.read_bytes()
-                                 for p in (fixture / 'app/src').rglob('*') if p.is_file()})
+        reference = ts.read()['preset_reference']
         pack = read(PRESETS / 'packs/typescript.json')
         capabilities = pack['files']['.harness-gate/packs/${binding}/capabilities.json']
-        self.assertEqual(capabilities['series'], ts.measurement_series(bundle.toolchain, 'node-jsdom', 'production-ts'))
-        native = bundle.measure('src/app/pricing.ts')[0]
+        self.assertEqual(capabilities['series'], reference['series'])
+        native = reference['native']
         for metric, state in capabilities['states'].items():
             self.assertEqual(native['states'][metric], state)
         self.assertNotIn('risk.crap', native['values'])

@@ -10,8 +10,8 @@ record commit metadata. A missing required input or exclusion path fails
 explicitly instead of being skipped.
 
 This entry point is manual acceptance tooling. It is not wired into any
-workflow: it consumes the full repository archive, so it cannot run from a
-checkout that deliberately lacks plugin sources.
+workflow: the ordinary selector verifies the exact accepted handoff; no separate test
+exclusion list is used. Already transferred implementation paths may be absent.
 """
 from __future__ import annotations
 
@@ -65,27 +65,6 @@ PLUGIN_IMPLEMENTATION = (
     'tools/quality/typescript_semantics.py',
 )
 
-# Tests that exercise plugin implementations. They are owned by GateProbes
-# under the split and are excluded from the core selection with that reason;
-# they are not core tests with a missing input.
-PLUGIN_OWNED_TESTS = (
-    'test_native_artifact_paths',
-    'test_preset_packs',
-    'test_rust_collector_contract',
-    'test_rust_collector_delivery',
-    'test_rust_collector_project',
-    'test_rust_collector_runtime',
-    'test_rust_native',
-    'test_rust_native_classify',
-    'test_rust_native_driver',
-    'test_typescript_acceptance',
-    'test_typescript_advisory',
-    'test_typescript_contracts',
-    'test_typescript_policy',
-    'test_typescript_reference',
-    'test_typescript_semantics',
-)
-
 REQUIRED_CORE_INPUTS = (
     CARGO_MANIFEST,
     'tools/harness-gate/quality-core/mod.rs',
@@ -119,11 +98,14 @@ def snapshot(commit: str, source: Path) -> None:
         tar.extractall(source / 'src', filter='data')
 
 
-def exclude_plugin_implementation(copy: Path) -> list[str]:
+def exclude_plugin_implementation(copy: Path, require_all: bool = True) -> list[str]:
     removed = []
     for relative in PLUGIN_IMPLEMENTATION:
         path = copy / relative
-        require(path.exists(), f'plugin implementation path is missing: {relative}')
+        require(not path.is_symlink(), f'symlink plugin implementation path: {relative}')
+        if not path.exists():
+            require(not require_all, f'plugin implementation path is missing: {relative}')
+            continue
         if path.is_dir():
             shutil.rmtree(path)
         else:
@@ -168,21 +150,19 @@ def cargo(copy: Path, workdir: Path, command: str) -> dict[str, object]:
 
 
 def python_selection(copy: Path, workdir: Path) -> dict[str, object]:
-    tests = copy / 'tools' / 'quality' / 'tests'
-    available = sorted(path.stem for path in tests.glob('test_*.py'))
-    selected = [name for name in available if name not in PLUGIN_OWNED_TESTS]
-    missing = [name for name in selected if not (tests / f'{name}.py').is_file()]
-    require(not missing, 'selected core tests are missing: ' + ', '.join(missing))
     environment = {**os.environ, 'PYTHONDONTWRITEBYTECODE': '1'}
-    result = run([sys.executable, '-m', 'unittest', *selected],
-                 tests, log=workdir / 'logs' / 'python-selection.log', env=environment)
+    command = [sys.executable, 'tools/quality/tests/run_core.py']
+    selection = run(command + ['--list'], copy, env=environment)
+    require(selection.returncode == 0, 'ordinary Core selector rejected isolation: ' + selection.stderr)
+    selected = selection.stdout.splitlines()
+    result = run(command, copy, log=workdir / 'logs' / 'python-selection.log', env=environment)
     output = result.stdout + result.stderr
     summary = UNITTEST_SUMMARY.search(output)
     outcome = UNITTEST_RESULT.search(output)
     counts = dict(item.split('=') for item in (outcome.group(2) or '').split(', ') if '=' in item) if outcome else {}
     report = {
         'selected_modules': selected,
-        'excluded_plugin_owned': [name for name in available if name in PLUGIN_OWNED_TESTS],
+        'command': 'python3 tools/quality/tests/run_core.py',
         'tests_run': int(summary.group(1)) if summary else 0,
         'failed': int(counts.get('failures', 0)) + int(counts.get('errors', 0)),
         'skipped': int(counts.get('skipped', 0)),
@@ -220,9 +200,13 @@ def main() -> int:
 
     snapshot(args.commit, workdir)
     copy = workdir / 'src'
-    report['excluded_plugin_implementation'] = exclude_plugin_implementation(copy)
+    report['excluded_plugin_implementation'] = exclude_plugin_implementation(copy, require_all=False)
     report['local_git_head'] = init_local_git(copy)
     check_required_inputs(copy)
+    hydration = run([sys.executable, 'tools/maintenance/test_data.py'], copy,
+                    log=workdir / 'logs' / 'test-data.log')
+    require(hydration.returncode == 0, 'verified regression data restore failed: ' + hydration.stderr)
+    report['test_data'] = json.loads(hydration.stdout)
 
     if not args.skip_cargo:
         build = cargo(copy, workdir, 'build')

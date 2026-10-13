@@ -66,3 +66,15 @@ Subsequent changes renew the ordinary CI receipt, classify the existing
 change the tested production loader. GateProbes PR #15 merged as
 `ae7a3a200817c67081d52a58cd580b1be12631c4` after ordinary CI and all four native
 release-acceptance platform jobs passed.
+
+
+## Issue #10 ordinary CI handoff
+
+The [accepted v2 handoff](ci-plugin-test-handoff.md) now preserves the remaining
+historical adapter tests in GateProbes and proves the fixed Core policy/preset
+inputs against their original producer. Ordinary `Quality Script Tests` removes
+all 24 plugin implementation paths from its disposable checkout and runs the
+same guarded Core selector, including generic TypeScript policy and preset tests.
+This supersedes the manual 15-module exclusion as current acceptance; historical
+isolation results above remain historical evidence. Core decisions, measurement
+series, thresholds, baseline/debt/ratchet and release authority are unchanged.

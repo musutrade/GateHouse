@@ -1,19 +1,33 @@
 {
-  "schema": "core-plugin-test-handoff/v1",
+  "schema": "core-plugin-test-handoff/v2",
   "repository": "musutrade/GateProbes",
-  "revision": "481eaa6d60264bb1569b85b1c51b6a1a646d2054",
-  "ci_run": "https://github.com/musutrade/GateProbes/actions/runs/38342999155",
-  "scope": "Delegate four native test modules and the standalone Rust source-risk step with demonstrated parity. Classification preserves the original Linux Quality Script Tests scope; other native tests run on four platforms. Keep all unmigrated Core compatibility/reference tests and select new modules by default.",
+  "revision": "a762f0c4c7da3945367b870bccc39aac8069132f",
+  "ci_run": "https://github.com/musutrade/GateProbes/actions/runs/38406597322",
+  "acceptance": {
+    "file": "docs/quality/issue-10/legacy-compatibility.json",
+    "sha256": "f82f330f021f64e003c69797619cfa988f5f56b5e25a20afd421cf1e14821086",
+    "inventory_sha256": "3dd45e80dbc655505d1650c65fc813a9ef89960bfb1986020ec912c7d94b6357",
+    "inventory_file": "docs/quality/issue-10/compatibility-inventory.json"
+  },
+  "native_acceptance": {
+    "revision": "481eaa6d60264bb1569b85b1c51b6a1a646d2054",
+    "ci_run": "https://github.com/musutrade/GateProbes/actions/runs/38342999155",
+    "note": "Original four-platform native path/project/driver and Linux-only classification parity retained; the current full plugin matrix also accepts released Core 0.4.9.",
+    "file": "docs/quality/issue-10/native-handoff-v1.json",
+    "sha256": "cc47c83c89ac71af3cb5bf7ccb920f90e3ba3d322536d327c1a1ae57d0297f3e"
+  },
   "delegated_tests": {
     "test_rust_collector_project": {
       "sha256": "456eba2acfb29f002039d94d929eea6359eb21aec35d2274ebc51ba7b5ea49e7",
       "path": "plugins/rust-native-plugin/tests/test_rust_collector_project.py",
-      "command": "PYTHONPATH=\"$GITHUB_WORKSPACE/plugins/rust-native-plugin$(python3 -c 'import os;print(os.pathsep,end=\"\")')$GITHUB_WORKSPACE/plugins/rust-native-plugin/tests$(python3 -c 'import os;print(os.pathsep,end=\"\")')$RUNNER_TEMP/core/tools/quality\" python3 tests/zero_skip.py test_rust_collector_project"
+      "command": "PYTHONPATH=\"$GITHUB_WORKSPACE/plugins/rust-native-plugin$(python3 -c 'import os;print(os.pathsep,end=\"\")')$GITHUB_WORKSPACE/plugins/rust-native-plugin/tests$(python3 -c 'import os;print(os.pathsep,end=\"\")')$RUNNER_TEMP/core/tools/quality\" python3 tests/zero_skip.py test_rust_collector_project",
+      "acceptance": "native"
     },
     "test_rust_native_driver": {
       "sha256": "71e523d8c829bb476483ddb35b825e93a086eb9d8e1a5f2bbaf7575b9091bcc7",
       "path": "plugins/rust-native-plugin/tests/test_rust_native_driver.py",
-      "command": "HARNESS_GATE_NATIVE_ACCEPTANCE_ROOT=\"$RUNNER_TEMP/native-acceptance\" NATIVE_PLUGIN_BINARY=\"$GITHUB_WORKSPACE/plugins/rust-native-output/$NATIVE_ASSET\" NATIVE_DRIVER=\"$GITHUB_WORKSPACE/plugins/target/native-driver/debug/harness-gate-rust-native-driver$NATIVE_SUFFIX\" NATIVE_DRIVER_SYSROOT=\"$(rustc --print sysroot)\" HARNESS_GATE_NATIVE_POLICY_BINARY=\"$RUNNER_TEMP/core/bin/$CORE_ASSET\" HARNESS_GATE_PRESETS_DIR=\"$RUNNER_TEMP/core/presets\" PYTHONPATH=\"$GITHUB_WORKSPACE/plugins/rust-native-plugin$(python3 -c 'import os;print(os.pathsep,end=\"\")')$GITHUB_WORKSPACE/plugins/rust-native-plugin/tests$(python3 -c 'import os;print(os.pathsep,end=\"\")')$RUNNER_TEMP/core/tools/quality\" python3 accept.py"
+      "command": "HARNESS_GATE_NATIVE_ACCEPTANCE_ROOT=\"$RUNNER_TEMP/native-acceptance\" NATIVE_PLUGIN_BINARY=\"$GITHUB_WORKSPACE/plugins/rust-native-output/$NATIVE_ASSET\" NATIVE_DRIVER=\"$GITHUB_WORKSPACE/plugins/target/native-driver/debug/harness-gate-rust-native-driver$NATIVE_SUFFIX\" NATIVE_DRIVER_SYSROOT=\"$(rustc --print sysroot)\" HARNESS_GATE_NATIVE_POLICY_BINARY=\"$RUNNER_TEMP/core/bin/$CORE_ASSET\" HARNESS_GATE_PRESETS_DIR=\"$RUNNER_TEMP/core/presets\" PYTHONPATH=\"$GITHUB_WORKSPACE/plugins/rust-native-plugin$(python3 -c 'import os;print(os.pathsep,end=\"\")')$GITHUB_WORKSPACE/plugins/rust-native-plugin/tests$(python3 -c 'import os;print(os.pathsep,end=\"\")')$RUNNER_TEMP/core/tools/quality\" python3 accept.py",
+      "acceptance": "native"
     },
     "test_native_artifact_paths": {
       "sha256": "970522363180ddd259378a04fec48a0c654f076f69f98c9f68e1a0bfef5f5570",
@@ -24,7 +38,8 @@
         "macos-amd64",
         "macos-arm64",
         "windows"
-      ]
+      ],
+      "acceptance": "native"
     },
     "test_rust_native_classify": {
       "sha256": "2a17af6780549c2dd22931746322147d0827f3bf49f00db5956d33762e2a0182",
@@ -32,14 +47,833 @@
       "command": "python3 plugins/rust-native-plugin/accept.py (registry native acceptance environment)",
       "platforms": [
         "linux"
+      ],
+      "acceptance": "native"
+    },
+    "test_rust_collector_contract": {
+      "sha256": "7e58f991221785996da3849597e1eb9eef93f2495e0ff5b7f2f969d26c809f47",
+      "path": "compatibility/legacy-core/snapshot/tools/quality/tests/test_rust_collector_contract.py",
+      "command": "python3 compatibility/legacy-core/run.py --report \"$RUNNER_TEMP/legacy-compatibility.json\"",
+      "acceptance": "legacy",
+      "methods": [
+        {
+          "method": "test_rust_collector_contract.DeliveryManifestTests.test_exact_tuple_and_empty_production_matrix",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_contract.DeliveryManifestTests.test_host_configuration_schema_is_explicit_and_versioned",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_contract.DeliveryManifestTests.test_malformed_manifest",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_contract.DeliveryManifestTests.test_receipt_required_and_duplicate_tuple_rejected",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_contract.DeliveryManifestTests.test_relocation_never_establishes_history_equivalence",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_contract.DeliveryManifestTests.test_unknown_combinations_and_wrong_tools_fail_before_sampling",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_contract.MeasurementContractTests.test_all_capability_states_remain_distinct_without_invented_values",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_contract.MeasurementContractTests.test_incomplete_and_operational_errors_never_supply_records",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_contract.MeasurementContractTests.test_legacy_certify_exit_keeps_threshold_failure",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_contract.MeasurementContractTests.test_legacy_nonzero_with_partial_json_is_not_success",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_contract.MeasurementContractTests.test_low_coverage_is_complete_facts_without_verdict",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_contract.MeasurementContractTests.test_native_missing_evidence_cannot_be_legacy_threshold_success",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        }
+      ]
+    },
+    "test_rust_collector_delivery": {
+      "sha256": "e9089f217ae2b8c5c7453f4854f02b5d8509959725d83f36bb11952597e55e54",
+      "path": "compatibility/legacy-core/snapshot/tools/quality/tests/test_rust_collector_delivery.py",
+      "command": "python3 compatibility/legacy-core/run.py --report \"$RUNNER_TEMP/legacy-compatibility.json\"",
+      "acceptance": "legacy",
+      "methods": [
+        {
+          "method": "test_rust_collector_delivery.ObservedDeliveryTests.test_host_configuration_changes_preserve_immutable_code_checks",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_delivery.ObservedDeliveryTests.test_pinned_metadata_rejects_changed_duplicate_and_symlink_bytes",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_delivery.ObservedDeliveryTests.test_relocated_capture_is_not_series_equivalence",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_delivery.ObservedDeliveryTests.test_unconfigured_delivery_does_not_probe_or_certify",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_delivery.ObservedDeliveryTests.test_wrong_core_bytes_are_rejected_before_executing_them",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        }
+      ]
+    },
+    "test_rust_collector_runtime": {
+      "sha256": "8c1edfaad51f3bd6d98666c5290acdafbab82fe980f611a41ab9f03df221dd49",
+      "path": "compatibility/legacy-core/snapshot/tools/quality/tests/test_rust_collector_runtime.py",
+      "command": "python3 compatibility/legacy-core/run.py --report \"$RUNNER_TEMP/legacy-compatibility.json\"",
+      "acceptance": "legacy",
+      "methods": [
+        {
+          "method": "test_rust_collector_runtime.BuildInputTests.test_changed_source_and_unsafe_destination_reject_before_assembly",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_runtime.InstalledLayoutTests.test_installed_runtime_resolves_the_host_contract_schema",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_collector_runtime.StandaloneNativeTests.test_actual_core_authenticates_private_collector_and_rejects_replay",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "held",
+          "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+        },
+        {
+          "method": "test_rust_collector_runtime.StandaloneNativeTests.test_actual_core_configures_installed_collector_once_and_rejects_replay",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "held",
+          "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+        },
+        {
+          "method": "test_rust_collector_runtime.StandaloneNativeTests.test_actual_core_rejects_malformed_output_once_and_consumes_nonce",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "held",
+          "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+        },
+        {
+          "method": "test_rust_collector_runtime.StandaloneNativeTests.test_complete_fixture_classifies_with_private_reexport",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "held",
+          "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+        },
+        {
+          "method": "test_rust_collector_runtime.StandaloneNativeTests.test_doctor_and_unknown_collect_never_sample",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "held",
+          "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+        },
+        {
+          "method": "test_rust_collector_runtime.StandaloneNativeTests.test_private_c_dependency_compiles_archives_and_links",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "held",
+          "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+        },
+        {
+          "method": "test_rust_collector_runtime.StandaloneNativeTests.test_private_cargo_capture_preserves_incomplete_classification",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "held",
+          "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+        },
+        {
+          "method": "test_rust_collector_runtime.StandaloneNativeTests.test_private_generic_projection_is_decided_by_actual_core",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "held",
+          "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+        },
+        {
+          "method": "test_rust_collector_runtime.StandaloneNativeTests.test_real_low_coverage_is_completion_and_legacy_exit_is_preserved",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "held",
+          "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+        },
+        {
+          "method": "test_rust_collector_runtime.StandaloneNativeTests.test_released_core_evaluates_typed_private_measurements",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "held",
+          "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+        },
+        {
+          "method": "test_rust_collector_runtime.StandaloneNativeTests.test_wrong_anchor_has_no_measurement",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "held",
+          "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+        }
+      ]
+    },
+    "test_rust_native": {
+      "sha256": "0528d2884bc6d85f52cd2de54ad11d920482e493f8bead0aa4e93fd4c5706aa1",
+      "path": "compatibility/legacy-core/snapshot/tools/quality/tests/test_rust_native.py",
+      "command": "python3 compatibility/legacy-core/run.py --report \"$RUNNER_TEMP/legacy-compatibility.json\"",
+      "acceptance": "legacy",
+      "methods": [
+        {
+          "method": "test_rust_native.NativeEvidenceTests.test_cfg_selection_and_history_identity",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_native.NativeEvidenceTests.test_duplicate_omitted_ambiguous_and_unowned_regions",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_native.NativeEvidenceTests.test_expansion_context_omission_is_rejected",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_native.NativeEvidenceTests.test_mir_omission_with_new_manifest_is_rejected",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_native.NativeEvidenceTests.test_real_closure_async_generic_and_macro_mapping",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_native.NativeEvidenceTests.test_real_derive_cannot_claim_generated_functions_are_absent",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_native.NativeEvidenceTests.test_retained_native_artifacts_replay_after_relocation",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_rust_native.NativeEvidenceTests.test_tampering_and_new_hash_cannot_invent_native_counts",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        }
+      ]
+    },
+    "test_typescript_acceptance": {
+      "sha256": "f7883f72732e115408f9c7d63bec293e1cc227a0f23488b96eb51dab82d3b32c",
+      "path": "compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_acceptance.py",
+      "command": "python3 compatibility/legacy-core/run.py --report \"$RUNNER_TEMP/legacy-compatibility.json\"",
+      "acceptance": "legacy",
+      "methods": [
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_ambiguous_parser_symbols",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_crap_is_explicitly_unsupported_with_no_invented_value_or_series",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_duplicate_native_symbols",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_failed_tool_incomplete_collection_and_undeclared_native_artifact",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_input_tampering_staleness_malformed_parser_and_path_escape",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_missing_native_coverage",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_missing_source_maps",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_nonzero_exit_timeout_and_malformed_stdout_fail_closed",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_real_mixed_subjects_and_all_capabilities_through_both_transports",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_rebound_unknown_method_identity_and_duplicate_scope_fail_closed",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_receipted_source_map_failure",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_replay_binding_rejects_changed_context_collector_and_scope",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_request_contract_rejects_unknown_duplicate_or_scoped_capabilities",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_response_omission_tampering_undeclared_artifact_and_provenance",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_single_capability_request_preserves_existing_measurement_series",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_tampered_source_map_inventory",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_zero_denominator_remains_explicitly_unavailable",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.NativeWindowTests.test_changed_semantic_series_blocks_without_rewriting_historical_debt",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.NativeWindowTests.test_disallowed_legacy_debt_fails_and_keeps_ledger",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.NativeWindowTests.test_missing_and_duplicate_base_evidence_block_legacy_debt",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.NativeWindowTests.test_native_receipts_match_retained_git_parent_and_source_bytes",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.NativeWindowTests.test_required_unsupported_metrics_never_gain_numeric_defaults",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_acceptance.NativeWindowTests.test_two_real_pairs_exact_counters_outcomes_and_debt",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        }
+      ]
+    },
+    "test_typescript_advisory": {
+      "sha256": "4d67af9a2bcc9e0e4414ee6fb49d3ffd9a1a26a3cfaf25e826c781d26982a506",
+      "path": "compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_advisory.py",
+      "command": "python3 compatibility/legacy-core/run.py --report \"$RUNNER_TEMP/legacy-compatibility.json\"",
+      "acceptance": "legacy",
+      "methods": [
+        {
+          "method": "test_typescript_advisory.AdvisoryTests.test_changed_contract_archive_is_rejected_before_extraction",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_advisory.AdvisoryTests.test_failed_replay_retains_machine_readable_failure_and_inventory",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        }
+      ]
+    },
+    "test_typescript_contracts": {
+      "sha256": "4cc116aeaedd251cd0901cc44dd59e1198bca1c8f6780d05ec1ac5c754bde02d",
+      "path": "compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_contracts.py",
+      "command": "python3 compatibility/legacy-core/run.py --report \"$RUNNER_TEMP/legacy-compatibility.json\"",
+      "acceptance": "legacy",
+      "methods": [
+        {
+          "method": "test_typescript_contracts.TypeScriptContractTests.test_cli_returns_nonzero_for_break_and_missing_artifact",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_contracts.TypeScriptContractTests.test_equal_generated_bytes_with_changed_input_digest_are_unavailable",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_contracts.TypeScriptContractTests.test_generic_policy_rejects_normalized_provenance_mismatch",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_contracts.TypeScriptContractTests.test_malformed_tool_output_is_not_zero_breaks",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_contracts.TypeScriptContractTests.test_measurement_failure_and_invocation_mismatch_even_with_rebound_receipt",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_contracts.TypeScriptContractTests.test_missing_tampered_and_extra_artifacts_fail_closed",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_contracts.TypeScriptContractTests.test_real_break_blocks_green_components_and_preserves_raw_relationships",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_contracts.TypeScriptContractTests.test_real_compatible_contract_and_current_client_pass",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_contracts.TypeScriptContractTests.test_receipt_and_caller_context_mismatch_fail_closed",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_contracts.TypeScriptContractTests.test_stale_or_missing_generated_client_cannot_pass",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_contracts.TypeScriptContractTests.test_tool_facts_do_not_decide_generic_policy",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        }
+      ]
+    },
+    "test_typescript_reference": {
+      "sha256": "eb8cf4a15a741e32ce0b2d4ebf0ee5f30790da37c38ea1b6317d72cc9f55b642",
+      "path": "compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_reference.py",
+      "command": "python3 compatibility/legacy-core/run.py --report \"$RUNNER_TEMP/legacy-compatibility.json\"",
+      "acceptance": "legacy",
+      "methods": [
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_crap_is_explicitly_unsupported_with_no_invented_value_or_series",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_failed_tool_incomplete_collection_and_undeclared_native_artifact",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_input_tampering_staleness_malformed_parser_and_path_escape",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_nonzero_exit_timeout_and_malformed_stdout_fail_closed",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_real_mixed_subjects_and_all_capabilities_through_both_transports",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_rebound_unknown_method_identity_and_duplicate_scope_fail_closed",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_receipted_source_map_failure",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_replay_binding_rejects_changed_context_collector_and_scope",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_request_contract_rejects_unknown_duplicate_or_scoped_capabilities",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_response_omission_tampering_undeclared_artifact_and_provenance",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_single_capability_request_preserves_existing_measurement_series",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_reference.TypeScriptCollectorTests.test_zero_denominator_remains_explicitly_unavailable",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        }
+      ]
+    },
+    "test_typescript_semantics": {
+      "sha256": "b98e9fe1bf1fdaa7d64cc4515d0102084a76e1f93509e3d5c4ceda8c798b675f",
+      "path": "compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_semantics.py",
+      "command": "python3 compatibility/legacy-core/run.py --report \"$RUNNER_TEMP/legacy-compatibility.json\"",
+      "acceptance": "legacy",
+      "methods": [
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_ambiguous_and_incomplete_parser_joins_rejected",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_basename_unknown_and_fabricated_native_coordinates_rejected",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_bundled_map_keeps_exactly_one_original_source_per_subject",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_duplicate_json_provenance_fields_are_ambiguous",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_duplicate_method_names_and_anonymous_arrows_have_unique_original_identities",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_every_tool_boundary_and_normalization_change_breaks_series_compatibility",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_exact_native_file_and_function_counters",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_invalid_and_incomplete_counters_do_not_become_defaults",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_missing_ambiguous_map_and_emitted_linkage_rejected",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_native_missing_map_is_not_perfect_coverage",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_partial_mapping_cannot_supply_measured_subjects",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_receipted_incomplete_or_invalid_collection_still_fails_closed",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_source_map_semantic_negatives_even_if_artifacts_are_rehashed",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_stale_or_missing_request_sources_rejected",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_tampered_native_archive_or_parser_index_rejected_at_entry",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_template_and_generated_multisource_remain_unsupported",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_utf16_coordinates_and_invalid_columns",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        },
+        {
+          "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_zero_denominator_has_no_numeric_value",
+          "owner": "GateProbes",
+          "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+          "execution": "required",
+          "reason": "Original test body and fixtures preserved."
+        }
       ]
     }
   },
   "guarded_sources": {
+    "schema/collector-protocol.schema.json": "a3c23c578783dd4cbb1f4be3bb41a5c3552aee563e89116a5ff53fd4c159e545",
+    "tools/harness-gate/fixtures/preset-compat/rust-api.flow.toml": "450683bc424d105454f5afa00e1cf8e05ccd1e51aac0b3096afdd70ca60d081c",
     "tools/harness-gate/presets/default.secrets.toml": "f50ee579024104cc20818cd628d1cad42404a6d3c53e11cdb85d464afefe3345",
     "tools/harness-gate/presets/empty.audit.toml": "5f8421315aac8c39fb6ad09dba572297b5ca264f111b231ad46f04e836f30adf",
-    "tools/harness-gate/fixtures/preset-compat/rust-api.flow.toml": "450683bc424d105454f5afa00e1cf8e05ccd1e51aac0b3096afdd70ca60d081c",
+    "tools/quality/ci_quality.py": "391ded3e2680874d5787761490fab9193bd959689e691fce6a51354bfa42fe5b",
     "tools/quality/collector_runner.py": "9dc0321243e388295572c49c0848310da0ff8bf7ba29f006446ed102b8646dcb",
+    "tools/quality/complexity_analyzer.py": "b39907e62acfc4b4bec4d6db2b054053b2d7ffe702528bf60e8f1e30874b88ab",
+    "tools/quality/critical_paths.py": "16bbdf441308c2a3ef56bfa748b6c8a447d059c19798a5b84ff5218655a8f3b1",
+    "tools/quality/critical_paths_collect.py": "28de3377e37ef9e7804ebb8248dfd2675beb0c30923fcfd67c9dbdfd9d99aed7",
+    "tools/quality/cross_component.py": "a861c3e3f3ab9a79a036c6ac41a1a0883fef553a3723878d721d2032f3833111",
+    "tools/quality/fixtures/adapter/adapter_fixture.py": "25d7d8459fee19dc5b64ddb2d5dfdc439ca0b3e6d84bc55d06bd5529fd7f5ed7",
+    "tools/quality/fixtures/benchmark/benchmark_worker.py": "dfbf93562b9909e7fb240997d948aa69b97ab88675f2d5526bc46804134d5fd5",
+    "tools/quality/fixtures/collectors/synthetic.py": "fcce97ee01293d3a507d3c41251abb33404ab6cf9f703ce309eecffe4b2ac5c9",
+    "tools/quality/fixtures/contracts/sources/worker/src/run.py": "a40c04aa22c369fa354406d31613f110878d800e33ddd428e124b513762b3635",
+    "tools/quality/fixtures/core-typescript-policy.json": "fcdae780571dbe46c1c8433a74a3f9967398baf6bedc288ae6086d32711e86b3",
+    "tools/quality/fixtures/generic-core/authority.py": "d0b4a2cc1ae0edc2ce4271d116f9d20586c0ff2d5f1612233a7ceb812274e671",
+    "tools/quality/fixtures/generic-core/differential.py": "2449feadd88a7cd3267a74abda8c967e5bd539ca352e3952897e48e324d897c9",
+    "tools/quality/fixtures/generic-core/profile_oracles.py": "af416eb7d9eb6aaa1c731b6b6aca487d9a3b55b77034f8a00426e54147e0777b",
+    "tools/quality/fixtures/generic-core/replay.py": "2368be42324e77233c7ea34d52685025ccc6e8cb19e153aeefabc668efe2deed",
+    "tools/quality/fixtures/json-results/error_object.py": "ef2a93b13ea16a757d958985d56d17deed871efa87c609648a9c9591570a2362",
+    "tools/quality/fixtures/project-model/head-sources/worker/src/run.py": "d9a807f2791a173ceeab98bdef93dd6ca735c10ac0b07cf0ed070b2fcb27ba48",
+    "tools/quality/fixtures/project-model/sources/worker/src/run.py": "a40c04aa22c369fa354406d31613f110878d800e33ddd428e124b513762b3635",
     "tools/quality/fixtures/rust-native/cargo-complete/Cargo.lock": "40bb4824db9814094513a24216188e8127d6514cece5e593d922fc8ebc28ec74",
     "tools/quality/fixtures/rust-native/cargo-complete/Cargo.toml": "cd28b127d7a5f47d8a9155a7c84769b5c83833b853c9454424cf9674f7ac065c",
     "tools/quality/fixtures/rust-native/cargo-complete/src/inactive.rs": "375b1683cae6addf570f9082be9e45d3e1b0cc41669508a9d6dd06ef688ababb",
@@ -47,14 +881,94 @@
     "tools/quality/fixtures/rust-native/cargo-complete/src/main.rs": "cc78ca59ff9b603f4dc02bb664c4c63b54db4f834c08b152e67bccc7e75de8ec",
     "tools/quality/fixtures/rust-native/cargo-complete/tests/contract.rs": "92711f9d094b6db6941b149560dc0dba69dad9ffb208aeca546da07e85642dd2",
     "tools/quality/fixtures/rust-native/driver_complete.rs": "a8be4cef00ed15911adb43f65662509eb9ace34a0fd98f5af2fd012b092d2aa3",
+    "tools/quality/fixtures/rust-native/file-classification/Cargo.lock": "5a6526e079c2564157287551a58ba19b60e740fd289e9bab1fe33f7ab9901e10",
+    "tools/quality/fixtures/rust-native/file-classification/Cargo.toml": "b714223e8d6c1027f31af25c525e8415bc1aa995acf3c95f70bb6a0ec5458e84",
+    "tools/quality/fixtures/rust-native/file-classification/src/conditional.rs": "325564756efaa8868f52f1af916cf0bee2340336fc9fb033e162a95bb278f2ee",
+    "tools/quality/fixtures/rust-native/file-classification/src/declarations.rs": "c05d9ec7bfc6254b9f336905b4ec00b5c24da53a6cb60701be532b5501d93824",
+    "tools/quality/fixtures/rust-native/file-classification/src/derived.rs": "38e329a72793c54e4c3e5bfd24a4ec6f2dd2a8fda6d11051260c26ca89541d9c",
+    "tools/quality/fixtures/rust-native/file-classification/src/forward/child.rs": "a4c4881f545f7711c0bbe7c09e29e49eb1c2c62e83eecff0fd24dc0bc98c17e9",
+    "tools/quality/fixtures/rust-native/file-classification/src/forward/mod.rs": "58c1c45d765e4298d06789132f156326b9c24c11404915d534f8ce95d377a3d0",
+    "tools/quality/fixtures/rust-native/file-classification/src/generated.rs": "af792d42ccea40987bd6a35e6722993e5c71b5c095f9c2dcd7137fb009619ed4",
+    "tools/quality/fixtures/rust-native/file-classification/src/lib.rs": "dd46330fcb8ac649615a84a938f4368cc612cb7eb862fe80b22979ae66a53c51",
+    "tools/quality/fixtures/rust-native/file-classification/src/local.rs": "e75aedfd03186fc1b3d53296b7b6ac819a3ea26e734d782acc1b083336eac60e",
+    "tools/quality/fixtures/rust-native/file-classification/src/markers.rs": "d52e4339232e8884efffde3a0da88c30968cf76012c988b514a9ec3c8e087077",
+    "tools/quality/fixtures/rust-native/file-classification/src/orphan.rs": "207647cdc395b5bdedc3d8bcbc27d838ee5ce0833dc413ab63bf47e700a456df",
+    "tools/quality/fixtures/rust-native/file-classification/src/unexecuted.rs": "a896a4821e7a1990fff9def38462721351019fe1245ed010afedcf2e80ad752e",
+    "tools/quality/fixtures/rust-native/file-classification/tests/contract.rs": "583f7d479180b9806a75a03ab0e268f744fadd3fe61879628cca25c79ecfc66a",
+    "tools/quality/fixtures/typescript-angular/collect.py": "478cdb948510fe44b7a43b1929698941660bbd8e3f5290ef0b09123a0df5cd64",
+    "tools/quality/function_risk.py": "474721231723fe5ca1ee3c50033a15319f59bbb152f755ce366d800e006c3abc",
     "tools/quality/harness_evidence.py": "fcb07569d8fa386fb11324003ba939a9bf2522a7baf60a7ef9194ac703414368",
+    "tools/quality/policy_engine.py": "a3ac2948eec2a27b3968e531c2e6f9e7f797afd832f819190734aa545388e619",
+    "tools/quality/policy_ratchet.py": "90eeb951393bed7393d5ed1a223c533e18c986ecb63ad06c7fbceeecef640620",
+    "tools/quality/production_coverage.py": "170d7d7470161a25380fdfaf1d0ca62c453e988202ad23dd54ac7b4c548683f1",
     "tools/quality/project_model.py": "d1d493bbd4566b8aaf469d0f28fdee89a3c3a3e3ebfe3e1068b9d93e90d1b196",
+    "tools/quality/project_report.py": "ff1a83d66fa63f988faad8a586e2f8ce9ad7c2f37d4e39c83841da6662c2acd5",
+    "tools/quality/quality_common.py": "1b908a7e791fc6df4a5f2d5112a0180c35a6e39a1e8f932a95672d24c78e4cf8",
     "tools/quality/quality_evidence.py": "8938ce2fc2d49caf2e3f3dac284fe3d07a13a3da9cbd8e1e729f011e2d5d145e",
+    "tools/quality/rust_reference.py": "73a76252eebbd1534cfae8d395c70c03a862de3c17908c721eee4d6c5a179a75",
+    "tools/quality/schema/capability-requirements.schema.json": "763da8a3a15cde9c338e8ca076e52488f5d0795ff61e05f8018b61cdc63c40ea",
+    "tools/quality/schema/harness-evidence.schema.json": "fbd0b737f73f8d65f196581859fcdf18d8d47da522c98d1020c22d2e0660d406",
+    "tools/quality/schema/policy-exceptions.schema.json": "da3c0439d1a7484cef7571e9fd5bd5e3446f64419d51a7556ea69c7a004ead78",
+    "tools/quality/schema/policy.schema.json": "3d3cb56ee6f5010bcc0a1a27284fcac69fb6cc59d91471d853af2bd570d82ba6",
+    "tools/quality/schema/project-config.schema.json": "1c8c334f3eedee4d96d97136d4f8e8aad00631f9b34feb5c6935047a29dd4cee",
+    "tools/quality/schema/project-model.schema.json": "fd6274e0f1f03a02c9ee701eccde3f117ff6f75d5d145e18a3f835995449282a",
+    "tools/quality/schema/quality-evidence.schema.json": "ceb99d0e3c76a482985f064ce547019864353838d6eb040d4f54d2b91bfbad11",
+    "tools/quality/schema/rust-collector-delivery.schema.json": "25b196707810bb48e36f7ee7740f459126f0b1f958af4466517f934b8d764266",
+    "tools/quality/schema/rust-collector-plugin.schema.json": "432ee89d57eb08b1a0606d544391d8d5ef704948fc4a37d9f3bd96246a4ed8ef",
+    "tools/quality/schema/rust-project-collector-binding.schema.json": "59cac4184eefc1ae3dc227b0c706d2748df761fc62bf7304dd4c6407761effee",
+    "tools/quality/schema/subject-mappings.schema.json": "6a139b941278287af42f220004d4761742ce8d22c7b3bbcf9148fc9405510eaa",
+    "tools/quality/source_measure.py": "52ecd7e33018ca3480d9aa78099e6037774b5e4f807265111e8f977c57fe5f8f",
+    "tools/quality/tests/core_typescript_fixture.py": "9c81b2445eb84da8f702a740eb4bb850cbe5695350a3ed632ec2b925f91f20b5",
+    "tools/quality/tests/native_policy_fixture.py": "02edf6dff3b4b7ccba3afcde1a09ec0f40b0565e8afbf638f572ece302d934af",
+    "tools/quality/tests/test_preset_packs.py": "1ccb8483bf68be73358af635ca4a491a1561a28db96636441080f59735983547",
+    "tools/quality/tests/test_typescript_policy.py": "a6f8a07ae875da1c080bfc44eebd30ccfb27a3e18f8a749c57f7b6ee7a50c30b",
+    "tools/maintenance/test_data.py": "ab097d97d5534a3cfd19692f2813db34b65c537afc33fea7dbe514333991b61f",
+    "tools/maintenance/restore_evidence.py": "57a52f698d7ca180dcdead72c8aceb51c0b89a256086accd8983234547a999a3",
+    "test-data/manifest.json": "5672aa4651823f99b8bf55d282bb50669c78fedbebd0c0c5033d63b1fc7247b9",
+    "tools/quality/fixtures/generic-core/manifest.json": "9f5556f20160cac696d361e7d51c8a5ebf28d44edb7ce36ffd64ae0724c142a2",
+    "tools/quality/tests/test_policy_engine.py": "18e0a4ceef15bce206a2a43b4a299e7bce5214ce224ac0dd8da1c9e69e6cb9f2"
+  },
+  "transferred_sources": {
+    "tools/quality/build_rust_collector.py": "cb5b2abf75c0ecd61f8c4a82ef9a026c763c14d448202fc164f9011fa82a7870",
+    "tools/quality/collect_typescript_contracts.py": "7bcc45f52f5a2d8fdebc6294523ed9101f33f10a9e3eaec8a87bcf31e75f82c0",
+    "tools/quality/http-json-contract/LICENSE": "5b9835780a3cd7518d7637c6730a26c1141d24a00a413364264c2a4091c0e6d9",
+    "tools/quality/http-json-contract/README.md": "faf3a461d7f23ccaebff4cdb41fe723c0cdaa52c6703072a00e2f09ea28976bd",
+    "tools/quality/http-json-contract/business.test.cjs": "3a53c9bff28c74279a5beb9de26a62be98b3ab3b4a1d7749c108ebede00c306d",
+    "tools/quality/http-json-contract/cli.cjs": "a4c042caad8ad55850007c905697608f36d31b15913d5a710810a4001044cdba",
+    "tools/quality/http-json-contract/clients.cjs": "de8fe3c9b83169aa0f9cfdc99bdd6fd16a8b0722c761719cf718fadc3b0a079b",
+    "tools/quality/http-json-contract/legacy-measure.cjs": "8c53bfca159e7659fdba146a6d43919a4f7790677a144905fdb0b0fc50ebc45e",
+    "tools/quality/http-json-contract/measure.cjs": "68784d2faa75af66461aa1d87b92e95b657c8639d79055e55f273767ec1ed21b",
+    "tools/quality/http-json-contract/npm-shrinkwrap.json": "a7a3625e87a356dcffe77aa5205218c9c8f838decdb5d8cbf596c705e221a164",
+    "tools/quality/http-json-contract/package.json": "0e41e26d81c434ea45c151338549d9f658fae26fec3f6c9cc17ab5b6169a366f",
+    "tools/quality/http-json-contract/project.cjs": "4abc0644f5acdcee9b3d65cc5b6e9a9f4a2761375861132a054ef227d6cf5ea4",
+    "tools/quality/http-json-contract/protocol.cjs": "58c5cd96bc550c7b8f208386e44bb7370cc6f70e3e6601bdf70e057072fe237e",
+    "tools/quality/http-json-contract/schema.cjs": "f8cd588ac2deac396d070e3f798aaad27919a8de2cc5f6fdfbba3957b054089a",
+    "tools/quality/http-json-contract/strict-json.cjs": "853cc56381c2ed275d5f6c4dd25a75ea80edca89e030b79bdc447f6258181d09",
+    "tools/quality/http-json-contract/test.cjs": "82831c3dcc9e6ee86cb2540525703842f9aef699bbdafcd684d769b74fe2ef13",
+    "tools/quality/rust-collector-runtime/cc": "79aaf8eafe6590db1883f0924fd394be5ec8a19a193f557ba5ac69e15ec0f755",
+    "tools/quality/rust-collector-runtime/harness-gate-rust-collector": "d1f88ff60b1bab3c46b425cc4901fa1c6e3cd732d5d3008aa8b5264639459bc2",
+    "tools/quality/rust-collector-runtime/native-wrapper": "0994684d7fbeeb47836eaa03df4e022ec61f4478d5a2127ce2481e72604a43a4",
+    "tools/quality/rust-collector-runtime/native_wrapper.py": "a8ff050292426f9d1a974ce8724c82c6cc1df4700e745f406c6f76ee1ee33c38",
+    "tools/quality/rust-collector-runtime/pkg-config": "8a22fdfd82c23fabb772b06ea23e8f3b824dd95f0f672751d6e0649a52bfbe65",
+    "tools/quality/rust-measure/Cargo.lock": "bcdbad54b75431ca01275eb9a671334c5bf9008958d5edd1d16956d419db66a8",
+    "tools/quality/rust-measure/Cargo.toml": "b906c51b311e34150d15b55ad0d32ad8d65735baf3052f3c723c4bced4e98044",
+    "tools/quality/rust-measure/README.md": "9ee7e6564150ad4e4f7c9644ffbd4dd941b30ce25ba3f0bf7f13ca2c4c7d113b",
+    "tools/quality/rust-measure/plugin.json": "274a64a632ca22fae01b4f0f664e611838b251cd9ddc8cbb7789ac8637116cfa",
+    "tools/quality/rust-measure/src/configuration.rs": "cfd0b9f31855bdd492c456b6879752a067aa6e1c4c58148cac45db57afa2cf03",
+    "tools/quality/rust-measure/src/main.rs": "6b9707ecca94913a7528092adb606b03d45a5bb778a25d387221a1d28f3309cc",
+    "tools/quality/rust-measure/src/native.rs": "25253d0c21200bff991460e1bd64eec4b5b9a776cb759d6f0b4fe2fa3e7f681d",
     "tools/quality/rust-native-driver/Cargo.lock": "73e6a295bc1c4a4709e4efa684f1e00b5a5f0bcd04c51c7cebe66b04e8894666",
     "tools/quality/rust-native-driver/Cargo.toml": "3ccaa624ace4290a69b70b91bc0df99bd2462c86d8e620c2258e8709845a037d",
     "tools/quality/rust-native-driver/README.md": "709b0a3f1b837c71511f7a1c6f2755312e411490689f63937720eab001b2e906",
     "tools/quality/rust-native-driver/bootstrap.py": "65104b19e33132eefcfad05c38385a03c9d04ea8961008b5798a6019f68916dd",
     "tools/quality/rust-native-driver/src/main.rs": "09240d9beaa8adaddf8782870a0a433d5293f314e46e7b6bbfb788d3efa6be8a",
+    "tools/quality/rust-native-plugin/Cargo.toml": "3b88937f5f9e781f81c88a2bb1abe977c26f147a58055724cc95b519f7835765",
+    "tools/quality/rust-native-plugin/README.md": "a5001678a29834904566af4e08f68f4ee9347f9e8f7b34aed9b960231c3a9cd0",
+    "tools/quality/rust-native-plugin/accept.py": "bafb5290080e0260d3ad0c8e602c3a91c5339ed30da8b228e5628b1bb68c538f",
+    "tools/quality/rust-native-plugin/build.py": "6fd96f96038a4d0f565fac489ad6bd3583bdefe63d205541b5b6b7920f125df0",
+    "tools/quality/rust-native-plugin/launcher.rs": "5be0b4eb535bde2cf3c64f51997ebd1b4a654bab0e36fc6df159a72d7a906e83",
+    "tools/quality/rust-native-plugin/locked_notices.py": "b4c0bc48462d5b4106a9ff51b5d193fe4fc3a1f2ed4c7cc455d5a18633226319",
+    "tools/quality/rust-native-plugin/native_external.py": "64b5bafc0cce945aa8ef670ea4309c04c2d7af4f11d6e9ecde1e92c191e439b6",
     "tools/quality/rust-source-risk/.gitignore": "df7ee02ce7aaed623b63ce44a9567a7017ff8e4957c3b2ad6e6e8624128d4e7d",
     "tools/quality/rust-source-risk/LICENSE": "5b9835780a3cd7518d7637c6730a26c1141d24a00a413364264c2a4091c0e6d9",
     "tools/quality/rust-source-risk/README.md": "823e2ef8229089b222f8d3fe4cbab90b6ed102c8a7b28a8ee52c111403d5b019",
@@ -79,101 +993,77 @@
     "tools/quality/rust_collector_delivery.py": "bbfabb192a8534ae31d9678b106a6a9758dc9c6fa31c45baff2d213bed14efd9",
     "tools/quality/rust_collector_entry.py": "d13233de8cb94692bd916ef9e9c0f86ac0ebb39fbc81d30e9fd6883fc24cbdc5",
     "tools/quality/rust_collector_project.py": "b9873d9fab94c88f7eb1638ea845d7a7d5093af6a0d8eef2b6e1c53be0e22b07",
+    "tools/quality/rust_native.py": "cafd5670a7d040f2beb7dbc5f5880825391bc19a6ccafece30e7bcd6b0ea5767",
     "tools/quality/rust_native_classify.py": "b952ae1c7c5ed335013387e314898cccacd813720c200ddcdffdba2dc08916e7",
     "tools/quality/rust_native_config.py": "4e1c80301839111098ffa17fb27830aabdd253f3088e0541b0884b24fb24edef",
     "tools/quality/rust_native_driver.py": "52c717a76e9e45d5e1524654312ed513872a30f32d545c67e9451b0fca9ae93b",
     "tools/quality/rust_native_policy.py": "7d44632b9f82284628ba6fe1742823b390644632a482a80f2bf0decd317cbcda",
-    "tools/quality/schema/harness-evidence.schema.json": "fbd0b737f73f8d65f196581859fcdf18d8d47da522c98d1020c22d2e0660d406",
-    "tools/quality/schema/project-model.schema.json": "fd6274e0f1f03a02c9ee701eccde3f117ff6f75d5d145e18a3f835995449282a",
-    "tools/quality/schema/rust-collector-delivery.schema.json": "25b196707810bb48e36f7ee7740f459126f0b1f958af4466517f934b8d764266",
-    "tools/quality/schema/rust-collector-plugin.schema.json": "432ee89d57eb08b1a0606d544391d8d5ef704948fc4a37d9f3bd96246a4ed8ef",
-    "tools/quality/schema/rust-project-collector-binding.schema.json": "59cac4184eefc1ae3dc227b0c706d2748df761fc62bf7304dd4c6407761effee",
-    "tools/quality/tests/native_policy_fixture.py": "02edf6dff3b4b7ccba3afcde1a09ec0f40b0565e8afbf638f572ece302d934af",
-    "tools/quality/tests/test_rust_collector_project.py": "456eba2acfb29f002039d94d929eea6359eb21aec35d2274ebc51ba7b5ea49e7",
-    "tools/quality/tests/test_rust_native_driver.py": "71e523d8c829bb476483ddb35b825e93a086eb9d8e1a5f2bbaf7575b9091bcc7",
+    "tools/quality/rust_native_replay.py": "a09d13ec1ae36919a9622e518d21c3fa37ac693f031b2a6bfc3ae9425d03bee9",
     "tools/quality/tests/test_native_artifact_paths.py": "970522363180ddd259378a04fec48a0c654f076f69f98c9f68e1a0bfef5f5570",
+    "tools/quality/tests/test_rust_collector_contract.py": "7e58f991221785996da3849597e1eb9eef93f2495e0ff5b7f2f969d26c809f47",
+    "tools/quality/tests/test_rust_collector_delivery.py": "e9089f217ae2b8c5c7453f4854f02b5d8509959725d83f36bb11952597e55e54",
+    "tools/quality/tests/test_rust_collector_project.py": "456eba2acfb29f002039d94d929eea6359eb21aec35d2274ebc51ba7b5ea49e7",
+    "tools/quality/tests/test_rust_collector_runtime.py": "8c1edfaad51f3bd6d98666c5290acdafbab82fe980f611a41ab9f03df221dd49",
+    "tools/quality/tests/test_rust_native.py": "0528d2884bc6d85f52cd2de54ad11d920482e493f8bead0aa4e93fd4c5706aa1",
     "tools/quality/tests/test_rust_native_classify.py": "2a17af6780549c2dd22931746322147d0827f3bf49f00db5956d33762e2a0182",
-    "tools/quality/fixtures/rust-native/file-classification/Cargo.toml": "b714223e8d6c1027f31af25c525e8415bc1aa995acf3c95f70bb6a0ec5458e84",
-    "tools/quality/fixtures/rust-native/file-classification/Cargo.lock": "5a6526e079c2564157287551a58ba19b60e740fd289e9bab1fe33f7ab9901e10",
-    "tools/quality/fixtures/rust-native/file-classification/tests/contract.rs": "583f7d479180b9806a75a03ab0e268f744fadd3fe61879628cca25c79ecfc66a",
-    "tools/quality/fixtures/rust-native/file-classification/src/unexecuted.rs": "a896a4821e7a1990fff9def38462721351019fe1245ed010afedcf2e80ad752e",
-    "tools/quality/fixtures/rust-native/file-classification/src/orphan.rs": "207647cdc395b5bdedc3d8bcbc27d838ee5ce0833dc413ab63bf47e700a456df",
-    "tools/quality/fixtures/rust-native/file-classification/src/markers.rs": "d52e4339232e8884efffde3a0da88c30968cf76012c988b514a9ec3c8e087077",
-    "tools/quality/fixtures/rust-native/file-classification/src/local.rs": "e75aedfd03186fc1b3d53296b7b6ac819a3ea26e734d782acc1b083336eac60e",
-    "tools/quality/fixtures/rust-native/file-classification/src/lib.rs": "dd46330fcb8ac649615a84a938f4368cc612cb7eb862fe80b22979ae66a53c51",
-    "tools/quality/fixtures/rust-native/file-classification/src/generated.rs": "af792d42ccea40987bd6a35e6722993e5c71b5c095f9c2dcd7137fb009619ed4",
-    "tools/quality/fixtures/rust-native/file-classification/src/derived.rs": "38e329a72793c54e4c3e5bfd24a4ec6f2dd2a8fda6d11051260c26ca89541d9c",
-    "tools/quality/fixtures/rust-native/file-classification/src/declarations.rs": "c05d9ec7bfc6254b9f336905b4ec00b5c24da53a6cb60701be532b5501d93824",
-    "tools/quality/fixtures/rust-native/file-classification/src/conditional.rs": "325564756efaa8868f52f1af916cf0bee2340336fc9fb033e162a95bb278f2ee",
-    "tools/quality/fixtures/rust-native/file-classification/src/forward/mod.rs": "58c1c45d765e4298d06789132f156326b9c24c11404915d534f8ce95d377a3d0",
-    "tools/quality/fixtures/rust-native/file-classification/src/forward/child.rs": "a4c4881f545f7711c0bbe7c09e29e49eb1c2c62e83eecff0fd24dc0bc98c17e9"
+    "tools/quality/tests/test_rust_native_driver.py": "71e523d8c829bb476483ddb35b825e93a086eb9d8e1a5f2bbaf7575b9091bcc7",
+    "tools/quality/tests/test_typescript_acceptance.py": "f7883f72732e115408f9c7d63bec293e1cc227a0f23488b96eb51dab82d3b32c",
+    "tools/quality/tests/test_typescript_advisory.py": "4d67af9a2bcc9e0e4414ee6fb49d3ffd9a1a26a3cfaf25e826c781d26982a506",
+    "tools/quality/tests/test_typescript_contracts.py": "4cc116aeaedd251cd0901cc44dd59e1198bca1c8f6780d05ec1ac5c754bde02d",
+    "tools/quality/tests/test_typescript_reference.py": "eb8cf4a15a741e32ce0b2d4ebf0ee5f30790da37c38ea1b6317d72cc9f55b642",
+    "tools/quality/tests/test_typescript_semantics.py": "b98e9fe1bf1fdaa7d64cc4515d0102084a76e1f93509e3d5c4ceda8c798b675f",
+    "tools/quality/typescript-risk/LICENSE": "5b9835780a3cd7518d7637c6730a26c1141d24a00a413364264c2a4091c0e6d9",
+    "tools/quality/typescript-risk/README.md": "506e9819a526eb7dcffbdb57f715949aa7c8bf07088f9eb68ace829bb95ee71f",
+    "tools/quality/typescript-risk/cli.cjs": "bb853a3fcc291d1323926759275c00853df71afbefe301c5bb6a8cfdcb03a241",
+    "tools/quality/typescript-risk/measure.cjs": "fc2ebbac4bc53a69ff52728d5e9aac041e065ca64c3011727b4de25969ce3461",
+    "tools/quality/typescript-risk/npm-shrinkwrap.json": "8ce31dd48b2892a551af822fa97b0f9bdb579e8cbcbd6a1ce4c92788dcfdd92e",
+    "tools/quality/typescript-risk/package.json": "2d6eab71d6d92c07841a85fb5c6d8893125ae2aac4f741b3a4d583afe32df25b",
+    "tools/quality/typescript-risk/plugin.json": "ba6be759693847020ebcc613e065aa4b8f43eef323dbbda5a4778350617b2c0d",
+    "tools/quality/typescript-risk/project.cjs": "cdbc09d3a332df4ce927f7ef63842c244a5e9b3d0f1de4a70901ad7ed5435fad",
+    "tools/quality/typescript-risk/protocol.cjs": "09575a6b7d9de8f86bd6ac4323d04c7a072f158e1338806058e5e83d8b644d26",
+    "tools/quality/typescript-risk/strict-json.cjs": "4ff65921404282e6caf8d9e289545a1b344545de3d56429ed62041354a009d43",
+    "tools/quality/typescript-risk/test-core.cjs": "86f4cb43c2b8c0cc279695d8c6265ce7c1106521b50ad3ebb5675fa1a1cc76d9",
+    "tools/quality/typescript-risk/test.cjs": "38ac62212eb90fa788de259000706a12b47f1c98d4199e494d95ab77c251ebb8",
+    "tools/quality/typescript_acceptance.py": "73d3f5a6cfb65b162863074c23815a6044fde64bd578423316e68503bb180342",
+    "tools/quality/typescript_advisory.py": "2f1bb5b82b5b83717db499240c84028d6c9a9a77bdcd1ae5b4d6d0033c9ab3d5",
+    "tools/quality/typescript_contracts.py": "be30cd166091ab263cf344620fdaaedd3cfaa7a4ff61c0f3cdd971606b3637e9",
+    "tools/quality/typescript_reference.py": "347ec0c980e77d519a5b956af49762f6be9a3d15d6d03a8ad697ded1186b490b",
+    "tools/quality/typescript_semantics.py": "71ac267b84ca2c2cb24f88ec0d03fd05df84d63d61687f40d3eea0cd642647bc"
   },
-  "native_test_evidence": {
-    "test_rust_collector_project": {
-      "test_methods": 8,
-      "entry": "plugins/registry.json:109",
-      "execution": "Helper tests (rust) invokes tests/zero_skip.py; any skipped or failed test fails the command.",
-      "core_inputs": {
-        "repository": "musutrade/Harness-Gate",
-        "revision": "8d93ea53c7cf8b314bda816eafe13209da25c742",
-        "paths": [
-          "tools/quality/collector_runner.py",
-          "tools/quality/harness_evidence.py",
-          "tools/quality/project_model.py",
-          "tools/quality/quality_evidence.py",
-          "tools/quality/schema/harness-evidence.schema.json",
-          "tools/quality/schema/project-model.schema.json"
-        ],
-        "byte_identical": true,
-        "execution": "GateProbes CI reads docs/ownership.json top-level source_commit and downloads these generic consumers and schemas before the eight project tests. The already guarded rust-project-collector-binding schema is supplied by the plugin."
-      }
-    },
-    "test_rust_native_driver": {
-      "test_methods": 10,
-      "entry": "plugins/registry.json:110",
-      "execution": "accept.py loads NativeDriverTests with real driver/sysroot/pinned Core on all four native platforms; any selected skip or failure fails acceptance."
-    },
-    "byte_identity_scope": "The original two delegated modules, eight native helper implementations, driver sources and fixture files match the pinned GateProbes revision byte for byte. The two additional modules have identical test-method ASTs; only recorded setup adaptations differ.",
-    "adaptations": [
-      {
-        "core_path": "tools/quality/tests/native_policy_fixture.py",
-        "path": "plugins/rust-native-plugin/tests/native_policy_fixture.py",
-        "core_sha256": "02edf6dff3b4b7ccba3afcde1a09ec0f40b0565e8afbf638f572ece302d934af",
-        "gateprobes_sha256": "8e38fdb271b268297491210663ae2fc2aaf7de2de297612667f37c2c1fc3168e",
-        "byte_identical": false,
-        "reason": "GateProbes imports os and reads the three Core templates from HARNESS_GATE_PRESETS_DIR instead of the sibling Core source tree; missing pinned templates fail explicitly. CI downloads them from its fixed Core source revision. This is an environment/path adaptation, not byte equivalence or a policy change. Core relocation from da9a108 changes only the rust-api template literal to fixtures/preset-compat; template bytes remain identical and frozen provenance is tested."
-      }
+  "transferred_trees": {
+    "tools/quality/rust-collector-runtime": [
+      "tools/quality/rust-collector-runtime/cc",
+      "tools/quality/rust-collector-runtime/harness-gate-rust-collector",
+      "tools/quality/rust-collector-runtime/native-wrapper",
+      "tools/quality/rust-collector-runtime/native_wrapper.py",
+      "tools/quality/rust-collector-runtime/pkg-config"
     ],
-    "retain_test_sources": "Keep the delegated test files as compatibility/helper source for now; legacy runtime tests still import binding_for/request_for from test_rust_collector_project.",
-    "test_native_artifact_paths": {
-      "test_methods": 3,
-      "platforms": [
-        "linux",
-        "macos-amd64",
-        "macos-arm64",
-        "windows"
-      ],
-      "test_method_asts_identical": true,
-      "core_sha256": "970522363180ddd259378a04fec48a0c654f076f69f98c9f68e1a0bfef5f5570",
-      "gateprobes_sha256": "0e725279fa863df130232b5e81b3f595c23aea14e0f29366f8e5540186cb8bee",
-      "setup_adaptations": "See GateProbes docs/native-test-handoff.json: packaged workspace wrapper, retained artifact root, canonical macOS temporary directory; assertions and fixtures unchanged."
-    },
-    "test_rust_native_classify": {
-      "test_methods": 8,
-      "platforms": [
-        "linux"
-      ],
-      "test_method_asts_identical": true,
-      "core_sha256": "2a17af6780549c2dd22931746322147d0827f3bf49f00db5956d33762e2a0182",
-      "gateprobes_sha256": "6d4add1950218e7aa6ea8d2fd2c65138a67ba5690b8390a0ffb1aa2a48a92f1f",
-      "setup_adaptations": "See GateProbes docs/native-test-handoff.json: packaged workspace wrapper, retained artifact root, canonical macOS temporary directory; assertions and fixtures unchanged."
-    },
-    "classification_limits": "The original Core job is Linux-only. Attempted Windows classification at run 38342558580 fails closed with unowned local compiler instance; Windows/macOS classification acceptance is not claimed or substituted for Linux execution."
-  },
-  "source_risk_step": {
-    "guarded_root": "tools/quality/rust-source-risk",
-    "path": "plugins/rust-source-risk",
-    "tracked_files": [
+    "tools/quality/rust-measure": [
+      "tools/quality/rust-measure/Cargo.lock",
+      "tools/quality/rust-measure/Cargo.toml",
+      "tools/quality/rust-measure/README.md",
+      "tools/quality/rust-measure/plugin.json",
+      "tools/quality/rust-measure/src/configuration.rs",
+      "tools/quality/rust-measure/src/main.rs",
+      "tools/quality/rust-measure/src/native.rs"
+    ],
+    "tools/quality/rust-native-driver": [
+      "tools/quality/rust-native-driver/Cargo.lock",
+      "tools/quality/rust-native-driver/Cargo.toml",
+      "tools/quality/rust-native-driver/README.md",
+      "tools/quality/rust-native-driver/bootstrap.py",
+      "tools/quality/rust-native-driver/src/main.rs"
+    ],
+    "tools/quality/rust-native-plugin": [
+      "tools/quality/rust-native-plugin/Cargo.toml",
+      "tools/quality/rust-native-plugin/README.md",
+      "tools/quality/rust-native-plugin/accept.py",
+      "tools/quality/rust-native-plugin/build.py",
+      "tools/quality/rust-native-plugin/launcher.rs",
+      "tools/quality/rust-native-plugin/locked_notices.py",
+      "tools/quality/rust-native-plugin/native_external.py"
+    ],
+    "tools/quality/rust-source-risk": [
       "tools/quality/rust-source-risk/.gitignore",
       "tools/quality/rust-source-risk/LICENSE",
       "tools/quality/rust-source-risk/README.md",
@@ -195,189 +1085,40 @@
       "tools/quality/rust-source-risk/test_protocol.py",
       "tools/quality/rust-source-risk/test_toolchain_compatibility.py"
     ],
-    "commands": {
-      "install": "cargo build --locked --release --manifest-path ast/Cargo.toml && cp ast/target/release/harness-gate-rust-source-inventory inventory",
-      "test": "cargo test --locked --manifest-path ast/Cargo.toml && RUST_SOURCE_INVENTORY=\"$PWD/inventory\" python3 -m unittest discover -s . -p \"test_*.py\" -v",
-      "contract": "RUST_SOURCE_INVENTORY=\"$PWD/inventory\" python3 -m unittest test_protocol -v && python3 contract.py --core-root \"$RUNNER_TEMP/core/tools/quality\"",
-      "package": "tar -czf \"harness-gate-rust-source-risk-$(python3 -c \"import json;print(json.load(open('plugin.json'))['version'])\")-linux-amd64.tar.gz\" plugin.py measure.py capture.py plugin.json LICENSE README.md inventory ast/Cargo.lock"
-    },
-    "test_files": {
-      "test_closures.py": {
-        "path": "plugins/rust-source-risk/test_closures.py",
-        "sha256": "f9a428ac4eea03895be7aaaae35b2097728078e833bb7a28935c32e157693fff",
-        "gateprobes_sha256": "f9a428ac4eea03895be7aaaae35b2097728078e833bb7a28935c32e157693fff",
-        "byte_identical": true
-      },
-      "test_compressed_artifacts.py": {
-        "path": "plugins/rust-source-risk/test_compressed_artifacts.py",
-        "sha256": "99b7c33a338802ceaa4c36d996efa4c0f041dadf5044ecf7cfc4c9215d4a740a",
-        "gateprobes_sha256": "99b7c33a338802ceaa4c36d996efa4c0f041dadf5044ecf7cfc4c9215d4a740a",
-        "byte_identical": true
-      },
-      "test_measure.py": {
-        "path": "plugins/rust-source-risk/test_measure.py",
-        "sha256": "81d8f2d2b3dbdb1b88ec75783e20e09cc299de6c37bc3103d2e966ff4f326a46",
-        "gateprobes_sha256": "81d8f2d2b3dbdb1b88ec75783e20e09cc299de6c37bc3103d2e966ff4f326a46",
-        "byte_identical": true
-      },
-      "test_preflight.py": {
-        "path": "plugins/rust-source-risk/test_preflight.py",
-        "sha256": "e241a7b0f282ec9c37b7634dbf5e9b72139b05d7bd65e7d9e36e2d74692c6bc1",
-        "gateprobes_sha256": "e241a7b0f282ec9c37b7634dbf5e9b72139b05d7bd65e7d9e36e2d74692c6bc1",
-        "byte_identical": true
-      },
-      "test_protocol.py": {
-        "path": "plugins/rust-source-risk/test_protocol.py",
-        "sha256": "227efb8ed0dcbae6821ffa52e0790ebcb6414e4773de9ef1915484f55f5d7142",
-        "gateprobes_sha256": "227efb8ed0dcbae6821ffa52e0790ebcb6414e4773de9ef1915484f55f5d7142",
-        "byte_identical": true
-      },
-      "test_toolchain_compatibility.py": {
-        "path": "plugins/rust-source-risk/test_toolchain_compatibility.py",
-        "sha256": "5437a95536d44bdf25b6d4873aad9f7dddb5f116a87a4b325d255e700899d0ab",
-        "gateprobes_sha256": "5437a95536d44bdf25b6d4873aad9f7dddb5f116a87a4b325d255e700899d0ab",
-        "byte_identical": true
-      }
-    },
-    "file_mapping": {
-      "tools/quality/rust-source-risk/.gitignore": {
-        "path": "plugins/rust-source-risk/.gitignore",
-        "sha256": "df7ee02ce7aaed623b63ce44a9567a7017ff8e4957c3b2ad6e6e8624128d4e7d",
-        "gateprobes_sha256": "df7ee02ce7aaed623b63ce44a9567a7017ff8e4957c3b2ad6e6e8624128d4e7d",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/LICENSE": {
-        "path": "plugins/rust-source-risk/LICENSE",
-        "sha256": "5b9835780a3cd7518d7637c6730a26c1141d24a00a413364264c2a4091c0e6d9",
-        "gateprobes_sha256": "5b9835780a3cd7518d7637c6730a26c1141d24a00a413364264c2a4091c0e6d9",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/README.md": {
-        "path": "plugins/rust-source-risk/README.md",
-        "sha256": "823e2ef8229089b222f8d3fe4cbab90b6ed102c8a7b28a8ee52c111403d5b019",
-        "gateprobes_sha256": "30e1f6c0953c18a962ad5dc7ee069929041d682ff4db7333ed42b94546c7a5e0",
-        "byte_identical": false
-      },
-      "tools/quality/rust-source-risk/acceptance.py": {
-        "path": "plugins/rust-source-risk/acceptance.py",
-        "sha256": "069b92d51dbe8a0d8d2a805198b912352e608e49cdb8fc0b8bfac774e6a6cf19",
-        "gateprobes_sha256": "069b92d51dbe8a0d8d2a805198b912352e608e49cdb8fc0b8bfac774e6a6cf19",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/ast/Cargo.lock": {
-        "path": "plugins/rust-source-risk/ast/Cargo.lock",
-        "sha256": "9ac91ee39be0492a04a3b227127c493b501ca1a578292ff35bc252ab52616c09",
-        "gateprobes_sha256": "9ac91ee39be0492a04a3b227127c493b501ca1a578292ff35bc252ab52616c09",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/ast/Cargo.toml": {
-        "path": "plugins/rust-source-risk/ast/Cargo.toml",
-        "sha256": "8cd71f4c82fdd9c4baf2c95a42f2cd2d2cb6b0b16d49d667dc4bbc256efd32a7",
-        "gateprobes_sha256": "8cd71f4c82fdd9c4baf2c95a42f2cd2d2cb6b0b16d49d667dc4bbc256efd32a7",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/ast/src/main.rs": {
-        "path": "plugins/rust-source-risk/ast/src/main.rs",
-        "sha256": "f4ba1cecd19cd73104f7d32e21dfcac58202ac5f02dc8272c78f27ce818d1673",
-        "gateprobes_sha256": "f4ba1cecd19cd73104f7d32e21dfcac58202ac5f02dc8272c78f27ce818d1673",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/ast/src/select.rs": {
-        "path": "plugins/rust-source-risk/ast/src/select.rs",
-        "sha256": "50b0b2aad436eef27781db03c09bda6bc37cf56302f35eea067383729eefb60d",
-        "gateprobes_sha256": "50b0b2aad436eef27781db03c09bda6bc37cf56302f35eea067383729eefb60d",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/capture.py": {
-        "path": "plugins/rust-source-risk/capture.py",
-        "sha256": "06de8e00a4efd77b5efafa80b625532e8d6f4e3844f3131a743ded253ee6c5de",
-        "gateprobes_sha256": "06de8e00a4efd77b5efafa80b625532e8d6f4e3844f3131a743ded253ee6c5de",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/fixtures/closure_without_counter.rs": {
-        "path": "plugins/rust-source-risk/fixtures/closure_without_counter.rs",
-        "sha256": "356f4f8771e80ce01790e1cc8ff83799281e73aac254114ac042cddb8c0bca08",
-        "gateprobes_sha256": "356f4f8771e80ce01790e1cc8ff83799281e73aac254114ac042cddb8c0bca08",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/fixtures/closures.rs": {
-        "path": "plugins/rust-source-risk/fixtures/closures.rs",
-        "sha256": "9adc005a9e6f16eb7ea1a44f2813c742f19a139f493aa512fd8de9e047f53ee6",
-        "gateprobes_sha256": "9adc005a9e6f16eb7ea1a44f2813c742f19a139f493aa512fd8de9e047f53ee6",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/measure.py": {
-        "path": "plugins/rust-source-risk/measure.py",
-        "sha256": "3e5fd31b01f81cabf2d3c1394cd5b267928c41af795acf3ae06f309598c626df",
-        "gateprobes_sha256": "3e5fd31b01f81cabf2d3c1394cd5b267928c41af795acf3ae06f309598c626df",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/plugin.json": {
-        "path": "plugins/rust-source-risk/plugin.json",
-        "sha256": "17b6f71b6da0559abe53102b746fbcb71d369689d28f81ed08ba60b1586dd367",
-        "gateprobes_sha256": "17b6f71b6da0559abe53102b746fbcb71d369689d28f81ed08ba60b1586dd367",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/plugin.py": {
-        "path": "plugins/rust-source-risk/plugin.py",
-        "sha256": "bbbb40a12e103daa4cb41778e483dc33d39a3ba223413fdc175f2faa99bb2ba2",
-        "gateprobes_sha256": "bbbb40a12e103daa4cb41778e483dc33d39a3ba223413fdc175f2faa99bb2ba2",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/test_closures.py": {
-        "path": "plugins/rust-source-risk/test_closures.py",
-        "sha256": "f9a428ac4eea03895be7aaaae35b2097728078e833bb7a28935c32e157693fff",
-        "gateprobes_sha256": "f9a428ac4eea03895be7aaaae35b2097728078e833bb7a28935c32e157693fff",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/test_compressed_artifacts.py": {
-        "path": "plugins/rust-source-risk/test_compressed_artifacts.py",
-        "sha256": "99b7c33a338802ceaa4c36d996efa4c0f041dadf5044ecf7cfc4c9215d4a740a",
-        "gateprobes_sha256": "99b7c33a338802ceaa4c36d996efa4c0f041dadf5044ecf7cfc4c9215d4a740a",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/test_measure.py": {
-        "path": "plugins/rust-source-risk/test_measure.py",
-        "sha256": "81d8f2d2b3dbdb1b88ec75783e20e09cc299de6c37bc3103d2e966ff4f326a46",
-        "gateprobes_sha256": "81d8f2d2b3dbdb1b88ec75783e20e09cc299de6c37bc3103d2e966ff4f326a46",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/test_preflight.py": {
-        "path": "plugins/rust-source-risk/test_preflight.py",
-        "sha256": "e241a7b0f282ec9c37b7634dbf5e9b72139b05d7bd65e7d9e36e2d74692c6bc1",
-        "gateprobes_sha256": "e241a7b0f282ec9c37b7634dbf5e9b72139b05d7bd65e7d9e36e2d74692c6bc1",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/test_protocol.py": {
-        "path": "plugins/rust-source-risk/test_protocol.py",
-        "sha256": "227efb8ed0dcbae6821ffa52e0790ebcb6414e4773de9ef1915484f55f5d7142",
-        "gateprobes_sha256": "227efb8ed0dcbae6821ffa52e0790ebcb6414e4773de9ef1915484f55f5d7142",
-        "byte_identical": true
-      },
-      "tools/quality/rust-source-risk/test_toolchain_compatibility.py": {
-        "path": "plugins/rust-source-risk/test_toolchain_compatibility.py",
-        "sha256": "5437a95536d44bdf25b6d4873aad9f7dddb5f116a87a4b325d255e700899d0ab",
-        "gateprobes_sha256": "5437a95536d44bdf25b6d4873aad9f7dddb5f116a87a4b325d255e700899d0ab",
-        "byte_identical": true
-      }
-    },
-    "workflow_execution": "plugins/registry.json declares language python, Python 3.14 and Rust with llvm-tools-preview. .github/workflows/ci.yml lines 255-268 execute its install, test and contract entries; the fixed aggregate requires the selected plugin matrix to succeed.",
-    "equivalence": "All six test_*.py files and ast/src/main.rs plus ast/src/select.rs match the exact GateProbes revision byte for byte. Both sides run cargo test and Python discovery with a real built inventory executable. Per-file mapping records any other differences instead of claiming blanket source equivalence.",
-    "test_method_count": 33,
-    "limits": "test_toolchain_compatibility.py discovery runs static contracts; its opt-in expensive two-toolchain certification is not run by either of the compared CI steps. No additional toolchain certification is claimed.",
-    "inventory_guard": "Check the current tracked file set under guarded_root as well as guarded_sources hashes. A new, removed or modified tracked source/test/configuration file requires reviewing and refreshing the handoff; unknown files must not remain silently untested."
+    "tools/quality/typescript-risk": [
+      "tools/quality/typescript-risk/LICENSE",
+      "tools/quality/typescript-risk/README.md",
+      "tools/quality/typescript-risk/cli.cjs",
+      "tools/quality/typescript-risk/measure.cjs",
+      "tools/quality/typescript-risk/npm-shrinkwrap.json",
+      "tools/quality/typescript-risk/package.json",
+      "tools/quality/typescript-risk/plugin.json",
+      "tools/quality/typescript-risk/project.cjs",
+      "tools/quality/typescript-risk/protocol.cjs",
+      "tools/quality/typescript-risk/strict-json.cjs",
+      "tools/quality/typescript-risk/test-core.cjs",
+      "tools/quality/typescript-risk/test.cjs"
+    ],
+    "tools/quality/http-json-contract": [
+      "tools/quality/http-json-contract/LICENSE",
+      "tools/quality/http-json-contract/README.md",
+      "tools/quality/http-json-contract/business.test.cjs",
+      "tools/quality/http-json-contract/cli.cjs",
+      "tools/quality/http-json-contract/clients.cjs",
+      "tools/quality/http-json-contract/legacy-measure.cjs",
+      "tools/quality/http-json-contract/measure.cjs",
+      "tools/quality/http-json-contract/npm-shrinkwrap.json",
+      "tools/quality/http-json-contract/package.json",
+      "tools/quality/http-json-contract/project.cjs",
+      "tools/quality/http-json-contract/protocol.cjs",
+      "tools/quality/http-json-contract/schema.cjs",
+      "tools/quality/http-json-contract/strict-json.cjs",
+      "tools/quality/http-json-contract/test.cjs"
+    ]
   },
   "retained_modules": {
     "test_preset_packs": "Core generic composition/policy/reference regressions read frozen preset-compat snapshots; current templates and migration parity run in GateProbes.",
-    "test_rust_collector_contract": "Retain legacy delivery schema, exact Core/protocol/ABI tuple, receipt, typed measurement failure and legacy exit contracts; migrated helper source does not establish replacement test coverage.",
-    "test_rust_collector_delivery": "Retain legacy immutable delivery identity, wrong-Core-bytes-before-execution, pinned JSON/symlink rejection and relocation contracts; external-toolchain acceptance is not a complete replacement.",
-    "test_rust_collector_runtime": "Retain paused bundled-runtime build-input and installed-schema-layout checks. Private-runtime tests and GateProbes external-toolchain RC8 acceptance cover distinct products.",
-    "test_rust_native": "Retain the bounded legacy rust_native.py MIR experiment and its compiler-specific replay/inventory tests; GateProbes migrated the driver implementation, not this experiment.",
-    "test_typescript_acceptance": "Retain historical Angular/V8 native windows, exact counters, Git/source receipts and debt/series acceptance. GateProbes original-source instrumentation is a different measurement boundary.",
-    "test_typescript_advisory": "Retain Core frontend-advisory failure records, artifact inventory and historical archive integrity checks; that workflow and reference tooling are not migrated.",
-    "test_typescript_contracts": "Retain gh-133 historical Python contract adapter, relationship outcome and generic policy/provenance checks; current HTTP plugin CLI/schema acceptance does not replace that retained window.",
-    "test_typescript_policy": "Retain generic policy/debt/history reference tests, including mixed Rust/TypeScript historical series; these exercise Core decisions.",
-    "test_typescript_reference": "Retain the historical Angular/V8 archive adapter, transport and unsupported-CRAP contracts. GateProbes typescript-risk explicitly excludes mapped Angular/V8 reports and supports a different original-source series.",
-    "test_typescript_semantics": "Retain historical archive/parser/receipt joins, source-map and UTF-16 integrity, unavailable metrics and measurement-series compatibility tests; these are outside the migrated TypeScript plugin scope."
-  }
+    "test_typescript_policy": "Retain generic policy/debt/history reference tests, including mixed Rust/TypeScript historical series; these exercise Core decisions."
+  },
+  "policy": "Engineering Policy unchanged. Rust Core retains decisions, requiredness, thresholds, measurement identity, baseline/debt/ratchet and release authority. Held bundled-runtime methods are not passing assurance or independently delivered native-plugin parity."
 }

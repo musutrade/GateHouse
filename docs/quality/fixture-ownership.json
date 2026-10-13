@@ -16,7 +16,8 @@
       "tools/quality/fixtures/policy",
       "tools/quality/fixtures/project-model",
       "tools/quality/fixtures/risk",
-      "tools/quality/fixtures/rust-reference"
+      "tools/quality/fixtures/rust-reference",
+      "tools/quality/fixtures/core-typescript-policy.json"
     ],
     "plugin": [
       "tools/quality/fixtures/rust-macro-observation",

@@ -25,17 +25,17 @@ class CoreTestSelectionTests(unittest.TestCase):
         self.source.write_text('implementation')
         digest = hashlib.sha256(self.plugin.read_bytes()).hexdigest()
         self.receipt = {
-            'schema': 'core-plugin-test-handoff/v1',
+            'schema': 'core-plugin-test-handoff/v2',
             'repository': 'musutrade/GateProbes', 'revision': 'a' * 40,
             'ci_run': 'https://github.com/musutrade/GateProbes/actions/runs/123',
             'delegated_tests': {'test_plugin': {
                 'sha256': digest, 'path': 'plugins/example/test_plugin.py',
-                'command': 'python3 -m unittest test_plugin'}},
-            'guarded_sources': {
+                'command': 'python3 -m unittest test_plugin', 'acceptance': 'legacy'}},
+            'guarded_sources': {'tools/quality/tests/test_core.py': hashlib.sha256(b'core').hexdigest()},
+            'transferred_sources': {
                 'tools/quality/tests/test_plugin.py': digest,
                 'tools/quality/rust-source-risk/plugin.py': hashlib.sha256(self.source.read_bytes()).hexdigest()},
-            'source_risk_step': {'guarded_root': 'tools/quality/rust-source-risk',
-                                 'tracked_files': ['tools/quality/rust-source-risk/plugin.py']},
+            'transferred_trees': {'tools/quality/rust-source-risk': ['tools/quality/rust-source-risk/plugin.py']},
         }
         original = run_core.tracked_files
         def tracked(root, directory):
@@ -48,7 +48,24 @@ class CoreTestSelectionTests(unittest.TestCase):
         self.addCleanup(mock.stop)
         self.manifest = self.root / run_core.RECEIPT
         self.manifest.parent.mkdir(parents=True)
+        self.inventory_path = self.root / 'docs/quality/compatibility-inventory.json'
+        self.inventory = {'schema': 'legacy-core-compatibility/v1', 'files': {
+            name: {'sha256': digest} for name, digest in self.receipt['transferred_sources'].items()}}
+        self.inventory_path.write_text(json.dumps(self.inventory))
+        self.proof = {'schema': 'legacy-core-compatibility-result/v1', 'status': 'pass',
+            'inventory_sha256': hashlib.sha256(self.inventory_path.read_bytes()).hexdigest(),
+            'producer_parity': 'pass', 'revision': self.receipt['revision'], 'ci_run': self.receipt['ci_run'],
+            'failures': 0, 'errors': 0, 'skipped': 0, 'tests_run': 1, 'held': 0,
+            'methods': [{'method': 'test_plugin.Tests.test_original', 'execution': 'required', 'owner': 'GateProbes'}]}
+        self.proof_path = self.root / 'docs/quality/compatibility-proof.json'
+        self.save_proof()
         self.save()
+
+    def save_proof(self):
+        self.proof_path.write_text(json.dumps(self.proof))
+        self.receipt['acceptance'] = {'file': 'docs/quality/compatibility-proof.json',
+            'sha256': hashlib.sha256(self.proof_path.read_bytes()).hexdigest(),
+            'inventory_file': 'docs/quality/compatibility-inventory.json'}
 
     def save(self):
         self.manifest.write_text(json.dumps(self.receipt))
@@ -118,7 +135,7 @@ class CoreTestSelectionTests(unittest.TestCase):
                 path.write_bytes(previous)
 
     def test_missing_guarded_input_fails(self):
-        self.source.unlink()
+        self.core.unlink()
         with self.assertRaisesRegex(ValueError, 'missing guarded source'):
             run_core.select(self.root)
 
@@ -132,7 +149,7 @@ class CoreTestSelectionTests(unittest.TestCase):
                 path.unlink()
 
     def test_source_risk_file_list_cannot_drop_digest_checks(self):
-        self.receipt['source_risk_step']['tracked_files'].append('unrecorded.py')
+        self.receipt['transferred_trees']['tools/quality/rust-source-risk'].append('unrecorded.py')
         self.save()
         with self.assertRaisesRegex(ValueError, 'exact guarded file list'):
             run_core.select(self.root)
@@ -172,12 +189,72 @@ class CoreTestSelectionTests(unittest.TestCase):
 
     def test_empty_selection_fails(self):
         self.core.unlink()
+        self.receipt['guarded_sources'] = {'tools/quality/core-input.py': hashlib.sha256(b'core').hexdigest()}
+        (self.root / 'tools/quality/core-input.py').write_text('core')
+        self.save()
         with self.assertRaisesRegex(ValueError, 'selection is empty'):
+            run_core.select(self.root)
+
+    def test_all_transferred_sources_and_tests_can_be_absent(self):
+        self.source.unlink()
+        self.plugin.unlink()
+        self.assertEqual(run_core.select(self.root), ['test_core'])
+
+    def test_core_input_cannot_be_marked_optional(self):
+        digest = self.receipt['guarded_sources'].pop('tools/quality/tests/test_core.py')
+        self.receipt['transferred_sources']['tools/quality/tests/test_core.py'] = digest
+        self.receipt['guarded_sources']['tools/quality/core-input.py'] = digest
+        (self.root / 'tools/quality/core-input.py').write_text('core')
+        self.save()
+        with self.assertRaisesRegex(ValueError, 'cannot be optional'):
+            run_core.select(self.root)
+
+    def test_failed_stale_skipped_or_incomplete_execution_cannot_approve_handoff(self):
+        for field, value in [('status', 'fail'), ('revision', 'b' * 40), ('ci_run', 'wrong'),
+                             ('producer_parity', 'fail'), ('skipped', 1), ('tests_run', 0),
+                             ('methods', []), ('held', 1)]:
+            original = self.proof[field]
+            with self.subTest(field=field):
+                self.proof[field] = value
+                self.save_proof(); self.save()
+                with self.assertRaises(ValueError):
+                    run_core.select(self.root)
+                self.proof[field] = original
+
+    def test_proof_cannot_be_replaced_without_renewing_receipt(self):
+        self.proof_path.write_text('{}')
+        with self.assertRaisesRegex(ValueError, 'digest mismatch'):
+            run_core.select(self.root)
+
+    def test_unknown_delegation_does_not_hide_new_module(self):
+        self.proof['methods'][0]['method'] = 'test_other.Tests.test_original'
+        self.save_proof(); self.save()
+        with self.assertRaisesRegex(ValueError, 'missing from executed inventory'):
+            run_core.select(self.root)
+
+    def test_hash_refresh_alone_cannot_approve_unexecuted_changes(self):
+        self.source.write_text('new unexecuted implementation')
+        relative = self.source.relative_to(self.root).as_posix()
+        self.receipt['transferred_sources'][relative] = hashlib.sha256(self.source.read_bytes()).hexdigest()
+        self.save()
+        with self.assertRaisesRegex(ValueError, 'source differs from executed'):
+            run_core.select(self.root)
+
+    def test_replacing_executed_inventory_cannot_renew_parity(self):
+        self.inventory_path.write_text('{}')
+        with self.assertRaisesRegex(ValueError, 'does not match executed'):
+            run_core.select(self.root)
+
+    def test_core_owned_method_cannot_be_delegated(self):
+        self.proof['methods'][0]['owner'] = 'Core'
+        self.save_proof(); self.save()
+        with self.assertRaisesRegex(ValueError, 'missing from executed'):
             run_core.select(self.root)
 
     def test_repository_workflow_uses_guarded_selection(self):
         workflow = (run_core.ROOT / '.github/workflows/ci.yml').read_text()
         self.assertIn('python3 tools/quality/tests/run_core.py', workflow)
+        self.assertIn('exclude_plugin_implementation(Path.cwd(), require_all=False)', workflow)
         self.assertNotIn('cargo test --locked --manifest-path tools/quality/rust-source-risk', workflow)
         self.assertNotIn('cargo build --locked --manifest-path tools/quality/rust-source-risk', workflow)
         delegated = run_core.read_receipt(run_core.ROOT)['delegated_tests']
