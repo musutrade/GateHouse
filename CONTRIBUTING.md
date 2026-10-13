@@ -1,6 +1,9 @@
 # 贡献指南
 
-感谢你对 Harness-Gate 的关注！我们欢迎各种形式的贡献。
+GateHouse 是 `harness-gate` Core 的开发仓库；命令、crate 和 `.harness-gate/`
+配置目录保持原名。采集器与生态预设由 GateProbes 维护，迁移前历史保留在
+Harness-Gate。提交问题和 PR 请使用 GateHouse；职责与签名边界见
+[迁移说明](docs/gatehouse-migration.md)。
 
 ## 规范性工程政策
 
@@ -14,17 +17,21 @@
 
 - Rust 1.88 或更高版本（以 `tools/harness-gate/Cargo.toml` 的 `rust-version` 为准）
 - Git
-- Docker（用于测试服务集成）
+- Python 3（用于回归数据准备和文档/质量脚本检查）
+- cargo-nextest（按 CI 方式运行 Rust 测试时需要）
+- Docker（涉及容器服务集成时需要）
 
 ### 克隆和构建
 
 ```bash
 git clone https://github.com/musutrade/GateHouse.git
 cd GateHouse
-cargo build --manifest-path tools/harness-gate/Cargo.toml
-python3 tools/maintenance/test_data.py
-cargo test --manifest-path tools/harness-gate/Cargo.toml
+cargo build --manifest-path tools/harness-gate/Cargo.toml --locked
 ```
+
+基础构建不下载历史证据。完整回归与文档校验需额外准备固定摘要数据，
+可先运行 `python3 tools/maintenance/test_data.py --list` 查看分组与下载量。
+缓存、按组恢复和离线使用见[测试数据说明](test-data/README.md)。
 
 ### 运行测试
 
@@ -33,16 +40,16 @@ cargo test --manifest-path tools/harness-gate/Cargo.toml
 python3 tools/maintenance/test_data.py
 
 # 运行单元测试
-cargo test --manifest-path tools/harness-gate/Cargo.toml
+cargo test --manifest-path tools/harness-gate/Cargo.toml --locked
 
 # 运行集成测试
-cargo test --manifest-path tools/harness-gate/Cargo.toml --test integration
+cargo test --manifest-path tools/harness-gate/Cargo.toml --locked --test integration
 
 # 格式检查
 cargo fmt --manifest-path tools/harness-gate/Cargo.toml -- --check
 
 # Clippy 检查
-cargo clippy --manifest-path tools/harness-gate/Cargo.toml -- -D warnings
+cargo clippy --manifest-path tools/harness-gate/Cargo.toml --locked --all-targets --all-features -- -D warnings
 ```
 
 以上只是基础开发检查。涉及质量语义的变更还必须满足 Engineering Policy 和仓库 Required Quality Aggregate 中适用的 coverage、risk/CRAP、critical-path、evidence、policy/ratchet 等 required gates；不能用单独的 `cargo test` 代替这些门禁。
@@ -138,6 +145,18 @@ Closes #123
 - 预期的行为
 - 可能的实现方案
 - 是否愿意贡献代码
+
+## 文档检查
+
+准备好测试数据后，纯文档改动运行与文档分流 CI 相同的检查：
+
+```bash
+python3 tools/quality/docs_consistency.py --pure --output target/quality/docs-consistency.json
+```
+
+`--pure` 校验链接、schema 与文档契约，不编译 Rust。修改 CLI、schema 或配置
+行为时运行完整的 `python3 tools/quality/docs_consistency.py`，并执行该改动
+适用的测试与质量门禁。详见[文档 CI 分流](docs/quality/ci-docs-routing.md)。
 
 ## 文档贡献
 

@@ -1,144 +1,65 @@
-# About Harness-Gate
+# About GateHouse
 
-Harness-Gate is configuration-driven: **`init -> verify -> one project decision`**.
-Execution and quality configuration select collectors and policy; collectors
-measure and the Rust core decides. Ecosystem/language/framework identity is pack
-data, with no new language branches in generic schema, compilation,
-orchestration, baselines, profiles, verification, reporting or CI. Extend through
-collector + capability/policy pack + certification. See the
-[workflow and architecture](docs/quality-workflow.md) for reference certification
-limits and future composable combinations such as Vue + Go + PostgreSQL.
-`quality evaluate` and `adapter run` are advanced interfaces.
+GateHouse is the active development repository for **`harness-gate`**, a
+configuration-driven project verification CLI written in Rust. Its workflow is
+**`init -> verify -> one project decision`**: declare execution and quality intent,
+run the configured checks, and combine their results into one blocking decision.
+The CLI, crate name and `.harness-gate/` configuration directory remain unchanged.
 
-## What is Harness-Gate?
+## What it does
 
-Harness-Gate is a **reusable development workflow and architecture guard CLI** built in Rust. It provides a complete quality gate and workflow management system that keeps your codebase clean, secure, and maintainable.
+- Maps Git changes to components and selects checks by profile (`hook`, `full`, `ci`).
+- Runs secret scanning and architecture audits before configured external steps.
+- Orchestrates project-owned build, lint, test and integration commands with
+  timeouts, structured result parsing and temporary service lifecycle management.
+- Invokes configured collectors and evaluates their evidence against quality
+  policies, trusted baselines and non-regression rules in the Rust core.
+- Publishes JSON and Markdown results, with optional HTML/JUnit reports and
+  webhook notifications.
 
-## Purpose
+Execution belongs in `flow.toml`; quality intent belongs in `quality.toml`.
+Collectors measure facts; Core owns requiredness, thresholds and the final
+quality decision. Missing or invalid required evidence blocks success.
+See the [workflow and architecture](docs/quality-workflow.md).
 
-Harness-Gate solves the common problem of scattered quality checks across Shell scripts, Git hooks, and CI configurations. Instead of maintaining complex scripts in multiple places, Harness-Gate provides:
+## Repository responsibilities
 
-- **Unified workflow orchestration** - All quality checks in one tool
-- **Configuration over code** - Extend via TOML, not Rust code
-- **Git-aware scoping** - Run only relevant checks for changed files
-- **Built-in security** - Secrets scanning and architecture auditing
-- **Fail-fast gates** - Catch issues early in development
+| Project | Responsibility |
+| --- | --- |
+| [GateHouse](https://github.com/musutrade/GateHouse) | Core source, CLI, schemas, orchestration, policy evaluation and current issues/PRs. |
+| [GateProbes](https://github.com/musutrade/GateProbes) | External collectors, ecosystem presets and independently signed plugin releases. |
+| [Harness-Gate](https://github.com/musutrade/Harness-Gate) | Pre-migration history, issues and immutable Core releases through 0.4.8. |
 
-## Key Features
+New languages and frameworks integrate through project-owned commands or
+collector + capability/policy packs. Support and certification depend on the
+actual collector and measurement series; a preset name alone grants no quality
+capability. Application-specific tests stay with the application.
 
-### 🛡️ Security First
-- **Secret scanning** with entropy detection
-- **Architecture auditing** to enforce code standards
-- **Git-staged secret detection** to prevent leaks before commit
+## Version and installation
 
-### 🎯 Smart Scoping
-- Analyzes Git changes to determine affected components
-- Runs only relevant checks, saving time
-- Supports monorepo and multi-component projects
+Core's package version is **0.4.8**. The current development tree includes
+post-release changes such as external preset loading. Published 0.4.8 embeds
+its earlier presets; the current source build embeds only `generic` and loads
+reviewed GateProbes presets through `--presets-dir` or `HARNESS_GATE_PRESETS_DIR`.
 
-### ⚙️ Flexible Workflow
-- **Profiles**: Different check intensity (hook, CI, full)
-- **Components**: Logical groupings (frontend, backend, docs)
-- **Steps**: External commands with timeout and parsing
-- **Services**: Temporary service lifecycle management
+The migration did not publish a new Core binary or re-sign historical assets.
+The current repository installer selects GateProbes native RC8; the installer
+frozen in Core 0.4.8 retains its RC7 pin. Use the
+[version-specific quick start](README.md#installation-and-quick-start),
+[standalone plugin installation guide](docs/quality/standalone-installation.md)
+and [verified delivery record](docs/release-status.md).
 
-### 📊 Clear Reporting
-- JSON and Markdown reports
-- Error context extraction from logs
-- Detailed violation summaries
+Core supports Linux, macOS and Windows under the MIT license. Ordinary source
+builds need no historical evidence download. Full regression and documentation
+checks restore [pinned optional data](test-data/README.md), with digest-verified
+caching and an explicit offline mode.
 
-## How It Works
+## Start here
 
-```text
-Git changed files
-  ↓
-Scope rules (which components changed?)
-  ↓
-Profile selection (hook/CI/full intensity?)
-  ↓
-Quality gates (secrets, audit)
-  ↓
-Component steps (build, test, lint)
-  ↓
-Reports (JSON, Markdown, logs)
-```
-
-## Who Should Use It?
-
-Harness-Gate is ideal for:
-
-- **Teams** enforcing architecture and security standards
-- **Monorepos** with multiple components needing selective testing
-- **Projects** wanting consistent checks across local and CI environments
-- **Developers** tired of maintaining Shell script spaghetti
-
-## Technology
-
-- **Language**: Rust (for performance, safety, and cross-platform support)
-- **Configuration**: TOML (human-readable, strongly-typed)
-- **Integration**: Git hooks, CI/CD, local development
-
-## Project Status
-
-- **Version**: 0.4.0
-- **License**: MIT
-- **Platforms**: Linux, macOS, Windows
-- **Status**: Production-ready, actively maintained
-
-## Quick Example
-
-```bash
-# Initialize in your project
-harness-gate init --preset rust-api
-
-# Run quality checks on changed files
-harness-gate verify --profile hook
-
-# Scan for secrets in staged files
-harness-gate secrets --staged
-
-# Check architecture rules
-harness-gate audit
-```
-
-## Philosophy
-
-Harness-Gate follows these principles:
-
-1. **Fail fast** - Catch issues before they reach CI
-2. **Configuration over code** - Extend without Rust knowledge
-3. **Git-aware** - Only check what changed
-4. **Portable** - Same checks locally and in CI
-5. **Transparent** - Clear reports on what failed and why
-
-## Community
-
-- **GitHub**: [musutrade/Harness-Gate](https://github.com/musutrade/Harness-Gate)
-- **Issues**: Report bugs and request features on GitHub Issues
-- **Contributing**: See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
-- **Documentation**: Full docs at [docs.rs/harness-gate](https://docs.rs/harness-gate)
-
-## Comparison
-
-| Feature | Harness-Gate | Shell Scripts | CI Only |
-|---------|--------------|---------------|---------|
-| Local & CI consistency | ✅ | ❌ | ❌ |
-| Git-aware scoping | ✅ | Manual | Manual |
-| Secret scanning | ✅ Built-in | External tool | External tool |
-| Architecture auditing | ✅ Built-in | N/A | N/A |
-| Configuration format | TOML | Various | YAML |
-| Cross-platform | ✅ | Limited | ✅ |
-| Timeout handling | ✅ | Manual | Built-in |
-| Service lifecycle | ✅ | Manual | Manual |
-
-## Getting Started
-
-See [README.md](README.md) for installation instructions and quickstart guide.
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-**Built with ❤️ in Rust** | Maintained by the Harness-Gate team
+- [English README](README.md) / [中文 README](README.zh-CN.md): installation and usage.
+- [Documentation index](docs/README.md): configuration, integration and diagnosis.
+- [Contributing](CONTRIBUTING.md): build, test and documentation checks.
+- [Engineering policy](docs/engineering-policy.md): authority and required quality semantics.
+- [Migration acceptance](docs/gatehouse-migration-acceptance.md): source continuity and validation.
+- [Issues](https://github.com/musutrade/GateHouse/issues): bugs and feature requests.
+- [Crate API documentation](https://docs.rs/harness-gate): published Rust API.

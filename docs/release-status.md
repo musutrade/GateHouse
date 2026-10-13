@@ -1,5 +1,19 @@
 # Published releases and acceptance
 
+## GateHouse source migration, 2026-10-13
+
+Active Core development now lives in [GateHouse](https://github.com/musutrade/GateHouse).
+The CLI/crate remains `harness-gate` at version 0.4.8; the source migration is not
+a new binary release. The development tree includes external preset loading,
+while the published 0.4.8 package retains its embedded presets.
+
+Core tags through v0.4.8 retain Harness-Gate downloads and signing identities;
+installer routing for v0.4.9 onward targets GateHouse. This routing is not a claim
+that v0.4.9 has been published. Current repository installers select GateProbes
+native RC8; historical tagged installers retain their original pins. See
+[migration boundaries](gatehouse-migration.md), [clone/build/quality acceptance](gatehouse-migration-acceptance.md)
+and [installation paths](quality/standalone-installation.md).
+
 ## Four independent GateProbes packages, 2026-10-13
 
 TypeScript risk RC4, HTTP/JSON contract RC5, Rust source-risk RC7 and Rust

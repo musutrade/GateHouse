@@ -1,4 +1,4 @@
-# Harness-Gate
+# GateHouse
 
 > Development now lives in **GateHouse**. The `harness-gate` CLI and crate names remain unchanged. Historical releases through v0.4.8 retain their Harness-Gate download and signing identities. See [migration and test data](docs/gatehouse-migration.md).
 
@@ -13,11 +13,32 @@
 
 It handles changed paths, secret scanning, architecture auditing, environment validation, external command orchestration, test result counting, timeout and interrupt handling, and temporary service lifecycle. Git hooks only keep launchers, and flow decisions do not depend on Shell scripts.
 
+## Repository and release boundaries
+
+| Name | Responsibility |
+| --- | --- |
+| **GateHouse** | Active source repository for Core, configuration, schemas, orchestration and quality decisions. |
+| **`harness-gate`** | Unchanged CLI and crate name; configuration remains under `.harness-gate/`. |
+| **[GateProbes](https://github.com/musutrade/GateProbes)** | Independently delivered collectors and ecosystem presets. |
+| **[Harness-Gate](https://github.com/musutrade/Harness-Gate)** | Historical source, issues, release assets and signing identities through Core 0.4.8. |
+
+The source migration did not publish a new Core version. The current checkout
+includes changes beyond the published 0.4.8 package, including external preset
+loading. Use the matching quick-start path below. Ordinary source builds need no
+historical evidence download; full regression and documentation checks use
+[pinned optional data](test-data/README.md). See the [documentation index](docs/README.md)
+and [migration acceptance](docs/gatehouse-migration-acceptance.md).
+
 ## Current releases
 
 Core **0.4.8** prepares the core/plugin split: every schema role has one editable source, the decision fixtures live in the core crate, and the pinned Rust measurer **0.3.1** is published as an independent package for the first time. Independently installed Rust source-risk RC7, TypeScript risk RC4, HTTP JSON contract RC5 and Rust measurer 0.3.1 packages are included in the release. Core owns orchestration and quality decisions. See the [release guide](docs/releases/0.4.8.zh-CN.md) and [verified delivery status](docs/release-status.md).
 
-Core **0.4.8** selects standalone Rust/MIR plugin **0.1.0-rc.7** by default. RC7 adds dependency-attribution caching and signed monorepo source-prefix binding. Matching Rust/LLVM and Python remain external dependencies; see the [standalone installation guide](docs/quality/standalone-installation.md).
+The installer tagged with Core **0.4.8** selects standalone Rust/MIR plugin **0.1.0-rc.7** by default. RC7 adds dependency-attribution caching and signed monorepo source-prefix binding. Matching Rust/LLVM and Python remain external dependencies; see the [standalone installation guide](docs/quality/standalone-installation.md).
+
+The current repository installer selects GateProbes native **0.1.0-rc.8**;
+this does not change the installer frozen in the 0.4.8 tag or Core's measurement
+consumption pin. See [standalone installation](docs/quality/standalone-installation.md)
+for the two installation paths and their signing identities.
 
 ## Navigation
 
@@ -150,11 +171,20 @@ cargo install --locked --path tools/harness-gate
 
 ## Development Commands
 
+Install Rust 1.88+ (see the crate's `rust-version`), Git, Python 3 and
+`cargo-nextest` for the commands below. Prepare pinned regression inputs before
+full tests; the download is separate from building or installing Core.
+
+```bash
+python3 tools/maintenance/test_data.py --list
+python3 tools/maintenance/test_data.py
+```
+
 The repository uses `cargo-nextest` for fast, isolated test execution:
 
 ```bash
-cargo nextest run --manifest-path tools/harness-gate/Cargo.toml
-cargo clippy --manifest-path tools/harness-gate/Cargo.toml --all-targets -- -D warnings
+cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked
+cargo clippy --manifest-path tools/harness-gate/Cargo.toml --locked --all-targets --all-features -- -D warnings
 cargo fmt --manifest-path tools/harness-gate/Cargo.toml -- --check
 ```
 
@@ -175,6 +205,24 @@ The stable machine failure registry is documented in
 
 ## Installation and Quick Start
 
+### Published Core 0.4.8
+
+The package installed above embeds the ecosystem presets. Use its commands
+without the development-only external catalog option:
+
+```bash
+harness-gate --version
+harness-gate presets
+harness-gate --project-root /path/to/new-project init --preset rust-api
+```
+
+Use an existing Git worktree (or run `git init` first), then follow the shared
+configuration and trust-provisioning steps below.
+
+### Current GateHouse source build
+
+After installing from source, select a reviewed GateProbes checkout's `presets/`
+directory. Core embeds only `generic`; see [external preset setup](docs/quality-presets.md).
 Verify installation and explore presets:
 
 ```bash
@@ -186,6 +234,11 @@ Initialize in an existing Git project (run `git init` first for a new directory)
 
 ```bash
 harness-gate --project-root /path/to/new-project init --preset rust-api --presets-dir /path/to/GateProbes/presets
+```
+
+### Validate configuration and provision quality inputs
+
+```bash
 harness-gate --project-root /path/to/new-project config check
 harness-gate --project-root /path/to/new-project doctor
 # Review generated QUALITY.md; provision trusted state, signed requests and keys.

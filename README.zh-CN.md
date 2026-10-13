@@ -1,4 +1,4 @@
-# Harness-Gate
+# GateHouse
 
 > 开发仓库已迁移到 **GateHouse**，命令和 crate 名仍为 `harness-gate`。v0.4.8 及以前的发行版保留旧仓库下载与签名身份。见[迁移与测试数据说明](docs/gatehouse-migration.md)。
 
@@ -13,11 +13,29 @@
 
 它统一负责 changed paths、secret scan、architecture audit、环境体检、外部命令编排、测试结果计数、超时与中断处理，以及临时服务生命周期。Git hook 只保留启动器，流程判断不依赖 Shell 脚本。
 
+## 仓库与发行边界
+
+| 名称 | 职责 |
+| --- | --- |
+| **GateHouse** | Core 的当前开发仓库，维护配置、schema、执行编排与质量决策。 |
+| **`harness-gate`** | 保持不变的命令与 crate 名称，项目配置仍位于 `.harness-gate/`。 |
+| **[GateProbes](https://github.com/musutrade/GateProbes)** | 独立交付的采集器与生态预设。 |
+| **[Harness-Gate](https://github.com/musutrade/Harness-Gate)** | 历史源码、Issue，以及 Core 0.4.8 及以前的发行资产和签名身份。 |
+
+源码迁移没有发布新的 Core 版本。当前源码包含已发布 0.4.8 之后的改动，
+包括外部预设加载；请按下方对应版本的快速开始操作。普通源码构建无需下载
+历史证据，完整回归与文档检查使用[固定摘要的可选数据](test-data/README.md)。
+完整入口见[文档目录](docs/README.md)与[迁移验收](docs/gatehouse-migration-acceptance.md)。
+
 ## 当前版本
 
 Core **0.4.8** 为 core/plugin 拆分做准备：每种 schema 角色只有一个可编辑源，决策夹具移入核心 crate，并首次把固定版本的 Rust 测量器 `0.3.1` 作为独立包发布。本次同时提供独立安装的 Rust source-risk RC7、TypeScript risk RC4、HTTP JSON contract RC5 与 Rust 测量器 0.3.1。Core 负责编排和质量决策；版本说明与安装见[发布指南](docs/releases/0.4.8.zh-CN.md)，验证回执见[交付状态](docs/release-status.md)。
 
-Core **0.4.8** 的可选 Rust 安装默认选择独立插件 **0.1.0-rc.7**，增加依赖归属缓存与签名 monorepo 源路径绑定。Rust/LLVM 和 Python 仍作为外部依赖；固定版本用法见[独立插件安装指南](docs/quality/standalone-installation.md)。
+Core **0.4.8** 标签内的安装器默认选择独立插件 **0.1.0-rc.7**，增加依赖归属缓存与签名 monorepo 源路径绑定。Rust/LLVM 和 Python 仍作为外部依赖；固定版本用法见[独立插件安装指南](docs/quality/standalone-installation.md)。
+
+当前仓库的安装器默认选择 GateProbes native **0.1.0-rc.8**；这不会改变
+0.4.8 标签内冻结的安装器或 Core 的测量消费 pin。两种安装路径与签名身份见
+[独立插件安装指南](docs/quality/standalone-installation.md)。
 
 ## 阅读导航
 
@@ -107,11 +125,20 @@ cargo install --locked --path tools/harness-gate
 
 ## 开发命令
 
+下列命令需要 Rust 1.88+（以 crate 的 `rust-version` 为准）、Git、Python 3
+和 `cargo-nextest`。完整测试前先准备固定摘要的回归数据；构建或安装 Core
+本身不需要这一步。
+
+```bash
+python3 tools/maintenance/test_data.py --list
+python3 tools/maintenance/test_data.py
+```
+
 仓库使用 `cargo-nextest` 执行快速、隔离的测试：
 
 ```bash
-cargo nextest run --manifest-path tools/harness-gate/Cargo.toml
-cargo clippy --manifest-path tools/harness-gate/Cargo.toml --all-targets -- -D warnings
+cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked
+cargo clippy --manifest-path tools/harness-gate/Cargo.toml --locked --all-targets --all-features -- -D warnings
 cargo fmt --manifest-path tools/harness-gate/Cargo.toml -- --check
 ```
 
@@ -153,6 +180,23 @@ SBOM 记录源码提交、`Cargo.lock` 摘要和构建工具链。发布流程�
 
 ## 安装与快速开始
 
+### 已发布的 Core 0.4.8
+
+上方安装的发行包内置生态预设，不使用开发版的外部目录参数：
+
+```bash
+harness-gate --version
+harness-gate presets
+harness-gate --project-root /path/to/new-project init --preset rust-api
+```
+
+请在已有 Git 项目中操作，新目录先运行 `git init`，再按下方步骤检查配置、
+准备可信主机输入并验证。
+
+### 当前 GateHouse 源码构建
+
+从源码安装后，选择审阅过的 GateProbes checkout 中的 `presets/` 目录。
+Core 仅内置 `generic`，详见[外部预设接入](docs/quality-presets.md)。
 验证安装并查看预设：
 
 ```bash
@@ -164,6 +208,11 @@ harness-gate presets --presets-dir /path/to/GateProbes/presets
 
 ```bash
 harness-gate --project-root /path/to/new-project init --preset rust-api --presets-dir /path/to/GateProbes/presets
+```
+
+### 检查配置并准备质量输入
+
+```bash
 harness-gate --project-root /path/to/new-project config check
 harness-gate --project-root /path/to/new-project doctor
 # 阅读生成的 QUALITY.md；由可信 host 配置 state、签名请求和密钥。
