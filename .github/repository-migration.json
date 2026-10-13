@@ -1,0 +1,13 @@
+{
+  "schema": "repository-migration/v1",
+  "source_repository": "musutrade/Harness-Gate",
+  "source_commit": "e8532697d67b6145ed22db471870fe0e3538b709",
+  "destination_repository": "musutrade/GateHouse",
+  "seed_commit": "691447fbe5af64d01995d9e15c35781df4945e0d",
+  "purpose": "Lean source import; explicit legacy comparison for the seed transition only. Historical debt, series, required gates and evidence identities remain unchanged.",
+  "source_acceptance": {
+    "pr": "https://github.com/musutrade/Harness-Gate/pull/357",
+    "run": "https://github.com/musutrade/Harness-Gate/actions/runs/38357233308",
+    "required_aggregate": "success"
+  }
+}

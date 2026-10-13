@@ -1,0 +1,27 @@
+{
+  "schema": "schema-ownership/v1",
+  "description": "Single editable source per schema role. Copies marked generated are byte-identical mirrors and must not be edited independently.",
+  "roles": {
+    "host-contract": {
+      "owner": "core",
+      "root": "schema",
+      "wire_format": "request/decision"
+    },
+    "generic-evidence": {
+      "owner": "core",
+      "root": "tools/harness-gate/quality-core/schema"
+    },
+    "plugin-raw-output": {
+      "owner": "plugin",
+      "root": "tools/quality/schema"
+    }
+  },
+  "generated": {
+    "tools/quality/schema/capability-requirements.schema.json": "tools/harness-gate/quality-core/schema/capability-requirements.schema.json",
+    "tools/quality/schema/harness-evidence.schema.json": "tools/harness-gate/quality-core/schema/harness-evidence.schema.json",
+    "tools/quality/schema/policy-exceptions.schema.json": "tools/harness-gate/quality-core/schema/policy-exceptions.schema.json",
+    "tools/quality/schema/policy.schema.json": "tools/harness-gate/quality-core/schema/policy.schema.json",
+    "tools/quality/schema/project-model.schema.json": "tools/harness-gate/quality-core/schema/project-model.schema.json",
+    "tools/quality/schema/subject-mappings.schema.json": "tools/harness-gate/quality-core/schema/subject-mappings.schema.json"
+  }
+}

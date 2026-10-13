@@ -1,0 +1,61 @@
+{
+  "status": "failed-acceptance-retained",
+  "cause": "systemd launch PATH omitted /home/gem/.cargo/bin; cargo commands did not start",
+  "core_sha256": "eda5179d96b32269124150980ffcaa7e57878605133bc6ead51e5aeb8a6ad0a0",
+  "report_published": true,
+  "evidence_complete": false,
+  "failed_steps": [
+    {
+      "id": "backend.format",
+      "detail": "start cargo: No such file or directory (os error 2)"
+    },
+    {
+      "id": "backend.clippy",
+      "detail": "start cargo: No such file or directory (os error 2)"
+    },
+    {
+      "id": "backend.compile",
+      "detail": "start cargo: No such file or directory (os error 2)"
+    },
+    {
+      "id": "backend.tests",
+      "detail": "start cargo: No such file or directory (os error 2)"
+    },
+    {
+      "id": "frontend.fullstack-smoke",
+      "detail": "exit code 1"
+    },
+    {
+      "id": "workflow.template-quality",
+      "detail": "exit code 1"
+    },
+    {
+      "id": "workflow.template-quality-tests",
+      "detail": "exit code 1"
+    },
+    {
+      "id": "workflow.api-generation",
+      "detail": "exit code 1"
+    },
+    {
+      "id": "workflow.format",
+      "detail": "start cargo: No such file or directory (os error 2)"
+    },
+    {
+      "id": "workflow.clippy",
+      "detail": "start cargo: No such file or directory (os error 2)"
+    },
+    {
+      "id": "workflow.tests",
+      "detail": "start cargo: No such file or directory (os error 2)"
+    }
+  ],
+  "services": [
+    {
+      "id": "test-postgres",
+      "status": "CLEANED"
+    }
+  ],
+  "report_sha256": "dee8f8f766212d628db9d559e7339d068eaf6d7e3300e4d7c2c1e995105a3b7a",
+  "retry_change": "operator service PATH only; release binary and project unchanged"
+}

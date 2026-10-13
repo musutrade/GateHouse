@@ -1,0 +1,58 @@
+{
+  "binary": {
+    "bytes": 1339320,
+    "sha256": "ad2f9648512fc7b1fecce229e305d92968d09d28d5bd57b49f5579bdd1b928b4"
+  },
+  "checks": {
+    "actual_release_checksums": true,
+    "conditional_classification_with_and_without_anchored_witness": true,
+    "documentation_consistency": true,
+    "exact_crap_debt_unchanged_changed_and_rebound_rules": true,
+    "missing_corrupt_evidence_and_cache_block": true,
+    "native_engine_sources_unchanged": {
+      "tools/quality/rust-native-driver/src/main.rs": true,
+      "tools/quality/rust_collector_project.py": true,
+      "tools/quality/rust_native_classify.py": true,
+      "tools/quality/rust_native_driver.py": true,
+      "tools/quality/rust_native_policy.py": true
+    },
+    "native_skips": 0,
+    "native_tests": 16,
+    "normalized_old_engine_equivalence": true,
+    "real_signed_core_collection": true,
+    "real_wrong_rust_1981_rejected": true,
+    "release_tests": 88,
+    "report_cannot_modify_retained_evidence": true,
+    "tampered_args_and_replay_block": true,
+    "unsigned_release_rejected": true
+  },
+  "evidence_root": "/mnt/dev-ssd/workspaces/native-core-style-release/target/native-acceptance/tmp_x4vbg63",
+  "files": {
+    "build.json": "acc7f2d81dffd0a09d6d6a1832bdc01344ef1d8eb6f3d2165c92ee522458a09f",
+    "docs-consistency.json": "3ddc3b606f1933c4ace1345f56d5d878c2bbefd7c57415902b5403019c3cff5e",
+    "hosted-initial.json": "16587d4a18b3bbecead1e64dd3c96ff0f2df13478a5138387dd0109057c527d3",
+    "native-acceptance.log": "965766d6760ebdf23e307c1495f1a4e51381bd9f72c76b83045217d30aa9ae9a",
+    "release-tests.log": "4245c563c73529866d4f8b8737146a2bf64b9bc3e324d82bb6e1a1866427a8d4",
+    "wrong-toolchain.log": "0ae7ffe2ee47db58511c75b41ef99136aaac044bebfd9b9cf39d400abead1a09"
+  },
+  "fixture": {
+    "anchor": "e73e2e2150c43a3840d3649bce75e945d1386d608c49dba30040d87a3a5b6d5d",
+    "backend_complete": false,
+    "legacy_debt_crap": [
+      56,
+      1
+    ],
+    "mapping_complete_for_declared_scope": true,
+    "owners": 14,
+    "unpolled_async_body_entry": 0
+  },
+  "host": {
+    "active_toolchain": "stable-x86_64-unknown-linux-gnu (default)",
+    "core": "harness-gate 0.4.2",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.43",
+    "python": "3.14.4"
+  },
+  "publication": "not-run; unsigned local artifact only",
+  "schema": "native-external-local-acceptance/v1",
+  "source_base": "04344d6f49e945ce32819891ff0e76213278ae10"
+}

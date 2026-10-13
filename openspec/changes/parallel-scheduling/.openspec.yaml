@@ -1,0 +1,4 @@
+schema: spec-driven
+status: implemented
+created: 2026-08-28
+goal: Define a safe, dependency-aware parallel scheduler while preserving serial compatibility

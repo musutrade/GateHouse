@@ -1,0 +1,27 @@
+{
+  "status": "partial",
+  "source_commit": "4ecde0305572e5439dc9e6513cd0fe2de2d73224",
+  "platform": "Linux x86_64",
+  "core_version": "0.4.6",
+  "core_sha256": "4f6b6f4e69644dccf5b338e38655d1e8fbcf13ab4143f90f969c743345f176dd",
+  "native_version": "0.1.0-rc.7",
+  "native_sha256": "663823010a6830ce1abd326317ce1983495103a69d647bed886a7ad65bc25b38",
+  "passed_runtime_tests": {
+    "native_core": 23,
+    "typescript_risk": 20,
+    "http_json_contract": 19
+  },
+  "rust_source_risk": {
+    "version": "0.1.0-rc.5",
+    "tests": 20,
+    "passed": 18,
+    "errors": 2,
+    "cause": "Published archive omits ast/Cargo.lock, required by plugin.py series().",
+    "failed_cases": [
+      "test_series_binds_method_and_toolchain_not_tool_location",
+      "test_signed_binding_and_claims_checked_before_collection"
+    ]
+  },
+  "test_harness": "Relocated TypeScript tests require PYTHONPATH to the tagged repository reference transport; all 20 passed with that test-only path supplied.",
+  "recovery": "Prepare a new immutable Core 0.4.7 delivery with Rust source-risk RC6; retain the existing tags and assets."
+}

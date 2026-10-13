@@ -1,0 +1,89 @@
+{
+  "quality": {
+    "collectors": {
+      "${binding}": {
+        "protocol": "harness-collector-request/v1",
+        "request": ".harness-gate/runtime/${binding}-request.json",
+        "produces": [
+          {
+            "target": {
+              "kind": "component",
+              "id": "${binding}"
+            },
+            "capability": "coverage.line",
+            "series": "measurement-series/v1:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ]
+      }
+    },
+    "policies": {
+      "${binding}.coverage.line": {
+        "policy_file": ".harness-gate/packs/${binding}/policy.json",
+        "rule": "${binding}.coverage.line",
+        "expectation": {
+          "target": {
+            "kind": "component",
+            "id": "${binding}"
+          },
+          "capability": "coverage.line",
+          "series": "measurement-series/v1:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      }
+    },
+    "profiles": {
+      "full": {
+        "collectors": [
+          "${binding}"
+        ],
+        "policies": [
+          "${binding}.coverage.line"
+        ]
+      },
+      "ci": {
+        "collectors": [
+          "${binding}"
+        ],
+        "policies": [
+          "${binding}.coverage.line"
+        ]
+      }
+    },
+    "components": {
+      "${binding}": {
+        "flow_components": [
+          "${binding}"
+        ],
+        "source_roots": [
+          "${source_root}"
+        ],
+        "artifact_root": ".harness-gate/reports/evidence/${binding}"
+      }
+    }
+  },
+  "files": {
+    ".harness-gate/packs/${binding}/policy.json": {
+      "schema": "harness-policy/v1",
+      "rules": [
+        {
+          "id": "${binding}.coverage.line",
+          "scope": {
+            "kind": "component",
+            "component": "${binding}"
+          },
+          "metric": "coverage.line",
+          "operator": "ge",
+          "limit": {
+            "type": "ratio",
+            "covered": 4,
+            "total": 5
+          },
+          "required": true,
+          "on_violation": "fail",
+          "remediation_classes": [
+            "review_quality_evidence"
+          ]
+        }
+      ]
+    }
+  }
+}

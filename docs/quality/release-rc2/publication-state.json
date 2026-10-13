@@ -1,0 +1,18 @@
+{
+  "status": "pass",
+  "error": null,
+  "collector_run": 34729745154,
+  "active_run": 34731395535,
+  "run_status": [
+    "completed",
+    "success"
+  ],
+  "collector_operator_receipt": {
+    "path": "/mnt/dev-ssd/workspaces/harness-gate-rc2-20260913/operator-continuation.json",
+    "sha256": "99fe8114aeaf51000d624777ad920bf979efaf2087e5888980ac82e9cd6f00a0"
+  },
+  "collector_release": "https://github.com/musutrade/Harness-Gate/releases/tag/rust-collector-v0.1.0-rc.2",
+  "installer_run": 34731395535,
+  "installer_release": "https://github.com/musutrade/Harness-Gate/releases/tag/rust-collector-installer-v0.1.0-rc.3",
+  "installer_sha256": "e69025454cedd659ad91d2522c7636e6c4a53c164e477ffafd2ca75d8cf17760"
+}

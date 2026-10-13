@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-08-27
+goal: Decompose audit scanner responsibilities without changing scanner behavior
+skip_specs: true

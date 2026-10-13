@@ -1,0 +1,83 @@
+{
+  "status": "pass",
+  "verified_at": "2026-09-22T08:55:28.922724+00:00",
+  "tag": "rust-collector-v0.1.0-rc.7",
+  "source_commit": "4ecde0305572e5439dc9e6513cd0fe2de2d73224",
+  "release_url": "https://github.com/musutrade/Harness-Gate/releases/tag/rust-collector-v0.1.0-rc.7",
+  "asset_count": 30,
+  "exact_inventory": true,
+  "notes_match_tagged_source": true,
+  "signature_identity": "https://github.com/musutrade/Harness-Gate/.github/workflows/native-collector-release.yml@refs/tags/rust-collector-v0.1.0-rc.7",
+  "attestation_source_ref": "refs/tags/rust-collector-v0.1.0-rc.7",
+  "attestation_source_digest": "4ecde0305572e5439dc9e6513cd0fe2de2d73224",
+  "verified_subjects": [
+    "SHA256SUMS",
+    "harness-gate-rust-collector-linux-amd64",
+    "harness-gate-rust-collector-linux-amd64.sbom.cdx.json",
+    "harness-gate-rust-collector-macos-amd64",
+    "harness-gate-rust-collector-macos-amd64.sbom.cdx.json",
+    "harness-gate-rust-collector-macos-arm64",
+    "harness-gate-rust-collector-macos-arm64.sbom.cdx.json",
+    "harness-gate-rust-collector-windows-amd64.exe",
+    "harness-gate-rust-collector-windows-amd64.sbom.cdx.json",
+    "release-inventory.json"
+  ],
+  "assets": [
+    {
+      "kind": "binary",
+      "name": "harness-gate-rust-collector-linux-amd64",
+      "sha256": "663823010a6830ce1abd326317ce1983495103a69d647bed886a7ad65bc25b38",
+      "size_bytes": 1351256
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate-rust-collector-linux-amd64.sbom.cdx.json",
+      "sha256": "8c757300ddd2540ef85f23b993aa7ef23ba8023f540f7ca44674cdc0d9b20e9a",
+      "size_bytes": 10467
+    },
+    {
+      "kind": "binary",
+      "name": "harness-gate-rust-collector-macos-amd64",
+      "sha256": "1730105fd7d6f80b5ef7c858676bee42db746ae9599096e942641cb969cb7813",
+      "size_bytes": 1338296
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate-rust-collector-macos-amd64.sbom.cdx.json",
+      "sha256": "2d56733bf25052e2f28e4c7bc5ef37839ce306f053d3aed34f19e2bde5668fb1",
+      "size_bytes": 10463
+    },
+    {
+      "kind": "binary",
+      "name": "harness-gate-rust-collector-macos-arm64",
+      "sha256": "aefb0eabff9511201ee219b81efa01ab0ad5c35efe81bc0e0f03f23ea961cffa",
+      "size_bytes": 1385728
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate-rust-collector-macos-arm64.sbom.cdx.json",
+      "sha256": "396490b28850f720fb59b463fc847be6e05425fdbc713aa2ef047ebbe18c3aa8",
+      "size_bytes": 10800
+    },
+    {
+      "kind": "binary",
+      "name": "harness-gate-rust-collector-windows-amd64.exe",
+      "sha256": "c453132729caf4d7f179d1ecec0addfb09b264628182edadf79d6d278881e488",
+      "size_bytes": 1236992
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate-rust-collector-windows-amd64.sbom.cdx.json",
+      "sha256": "7c7bebc845ab277101f3437ec7e4562fd7fdb75ffacb559d4f87d9bcfa699b8e",
+      "size_bytes": 10708
+    }
+  ],
+  "publication_run": {
+    "id": 35705664239,
+    "html_url": "https://github.com/musutrade/Harness-Gate/actions/runs/35705664239",
+    "head_sha": "4ecde0305572e5439dc9e6513cd0fe2de2d73224",
+    "head_branch": "rust-collector-v0.1.0-rc.7",
+    "status": "completed",
+    "conclusion": "success"
+  }
+}

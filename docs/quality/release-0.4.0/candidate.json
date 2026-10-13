@@ -1,0 +1,20 @@
+{
+  "version": "0.4.0",
+  "base_commit": "e24aeb351168610c00c14032a473fad61659ec2b",
+  "candidate_source_commit": "60fcc15",
+  "profile": "release-small",
+  "sha256": "39ed5ba7e981782938a820e005a266c464f9670b5e9c0d18aae405bdd8c167ff",
+  "native_tests": {
+    "passed": 9,
+    "skipped": 0,
+    "seconds": 30.803,
+    "command": "python3 -m unittest discover -s tools/quality/tests -p test_rust_native_driver.py -v",
+    "environment": {
+      "NATIVE_DRIVER": "GH-230 workspace-local pinned operator-native-runtime driver",
+      "NATIVE_DRIVER_SYSROOT": "rustc --print sysroot (1.97.1)",
+      "HARNESS_GATE_NATIVE_POLICY_BINARY": "fresh 0.4.0 release-small candidate",
+      "TMPDIR": "GH-230 workspace-local target/gh-230/tmp"
+    }
+  },
+  "scope": "Candidate compatibility only; not a released binary or GH-230 clean-host acceptance."
+}

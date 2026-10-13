@@ -1,0 +1,19 @@
+{
+  "status": "pass",
+  "source_commit": "859daa95b180c88f86fb817418e6b6ff5a5b1123",
+  "complete_manifest_verified": true,
+  "manifest_artifacts": 33,
+  "manifest_sha256": "c2233046730ca9b191c59d905bdabf5274a0ae4dca44091bfeb01ac72997dd7e",
+  "machine_result_bytes": 114995423,
+  "project_report_bytes": 72060628,
+  "gate_outcomes_identical_to_original_quality_aggregation": true,
+  "gate_counts": {
+    "fail": 2110,
+    "pass": 3391,
+    "not_applicable": 118,
+    "unsupported": 141
+  },
+  "total_gates": 5760,
+  "candidate_service_containers_remaining": [],
+  "core_released": false
+}

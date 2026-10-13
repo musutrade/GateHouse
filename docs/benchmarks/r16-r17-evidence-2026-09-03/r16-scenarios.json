@@ -1,0 +1,1371 @@
+{
+  "after": {
+    "scenarios": {
+      "cancel": {
+        "count": 5,
+        "max": 1.314602836035192,
+        "median": 1.3103028910118155,
+        "min": 1.3074554899940267,
+        "runs": [
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.15253904598997914,
+            "skipped": 10,
+            "step_seconds": 1.16,
+            "timed_out": 1,
+            "wall_seconds": 1.312539045989979
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.15160283603519198,
+            "skipped": 10,
+            "step_seconds": 1.163,
+            "timed_out": 1,
+            "wall_seconds": 1.314602836035192
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.15269849001849067,
+            "skipped": 10,
+            "step_seconds": 1.157,
+            "timed_out": 1,
+            "wall_seconds": 1.3096984900184907
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.1523028910118156,
+            "skipped": 10,
+            "step_seconds": 1.158,
+            "timed_out": 1,
+            "wall_seconds": 1.3103028910118155
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.1524554899940267,
+            "skipped": 10,
+            "step_seconds": 1.155,
+            "timed_out": 1,
+            "wall_seconds": 1.3074554899940267
+          }
+        ],
+        "samples": [
+          1.312539045989979,
+          1.314602836035192,
+          1.3096984900184907,
+          1.3103028910118155,
+          1.3074554899940267
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.15269849001849067,
+          "median": 0.1524554899940267,
+          "min": 0.15160283603519198
+        }
+      },
+      "deep": {
+        "count": 5,
+        "max": 3.2238272299873643,
+        "median": 3.0707864110008813,
+        "min": 2.9795769909978844,
+        "runs": [
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 34,
+            "returncode": 0,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.32992678103130313,
+            "skipped": 0,
+            "step_seconds": 2.726,
+            "timed_out": 0,
+            "wall_seconds": 3.055926781031303
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 34,
+            "returncode": 0,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.34478641100088137,
+            "skipped": 0,
+            "step_seconds": 2.726,
+            "timed_out": 0,
+            "wall_seconds": 3.0707864110008813
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 34,
+            "returncode": 0,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.3425519179995171,
+            "skipped": 0,
+            "step_seconds": 2.81,
+            "timed_out": 0,
+            "wall_seconds": 3.152551917999517
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 34,
+            "returncode": 0,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.34057699099788463,
+            "skipped": 0,
+            "step_seconds": 2.639,
+            "timed_out": 0,
+            "wall_seconds": 2.9795769909978844
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 34,
+            "returncode": 0,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.3388272299873645,
+            "skipped": 0,
+            "step_seconds": 2.885,
+            "timed_out": 0,
+            "wall_seconds": 3.2238272299873643
+          }
+        ],
+        "samples": [
+          3.055926781031303,
+          3.0707864110008813,
+          3.152551917999517,
+          2.9795769909978844,
+          3.2238272299873643
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.34478641100088137,
+          "median": 0.34057699099788463,
+          "min": 0.32992678103130313
+        }
+      },
+      "failed": {
+        "count": 5,
+        "max": 0.30085672496352345,
+        "median": 0.29277959297178313,
+        "min": 0.28388336999341846,
+        "runs": [
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.15485672496352346,
+            "skipped": 40,
+            "step_seconds": 0.146,
+            "timed_out": 0,
+            "wall_seconds": 0.30085672496352345
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.14481136897346006,
+            "skipped": 40,
+            "step_seconds": 0.145,
+            "timed_out": 0,
+            "wall_seconds": 0.28981136897346005
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.14777959297178314,
+            "skipped": 40,
+            "step_seconds": 0.145,
+            "timed_out": 0,
+            "wall_seconds": 0.29277959297178313
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.13988336999341847,
+            "skipped": 40,
+            "step_seconds": 0.144,
+            "timed_out": 0,
+            "wall_seconds": 0.28388336999341846
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.15069716098578648,
+            "skipped": 40,
+            "step_seconds": 0.146,
+            "timed_out": 0,
+            "wall_seconds": 0.29669716098578647
+          }
+        ],
+        "samples": [
+          0.30085672496352345,
+          0.28981136897346005,
+          0.29277959297178313,
+          0.28388336999341846,
+          0.29669716098578647
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.15485672496352346,
+          "median": 0.14777959297178314,
+          "min": 0.13988336999341847
+        }
+      },
+      "fast": {
+        "count": 5,
+        "max": 1.0549307490000501,
+        "median": 0.8271593250101432,
+        "min": 0.8190392399556004,
+        "runs": [
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 26,
+            "returncode": 0,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.108,
+            "timed_out": 0,
+            "wall_seconds": 1.0299876750214025
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 26,
+            "returncode": 0,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.106,
+            "timed_out": 0,
+            "wall_seconds": 1.0549307490000501
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 26,
+            "returncode": 0,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 3.985,
+            "timed_out": 0,
+            "wall_seconds": 0.8232516039861366
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 26,
+            "returncode": 0,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 3.961,
+            "timed_out": 0,
+            "wall_seconds": 0.8271593250101432
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 26,
+            "returncode": 0,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 3.953,
+            "timed_out": 0,
+            "wall_seconds": 0.8190392399556004
+          }
+        ],
+        "samples": [
+          1.0299876750214025,
+          1.0549307490000501,
+          0.8232516039861366,
+          0.8271593250101432,
+          0.8190392399556004
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        }
+      },
+      "narrow": {
+        "count": 5,
+        "max": 1.3293155909632333,
+        "median": 1.2490821770043112,
+        "min": 1.2321389229618944,
+        "runs": [
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 14,
+            "returncode": 0,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.21931559096323316,
+            "skipped": 0,
+            "step_seconds": 1.11,
+            "timed_out": 0,
+            "wall_seconds": 1.3293155909632333
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 14,
+            "returncode": 0,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.2129661750374361,
+            "skipped": 0,
+            "step_seconds": 1.11,
+            "timed_out": 0,
+            "wall_seconds": 1.3229661750374362
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 14,
+            "returncode": 0,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.2001389229618944,
+            "skipped": 0,
+            "step_seconds": 1.032,
+            "timed_out": 0,
+            "wall_seconds": 1.2321389229618944
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 14,
+            "returncode": 0,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.2170821770043112,
+            "skipped": 0,
+            "step_seconds": 1.032,
+            "timed_out": 0,
+            "wall_seconds": 1.2490821770043112
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 14,
+            "returncode": 0,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.20756069397879773,
+            "skipped": 0,
+            "step_seconds": 1.031,
+            "timed_out": 0,
+            "wall_seconds": 1.2385606939787976
+          }
+        ],
+        "samples": [
+          1.3293155909632333,
+          1.3229661750374362,
+          1.2321389229618944,
+          1.2490821770043112,
+          1.2385606939787976
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.21931559096323316,
+          "median": 0.2129661750374361,
+          "min": 0.2001389229618944
+        }
+      },
+      "slow": {
+        "count": 5,
+        "max": 1.3660076649975963,
+        "median": 1.3551063199993223,
+        "min": 1.3470376380137168,
+        "runs": [
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 6,
+            "returncode": 0,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.556,
+            "timed_out": 0,
+            "wall_seconds": 1.3470376380137168
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 6,
+            "returncode": 0,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.558,
+            "timed_out": 0,
+            "wall_seconds": 1.3491910320008174
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 6,
+            "returncode": 0,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.557,
+            "timed_out": 0,
+            "wall_seconds": 1.3551063199993223
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 6,
+            "returncode": 0,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.558,
+            "timed_out": 0,
+            "wall_seconds": 1.3588233049958944
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 6,
+            "returncode": 0,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.555,
+            "timed_out": 0,
+            "wall_seconds": 1.3660076649975963
+          }
+        ],
+        "samples": [
+          1.3470376380137168,
+          1.3491910320008174,
+          1.3551063199993223,
+          1.3588233049958944,
+          1.3660076649975963
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        }
+      },
+      "wide": {
+        "count": 5,
+        "max": 0.9403049009852111,
+        "median": 0.9140291299554519,
+        "min": 0.9111026700120419,
+        "runs": [
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 27,
+            "returncode": 0,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.08,
+            "timed_out": 0,
+            "wall_seconds": 0.9111026700120419
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 27,
+            "returncode": 0,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.085,
+            "timed_out": 0,
+            "wall_seconds": 0.9403049009852111
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 27,
+            "returncode": 0,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.05,
+            "timed_out": 0,
+            "wall_seconds": 0.9122132050106302
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 27,
+            "returncode": 0,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.063,
+            "timed_out": 0,
+            "wall_seconds": 0.9151004140148871
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 27,
+            "returncode": 0,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 3.895,
+            "timed_out": 0,
+            "wall_seconds": 0.9140291299554519
+          }
+        ],
+        "samples": [
+          0.9111026700120419,
+          0.9403049009852111,
+          0.9122132050106302,
+          0.9151004140148871,
+          0.9140291299554519
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        }
+      }
+    }
+  },
+  "after_binary": {
+    "name": "harness-gate-0.3.6",
+    "size_bytes": 8709488,
+    "version": "harness-gate 0.3.6"
+  },
+  "before": {
+    "scenarios": {
+      "cancel": {
+        "count": 5,
+        "max": 1.2787930570193566,
+        "median": 1.277195802947972,
+        "min": 1.2726833329652436,
+        "runs": [
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.15079305701935675,
+            "skipped": 10,
+            "step_seconds": 1.128,
+            "timed_out": 1,
+            "wall_seconds": 1.2787930570193566
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.15466094100661576,
+            "skipped": 10,
+            "step_seconds": 1.123,
+            "timed_out": 1,
+            "wall_seconds": 1.2776609410066158
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.1516833329652436,
+            "skipped": 10,
+            "step_seconds": 1.121,
+            "timed_out": 1,
+            "wall_seconds": 1.2726833329652436
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.15519580294797186,
+            "skipped": 10,
+            "step_seconds": 1.122,
+            "timed_out": 1,
+            "wall_seconds": 1.277195802947972
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.1546355179697274,
+            "skipped": 10,
+            "step_seconds": 1.12,
+            "timed_out": 1,
+            "wall_seconds": 1.2746355179697275
+          }
+        ],
+        "samples": [
+          1.2787930570193566,
+          1.2776609410066158,
+          1.2726833329652436,
+          1.277195802947972,
+          1.2746355179697275
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.15519580294797186,
+          "median": 0.1546355179697274,
+          "min": 0.15079305701935675
+        }
+      },
+      "deep": {
+        "count": 5,
+        "max": 3.797897500975523,
+        "median": 3.7859469410032034,
+        "min": 3.775587418000214,
+        "runs": [
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 34,
+            "returncode": 0,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.3426282109967431,
+            "skipped": 0,
+            "step_seconds": 3.442,
+            "timed_out": 0,
+            "wall_seconds": 3.7846282109967433
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 34,
+            "returncode": 0,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.3437288100472653,
+            "skipped": 0,
+            "step_seconds": 3.449,
+            "timed_out": 0,
+            "wall_seconds": 3.792728810047265
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 34,
+            "returncode": 0,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.33894694100320333,
+            "skipped": 0,
+            "step_seconds": 3.447,
+            "timed_out": 0,
+            "wall_seconds": 3.7859469410032034
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 34,
+            "returncode": 0,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.33458741800021397,
+            "skipped": 0,
+            "step_seconds": 3.441,
+            "timed_out": 0,
+            "wall_seconds": 3.775587418000214
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 34,
+            "returncode": 0,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.3508975009755231,
+            "skipped": 0,
+            "step_seconds": 3.447,
+            "timed_out": 0,
+            "wall_seconds": 3.797897500975523
+          }
+        ],
+        "samples": [
+          3.7846282109967433,
+          3.792728810047265,
+          3.7859469410032034,
+          3.775587418000214,
+          3.797897500975523
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.3508975009755231,
+          "median": 0.3426282109967431,
+          "min": 0.33458741800021397
+        }
+      },
+      "failed": {
+        "count": 5,
+        "max": 0.32851534005021676,
+        "median": 0.32642131100874394,
+        "min": 0.3221206670277752,
+        "runs": [
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.15751128897164016,
+            "skipped": 40,
+            "step_seconds": 0.171,
+            "timed_out": 0,
+            "wall_seconds": 0.32851128897164017
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.15751534005021675,
+            "skipped": 40,
+            "step_seconds": 0.171,
+            "timed_out": 0,
+            "wall_seconds": 0.32851534005021676
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.15212066702777519,
+            "skipped": 40,
+            "step_seconds": 0.17,
+            "timed_out": 0,
+            "wall_seconds": 0.3221206670277752
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.15642131100874393,
+            "skipped": 40,
+            "step_seconds": 0.17,
+            "timed_out": 0,
+            "wall_seconds": 0.32642131100874394
+          },
+          {
+            "actual_success": false,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 1,
+            "passed": 2,
+            "returncode": 1,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.15322573200892656,
+            "skipped": 40,
+            "step_seconds": 0.171,
+            "timed_out": 0,
+            "wall_seconds": 0.32422573200892657
+          }
+        ],
+        "samples": [
+          0.32851128897164017,
+          0.32851534005021676,
+          0.3221206670277752,
+          0.32642131100874394,
+          0.32422573200892657
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.15751534005021675,
+          "median": 0.15642131100874393,
+          "min": 0.15212066702777519
+        }
+      },
+      "fast": {
+        "count": 5,
+        "max": 1.1887019940186292,
+        "median": 0.9732309620012529,
+        "min": 0.9501631089951843,
+        "runs": [
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 26,
+            "returncode": 0,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 5.199,
+            "timed_out": 0,
+            "wall_seconds": 1.1887019940186292
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 26,
+            "returncode": 0,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.595,
+            "timed_out": 0,
+            "wall_seconds": 1.010305623000022
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 26,
+            "returncode": 0,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.288,
+            "timed_out": 0,
+            "wall_seconds": 0.9501631089951843
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 26,
+            "returncode": 0,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 5.005,
+            "timed_out": 0,
+            "wall_seconds": 0.9546221499913372
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 26,
+            "returncode": 0,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 5.029,
+            "timed_out": 0,
+            "wall_seconds": 0.9732309620012529
+          }
+        ],
+        "samples": [
+          1.1887019940186292,
+          1.010305623000022,
+          0.9501631089951843,
+          0.9546221499913372,
+          0.9732309620012529
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        }
+      },
+      "narrow": {
+        "count": 5,
+        "max": 1.55341277300613,
+        "median": 1.5462638920289464,
+        "min": 1.537769460992422,
+        "runs": [
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 14,
+            "returncode": 0,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.21646784801641483,
+            "skipped": 0,
+            "step_seconds": 1.329,
+            "timed_out": 0,
+            "wall_seconds": 1.5454678480164148
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 14,
+            "returncode": 0,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.20776946099242188,
+            "skipped": 0,
+            "step_seconds": 1.33,
+            "timed_out": 0,
+            "wall_seconds": 1.537769460992422
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 14,
+            "returncode": 0,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.22441277300613005,
+            "skipped": 0,
+            "step_seconds": 1.329,
+            "timed_out": 0,
+            "wall_seconds": 1.55341277300613
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 14,
+            "returncode": 0,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.21726389202894647,
+            "skipped": 0,
+            "step_seconds": 1.329,
+            "timed_out": 0,
+            "wall_seconds": 1.5462638920289464
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 14,
+            "returncode": 0,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.2159178810277953,
+            "skipped": 0,
+            "step_seconds": 1.334,
+            "timed_out": 0,
+            "wall_seconds": 1.5499178810277954
+          }
+        ],
+        "samples": [
+          1.5454678480164148,
+          1.537769460992422,
+          1.55341277300613,
+          1.5462638920289464,
+          1.5499178810277954
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.22441277300613005,
+          "median": 0.21646784801641483,
+          "min": 0.20776946099242188
+        }
+      },
+      "slow": {
+        "count": 5,
+        "max": 1.3406206149957143,
+        "median": 1.3341676259879023,
+        "min": 1.3258795050205663,
+        "runs": [
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 6,
+            "returncode": 0,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.493,
+            "timed_out": 0,
+            "wall_seconds": 1.3341676259879023
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 6,
+            "returncode": 0,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.493,
+            "timed_out": 0,
+            "wall_seconds": 1.3406206149957143
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 6,
+            "returncode": 0,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.495,
+            "timed_out": 0,
+            "wall_seconds": 1.3388922710437328
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 6,
+            "returncode": 0,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.49,
+            "timed_out": 0,
+            "wall_seconds": 1.3290412569767796
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 6,
+            "returncode": 0,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 4.496,
+            "timed_out": 0,
+            "wall_seconds": 1.3258795050205663
+          }
+        ],
+        "samples": [
+          1.3341676259879023,
+          1.3406206149957143,
+          1.3388922710437328,
+          1.3290412569767796,
+          1.3258795050205663
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        }
+      },
+      "wide": {
+        "count": 5,
+        "max": 0.9638605910004117,
+        "median": 0.8557465400081128,
+        "min": 0.8519537069951184,
+        "runs": [
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 27,
+            "returncode": 0,
+            "sample": 1,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 3.285,
+            "timed_out": 0,
+            "wall_seconds": 0.8529100340092555
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 27,
+            "returncode": 0,
+            "sample": 2,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 3.621,
+            "timed_out": 0,
+            "wall_seconds": 0.9638605910004117
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 27,
+            "returncode": 0,
+            "sample": 3,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 3.296,
+            "timed_out": 0,
+            "wall_seconds": 0.8557465400081128
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 27,
+            "returncode": 0,
+            "sample": 4,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 3.495,
+            "timed_out": 0,
+            "wall_seconds": 0.8519537069951184
+          },
+          {
+            "actual_success": true,
+            "cancelled": 0,
+            "expected_passed": true,
+            "failed": 0,
+            "passed": 27,
+            "returncode": 0,
+            "sample": 5,
+            "scheduler_overhead_seconds": 0.0,
+            "skipped": 0,
+            "step_seconds": 3.606,
+            "timed_out": 0,
+            "wall_seconds": 0.9517053280142136
+          }
+        ],
+        "samples": [
+          0.8529100340092555,
+          0.9638605910004117,
+          0.8557465400081128,
+          0.8519537069951184,
+          0.9517053280142136
+        ],
+        "scheduler_overhead_seconds": {
+          "count": 5,
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        }
+      }
+    }
+  },
+  "before_binary": {
+    "name": "harness-gate-0.3.5",
+    "size_bytes": 8640216,
+    "version": "harness-gate 0.3.5"
+  },
+  "comparison": {
+    "allocation": {
+      "100": {
+        "after_maxrss_median_kb": 9288,
+        "after_wall_median_seconds": 0.05940765200648457,
+        "before_maxrss_median_kb": 9220,
+        "before_wall_median_seconds": 0.06315215502399951,
+        "maxrss_delta_percent": 0.7375271149674623,
+        "wall_delta_percent": -5.92933529519607
+      },
+      "1200": {
+        "after_maxrss_median_kb": 12744,
+        "after_wall_median_seconds": 0.09305914700962603,
+        "before_maxrss_median_kb": 12576,
+        "before_wall_median_seconds": 0.40133685304317623,
+        "maxrss_delta_percent": 1.3358778625954137,
+        "wall_delta_percent": -76.8127082514362
+      },
+      "400": {
+        "after_maxrss_median_kb": 10192,
+        "after_wall_median_seconds": 0.06848273699870333,
+        "before_maxrss_median_kb": 10304,
+        "before_wall_median_seconds": 0.11392003897344694,
+        "maxrss_delta_percent": -1.0869565217391353,
+        "wall_delta_percent": -39.885258453373915
+      }
+    },
+    "cancel": {
+      "after_median_seconds": 1.3103028910118155,
+      "before_median_seconds": 1.277195802947972,
+      "delta_percent": 2.5921701267281883
+    },
+    "deep": {
+      "after_median_seconds": 3.0707864110008813,
+      "before_median_seconds": 3.7859469410032034,
+      "delta_percent": -18.889871969859627
+    },
+    "failed": {
+      "after_median_seconds": 0.29277959297178313,
+      "before_median_seconds": 0.32642131100874394,
+      "delta_percent": -10.306226003748764
+    },
+    "fast": {
+      "after_median_seconds": 0.8271593250101432,
+      "before_median_seconds": 0.9732309620012529,
+      "delta_percent": -15.008938545352368
+    },
+    "narrow": {
+      "after_median_seconds": 1.2490821770043112,
+      "before_median_seconds": 1.5462638920289464,
+      "delta_percent": -19.219340020588927
+    },
+    "slow": {
+      "after_median_seconds": 1.3551063199993223,
+      "before_median_seconds": 1.3341676259879023,
+      "delta_percent": 1.5694200341516806
+    },
+    "wide": {
+      "after_median_seconds": 0.9140291299554519,
+      "before_median_seconds": 0.8557465400081128,
+      "delta_percent": 6.810730423378231
+    }
+  },
+  "metadata": {
+    "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+    "commit": "6cc4a435d313126c608f211f0fe3af6c53fa8d88",
+    "logical_cpus": 8,
+    "machine": "x86_64",
+    "os": "Linux-7.0.0-30-generic-x86_64-with-glibc2.43",
+    "processor": "",
+    "python": "3.14.4",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "target": "x86_64-unknown-linux-gnu",
+    "timestamp_utc": "2026-09-03T09:14:09.374050+00:00",
+    "tool": "post-remediation-benchmarks"
+  },
+  "samples": 5
+}

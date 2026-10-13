@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose a focused improvement to Harness-Gate
+title: "[feature] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep proposals focused on a user workflow and do not include secrets or private project data.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and use case
+      description: What workflow is blocked or unnecessarily difficult today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the observable CLI, configuration, report, or documentation change.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and compatibility impact
+    validations:
+      required: true

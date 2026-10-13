@@ -1,0 +1,59 @@
+name: Arc-Admin bounded cost trial
+
+on:
+  push:
+    branches: [symphony/GH-206]
+    paths:
+      - .github/workflows/arc-admin-cost-trial.yml
+      - docs/dogfood/arc-admin/cost/selfhost_trial.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: arc-admin-gh206-cost-trial
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    # An operator registers a temporary runner with this unique label only.
+    # This workflow is not an authoritative gate or a permanent duplicate lane.
+    runs-on: gh206-measure
+    timeout-minutes: 120
+    env:
+      CARGO_TERM_COLOR: never
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target/harness-build
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Restore pinned regression data
+        uses: ./.github/actions/test-data
+
+      - name: Build measured Harness-Gate revision
+        run: cargo build --locked --manifest-path tools/harness-gate/Cargo.toml
+      - name: Prepare pinned Arc-Admin source and isolated caches
+        run: python3 docs/dogfood/arc-admin/cost/selfhost_trial.py prepare --output target/arc-admin-ci-trial
+      - name: Before sample 1
+        run: python3 docs/dogfood/arc-admin/cost/selfhost_trial.py before --sample 1 --output target/arc-admin-ci-trial
+      - name: Shadow sample 1
+        run: python3 docs/dogfood/arc-admin/cost/selfhost_trial.py shadow --sample 1 --output target/arc-admin-ci-trial
+      - name: Before sample 2
+        run: python3 docs/dogfood/arc-admin/cost/selfhost_trial.py before --sample 2 --output target/arc-admin-ci-trial
+      - name: Shadow sample 2
+        run: python3 docs/dogfood/arc-admin/cost/selfhost_trial.py shadow --sample 2 --output target/arc-admin-ci-trial
+      - name: Before sample 3
+        run: python3 docs/dogfood/arc-admin/cost/selfhost_trial.py before --sample 3 --output target/arc-admin-ci-trial
+      - name: Shadow sample 3
+        run: python3 docs/dogfood/arc-admin/cost/selfhost_trial.py shadow --sample 3 --output target/arc-admin-ci-trial
+      - name: Summarize actual outcomes without accepting authority transfer
+        if: always()
+        run: python3 docs/dogfood/arc-admin/cost/selfhost_trial.py summarize --output target/arc-admin-ci-trial
+      - name: Retain all successful and failed measurement receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: arc-admin-cost-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/arc-admin-ci-trial/evidence/
+          if-no-files-found: error
+          retention-days: 30

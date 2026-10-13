@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+root=$(CDPATH= cd -- "${0%/*}/.." && pwd)
+unset PKG_CONFIG_PATH PKG_CONFIG_DIR
+export PKG_CONFIG_SYSROOT_DIR="$root/link/sysroot"
+export PKG_CONFIG_LIBDIR="$root/link/sysroot/usr/lib/x86_64-linux-gnu/pkgconfig:$root/link/sysroot/usr/share/pkgconfig"
+exec "$root/link/bin/pkgconf" "$@"

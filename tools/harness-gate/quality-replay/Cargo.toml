@@ -1,0 +1,24 @@
+[package]
+name = "harness-gate-quality-core"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+publish = false
+license = "MIT"
+description = "Non-authoritative differential runner for Harness-Gate generic semantics"
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+harness-gate = { path = "..", version = "0.4.8" }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.151", features = ["arbitrary_precision", "raw_value"] }
+thiserror = "2.0"
+sha2 = "0.10"
+regex = "1.13.1"
+unicode-normalization = "0.1"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+
+[dev-dependencies]
+tempfile = "3.27"

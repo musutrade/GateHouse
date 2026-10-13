@@ -1,0 +1,308 @@
+{
+  "authority_transfer": "blocked",
+  "output_sha256": "5096719c1c5ecea970411f0df823eb81af92dd39add56c1764f8059cb602ea5e",
+  "preserved_sections": [
+    "project",
+    "paths",
+    "policy",
+    "doctor",
+    "services",
+    "parsers",
+    "scope",
+    "steps"
+  ],
+  "runtime_blockers": [
+    "Global ARC_FLOW_REPORTS, AUDITOR_CONFIG, ARC_FLOW_AUDIT_CONFIG and ARC_FLOW_SECRETS_CONFIG overrides are not migrated; Harness-Gate protects audit policy and uses its own environment interface. REPORT_DIR is only a deprecated compatibility alias.",
+    "Hook/prelude staged-versus-working-tree behavior, service lifecycle and runtime outcomes require shadow parity; existing secret/audit policy files and CI/hook commands remain project-owned prerequisites.",
+    "Route the destination config through project scope and integrate CI separately. No ci profile, quality policy or authority transfer is invented by import."
+  ],
+  "source_sha256": "6e254663c4a47b94ac8e85c263d34d24eb58f3afe5a14b02c7ef257b08f3ed5d",
+  "status": "execution-config-imported",
+  "steps": [
+    {
+      "blocks_when_selected": true,
+      "component": "backend",
+      "depends_on": [],
+      "id": "backend.format",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "backend",
+      "depends_on": [],
+      "id": "backend.clippy",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "backend",
+      "depends_on": [],
+      "id": "backend.compile",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "backend",
+      "depends_on": [],
+      "id": "backend.tests",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "frontend",
+      "depends_on": [],
+      "id": "frontend.lint",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "frontend",
+      "depends_on": [],
+      "id": "frontend.format",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "frontend",
+      "depends_on": [],
+      "id": "frontend.tests",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "frontend",
+      "depends_on": [],
+      "id": "frontend.e2e",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "frontend",
+      "depends_on": [],
+      "id": "frontend.fullstack-smoke",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "frontend",
+      "depends_on": [],
+      "id": "frontend.build",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.hook-syntax",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.project-init-tests",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.framework-release-config",
+      "listed_in_required_steps": false,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.framework-upgrade-tests",
+      "listed_in_required_steps": false,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.template-quality",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.template-quality-tests",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.observability-config",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.tracing-config",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.production-deployment-config",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.audit-retention-config",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.api-generation",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.supply-chain-config",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.format",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.clippy",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "blocks_when_selected": true,
+      "component": "workflow",
+      "depends_on": [],
+      "id": "workflow.tests",
+      "listed_in_required_steps": true,
+      "profiles": [
+        "full",
+        "hook"
+      ]
+    }
+  ],
+  "transformations": {
+    "explicit_repository_inputs": 25,
+    "materialized_arc_flow_secrets_default": false
+  },
+  "ux_metrics": {
+    "duplicated_step_definitions": 25,
+    "generated_config_bytes": 13505,
+    "generated_duplicate_configs": 1,
+    "import_commands": 1,
+    "manual_execution_config_edits": 0,
+    "manually_reentered_steps": 0,
+    "operator_elapsed_seconds": null,
+    "preserved_source_scalar_values": 491,
+    "retained_source_configs": 1,
+    "runtime_integration_effort": "unmeasured; runtime blockers remain",
+    "source_config_bytes": 12229
+  },
+  "version": 1
+}

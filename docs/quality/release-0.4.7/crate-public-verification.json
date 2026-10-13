@@ -1,0 +1,13 @@
+{
+  "status": "pass",
+  "verified_at": "2026-09-22T10:13:25.758789+00:00",
+  "version": "0.4.7",
+  "registry_url": "https://crates.io/crates/harness-gate/0.4.7",
+  "sha256": "b33bd0a350241e1f95731991f7af1637971a34d2d2cf28e8984b30fbe6ed0f0f",
+  "bytes": 327576,
+  "source_commit": "3e7b49f32b2b4afa79c8bf1edbb55ed5e2e96ee2",
+  "path_in_vcs": "tools/harness-gate",
+  "yanked": false,
+  "clean_source": true,
+  "configurable_artifact_limit_source_present": true
+}

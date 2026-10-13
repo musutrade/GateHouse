@@ -1,0 +1,5 @@
+schema: spec-driven
+status: implemented
+created: 2026-08-30
+goal: Improve CLI repair guidance, overlap service startup with mandatory gates, and publish isolated scope matcher cache evidence
+skip_specs: false

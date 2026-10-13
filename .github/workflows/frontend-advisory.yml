@@ -1,0 +1,39 @@
+name: Frontend Advisory
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-advisory:
+    name: TypeScript Angular Reference (advisory)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Restore pinned regression data
+        uses: ./.github/actions/test-data
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+
+      # Native Angular/provider collection already exists in the retained window.
+      - name: Replay accepted adapter, evidence, policy and negative fixtures
+        run: python3 tools/quality/typescript_advisory.py --output target/quality/frontend-advisory
+
+      - name: Retain advisory evidence even on failure
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: frontend-advisory-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            target/quality/frontend-advisory
+            docs/quality/typescript-certification.md
+            docs/quality/gh-133/index.json
+            docs/quality/gh-134/window.json

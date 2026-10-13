@@ -1,0 +1,5 @@
+schema: spec-driven
+status: implemented
+created: 2026-09-01
+goal: Bind adapter requests to their signed invocation and bound every exported process-evidence path
+skip_specs: false

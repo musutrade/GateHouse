@@ -1,0 +1,5 @@
+schema: spec-driven
+status: implemented
+created: 2026-08-28
+goal: Keep workflow and audit configuration scoped to the selected project
+skip_specs: true

@@ -1,0 +1,39 @@
+{
+  "schema": "core-release-artifact-acceptance/v1",
+  "status": "pass",
+  "version": "0.4.2",
+  "source_commit": "718bc5a1ea82f8364f91fc72f179ea0db689f6b5",
+  "core_sha256": "eda5179d96b32269124150980ffcaa7e57878605133bc6ead51e5aeb8a6ad0a0",
+  "release_run": 34738554209,
+  "arc_commit": "859daa95b180c88f86fb817418e6b6ff5a5b1123",
+  "full_receipt_sha256": "1dd7c61b467d5d08e1aeac0ca9b13adb945c81fbcbdd2d7f700afa38e7f902e2",
+  "full_report_sha256": "0a55fc0a8f4c705956ba3edcfa356efd6859894a82f98db9be997efb02fa22b6",
+  "full_execution_steps": 27,
+  "quality_records": 1921,
+  "quality_outcome": "fail",
+  "baseline_status": "available",
+  "all_gate_outcomes_identical": true,
+  "manifest_verified": true,
+  "manifest_artifacts": 33,
+  "manifest_sha256": "a45bbe4c7ccc22920a08253cbcd0195640306724e6b2584fff5462001206ab46",
+  "hook_report_sha256": "6d6189072f9e798dbeecd78ea313649583cfb4be845bc56f531b3f3613487fa5",
+  "hook_quality": "not_collected",
+  "different_staged_and_working_tree_content": true,
+  "service_cleanup": [
+    {
+      "id": "test-postgres",
+      "status": "CLEANED"
+    }
+  ],
+  "environment_observations": [
+    {
+      "process": "api_flow",
+      "DATABASE_URL_present": false,
+      "TEST_DATABASE_URL_present": true
+    }
+  ],
+  "native_recompile": false,
+  "measurement_sha256": "c3e17d97984ab8832a736b3ea6d475f8f6e0f38a88f20f2d63c49561748189b4",
+  "retained_full_inputs": "/mnt/dev-ssd/workspaces/harness-gate-rc3-20260913/accepted-core042-full-1789275353852177895",
+  "published": false
+}

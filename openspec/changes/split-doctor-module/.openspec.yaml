@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-08-27
+goal: Decompose doctor reporting and checks into private responsibility-based modules without changing behavior
+skip_specs: true

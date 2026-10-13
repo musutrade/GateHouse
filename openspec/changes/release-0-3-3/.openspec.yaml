@@ -1,0 +1,5 @@
+schema: spec-driven
+status: implemented
+created: 2026-08-30
+goal: Publish documentation-link and docs.rs metadata fixes in Harness-Gate 0.3.3
+skip_specs: true

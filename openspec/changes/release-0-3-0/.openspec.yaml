@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-08-29
+goal: Publish the merged 0.3.0 functionality to crates.io and GitHub Releases
+skip_specs: true

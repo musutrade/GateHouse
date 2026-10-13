@@ -1,0 +1,55 @@
+{
+  "schema": "arc-complete-quality-acceptance/v1",
+  "status": "pass",
+  "quality_outcome": "fail",
+  "reason": "actual coverage and CRAP thresholds remain enforced",
+  "source_commit": "859daa95b180c88f86fb817418e6b6ff5a5b1123",
+  "base_commit": "d5e113ec2d49cd7dc30aaf2a14db016ba9d7ca94",
+  "core": {
+    "version": "0.4.2",
+    "commit": "718bc5a1ea82f8364f91fc72f179ea0db689f6b5",
+    "source_commit": "718bc5a1ea82f8364f91fc72f179ea0db689f6b5",
+    "sha256": "eda5179d96b32269124150980ffcaa7e57878605133bc6ead51e5aeb8a6ad0a0",
+    "profile": "release-small",
+    "release_run": 34738554209,
+    "artifact_id": 10312325858,
+    "artifact_digest": "sha256:eef0be38c3105c7ee4702761b446004b5a231e0e15bd35b9bfbb16734c96e8a2",
+    "released": false
+  },
+  "measurement_sha256": "c3e17d97984ab8832a736b3ea6d475f8f6e0f38a88f20f2d63c49561748189b4",
+  "execution_steps_passed": 27,
+  "quality_records": 1921,
+  "producers": {
+    "backend": "collected",
+    "frontend": "collected",
+    "frontend-api": "collected"
+  },
+  "baseline_status": "available",
+  "timings": {
+    "core042-full-host-prepare": {
+      "seconds": 4.625906163943,
+      "exit": 0,
+      "log_sha256": "cb4f6cc336650c0c78026306cfe038f4f00cc6620c8b19d9bfc684171591bfbc"
+    },
+    "core042-full-verify": {
+      "seconds": 301.02617821400054,
+      "exit": 1,
+      "log_sha256": "4d5c7e33ba3dff420c2192d75fb32beaf4d555099c191ea352f129fd2e0fc7e1"
+    }
+  },
+  "native_recompile": false,
+  "environment_observations": [
+    {
+      "process": "api_flow",
+      "DATABASE_URL_present": false,
+      "TEST_DATABASE_URL_present": true
+    }
+  ],
+  "service_status": [
+    {
+      "id": "test-postgres",
+      "status": "CLEANED"
+    }
+  ],
+  "test_result_sha256": "0a55fc0a8f4c705956ba3edcfa356efd6859894a82f98db9be997efb02fa22b6"
+}

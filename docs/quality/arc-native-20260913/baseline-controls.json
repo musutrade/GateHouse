@@ -1,0 +1,31 @@
+{
+  "status": "pass",
+  "scope": "Real project Git baseline with fresh current-lock backend series and all three producer records",
+  "source_commit": "859daa95b180c88f86fb817418e6b6ff5a5b1123",
+  "cases": [
+    {
+      "case": "positive",
+      "exit": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "diagnostic": "Authenticated Git baseline resolved"
+    },
+    {
+      "case": "tampered-manifest-pin",
+      "exit": 1,
+      "log_sha256": "f9c574c90740b46e152730e39f0fc463fa4ff5105be5defb0ab8ce671f8730f1",
+      "diagnostic": "ERROR [E1000]: command failed: baseline manifest hash mismatch\n"
+    },
+    {
+      "case": "missing-manifest",
+      "exit": 1,
+      "log_sha256": "9266eaf2e14bb2d39c4bd15df49c3daecf90ef8623f2ac281a50c295b3b0ba50",
+      "diagnostic": "ERROR [E1000]: command failed: required baseline unavailable: baseline manifest missing\n"
+    },
+    {
+      "case": "wrong-git-base",
+      "exit": 1,
+      "log_sha256": "8c2a0f51fca7308696531bf6523d5273efccdc786b8896de5fe56528ab1c7510",
+      "diagnostic": "ERROR [E1000]: command failed: baseline source/target identity mismatch\n"
+    }
+  ]
+}

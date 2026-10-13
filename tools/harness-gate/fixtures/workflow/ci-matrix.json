@@ -1,0 +1,277 @@
+{
+  "schema": "quality-ci-matrix/v1",
+  "profile": "ci",
+  "modes": [
+    "pass",
+    "policy-failure",
+    "required-unavailable"
+  ],
+  "negative_cases": [
+    "digest",
+    "binding",
+    "schema",
+    "run",
+    "series",
+    "subject",
+    "artifact",
+    "source",
+    "missing",
+    "capability"
+  ],
+  "shapes": [
+    {
+      "id": "rust",
+      "components": [
+        {
+          "id": "service",
+          "metadata": {
+            "ecosystem": "rust"
+          },
+          "capabilities": [
+            {
+              "name": "coverage.line",
+              "state": "supported",
+              "value": {
+                "type": "ratio",
+                "covered": 5,
+                "total": 5
+              },
+              "limit": {
+                "type": "ratio",
+                "covered": 4,
+                "total": 5
+              },
+              "failure": {
+                "type": "ratio",
+                "covered": 1,
+                "total": 5
+              },
+              "operator": "ge",
+              "required": true
+            },
+            {
+              "name": "risk.crap",
+              "state": "supported",
+              "value": {
+                "type": "decimal",
+                "value": "10"
+              },
+              "limit": {
+                "type": "decimal",
+                "value": "30"
+              },
+              "failure": {
+                "type": "decimal",
+                "value": "40"
+              },
+              "operator": "le",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "producer": "rust-configured-producer",
+      "series": "rust-configured-series",
+      "tool": "rust-fixture-tool",
+      "runtime": "fixture-runtime-v1"
+    },
+    {
+      "id": "angular-reference",
+      "components": [
+        {
+          "id": "client",
+          "metadata": {
+            "ecosystem": "angular"
+          },
+          "capabilities": [
+            {
+              "name": "coverage.line",
+              "state": "supported",
+              "value": {
+                "type": "ratio",
+                "covered": 5,
+                "total": 5
+              },
+              "limit": {
+                "type": "ratio",
+                "covered": 4,
+                "total": 5
+              },
+              "failure": {
+                "type": "ratio",
+                "covered": 1,
+                "total": 5
+              },
+              "operator": "ge",
+              "required": true
+            },
+            {
+              "name": "risk.crap",
+              "state": "unsupported",
+              "value": {
+                "type": "decimal",
+                "value": "10"
+              },
+              "limit": {
+                "type": "decimal",
+                "value": "30"
+              },
+              "failure": {
+                "type": "decimal",
+                "value": "40"
+              },
+              "operator": "le",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "producer": "angular-reference-configured-producer",
+      "series": "angular-reference-configured-series",
+      "tool": "angular-reference-fixture-tool",
+      "runtime": "fixture-runtime-v1"
+    },
+    {
+      "id": "mixed",
+      "components": [
+        {
+          "id": "client",
+          "metadata": {
+            "ecosystem": "angular"
+          },
+          "capabilities": [
+            {
+              "name": "coverage.line",
+              "state": "supported",
+              "value": {
+                "type": "ratio",
+                "covered": 5,
+                "total": 5
+              },
+              "limit": {
+                "type": "ratio",
+                "covered": 4,
+                "total": 5
+              },
+              "failure": {
+                "type": "ratio",
+                "covered": 1,
+                "total": 5
+              },
+              "operator": "ge",
+              "required": true
+            },
+            {
+              "name": "risk.crap",
+              "state": "unsupported",
+              "value": {
+                "type": "decimal",
+                "value": "10"
+              },
+              "limit": {
+                "type": "decimal",
+                "value": "30"
+              },
+              "failure": {
+                "type": "decimal",
+                "value": "40"
+              },
+              "operator": "le",
+              "required": false
+            }
+          ]
+        },
+        {
+          "id": "service",
+          "metadata": {
+            "ecosystem": "rust"
+          },
+          "capabilities": [
+            {
+              "name": "coverage.line",
+              "state": "supported",
+              "value": {
+                "type": "ratio",
+                "covered": 5,
+                "total": 5
+              },
+              "limit": {
+                "type": "ratio",
+                "covered": 4,
+                "total": 5
+              },
+              "failure": {
+                "type": "ratio",
+                "covered": 1,
+                "total": 5
+              },
+              "operator": "ge",
+              "required": true
+            },
+            {
+              "name": "risk.crap",
+              "state": "supported",
+              "value": {
+                "type": "decimal",
+                "value": "10"
+              },
+              "limit": {
+                "type": "decimal",
+                "value": "30"
+              },
+              "failure": {
+                "type": "decimal",
+                "value": "40"
+              },
+              "operator": "le",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "producer": "mixed-configured-producer",
+      "series": "mixed-configured-series",
+      "tool": "mixed-fixture-tool",
+      "runtime": "fixture-runtime-v1"
+    },
+    {
+      "id": "unknown",
+      "components": [
+        {
+          "id": "observatory",
+          "metadata": {
+            "ecosystem": "nebula-unregistered-2049"
+          },
+          "capabilities": [
+            {
+              "name": "bundle.size",
+              "state": "supported",
+              "value": {
+                "type": "size",
+                "value": 5,
+                "unit": "bytes"
+              },
+              "limit": {
+                "type": "size",
+                "value": 10,
+                "unit": "bytes"
+              },
+              "failure": {
+                "type": "size",
+                "value": 15,
+                "unit": "bytes"
+              },
+              "operator": "le",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "producer": "unknown-configured-producer",
+      "series": "unknown-configured-series",
+      "tool": "unknown-fixture-tool",
+      "runtime": "fixture-runtime-v1"
+    }
+  ],
+  "unsupported_capability": "nebula.flux"
+}

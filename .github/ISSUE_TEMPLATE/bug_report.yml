@@ -1,0 +1,43 @@
+name: Bug report
+description: Report a reproducible problem in Harness-Gate
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, private keys, customer data, or unreleased security details.
+  - type: input
+    id: version
+    attributes:
+      label: Harness-Gate version or commit
+      placeholder: v0.3.5 or a commit SHA
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Operating system and Rust version
+      placeholder: Ubuntu 24.04, rustc 1.86
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest safe configuration or command that reproduces the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and safe logs
+    validations:
+      required: true

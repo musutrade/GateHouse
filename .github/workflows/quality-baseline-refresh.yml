@@ -1,0 +1,161 @@
+name: Refresh Quality Baseline
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Capture a candidate or deliver the same existing candidate (PR mode)
+        type: choice
+        options: [capture, delivery-only]
+        default: capture
+      source_run_id:
+        description: Original capture run ID (required for delivery-only)
+        type: string
+      source_run_attempt:
+        description: Original capture attempt (required for delivery-only)
+        type: string
+      candidate_sha:
+        description: Exact existing candidate commit SHA (required for delivery-only)
+        type: string
+      artifact_id:
+        description: Original raw artifact ID (required for delivery-only)
+        type: string
+      artifact_digest:
+        description: Original sha256 archive digest including sha256 prefix (required for delivery-only)
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: quality-baseline-${{ inputs.source_run_id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Capture reviewable baseline candidate
+    if: ${{ inputs.operation != 'delivery-only' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Restore pinned regression data
+        uses: ./.github/actions/test-data
+
+      - name: Precheck PR delivery policy
+        id: precheck
+        run: python3 tools/quality/baseline_delivery.py precheck
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+
+      - name: Install cargo-nextest
+        uses: ./.github/actions/install-ci-tool
+        with:
+          tool: cargo-nextest
+
+      - name: Capture candidate measurements
+        id: capture
+        run: |
+          python3 tools/quality/benchmarks.py \
+            --samples 5 \
+            --output docs/benchmarks/phase-1/current.json \
+            --raw-dir target/quality/benchmark-runs
+
+      - name: Upload raw benchmark evidence
+        id: evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quality-baseline-refresh-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/quality
+          if-no-files-found: warn
+
+      - name: Require retained evidence before PR delivery
+        env:
+          CAPTURE_RESULT: ${{ steps.capture.outcome }}
+          UPLOAD_RESULT: ${{ steps.evidence.outcome }}
+          ARTIFACT_ID: ${{ steps.evidence.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.evidence.outputs.artifact-digest }}
+        run: |
+          [[ "$CAPTURE_RESULT" == success && "$UPLOAD_RESULT" == success && "$ARTIFACT_ID" =~ ^[0-9]+$ && "$ARTIFACT_DIGEST" =~ ^[0-9a-f]{64}$ ]] || {
+            printf 'Original artifact id/digest missing; PR delivery blocked.\n' >&2
+            exit 1
+          }
+
+      - name: Create baseline update pull request
+        id: pr
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        with:
+          branch: automation/quality-baseline-${{ github.run_id }}
+          delete-branch: true
+          commit-message: 'chore(quality): refresh phase one baseline'
+          title: 'chore(quality): refresh phase one baseline'
+          body: |
+            Automated weekly/manual candidate baseline refresh.
+
+            Review the benchmark JSON and Markdown changes together with the
+            `quality-baseline-refresh-${{ github.run_id }}-${{ github.run_attempt }}` artifact before merging.
+
+            Original run/attempt: ${{ github.run_id }}/${{ github.run_attempt }}
+            Measured commit: ${{ github.sha }}
+            Original evidence: ${{ steps.evidence.outputs.artifact-url }}
+            Archive digest: sha256:${{ steps.evidence.outputs.artifact-digest }}
+            This pull request does not adopt a baseline automatically.
+
+            <!-- baseline-delivery-v1 {"repository":"${{ github.repository }}","source_run_id":${{ github.run_id }},"source_run_attempt":${{ github.run_attempt }},"measured_sha":"${{ github.sha }}","artifact_id":${{ steps.evidence.outputs.artifact-id }},"artifact_digest":"sha256:${{ steps.evidence.outputs.artifact-digest }}"} -->
+
+      - name: Report original candidate and delivery-only retry inputs
+        if: ${{ always() }}
+        env:
+          ARTIFACT_ID: ${{ steps.evidence.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.evidence.outputs.artifact-digest }}
+          CAPTURE_PR_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
+          PR_PERMISSION_STATE: ${{ steps.precheck.outputs.permission }}
+        run: |
+          arguments=(summary --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT")
+          if [[ -n "$ARTIFACT_ID" ]]; then arguments+=(--artifact-id "$ARTIFACT_ID"); fi
+          if [[ -n "$ARTIFACT_DIGEST" ]]; then arguments+=(--artifact-digest "sha256:$ARTIFACT_DIGEST"); fi
+          python3 tools/quality/baseline_delivery.py "${arguments[@]}"
+
+  delivery-only:
+    name: Retry original candidate PR delivery
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.operation == 'delivery-only' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+      SOURCE_RUN_ATTEMPT: ${{ inputs.source_run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      ARTIFACT_ID: ${{ inputs.artifact_id }}
+      ARTIFACT_DIGEST: ${{ inputs.artifact_digest }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Verify original evidence and deliver the exact existing SHA
+        run: |
+          python3 tools/quality/baseline_delivery.py deliver \
+            --run-id "$SOURCE_RUN_ID" --attempt "$SOURCE_RUN_ATTEMPT" \
+            --candidate-sha "$CANDIDATE_SHA" --artifact-id "$ARTIFACT_ID" \
+            --artifact-digest "$ARTIFACT_DIGEST" \
+            --output "$RUNNER_TEMP/baseline-delivery.json"
+      - name: Retain delivery-only diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quality-baseline-delivery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/baseline-delivery.json
+          if-no-files-found: warn

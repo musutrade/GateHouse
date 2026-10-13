@@ -1,0 +1,261 @@
+name: Rust collector preparation
+
+# Signing and publication are separate, explicitly selected protected operations.
+on:
+  workflow_dispatch:
+    inputs:
+      signing_packet_sha256:
+        description: Exact private RC signing packet digest; empty runs the rehearsal
+        required: false
+        type: string
+      installer_packet_sha256:
+        description: Exact approved installer delivery packet digest
+        required: false
+        type: string
+      publication_packet_sha256:
+        description: Exact reviewed final publication packet digest
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: rust-collector-release-dry-run-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  protection:
+    if: github.repository == 'musutrade/Harness-Gate' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject ambiguous operation selection
+        env:
+          SIGNING: ${{ inputs.signing_packet_sha256 }}
+          PUBLICATION: ${{ inputs.publication_packet_sha256 }}
+          INSTALLER: ${{ inputs.installer_packet_sha256 }}
+        run: |
+          count=0
+          for value in "$SIGNING" "$PUBLICATION" "$INSTALLER"; do
+            if [ -n "$value" ]; then count=$((count + 1)); fi
+          done
+          test "$count" -le 1
+      - name: Enforce stable Rust collector migration hold
+        env:
+          SIGNING: ${{ inputs.signing_packet_sha256 }}
+          PUBLICATION: ${{ inputs.publication_packet_sha256 }}
+          INSTALLER: ${{ inputs.installer_packet_sha256 }}
+        run: |
+          if [ -n "$SIGNING$PUBLICATION$INSTALLER" ]; then
+            echo 'Legacy collector signing/publication is suspended by docs/engineering-policy.md section 10.' >&2
+            echo 'A pure-Rust stable-interface collector and reviewed measurement migration are required.' >&2
+            exit 1
+          fi
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Require existing protected environment before requesting approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PYTHONPATH=tools/release python3 - <<'PY'
+          import os
+          import collector_release_policy as policy
+          client = policy.core.GitHubClient('https://api.github.com', policy.assets.REPOSITORY, os.environ['GH_TOKEN'])
+          policy.protected_environment(client.get_json('/repos/' + policy.assets.REPOSITORY + '/environments/' + policy.ENVIRONMENT))
+          PY
+  dry-run:
+    needs: protection
+    if: inputs.installer_packet_sha256 == '' && inputs.signing_packet_sha256 == '' && inputs.publication_packet_sha256 == '' && github.repository == 'musutrade/Harness-Gate' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: rust-collector-release
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Exercise delivery negatives and lifecycle
+        run: python3 -m unittest discover -s tools/release/tests -v
+      - name: Rehearse signed asset verification without publication
+        run: python3 tools/release/collector_dry_run.py --output target/collector-release-dry-run
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: collector-release-dry-run-${{ github.run_id }}
+          path: target/collector-release-dry-run
+          if-no-files-found: error
+          retention-days: 90
+
+  sign-private-candidate:
+    needs: protection
+    if: inputs.installer_packet_sha256 == '' && inputs.signing_packet_sha256 != '' && inputs.publication_packet_sha256 == '' && github.repository == 'musutrade/Harness-Gate' && github.ref == 'refs/heads/main'
+    environment: rust-collector-release
+    runs-on:
+      group: harness-gate-rust-collector-release
+      labels: rust-collector-release
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PACKET: ${{ vars.COLLECTOR_SIGNING_PACKET }}
+      PACKET_SHA256: ${{ inputs.signing_packet_sha256 }}
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify private candidate before accessing the signing key
+        run: |
+          python3 tools/release/sign_collector_candidate.py preflight \
+            --packet "$PACKET" --packet-sha256 "$PACKET_SHA256" --source "$SOURCE_SHA"
+      - name: Sign locally for installation acceptance without public distribution
+        shell: bash
+        env:
+          COLLECTOR_RSA_PRIVATE_KEY: ${{ secrets.COLLECTOR_RSA_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          key=$(mktemp)
+          trap 'rm -f -- "$key"' EXIT
+          printf '%s\n' "$COLLECTOR_RSA_PRIVATE_KEY" > "$key"
+          unset COLLECTOR_RSA_PRIVATE_KEY
+          python3 tools/release/sign_collector_candidate.py sign \
+            --packet "$PACKET" --packet-sha256 "$PACKET_SHA256" --source "$SOURCE_SHA" --private-key "$key"
+
+  publish:
+    needs: protection
+    if: inputs.installer_packet_sha256 == '' && inputs.publication_packet_sha256 != '' && inputs.signing_packet_sha256 == '' && github.repository == 'musutrade/Harness-Gate' && github.ref == 'refs/heads/main'
+    environment: rust-collector-release
+    # Ephemeral operator-provisioned runner matching the approved exact ABI.
+    runs-on:
+      group: harness-gate-rust-collector-release
+      labels: rust-collector-release
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      APPROVAL_SHA256: ${{ inputs.publication_packet_sha256 }}
+      APPROVAL_PACKET: ${{ vars.COLLECTOR_APPROVAL_PACKET }}
+      SOURCE_SHA: ${{ github.sha }}
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target/collector-production/cargo
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Rebuild pinned inputs and compare every approved unsigned byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/release/production_collector_release.py assemble \
+            --packet "$APPROVAL_PACKET" --packet-sha256 "$APPROVAL_SHA256" \
+            --source "$SOURCE_SHA" --directory target/collector-production/assets
+          PYTHONPATH=tools/release python3 - <<'PYVERSION' >> "$GITHUB_ENV"
+          from pathlib import Path
+          import collector_assets as assets
+          manifest = assets.read(Path('target/collector-production/assets/manifest.json'))
+          print('TAG=rust-collector-v' + assets.version(manifest['collector']['version']))
+          PYVERSION
+      - name: Create independent immutable tag after approval and successful checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=tools/release python3 - <<'PYTAG'
+          import os
+          import production_collector_release as release
+          release.create_or_verify_tag(os.environ['TAG'], os.environ['SOURCE_SHA'])
+          PYTAG
+          git fetch --no-tags origin "refs/tags/$TAG:refs/tags/$TAG"
+      - name: Check actual tag eligibility and sign inventory with RSA and Sigstore
+        shell: bash
+        env:
+          COLLECTOR_RSA_PRIVATE_KEY: ${{ secrets.COLLECTOR_RSA_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          key=$(mktemp)
+          trap 'rm -f -- "$key"' EXIT
+          printf '%s\n' "$COLLECTOR_RSA_PRIVATE_KEY" > "$key"
+          unset COLLECTOR_RSA_PRIVATE_KEY
+          python3 tools/release/production_collector_release.py sign \
+            --packet "$APPROVAL_PACKET" --packet-sha256 "$APPROVAL_SHA256" \
+            --source "$SOURCE_SHA" --directory target/collector-production/assets --private-key "$key"
+      - name: Publish exactly six assets as a draft and independently download and verify
+        env:
+          GODEBUG: http2client=0
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" --repo musutrade/Harness-Gate --verify-tag --draft --prerelease \
+            --title "$TAG" --notes "Independent Rust collector RC; exact compatibility and trust requirements apply." \
+            target/collector-production/assets/collector.tar \
+            target/collector-production/assets/manifest.json \
+            target/collector-production/assets/sbom.spdx.json \
+            target/collector-production/assets/provenance.json \
+            target/collector-production/assets/release-inventory.json \
+            target/collector-production/assets/release-inventory.sig
+          python3 -B tools/release/download_collector_release.py --tag "$TAG" \
+            --expected target/collector-production/assets --output target/collector-production/downloaded
+          python3 tools/release/production_collector_release.py verify \
+            --packet "$APPROVAL_PACKET" --packet-sha256 "$APPROVAL_SHA256" \
+            --source "$SOURCE_SHA" --directory target/collector-production/downloaded \
+            --expected-directory target/collector-production/assets \
+            --receipt target/collector-production/draft-verification.json
+          gh release edit "$TAG" --repo musutrade/Harness-Gate --draft=false
+          python3 -B tools/release/download_collector_release.py --tag "$TAG" \
+            --expected target/collector-production/assets --output target/collector-production/published-download
+          python3 tools/release/production_collector_release.py verify \
+            --packet "$APPROVAL_PACKET" --packet-sha256 "$APPROVAL_SHA256" \
+            --source "$SOURCE_SHA" --directory target/collector-production/published-download \
+            --expected-directory target/collector-production/assets \
+            --receipt target/collector-production/published-verification.json
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: collector-publication-${{ github.sha }}
+          path: |
+            target/collector-production/assets
+            target/collector-production/*-verification.json
+          if-no-files-found: warn
+          retention-days: 90
+
+  publish-installer:
+    needs: protection
+    if: inputs.installer_packet_sha256 != '' && inputs.signing_packet_sha256 == '' && inputs.publication_packet_sha256 == ''
+    environment: rust-collector-release
+    runs-on:
+      group: harness-gate-rust-collector-release
+      labels: rust-collector-release
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Rebuild, verify and publish the reviewed user installer
+        env:
+          GODEBUG: http2client=0
+          GH_TOKEN: ${{ github.token }}
+          PACKET: ${{ vars.COLLECTOR_INSTALLER_PACKET }}
+          PACKET_SHA256: ${{ inputs.installer_packet_sha256 }}
+          SOURCE: ${{ github.sha }}
+        run: |
+          python3 -B tools/release/publish_user_installer.py \
+            --packet "$PACKET" --sha256 "$PACKET_SHA256" --source "$SOURCE"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: collector-user-installer-${{ github.run_id }}
+          path: target/installer-publication.json
+          if-no-files-found: warn
+          retention-days: 90

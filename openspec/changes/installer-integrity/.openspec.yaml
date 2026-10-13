@@ -1,0 +1,4 @@
+schema: spec-driven
+status: implemented
+created: 2026-09-01
+goal: Verify immutable release artifacts before atomically installing Harness-Gate

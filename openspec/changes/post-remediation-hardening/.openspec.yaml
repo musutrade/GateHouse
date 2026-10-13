@@ -1,0 +1,5 @@
+schema: spec-driven
+status: implemented
+created: 2026-09-02
+goal: Track the remaining R-07 and R-13 through R-18 security, reliability, performance, maintainability, and repository-governance contracts, incremental implementation, and acceptance evidence
+skip_specs: false

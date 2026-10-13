@@ -1,0 +1,5 @@
+schema: spec-driven
+status: implemented
+created: 2026-08-31
+goal: Enforce one invocation input, proved runtime ownership, closed evidence, safe output publication, and one release asset inventory
+skip_specs: false

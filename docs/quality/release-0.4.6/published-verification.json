@@ -1,0 +1,105 @@
+{
+  "status": "pass",
+  "verified_at": "2026-09-22T09:01:46.376779+00:00",
+  "tag": "v0.4.6",
+  "source_commit": "4ecde0305572e5439dc9e6513cd0fe2de2d73224",
+  "release_url": "https://github.com/musutrade/Harness-Gate/releases/tag/v0.4.6",
+  "asset_count": 39,
+  "exact_inventory": true,
+  "notes_match_tagged_source": true,
+  "signature_identity": "https://github.com/musutrade/Harness-Gate/.github/workflows/release.yml@refs/tags/v0.4.6",
+  "attestation_source_ref": "refs/tags/v0.4.6",
+  "attestation_source_digest": "4ecde0305572e5439dc9e6513cd0fe2de2d73224",
+  "verified_subjects": [
+    "SHA256SUMS",
+    "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz",
+    "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz.sbom.cdx.json",
+    "harness-gate-linux-amd64",
+    "harness-gate-macos-amd64",
+    "harness-gate-macos-arm64",
+    "harness-gate-rust-source-risk-0.1.0-rc.5-linux-amd64.tar.gz",
+    "harness-gate-rust-source-risk-0.1.0-rc.5-linux-amd64.tar.gz.sbom.cdx.json",
+    "harness-gate-typescript-collector-0.1.0-rc.4.tgz",
+    "harness-gate-typescript-collector-0.1.0-rc.4.tgz.sbom.cdx.json",
+    "harness-gate-windows-amd64.exe",
+    "harness-gate.sbom.cdx.json",
+    "release-inventory.json"
+  ],
+  "assets": [
+    {
+      "kind": "package",
+      "name": "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz",
+      "sha256": "9146390200174a1f932be5fffb12d21444b1c7d7f26dbf14dcb48c5cfadb3b7a",
+      "size_bytes": 15905
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz.sbom.cdx.json",
+      "sha256": "a049d036da33949f20e03d654e92ed984b068c263b052fbfb51746797e6213ed",
+      "size_bytes": 3500
+    },
+    {
+      "kind": "binary",
+      "name": "harness-gate-linux-amd64",
+      "sha256": "4f6b6f4e69644dccf5b338e38655d1e8fbcf13ab4143f90f969c743345f176dd",
+      "size_bytes": 10264296
+    },
+    {
+      "kind": "binary",
+      "name": "harness-gate-macos-amd64",
+      "sha256": "42c852e27cb21cab9c6cf73a72d38f6119232763cde03b36a8bf10ef27a2687e",
+      "size_bytes": 8165040
+    },
+    {
+      "kind": "binary",
+      "name": "harness-gate-macos-arm64",
+      "sha256": "4fffa09028bd3f46aea8e57e6234df1280d44e7674823dcbab88688c6448230e",
+      "size_bytes": 6715968
+    },
+    {
+      "kind": "package",
+      "name": "harness-gate-rust-source-risk-0.1.0-rc.5-linux-amd64.tar.gz",
+      "sha256": "5d2e96fbd668827711375ab0bab9253bf9c3f0714a72a6e88629263b38a24f28",
+      "size_bytes": 964044
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate-rust-source-risk-0.1.0-rc.5-linux-amd64.tar.gz.sbom.cdx.json",
+      "sha256": "5cbef01f19d2c724a63ee92dec0e33be2ea0172c4ecc3c336b6d37c16a8a42d4",
+      "size_bytes": 5179
+    },
+    {
+      "kind": "package",
+      "name": "harness-gate-typescript-collector-0.1.0-rc.4.tgz",
+      "sha256": "d6a969e790ad6fcacd08ce80cc17f3333edc41254107bff5d4edc99b836b9a25",
+      "size_bytes": 18801
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate-typescript-collector-0.1.0-rc.4.tgz.sbom.cdx.json",
+      "sha256": "a3da73c26fa9d6c1cc3e221db06025e6f05a9a51c374b4aa66924774e345d785",
+      "size_bytes": 3549
+    },
+    {
+      "kind": "binary",
+      "name": "harness-gate-windows-amd64.exe",
+      "sha256": "5be1b6b17a22c0bbb52917d270a1dad0a3db44a1c9b02ff21f35762691ba637a",
+      "size_bytes": 8334848
+    },
+    {
+      "kind": "sbom",
+      "name": "harness-gate.sbom.cdx.json",
+      "sha256": "6cfb68d2fef82c402612cd770874d0376766ea8a745635f0c0947f9d9dd0c8e5",
+      "size_bytes": 73296
+    }
+  ],
+  "publication_run": {
+    "id": 35705668360,
+    "html_url": "https://github.com/musutrade/Harness-Gate/actions/runs/35705668360",
+    "head_sha": "4ecde0305572e5439dc9e6513cd0fe2de2d73224",
+    "head_branch": "v0.4.6",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "post_verification_erratum": "Release notes were subsequently annotated: Rust source-risk RC5 omits runtime ast/Cargo.lock. The cryptographically verified asset bytes and tags were retained."
+}

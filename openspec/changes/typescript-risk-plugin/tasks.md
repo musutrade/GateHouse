@@ -1,0 +1,8 @@
+- [x] Implement independent package and versioned measurement/protocol contract.
+- [x] Measure original AST decisions and native per-function line counters; emit exact rational CRAP.
+- [x] Verify identity, complete inventory, nested ownership and malformed-input rejection with native fixtures.
+- [x] Verify boundary 10 / above 10 / insufficient coverage and artifact tampering with released Core 0.4.5.
+- [x] Verify packaged clean installation and standard collector transport.
+- [ ] Certify actual Angular compilation/source maps and full application inventory.
+- [ ] Provision trusted signed per-source/profile collector inputs and adopt a new project series.
+- [ ] Review/publish independently versioned plugin and retain signed acceptance evidence.

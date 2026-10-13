@@ -1,0 +1,340 @@
+# RETIRED (2026-10-12): archived, inactive workflow. This file no longer
+# lives under .github/workflows: current main no longer triggers publication
+# from it, and pull requests and main pushes no longer start it. This does
+# not prohibit creating tags, and a tag that points at a historical commit
+# still runs the workflow as it existed at that commit.
+# It was active at .github/workflows/native-collector-release.yml
+# through commit 6aaa234249574c9a321a8819213b4c936c02605e; restore with
+# `git mv retired/workflows/native-collector-release.yml
+# .github/workflows/native-collector-release.yml` after reverting the
+# ownership record in docs/quality/release-ownership.json. Historical
+# releases, signatures, tags and this source are retained; GateProbes now
+# publishes the native collector (rc.8 verified, run 38218575101).
+name: Native collector build and release
+
+# Same publication boundary as Core; stable remains a separate candidate.
+on:
+  pull_request:
+    paths:
+      - 'tools/quality/**'
+      - 'tools/release/**'
+      - 'tools/harness-gate/**'
+      - '.github/workflows/native-collector-release.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/quality/**'
+      - 'tools/release/**'
+      - 'tools/harness-gate/**'
+      - '.github/workflows/native-collector-release.yml'
+    tags: ['rust-collector-v*']
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUTF8: '1'
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: native-collector-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  policy:
+    if: startsWith(github.ref, 'refs/tags/rust-collector-v')
+    name: Verify release eligibility
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+
+      - name: Fetch protected main reference
+        run: git fetch --no-tags origin main:refs/remotes/origin/main
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Verify tag, protected main, and exact CI run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          python tools/release/release_policy.py verify \
+            --tag "$TAG" --tag-prefix rust-collector-v \
+            --commit "$COMMIT" \
+            --repository "$GITHUB_REPOSITORY" \
+            --manifest tools/quality/rust-native-plugin/Cargo.toml \
+            --output target/release-policy.json
+
+      - name: Upload release policy evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: native-policy-${{ github.run_id }}
+          path: target/release-policy.json
+          if-no-files-found: error
+          retention-days: 90
+
+  build:
+    name: Build and accept native (${{ matrix.target }})
+    needs: policy
+    if: always() && (needs.policy.result == 'success' || (!startsWith(github.ref, 'refs/tags/') && needs.policy.result == 'skipped'))
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            asset: harness-gate-rust-collector-linux-amd64
+            suffix: ''
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+            asset: harness-gate-rust-collector-macos-amd64
+            suffix: ''
+          - os: macos-15
+            target: aarch64-apple-darwin
+            asset: harness-gate-rust-collector-macos-arm64
+            suffix: ''
+          - os: windows-2025
+            target: x86_64-pc-windows-msvc
+            asset: harness-gate-rust-collector-windows-amd64.exe
+            suffix: '.exe'
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Install build dependencies (never included in the release asset)
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: '1.97.1'
+          components: rustc-dev, llvm-tools-preview, rust-docs, rustfmt
+      - name: Build unchanged native driver from the release commit
+        env:
+          RUSTC_BOOTSTRAP: '1'
+          CARGO_TARGET_DIR: ${{ github.workspace }}/target/native-driver
+        run: |
+          cargo +1.97.1 fetch --manifest-path tools/quality/rust-native-driver/Cargo.toml --locked
+          cargo +1.97.1 build --manifest-path tools/quality/rust-native-driver/Cargo.toml --release --locked
+      - name: Build standalone plugin, embedded notices and SBOM
+        run: |
+          python tools/quality/rust-native-plugin/build.py \
+            --driver target/native-driver/release/harness-gate-rust-native-driver${{ matrix.suffix }} \
+            --rustc "$(rustup which --toolchain 1.97.1 rustc)" \
+            --target ${{ matrix.target }} \
+            --output target/native-package
+      - name: Build Core for protocol and policy acceptance
+        run: cargo +1.97.1 build --manifest-path tools/harness-gate/Cargo.toml --locked --release
+      - name: Select OpenSSL 3 for disposable request-signing tests
+        if: runner.os == 'macOS'
+        run: |
+          openssl_prefix="$(brew --prefix openssl@3)"
+          test -x "$openssl_prefix/bin/openssl"
+          "$openssl_prefix/bin/openssl" version
+          echo "$openssl_prefix/bin" >> "$GITHUB_PATH"
+      - name: Real native owner, history, external dependency and Core acceptance
+        env:
+          NATIVE_PLUGIN_BINARY: ${{ github.workspace }}/target/native-package/${{ matrix.asset }}
+          NATIVE_DRIVER: ${{ github.workspace }}/target/native-driver/release/harness-gate-rust-native-driver${{ matrix.suffix }}
+          HARNESS_GATE_NATIVE_POLICY_BINARY: ${{ github.workspace }}/tools/harness-gate/target/release/harness-gate${{ matrix.suffix }}
+          CARGO_NET_OFFLINE: 'true'
+        run: |
+          export NATIVE_DRIVER_SYSROOT="$(rustc +1.97.1 --print sysroot)"
+          python tools/quality/rust-native-plugin/accept.py
+      - name: Verify shared release rules and documentation
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          rustfmt +1.97.1 --edition 2021 --check tools/quality/rust-native-plugin/launcher.rs
+          python -m unittest discover -s tools/release/tests -v
+          python tools/quality/docs_consistency.py
+      - name: Retain build and acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: native-acceptance-${{ github.run_id }}-${{ matrix.target }}
+          path: |
+            target/native-package/build.json
+            target/native-acceptance
+            target/gh-220/driver-tests
+            !target/**/disposable-test-key.pem
+          if-no-files-found: error
+          retention-days: 30
+      - name: Stage only the tested release assets
+        run: |
+          mkdir dist
+          cp target/native-package/${{ matrix.asset }} dist/
+          cp target/native-package/*.sbom.cdx.json dist/
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: native-release-assets-${{ github.run_id }}-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/rust-collector-v')
+    name: Publish signed native collector
+    runs-on: ubuntu-latest
+    needs: [policy, build]
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Download release assets
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          # Download only the four tested binaries and their SBOMs from this run.
+          pattern: native-release-assets-${{ github.run_id }}-*
+          path: dist
+          merge-multiple: true
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Generate release inventory
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+          REPOSITORY: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python tools/release/release_inventory.py generate \
+            --dist dist \
+            --output dist/release-inventory.json \
+            --binary harness-gate-rust-collector-linux-amd64 \
+            --binary harness-gate-rust-collector-macos-amd64 \
+            --binary harness-gate-rust-collector-macos-arm64 \
+            --binary harness-gate-rust-collector-windows-amd64.exe \
+            --sbom harness-gate-rust-collector-linux-amd64.sbom.cdx.json \
+            --sbom harness-gate-rust-collector-macos-amd64.sbom.cdx.json \
+            --sbom harness-gate-rust-collector-macos-arm64.sbom.cdx.json \
+            --sbom harness-gate-rust-collector-windows-amd64.sbom.cdx.json \
+            --tag "$TAG" \
+            --commit "$COMMIT" \
+            --repository "$REPOSITORY"
+
+      - name: Generate checksum manifest from inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/release/release_inventory.py checksums \
+            --dist dist \
+            --inventory dist/release-inventory.json
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
+
+      - name: Sign release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r name; do
+            cosign sign-blob --yes \
+              --output-signature "dist/${name}.sig" \
+              --output-certificate "dist/${name}.crt" \
+              "dist/${name}"
+          done < <(python tools/release/release_inventory.py list \
+            --inventory dist/release-inventory.json --operation sign)
+
+      - name: Verify release signatures from inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r name; do
+            cosign verify-blob \
+              --signature "dist/${name}.sig" \
+              --certificate "dist/${name}.crt" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              --certificate-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/native-collector-release.yml@${GITHUB_REF}" \
+              "dist/${name}"
+          done < <(python tools/release/release_inventory.py list \
+            --inventory dist/release-inventory.json --operation sign)
+
+      - name: Prepare attestation subject set
+        id: attestation-subjects
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo 'subject_path<<HARNESS_GATE_SUBJECTS'
+            while IFS= read -r name; do
+              echo "dist/${name}"
+            done < <(python tools/release/release_inventory.py list \
+              --inventory dist/release-inventory.json --operation attest)
+            echo 'HARNESS_GATE_SUBJECTS'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Attest inventory subjects
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-path: ${{ steps.attestation-subjects.outputs.subject_path }}
+
+      - name: Verify provenance attestations
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r name; do
+            gh attestation verify "dist/${name}" \
+              --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/native-collector-release.yml" \
+              >/dev/null
+          done < <(python tools/release/release_inventory.py list \
+            --inventory dist/release-inventory.json --operation attest)
+
+      - name: Verify exact release inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          verify_args=(verify --dist dist --inventory dist/release-inventory.json)
+          while IFS= read -r name; do
+            verify_args+=(--attested "$name")
+          done < <(python tools/release/release_inventory.py list \
+            --inventory dist/release-inventory.json --operation attest)
+          python tools/release/release_inventory.py "${verify_args[@]}"
+
+      - name: Create immutable GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "release $TAG already exists; refusing to overwrite it" >&2
+            exit 1
+          fi
+          upload_paths=()
+          while IFS= read -r name; do
+            upload_paths+=("dist/${name}")
+          done < <(python tools/release/release_inventory.py list \
+            --inventory dist/release-inventory.json --operation upload)
+          release_options=()
+          release_version="${TAG#rust-collector-v}"
+          if [[ "${release_version%%+*}" == *-* ]]; then release_options+=(--prerelease); fi
+          notes_args=(--generate-notes)
+          notes_file="docs/releases/rust-collector-${release_version}.zh-CN.md"
+          if [[ -f "$notes_file" ]]; then
+            notes_args=(--notes-file "$notes_file")
+          fi
+          gh release create "$TAG" --verify-tag "${notes_args[@]}" "${release_options[@]}" "${upload_paths[@]}"

@@ -1,0 +1,10 @@
+{
+  "ecosystem": "nebula-unregistered-2049",
+  "capabilities": {"cheap": "bundle.size", "expensive": "risk.crap"},
+  "profiles": {
+    "hook": {"assurance": "partial", "collectors": ["cheap"], "policies": ["cheap"]},
+    "full": {"collectors": ["cheap", "expensive"], "policies": ["cheap", "expensive"]},
+    "ci": {"collectors": ["cheap", "expensive"], "policies": ["cheap", "expensive"]},
+    "custom-fast": {"assurance": "partial", "collectors": ["expensive"], "policies": ["expensive"]}
+  }
+}

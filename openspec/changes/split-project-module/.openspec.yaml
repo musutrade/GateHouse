@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-08-27
+goal: Decompose project discovery, repository path safety, and runtime preparation into private modules without changing behavior
+skip_specs: true

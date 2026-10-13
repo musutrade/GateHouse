@@ -1,0 +1,5 @@
+schema: spec-driven
+status: implemented
+created: 2026-09-02
+goal: Reject ambiguous JUnit and TRX XML before test counts can satisfy a gate
+skip_specs: false

@@ -1,0 +1,11 @@
+{
+  "schema": "core-crates-publication-verification/v1",
+  "status": "pass",
+  "version": "0.4.2",
+  "source_commit": "718bc5a1ea82f8364f91fc72f179ea0db689f6b5",
+  "checksum": "0cf22fddc34242c4e6eb59369573e0ba7fe994cc13ca70f9a19ffdabddf7784e",
+  "yanked": false,
+  "crate_bytes": 325112,
+  "report_source_matches_release": true,
+  "registry_url": "https://crates.io/crates/harness-gate/0.4.2"
+}

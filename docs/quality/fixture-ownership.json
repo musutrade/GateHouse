@@ -1,0 +1,32 @@
+{
+  "schema": "fixture-ownership/v1",
+  "description": "Fixture ownership for the core/plugin split. Core fixtures exercise the decision engine, host contracts and generic evidence; plugin fixtures are language/tool-specific measurement inputs.",
+  "owners": {
+    "core": [
+      "tools/quality/fixtures/adapter",
+      "tools/quality/fixtures/benchmark",
+      "tools/quality/fixtures/capability",
+      "tools/quality/fixtures/ci-topology.json",
+      "tools/quality/fixtures/collectors",
+      "tools/quality/fixtures/complexity",
+      "tools/quality/fixtures/contracts",
+      "tools/quality/fixtures/generic-core",
+      "tools/quality/fixtures/harness-evidence",
+      "tools/quality/fixtures/json-results",
+      "tools/quality/fixtures/policy",
+      "tools/quality/fixtures/project-model",
+      "tools/quality/fixtures/risk",
+      "tools/quality/fixtures/rust-reference"
+    ],
+    "plugin": [
+      "tools/quality/fixtures/rust-macro-observation",
+      "tools/quality/fixtures/rust-native",
+      "tools/quality/fixtures/typescript-angular"
+    ]
+  },
+  "relocated_core_fixtures": [
+    "tools/harness-gate/fixtures/workflow",
+    "tools/harness-gate/fixtures/v1-flow.toml",
+    "tools/harness-gate/fixtures/preset-compat"
+  ]
+}
