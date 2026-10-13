@@ -72,7 +72,9 @@ The [Cargo state action](../../../.github/actions/cargo-state/action.yml) select
 metadata to agree. Collector-owned fresh instrumentation targets override that
 default. Download caches contain only the resolved Cargo home's registry
 index/archives and git databases, keyed by
-`cargo-sources-v1-<OS>-<architecture>-<lock SHA-256>`.
+`cargo-sources-v1-<OS>-<architecture>-<lock SHA-256>`. A same-OS/architecture
+prefix fallback reuses downloads after lockfile changes; locked Cargo still
+resolves and verifies the requested dependencies.
 They contain no tools, compiled products or authoritative measurement evidence.
 They are disposable acceleration state within GitHub cache isolation; restoring
 a cache grants no quality or release authority.
@@ -95,6 +97,23 @@ Hash integrity is not producer authentication and cannot authorize untrusted PR
 workflow code or release publishing. Linux Build's resolved binary upload is
 informational. Failed collection can upload diagnostics via `always()`, but
 unsealed diagnostics are not valid input for successful projection.
+
+## GateHouse setup optimization (2026-10-13)
+
+Regression data cache keys include the requested groups as well as the manifest
+hash and OS. A job restoring only replay/corpus data can no longer win the
+immutable cache key needed by jobs that also require quality history. Every
+restore still validates pinned archive and member digests. Jobs using the
+regression-data action use its Python setup instead of repeating the same setup
+later in the job.
+
+All primary CI jobs have explicit timeouts (5–45 minutes according to workload),
+including the always-running aggregate. A timeout remains a failed required
+check. Events, required checks, native platforms, collection commands and quality
+thresholds are unchanged. Compiled targets remain uncached; Codecov retains its
+independent tarpaulin series. The observed PR run 38358858096 spent about 14m26s
+in quality collection; these setup changes do not establish a reduction in that
+critical path. Hosted cache-hit and duration comparisons remain to be measured.
 
 ## Diagnosis
 

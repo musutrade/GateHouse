@@ -13,7 +13,8 @@ runs:
     - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
       with:
         path: ~/.cache/gatehouse-test-data
-        key: regression-data-${{ runner.os }}-${{ hashFiles('test-data/manifest.json') }}
+        # Partial and complete restores must not compete for one immutable key.
+        key: regression-data-v2-${{ runner.os }}-${{ hashFiles('test-data/manifest.json') }}-${{ inputs.groups }}
     - name: Verify and restore regression inputs
       shell: bash
       env:
