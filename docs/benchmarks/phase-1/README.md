@@ -34,3 +34,11 @@ Future baseline updates must be raised as reviewed pull requests by the
 scheduled/manual refresh workflow. A local checkout containing unrelated
 project audit rules may fail audit fixture tests; the clean-checkout CI run is
 the authoritative baseline evidence for this package.
+
+## Retained migration candidate
+
+The pre-migration candidate from Harness-Gate PR #346 was reviewed and rejected
+for adoption because its timed nextest workload changed without a series
+transition. The accepted record above is retained. See the
+[GateHouse #2 review](../../quality/retained-baseline-review/README.md) for original
+provenance, raw-evidence validation and the decision.
