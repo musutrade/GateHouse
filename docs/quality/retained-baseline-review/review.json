@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-10-13",
+  "issue": "https://github.com/musutrade/GateHouse/issues/2",
+  "decision": "reject_adoption",
+  "baseline_accepted": false,
+  "source": {
+    "repository": "musutrade/Harness-Gate",
+    "pr": 346,
+    "candidate_head": "f93053a182c07a1c7cc977bb79eed879fb212b8b",
+    "measured_commit": "4ca947b59d0e85a712fb2eb9e2aa118c207fd67c",
+    "run_id": 38238245080,
+    "run_attempt": 1,
+    "artifact_id": 11743110115,
+    "archive_sha256": "60b6d0502c9b0d5ed8e91ef54923535dd11fbd5aa668c6b266d867531feea7ca",
+    "archive_bytes": 108100,
+    "archive_regular_files": 195,
+    "candidate_json_sha256": "bda82f3daec6a9ba926b325383c426c2aeb03b6b617008bc1b384441dbdeb614",
+    "candidate_markdown_sha256": "eb376c8d5d60d930ab34abc61ad8b97db4d0c00878d73e03d77426af2283d27b"
+  },
+  "checks": {
+    "archive_digest_and_paths": "pass",
+    "capture_run_identity": "pass",
+    "serial_parallel_scope_raw_consistency": "pass",
+    "summary_medians": "pass",
+    "markdown_figures": "pass",
+    "warm_command_records": "absent; not authenticated",
+    "timed_workload_compatibility": "fail: candidate excludes benchmark_fixture_test while accepted harness is unfiltered"
+  },
+  "series": {
+    "accepted": "x86_64-unknown-linux-gnu:rustc 1.99.0 (b940084d7 2026-09-28):1:1:cold-and-warm",
+    "candidate": "x86_64-unknown-linux-gnu:rustc 1.99.0 (b940084d7 2026-09-28):1:1:cold-and-warm",
+    "declared_harness_version": 1,
+    "declared_fixture_version": 1,
+    "candidate_excluded_binaries": [
+      "benchmark_fixture_test"
+    ]
+  },
+  "accepted_baseline": {
+    "commit": "16873ca9c5ebbd06c6b06d4391ab098fafc05194",
+    "unchanged_files_sha256": {
+      "docs/benchmarks/phase-1/current.json": "9ad0a346d77ded0964c082bfe5bf341c32620de4b5a563a20ebf38ba0f4099c5",
+      "docs/benchmarks/phase-1/current.md": "83ecd9ceed7b798da36848a3dd6fd0c3f2355870772bea532d6c1f868fb56968"
+    }
+  },
+  "reason": "Timed suite selection changed without a series transition; retain accepted record and historical candidate evidence."
+}
