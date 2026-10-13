@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Split Core development into GateHouse and independent collectors/presets into
+  GateProbes. Ecosystem presets are loaded from a reviewed external directory;
+  Core embeds only `generic`.
+- Remove the four independent collector packages from the active Core release
+  inventory. GateProbes publishes TypeScript risk, HTTP/JSON contract, Rust
+  source-risk and Rust measurer separately. Historical packaging helpers and
+  compatibility fixtures remain for their existing consumers and rollback.
+- These Core changes are **not yet published**. The latest Core release is
+  Harness-Gate v0.4.8; the unchanged development manifest version does not mean
+  the split Core has been released. Plugin publications are tracked separately
+  in [release status](docs/release-status.md).
+
 - The required core CI risk stage consumes the published Rust measurer
   (`v0.4.8`, digest-verified through `tools/quality/rust-measure-release.json`)
   instead of compiling `tools/quality/rust-measure`. Analyzer identity and

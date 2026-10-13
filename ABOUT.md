@@ -37,8 +37,11 @@ capability. Application-specific tests stay with the application.
 
 ## Version and installation
 
-Core's package version is **0.4.8**. The current development tree includes
-post-release changes such as external preset loading. Published 0.4.8 embeds
+**The split Core is unreleased.** GateHouse has no Core binary release yet.
+The latest published Core is **0.4.8** in Harness-Gate, before the removal of
+plugin publication from Core. The development manifest retains `0.4.8`, but
+external preset loading and the reduced Core release inventory are unreleased
+changes; see the [changelog](CHANGELOG.md#unreleased). Published 0.4.8 embeds
 its earlier presets; the current source build embeds only `generic` and loads
 reviewed GateProbes presets through `--presets-dir` or `HARNESS_GATE_PRESETS_DIR`.
 
