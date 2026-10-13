@@ -28,6 +28,9 @@ runs:
           ${{ steps.state.outputs.cargo-home }}/registry/cache/
           ${{ steps.state.outputs.cargo-home }}/git/db/
         key: cargo-sources-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.state.outputs.lock }}
+        # Cargo --locked still resolves and verifies the requested dependencies.
+        # Reuse downloaded crates when the lockfile adds or updates a dependency.
+        restore-keys: cargo-sources-v1-${{ runner.os }}-${{ runner.arch }}-
     - name: Cache disposable compilation state
       if: ${{ inputs.cache-target == 'true' }}
       uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
