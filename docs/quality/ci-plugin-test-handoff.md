@@ -1,103 +1,94 @@
-# Core CI plugin test handoff
+# Core CI plugin-test handoff
 
-This change transfers only tests whose execution is already demonstrated in
-GateProbes. Engineering Policy semantics, required check names, Core platform
-coverage, measurement identities, thresholds and release authority are unchanged.
+Engineering Policy semantics are unchanged. Rust Core retains decisions,
+requiredness, thresholds, measurement identity, baseline, debt/ratchet and release
+authority. Frozen Python policy/reference modules remain non-authoritative.
 
-## Accepted handoff
+## Accepted execution
 
-The [receipt](ci-plugin-test-handoff.json) records the exact GateProbes commit,
-successful CI run, test paths, execution commands and retained source digests.
+GateProbes [PR #18](https://github.com/musutrade/GateProbes/pull/18) preserves
+original collector tests and imports in `compatibility/legacy-core/snapshot`.
+The accepted candidate is `a762f0c4c7da3945367b870bccc39aac8069132f`;
+[CI 38406597322](https://github.com/musutrade/GateProbes/actions/runs/38406597322)
+succeeded. Its required compatibility job ran **103 tests, zero failures/errors/
+skips**, proved Core fixture parity against the original Angular/V8 producer,
+and reported eleven held bundled-runtime methods separately.
+[The original result](issue-10/legacy-compatibility.json) lists every inherited
+method, owner, scope and execution/hold reason. GateProbes' frozen
+[inventory](https://github.com/musutrade/GateProbes/blob/a762f0c4c7da3945367b870bccc39aac8069132f/compatibility/legacy-core/inventory.json)
+binds each imported test/helper/fixture to its original bytes and owner.
 
-| Core execution | GateProbes execution | Evidence |
+The same run accepted all five current plugins against released GateHouse Core
+0.4.9, including native Linux, Windows, macOS Intel and macOS ARM, and tested the
+external preset loader. Linux-only classification remains Linux-only. The
+original native four-module parity run
+[38342999155](https://github.com/musutrade/GateProbes/actions/runs/38342999155)
+is retained in the receipt; its scopes and source digests are unchanged.
+
+## Ownership and scope
+
+| Modules / methods | Owner and execution | Original boundary |
 | --- | --- | --- |
-| `test_rust_collector_project` | Native plugin helper tests through `tests/zero_skip.py` | Same eight test methods and bytes; any skip fails |
-| `test_rust_native_driver` | Native `accept.py` loads `NativeDriverTests` with the real driver, sysroot and pinned Core | Same ten test methods and bytes; four platforms; any skip fails |
-| `test_native_artifact_paths` | Native `accept.py` on four platforms | Three identical test-method ASTs; canonical temporary-root setup adaptation |
-| `test_rust_native_classify` | Native `accept.py` on Linux | Eight identical test-method ASTs and fixture bytes; real driver, packaged wrapper, any skip fails |
-| Standalone `rust-source-risk` AST build/tests and Python discovery | Registry-selected Python plugin job builds its inventory, runs Cargo tests and Python discovery with `RUST_SOURCE_INVENTORY` | Same six Python test files and both AST Rust source files; no platform coverage removed |
+| `test_rust_collector_project`, `test_rust_native_driver`, `test_native_artifact_paths` | GateProbes native tests, original four-platform matrix | Existing project/driver/path parity; adapted artifact-root location only |
+| `test_rust_native_classify` | GateProbes native Linux | Compiler owner classification; no Windows/macOS widening |
+| `test_rust_collector_contract`, `test_rust_collector_delivery` | GateProbes compatibility Linux | Legacy tuple, receipt, malformed input, relocation, exact Core identity, typed failures and exit behavior |
+| `test_rust_collector_runtime.BuildInputTests`, `.InstalledLayoutTests` | GateProbes compatibility Linux, both execute | Changed/unsafe build inputs and installed host-schema lookup |
+| `test_rust_collector_runtime.StandaloneNativeTests` (11 methods) | GateProbes preserved source; explicitly held | Suspended assembled private Linux runtime; originally opt-in via `RUST_COLLECTOR_RUNTIME`, not independent native RC acceptance |
+| `test_rust_native` (8 methods) | GateProbes compatibility Linux, exact Rust 1.97.1 / LLVM tools | Original bounded textual MIR experiment and negative replay cases; no stable candidate promotion |
+| `test_typescript_reference`, `test_typescript_semantics`, `test_typescript_acceptance` | GateProbes compatibility Linux, including inherited methods | Original Angular/V8 archives, counters, source maps, UTF-16, provenance, contexts, transport and debt replay windows |
+| `test_typescript_contracts`, `test_typescript_advisory` | GateProbes historical adapter/reference replay | Original GH-133 contract relationships, provenance and advisory failure/inventory checks; no authority transfer |
+| `test_typescript_policy` (9 methods) | Core; original methods also run in GateProbes to prove fixture parity | Generic requiredness, mixed Rust/TypeScript aggregation, series compatibility, debt and lineage |
+| `test_preset_packs` (6 methods) | Core; original TypeScript producer method also runs in GateProbes | Generic composition, accepted series/rules, required/unsupported states and frozen provenance |
+| Source-risk standalone Rust + six Python modules | GateProbes existing source-risk job | Original full source-risk inventory; no duplicate AST build in Core |
 
-The source-risk discovery includes the same static toolchain compatibility
-contract as before. The separately invoked expensive dual-toolchain acceptance
-was not part of either discovery command and is not newly claimed here.
+The new TypeScript original-source plugin does not replace or certify the old
+Angular/V8 adapter. Paused bundled-runtime tests are preserved with their
+original helper imports and are never counted as passing assurance. This change
+does not construct, publish or revive the held product. Their assembly/publication
+workflow disposition remains tracked separately by GateHouse #12.
 
-`Quality Script Tests` uses
-[`run_core.py`](../../tools/quality/tests/run_core.py). It first checks the
-handoff and retained source digests, then runs every discovered `test_*.py`
-module except the four accepted native modules. New modules run by default.
-Missing or modified delegated tests or guarded plugin/Core inputs fail selection;
-restore local execution or renew the reviewed parity evidence before changing
-those retained implementations. The check uses committed evidence, without a
-GateProbes checkout or a new network dependency in Core CI.
+## Ordinary Core selection without plugin source
 
-The eight project tests also depend on Core's `harness_evidence.py`,
-`project_model.py`, `quality_evidence.py` and `collector_runner.py`, plus
-`harness-evidence.schema.json` and `project-model.schema.json`. All six inputs
-are digest-guarded alongside the existing plugin binding schema. Their bytes
-match Core `8d93ea53c7cf8b314bda816eafe13209da25c742`, which the accepted
-GateProbes CI pins through the top-level `source_commit`. Changing a Core
-consumer or either schema invalidates that handoff even if plugin code is
-unchanged. Renew acceptance against the changed inputs or restore the eight
-local project tests under a revised handoff; updating hashes alone is not
-renewed acceptance.
+`tools/quality/tests/run_core.py` uses `core-plugin-test-handoff/v2`. The receipt
+separates mandatory Core inputs from accepted transferred inputs. A transferred
+copy may be absent; any remaining copy must still match its accepted digest.
+Transferred trees reject unknown tracked files. Core consumers, evidence/schema
+contracts, policy fixture and generic test inputs remain mandatory and guarded.
 
-The original test files remain available: legacy runtime tests still import
-fixture helpers from `test_rust_collector_project`. This change transfers
-execution and does not delete those dependencies.
+Core's TypeScript policy and preset tests now read fixed original facts, not a
+collector implementation. The fixture retains real source/artifact bytes,
+contexts, measurement-series identity and baseline records. Generic validators
+still validate those bytes and contexts on every policy evaluation. GateProbes
+compares the complete facts, project, raw artifacts and receipts with the original
+producer; updating hashes alone cannot establish that parity.
 
-## Retained coverage
+Missing/malformed receipts, wrong owners/commits/runs, failed or skipped
+acceptance, incomplete/duplicate method inventories, modified Core consumers or
+schemas, and unknown delegations fail. New Core modules run by default; nested
+modules need explicit Python package discovery. Only the original four native
+module names may use the prior native handoff, and newly transferred modules must
+appear with GateProbes ownership in the real compatibility result.
 
-The fifteen exclusions in `core_isolation_check.py` serve a different purpose:
-they define the manually tested Core-only snapshot. They are not evidence that
-all fifteen modules have been accepted by GateProbes. Ordinary CI retains the
-other eleven modules, with their individual reasons recorded in the receipt:
+The existing `Quality Script Tests` job verifies the receipt, removes all 24
+plugin implementation paths from its disposable checkout and then executes the
+ordinary selector. It keeps the same check name and required aggregate. The
+manual `core_isolation_check.py` uses this same selector instead of its former
+15-module exclusion list. Core-owned preset and TypeScript policy tests therefore
+remain in both ordinary and isolated Core execution.
 
-- Core preset and generic policy/reference semantics.
-- Historical TypeScript/Angular/V8 adapters, archives, normalization and advisory
-  behavior. The new TypeScript plugin does not support the same mapped reports.
-- Legacy native delivery and bundled-runtime contracts without complete
-  replacement coverage in GateProbes.
+## Cost and rollback
 
-Core reference equivalence and its `rust-reference` fixture directory remain
-Core-owned. Release governance and retained compatibility tests remain in Core.
-The later
-[four-plugin publication handoff](independent-plugin-release-acceptance.md) removes
-plugin packaging from Core release after signed public installation acceptance.
-That separate handoff does not complete ordinary Core CI independence or remove
-the retained source/fixture consumers described here.
+One GateProbes Linux job restores two checksum/member-verified historical data
+archives (about 36 MB), executes the original compatibility scope and uploads a
+bounded JSON result for seven days. It has a 15-minute timeout. The accepted
+result records 44.317 seconds of execution and 62 seconds of hosted job time;
+[the hosted cost record](issue-10/hosted-cost.json) retains every selected job; no duplicate complete plugin matrix
+runs inside Core. The current Core 0.4.9 five-plugin matrix was required once to
+renew cross-repository acceptance, preserving its existing platform selection.
+Superseded failed/cancelled runs remain visible in GitHub.
 
-## Verification and rollback
-
-Focused tests cover stale source/test digests, changes to the project tests'
-Core consumers and evidence/model schemas using the actual receipt, missing
-inputs, malformed or unpinned handoffs, missing execution evidence and
-conservative selection of new tests. Existing CI topology tests continue to
-enforce the unchanged required job and platform contract. The fixture ownership test guards the historical
-Core Python equivalence inputs as well as Rust fixture references.
-
-Reverting the workflow change restores the original discovery command and
-standalone source-risk execution. No historical release, signature or baseline
-is changed. Hosted checks on the PR supply the required acceptance; no numerical
-CI speed improvement is claimed without a measured comparison.
-
-## Remaining ordinary CI handoff (2026-10-13)
-
-GateProbes [PR #15](https://github.com/musutrade/GateProbes/pull/15) and
-[successful CI run 38342999155](https://github.com/musutrade/GateProbes/actions/runs/38342999155)
-accept the additional 3 path cases on four platforms and 8 classification cases
-on Linux. Core's original Quality Script Tests job is Linux-only; no original
-platform coverage is removed. GateProbes acceptance runs 34 cases on Linux and
-26 on other hosts, plus 8 helper cases per host, with zero skips.
-
-An attempted Windows classification run failed closed on an unowned compiler
-instance. That historical fixture has no accepted Windows/macOS contract; the
-limitation is recorded in GateProbes rather than changing measurement semantics
-or claiming additional platform parity. All four original platform suites remain
-required. Source digests also guard all 14 newly transferred fixture files.
-
-The native policy helper relocation changes one Core template path only. The
-old and new template bytes match the recorded source commit; a frozen inventory
-test guards their continued identity. The helper's existing GateProbes setup
-adaptation and unchanged policy behavior are recorded separately in the receipt.
-See [preset externalization and consumer review](preset-externalization.md) for
-why compatibility sources and historical materials remain in Core.
+The receipt and original test bodies remain reviewable. If parity is withdrawn,
+revert the handoff/selector together and restore local tests before accepting new
+Core consumer changes. Historical archives, immutable releases and baseline/debt
+inputs remain untouched. Physical source deletion and measurer pin migration are
+separate GateHouse #13 and #11 work.

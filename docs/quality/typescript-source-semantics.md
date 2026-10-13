@@ -103,6 +103,6 @@ similarity cannot authorize reuse. Full policy/ratchet integration remains 3.2.
 - [Semantic implementation](https://github.com/musutrade/Harness-Gate/blob/8d93ea53c7cf8b314bda816eafe13209da25c742/tools/quality/typescript_semantics.py)
 - [Pinned parser, native oracle and reproduction commands](../../tools/quality/fixtures/typescript-angular/semantics/README.md)
 - [Native collection](../../tools/quality/fixtures/typescript-angular/evidence/README.md)
-- [Adversarial and native replay tests](../../tools/quality/tests/test_typescript_semantics.py)
+- [Adversarial and native replay tests](https://github.com/musutrade/GateProbes/blob/a762f0c4c7da3945367b870bccc39aac8069132f/compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_semantics.py)
 - [GH-130 validation](gh-130/README.md)
 - [OpenSpec decisions and remaining tasks](../../openspec/changes/typescript-angular-reference-adapter/tasks.md)
