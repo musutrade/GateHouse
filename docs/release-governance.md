@@ -49,22 +49,20 @@ Historical release evidence (2026-09-03):
   constitute DevRail staging, shadow/canary, rollback-authority, or R-07
   OS-sandbox acceptance.
 
-## Current publication status (2026-09-22)
+## Current release preparation (2026-10-13)
 
-Core **0.4.7** is published on GitHub and crates.io with the corrected
-Rust source-risk RC6 package. Native Rust/MIR **RC7**
-is published through its independent four-platform workflow. The Core release
-also carries independently versioned Rust source-risk RC6, TypeScript risk RC4
-and HTTP JSON contract RC5 candidate packages, each covered by the exact release
-inventory, checksum, signature and provenance operations.
+Core **0.4.9** is prepared for GateHouse's first signed Core release. The latest
+published Core remains Harness-Gate 0.4.8 until that workflow completes.
+Core 0.4.9 publishes only its four platform binaries, Core SBOM and metadata;
+GateProbes owns independent collector publication. The accepted performance and
+quality/debt baselines are retained. See [release status](release-status.md) and
+the [0.4.9 guide](releases/0.4.9.zh-CN.md).
 
-The `release` environment retains required owner review with self-review allowed,
-no administrator bypass, and its existing `v*` / `rust-collector-v*` tag policies.
-No release control was removed. The legacy bundled collector delivery retains
-its separate historical environment and immutable source records.
-
-See [public verification receipts](release-status.md) and the
-[installation and compatibility guide](releases/0.4.7.zh-CN.md).
+GateHouse has active `main` and `release-tags` rulesets (24975950 and 24975954).
+The `release` environment (24147678356) requires owner `higoalespn` review,
+allows self-review, disables administrator bypass and accepts the `v*` tag
+policy. These controls are retained for publication. Earlier Harness-Gate
+settings and completed release runs above remain historical evidence.
 
 ## Release Procedure
 

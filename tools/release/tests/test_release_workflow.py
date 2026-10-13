@@ -31,6 +31,14 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertEqual(re.findall(r"--sbom (\S+)", self.source),
                          ["harness-gate.sbom.cdx.json"])
 
+    def test_quality_restores_verified_data_before_consuming_it(self) -> None:
+        quality = self.source.split("\n  quality:\n", 1)[1].split("\n  publish:\n", 1)[0]
+        self.assertIn("uses: ./.github/actions/test-data", quality)
+        self.assertLess(quality.index("uses: ./.github/actions/test-data"),
+                        quality.index("name: Run locked tests"))
+        action = (WORKFLOW.parents[1] / "actions/test-data/action.yml").read_text()
+        self.assertIn("tools/maintenance/test_data.py", action)
+
     def test_publication_download_excludes_policy_evidence(self) -> None:
         """Only build-matrix artifacts may be copied into the release dist."""
 
