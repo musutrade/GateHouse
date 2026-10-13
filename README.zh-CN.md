@@ -27,7 +27,18 @@
 历史证据，完整回归与文档检查使用[固定摘要的可选数据](test-data/README.md)。
 完整入口见[文档目录](docs/README.md)与[迁移验收](docs/gatehouse-migration-acceptance.md)。
 
-## 当前版本
+## 发布状态
+
+**核心拆分与清理后的版本尚未发布。** GateHouse 尚未发布 Core 二进制版本；
+最新已发布核心仍是旧 Harness-Gate 仓库的 **0.4.8**，早于核心移除插件发布链路。
+安装 0.4.8 得到的是当时的发行内容。
+
+当前开发源码已将生态预设外置到 GateProbes，核心发布工作流也已停止打包四个
+独立采集器。GateProbes 的插件发布与 Core 发布分别进行。源码 manifest 仍写
+`0.4.8`，这个保留的版本号不能证明这些改动已发布。详见
+[未发布变更](CHANGELOG.md#unreleased)与[交付状态](docs/release-status.md)。
+
+### 最新已发布核心：0.4.8（拆分前）
 
 Core **0.4.8** 为 core/plugin 拆分做准备：每种 schema 角色只有一个可编辑源，决策夹具移入核心 crate，并首次把固定版本的 Rust 测量器 `0.3.1` 作为独立包发布。本次同时提供独立安装的 Rust source-risk RC7、TypeScript risk RC4、HTTP JSON contract RC5 与 Rust 测量器 0.3.1。Core 负责编排和质量决策；版本说明与安装见[发布指南](docs/releases/0.4.8.zh-CN.md)，验证回执见[交付状态](docs/release-status.md)。
 

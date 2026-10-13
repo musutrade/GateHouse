@@ -29,7 +29,21 @@ historical evidence download; full regression and documentation checks use
 [pinned optional data](test-data/README.md). See the [documentation index](docs/README.md)
 and [migration acceptance](docs/gatehouse-migration-acceptance.md).
 
-## Current releases
+## Release status
+
+**The Core split and cleanup are unreleased.** GateHouse has not published a
+Core binary release. The latest published Core is **0.4.8** in Harness-Gate,
+from before plugin publication was removed from Core. Installing 0.4.8 does not
+install the current split Core source.
+
+The current development tree loads ecosystem presets from GateProbes and its
+Core release workflow no longer packages the four independent collectors.
+Plugin releases in GateProbes are separate from a Core release. The source
+manifest still says `0.4.8`; that retained number does not establish publication
+of these changes. See [unreleased changes](CHANGELOG.md#unreleased) and
+[release status](docs/release-status.md).
+
+### Latest published Core: 0.4.8 (before the split)
 
 Core **0.4.8** prepares the core/plugin split: every schema role has one editable source, the decision fixtures live in the core crate, and the pinned Rust measurer **0.3.1** is published as an independent package for the first time. Independently installed Rust source-risk RC7, TypeScript risk RC4, HTTP JSON contract RC5 and Rust measurer 0.3.1 packages are included in the release. Core owns orchestration and quality decisions. See the [release guide](docs/releases/0.4.8.zh-CN.md) and [verified delivery status](docs/release-status.md).
 

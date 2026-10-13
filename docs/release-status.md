@@ -1,5 +1,19 @@
 # Published releases and acceptance
 
+## Unreleased Core split and cleanup
+
+**GateHouse has not published a Core binary release.** The latest published
+Core remains Harness-Gate **v0.4.8**, before the plugin publication handoff.
+The current source manifest still has version `0.4.8`; it does not identify a
+published artifact containing the subsequent split and cleanup.
+
+The current source loads external ecosystem presets and the Core release
+workflow has stopped packaging the four independent collectors. These changes
+await a new Core release. GateProbes native RC8 and the four independent plugin
+releases below are plugin deliveries, not publication of the updated Core.
+See [unreleased changes](../CHANGELOG.md#unreleased) and
+[release ownership](quality/release-ownership.md).
+
 ## GateHouse source migration, 2026-10-13
 
 Active Core development now lives in [GateHouse](https://github.com/musutrade/GateHouse).
