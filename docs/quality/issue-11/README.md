@@ -88,6 +88,15 @@ fixtures, closure coverage joins, function risk and lineage comparisons with the
 verified independent release. Pure documentation consistency also passed.
 Raw local logs, including earlier rounds, remain under `/tmp/issue-11-*`.
 
+The initial hosted candidate `7e7407d` ran all 536 Core Python tests and failed
+one registration check: the new release helper was absent from the Python module
+inventory. The original failure log remains `/tmp/issue-11-hosted-quality-scripts-failure.log`
+(run `38415351493`). The correction introduces the maintained
+[Python boundary inventory](../python-boundary.json), preserving historical
+inventories and registering the helper as existing repository CI/dev tooling.
+The module-coverage regression reads the current inventory; no test is removed
+or weakened and the frozen oracle retains its original hashes.
+
 Hosted Core risk, coverage and Required Quality Aggregate acceptance is pending;
 local tests do not substitute for that condition. The issue must remain open
 until the exact candidate passes its applicable hosted gates.
