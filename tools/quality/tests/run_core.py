@@ -50,6 +50,41 @@ def checked_path(relative, prefixes):
     return path
 
 
+def verify_scope_review(root, receipt):
+    """Bind the narrowed boundary to preserved inputs and their import graph."""
+    review = receipt.get('scope_review')
+    if review is None:
+        return
+    for field in ('prior_receipt', 'dependency_audit'):
+        relative = checked_path(review.get(field, ''), ('docs/quality/issue-11/',))
+        payload = (root / relative).read_bytes()
+        require(hashlib.sha256(payload).hexdigest() == review.get(field + '_sha256'),
+                'plugin scope review digest mismatch')
+    prior = json.loads((root / review['prior_receipt']).read_text())
+    audit = json.loads((root / review['dependency_audit']).read_text())
+    removed = {'tools/quality/ci_quality.py', 'tools/quality/source_measure.py'}
+    require(receipt['guarded_sources'] == {**{k: v for k, v in prior['guarded_sources'].items() if k not in removed},
+            'tools/quality/tests/rust_collector_config_fixture.py':
+                audit['modules']['rust_collector_config_fixture']['sha256']}, 'unexpected plugin scope delta')
+    for field in ('delegated_tests', 'transferred_sources', 'transferred_trees', 'acceptance', 'native_acceptance'):
+        require(receipt[field] == prior[field], 'plugin execution acceptance changed in scope review')
+    require(audit.get('schema') == 'plugin-dependency-scope/v1' and
+            audit.get('roots') == sorted(receipt['delegated_tests']), 'invalid plugin dependency roots')
+    guarded = {**receipt['guarded_sources'], **receipt['transferred_sources']}
+    pending, visited = list(audit['roots']), set()
+    while pending:
+        name = pending.pop()
+        if name in visited:
+            continue
+        require(name not in ('ci_quality', 'source_measure', 'measurer_release'),
+                'plugin delegation reaches changed Core consumer')
+        visited.add(name)
+        row = audit['modules'][name]
+        require(guarded.get(row['path']) == row['sha256'], 'unbound plugin dependency')
+        pending.extend(row['imports'])
+    require(visited == set(audit['modules']), 'incomplete plugin dependency closure')
+
+
 def select(root=ROOT):
     receipt = read_receipt(root)
     require(isinstance(receipt, dict) and receipt.get('schema') == 'core-plugin-test-handoff/v2',
@@ -59,6 +94,7 @@ def select(root=ROOT):
             'plugin handoff requires an exact commit')
     require(re.fullmatch(r'https://github.com/musutrade/GateProbes/actions/runs/[0-9]+',
                          str(receipt.get('ci_run', ''))), 'plugin handoff requires a recorded CI run')
+    verify_scope_review(root, receipt)
     delegated = receipt.get('delegated_tests')
     sources = receipt.get('guarded_sources')
     optional = receipt.get('transferred_sources')

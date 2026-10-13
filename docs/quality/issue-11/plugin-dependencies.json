@@ -1,0 +1,346 @@
+{
+  "schema": "plugin-dependency-scope/v1",
+  "roots": [
+    "test_native_artifact_paths",
+    "test_rust_collector_contract",
+    "test_rust_collector_delivery",
+    "test_rust_collector_project",
+    "test_rust_collector_runtime",
+    "test_rust_native",
+    "test_rust_native_classify",
+    "test_rust_native_driver",
+    "test_typescript_acceptance",
+    "test_typescript_advisory",
+    "test_typescript_contracts",
+    "test_typescript_reference",
+    "test_typescript_semantics"
+  ],
+  "excluded_core_consumers": [
+    "ci_quality",
+    "source_measure",
+    "measurer_release"
+  ],
+  "modules": {
+    "test_typescript_semantics": {
+      "path": "tools/quality/tests/test_typescript_semantics.py",
+      "sha256": "b98e9fe1bf1fdaa7d64cc4515d0102084a76e1f93509e3d5c4ceda8c798b675f",
+      "imports": [
+        "harness_evidence",
+        "typescript_semantics"
+      ]
+    },
+    "typescript_semantics": {
+      "path": "tools/quality/typescript_semantics.py",
+      "sha256": "71ac267b84ca2c2cb24f88ec0d03fd05df84d63d61687f40d3eea0cd642647bc",
+      "imports": [
+        "harness_evidence",
+        "project_model"
+      ]
+    },
+    "project_model": {
+      "path": "tools/quality/project_model.py",
+      "sha256": "d1d493bbd4566b8aaf469d0f28fdee89a3c3a3e3ebfe3e1068b9d93e90d1b196",
+      "imports": [
+        "quality_evidence"
+      ]
+    },
+    "quality_evidence": {
+      "path": "tools/quality/quality_evidence.py",
+      "sha256": "8938ce2fc2d49caf2e3f3dac284fe3d07a13a3da9cbd8e1e729f011e2d5d145e",
+      "imports": []
+    },
+    "harness_evidence": {
+      "path": "tools/quality/harness_evidence.py",
+      "sha256": "fcb07569d8fa386fb11324003ba939a9bf2522a7baf60a7ef9194ac703414368",
+      "imports": [
+        "project_model",
+        "quality_evidence"
+      ]
+    },
+    "test_typescript_reference": {
+      "path": "tools/quality/tests/test_typescript_reference.py",
+      "sha256": "eb8cf4a15a741e32ce0b2d4ebf0ee5f30790da37c38ea1b6317d72cc9f55b642",
+      "imports": [
+        "collector_runner",
+        "harness_evidence",
+        "project_model",
+        "typescript_reference",
+        "typescript_semantics"
+      ]
+    },
+    "typescript_reference": {
+      "path": "tools/quality/typescript_reference.py",
+      "sha256": "347ec0c980e77d519a5b956af49762f6be9a3d15d6d03a8ad697ded1186b490b",
+      "imports": [
+        "harness_evidence",
+        "project_model",
+        "typescript_semantics"
+      ]
+    },
+    "collector_runner": {
+      "path": "tools/quality/collector_runner.py",
+      "sha256": "9dc0321243e388295572c49c0848310da0ff8bf7ba29f006446ed102b8646dcb",
+      "imports": [
+        "harness_evidence",
+        "project_model"
+      ]
+    },
+    "test_typescript_contracts": {
+      "path": "tools/quality/tests/test_typescript_contracts.py",
+      "sha256": "4cc116aeaedd251cd0901cc44dd59e1198bca1c8f6780d05ec1ac5c754bde02d",
+      "imports": [
+        "harness_evidence",
+        "policy_engine",
+        "project_report",
+        "typescript_contracts"
+      ]
+    },
+    "typescript_contracts": {
+      "path": "tools/quality/typescript_contracts.py",
+      "sha256": "be30cd166091ab263cf344620fdaaedd3cfaa7a4ff61c0f3cdd971606b3637e9",
+      "imports": [
+        "harness_evidence",
+        "policy_engine",
+        "project_model",
+        "project_report"
+      ]
+    },
+    "project_report": {
+      "path": "tools/quality/project_report.py",
+      "sha256": "ff1a83d66fa63f988faad8a586e2f8ce9ad7c2f37d4e39c83841da6662c2acd5",
+      "imports": [
+        "harness_evidence",
+        "policy_engine",
+        "project_model"
+      ]
+    },
+    "policy_engine": {
+      "path": "tools/quality/policy_engine.py",
+      "sha256": "a3ac2948eec2a27b3968e531c2e6f9e7f797afd832f819190734aa545388e619",
+      "imports": [
+        "cross_component",
+        "harness_evidence",
+        "policy_ratchet",
+        "project_model"
+      ]
+    },
+    "policy_ratchet": {
+      "path": "tools/quality/policy_ratchet.py",
+      "sha256": "90eeb951393bed7393d5ed1a223c533e18c986ecb63ad06c7fbceeecef640620",
+      "imports": [
+        "harness_evidence",
+        "project_model"
+      ]
+    },
+    "cross_component": {
+      "path": "tools/quality/cross_component.py",
+      "sha256": "a861c3e3f3ab9a79a036c6ac41a1a0883fef553a3723878d721d2032f3833111",
+      "imports": [
+        "harness_evidence"
+      ]
+    },
+    "test_typescript_advisory": {
+      "path": "tools/quality/tests/test_typescript_advisory.py",
+      "sha256": "4d67af9a2bcc9e0e4414ee6fb49d3ffd9a1a26a3cfaf25e826c781d26982a506",
+      "imports": [
+        "typescript_advisory"
+      ]
+    },
+    "typescript_advisory": {
+      "path": "tools/quality/typescript_advisory.py",
+      "sha256": "2f1bb5b82b5b83717db499240c84028d6c9a9a77bdcd1ae5b4d6d0033c9ab3d5",
+      "imports": [
+        "harness_evidence",
+        "typescript_acceptance",
+        "typescript_contracts"
+      ]
+    },
+    "typescript_acceptance": {
+      "path": "tools/quality/typescript_acceptance.py",
+      "sha256": "73d3f5a6cfb65b162863074c23815a6044fde64bd578423316e68503bb180342",
+      "imports": [
+        "collector_runner",
+        "harness_evidence",
+        "policy_engine",
+        "typescript_reference",
+        "typescript_semantics"
+      ]
+    },
+    "test_typescript_acceptance": {
+      "path": "tools/quality/tests/test_typescript_acceptance.py",
+      "sha256": "f7883f72732e115408f9c7d63bec293e1cc227a0f23488b96eb51dab82d3b32c",
+      "imports": [
+        "harness_evidence",
+        "test_typescript_reference",
+        "typescript_acceptance",
+        "typescript_semantics"
+      ]
+    },
+    "test_rust_native": {
+      "path": "tools/quality/tests/test_rust_native.py",
+      "sha256": "0528d2884bc6d85f52cd2de54ad11d920482e493f8bead0aa4e93fd4c5706aa1",
+      "imports": [
+        "rust_native"
+      ]
+    },
+    "rust_native": {
+      "path": "tools/quality/rust_native.py",
+      "sha256": "cafd5670a7d040f2beb7dbc5f5880825391bc19a6ccafece30e7bcd6b0ea5767",
+      "imports": []
+    },
+    "test_rust_collector_runtime": {
+      "path": "tools/quality/tests/test_rust_collector_runtime.py",
+      "sha256": "8c1edfaad51f3bd6d98666c5290acdafbab82fe980f611a41ab9f03df221dd49",
+      "imports": [
+        "build_rust_collector",
+        "native_policy_fixture",
+        "rust_collector_config_fixture",
+        "rust_native_policy",
+        "test_rust_collector_project"
+      ]
+    },
+    "test_rust_collector_project": {
+      "path": "tools/quality/tests/test_rust_collector_project.py",
+      "sha256": "456eba2acfb29f002039d94d929eea6359eb21aec35d2274ebc51ba7b5ea49e7",
+      "imports": [
+        "harness_evidence",
+        "project_model",
+        "rust_collector_entry",
+        "rust_collector_project",
+        "rust_native_driver"
+      ]
+    },
+    "rust_native_driver": {
+      "path": "tools/quality/rust_native_driver.py",
+      "sha256": "52c717a76e9e45d5e1524654312ed513872a30f32d545c67e9451b0fca9ae93b",
+      "imports": []
+    },
+    "rust_collector_project": {
+      "path": "tools/quality/rust_collector_project.py",
+      "sha256": "b9873d9fab94c88f7eb1638ea845d7a7d5093af6a0d8eef2b6e1c53be0e22b07",
+      "imports": [
+        "harness_evidence",
+        "project_model",
+        "rust_native_driver"
+      ]
+    },
+    "rust_collector_entry": {
+      "path": "tools/quality/rust_collector_entry.py",
+      "sha256": "d13233de8cb94692bd916ef9e9c0f86ac0ebb39fbc81d30e9fd6883fc24cbdc5",
+      "imports": [
+        "collector_runner",
+        "rust_collector_contract",
+        "rust_collector_delivery",
+        "rust_collector_project",
+        "rust_native_classify",
+        "rust_native_driver"
+      ]
+    },
+    "rust_native_classify": {
+      "path": "tools/quality/rust_native_classify.py",
+      "sha256": "b952ae1c7c5ed335013387e314898cccacd813720c200ddcdffdba2dc08916e7",
+      "imports": [
+        "rust_native_driver"
+      ]
+    },
+    "rust_collector_delivery": {
+      "path": "tools/quality/rust_collector_delivery.py",
+      "sha256": "bbfabb192a8534ae31d9678b106a6a9758dc9c6fa31c45baff2d213bed14efd9",
+      "imports": [
+        "harness_evidence",
+        "rust_collector_contract",
+        "rust_native_driver"
+      ]
+    },
+    "rust_collector_contract": {
+      "path": "tools/quality/rust_collector_contract.py",
+      "sha256": "9d9aa499cbed81293980c57c4ef96fd8b350ccb12acdeddf0b39f84115c62d71",
+      "imports": [
+        "collector_runner",
+        "harness_evidence"
+      ]
+    },
+    "rust_native_policy": {
+      "path": "tools/quality/rust_native_policy.py",
+      "sha256": "7d44632b9f82284628ba6fe1742823b390644632a482a80f2bf0decd317cbcda",
+      "imports": [
+        "harness_evidence",
+        "project_model",
+        "rust_native_config",
+        "rust_native_driver"
+      ]
+    },
+    "rust_native_config": {
+      "path": "tools/quality/rust_native_config.py",
+      "sha256": "4e1c80301839111098ffa17fb27830aabdd253f3088e0541b0884b24fb24edef",
+      "imports": [
+        "project_model",
+        "rust_native_driver"
+      ]
+    },
+    "rust_collector_config_fixture": {
+      "path": "tools/quality/tests/rust_collector_config_fixture.py",
+      "sha256": "c3ee57529ac3265f3f281b13f54f3c0f13333796ebab69c9d823839985ff0e96",
+      "imports": [
+        "build_rust_collector",
+        "rust_collector_project",
+        "test_rust_collector_project"
+      ]
+    },
+    "build_rust_collector": {
+      "path": "tools/quality/build_rust_collector.py",
+      "sha256": "cb5b2abf75c0ecd61f8c4a82ef9a026c763c14d448202fc164f9011fa82a7870",
+      "imports": []
+    },
+    "native_policy_fixture": {
+      "path": "tools/quality/tests/native_policy_fixture.py",
+      "sha256": "02edf6dff3b4b7ccba3afcde1a09ec0f40b0565e8afbf638f572ece302d934af",
+      "imports": [
+        "rust_native_policy"
+      ]
+    },
+    "test_rust_collector_delivery": {
+      "path": "tools/quality/tests/test_rust_collector_delivery.py",
+      "sha256": "e9089f217ae2b8c5c7453f4854f02b5d8509959725d83f36bb11952597e55e54",
+      "imports": [
+        "rust_collector_delivery",
+        "rust_native_driver"
+      ]
+    },
+    "test_rust_collector_contract": {
+      "path": "tools/quality/tests/test_rust_collector_contract.py",
+      "sha256": "7e58f991221785996da3849597e1eb9eef93f2495e0ff5b7f2f969d26c809f47",
+      "imports": [
+        "collector_runner",
+        "harness_evidence",
+        "rust_collector_contract",
+        "rust_native_driver"
+      ]
+    },
+    "test_rust_native_classify": {
+      "path": "tools/quality/tests/test_rust_native_classify.py",
+      "sha256": "2a17af6780549c2dd22931746322147d0827f3bf49f00db5956d33762e2a0182",
+      "imports": [
+        "rust_native_classify",
+        "rust_native_driver",
+        "test_native_artifact_paths"
+      ]
+    },
+    "test_native_artifact_paths": {
+      "path": "tools/quality/tests/test_native_artifact_paths.py",
+      "sha256": "970522363180ddd259378a04fec48a0c654f076f69f98c9f68e1a0bfef5f5570",
+      "imports": [
+        "rust_native_driver"
+      ]
+    },
+    "test_rust_native_driver": {
+      "path": "tools/quality/tests/test_rust_native_driver.py",
+      "sha256": "71e523d8c829bb476483ddb35b825e93a086eb9d8e1a5f2bbaf7575b9091bcc7",
+      "imports": [
+        "native_policy_fixture",
+        "rust_native_driver",
+        "rust_native_policy"
+      ]
+    }
+  }
+}

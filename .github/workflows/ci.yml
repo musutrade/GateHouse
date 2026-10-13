@@ -338,6 +338,7 @@ jobs:
 
       - name: Collect and require fresh coverage, risk and matrix evidence
         env:
+          GH_TOKEN: ${{ github.token }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.sha }}
           RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
@@ -625,6 +626,7 @@ jobs:
 
       - name: Test and compile quality scripts
         env:
+          GH_TOKEN: ${{ github.token }}
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
           # Verify the accepted handoff before stripping this disposable checkout.

@@ -1,0 +1,97 @@
+{
+  "verification": "gh attestation verify; exact repository, workflow SAN, OIDC issuer, tag, signer and source SHA",
+  "verified": [
+    {
+      "certificate": {
+        "certificateIssuer": "CN=sigstore-intermediate,O=sigstore.dev",
+        "subjectAlternativeName": "https://github.com/musutrade/GateProbes/.github/workflows/collector-release.yml@refs/tags/rust-measure-v0.3.1",
+        "issuer": "https://token.actions.githubusercontent.com",
+        "githubWorkflowTrigger": "push",
+        "githubWorkflowSHA": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+        "githubWorkflowName": "Independent collector release",
+        "githubWorkflowRepository": "musutrade/GateProbes",
+        "githubWorkflowRef": "refs/tags/rust-measure-v0.3.1",
+        "buildSignerURI": "https://github.com/musutrade/GateProbes/.github/workflows/collector-release.yml@refs/tags/rust-measure-v0.3.1",
+        "buildSignerDigest": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+        "runnerEnvironment": "github-hosted",
+        "sourceRepositoryURI": "https://github.com/musutrade/GateProbes",
+        "sourceRepositoryDigest": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+        "sourceRepositoryRef": "refs/tags/rust-measure-v0.3.1",
+        "sourceRepositoryIdentifier": "1414071007",
+        "sourceRepositoryOwnerURI": "https://github.com/musutrade",
+        "sourceRepositoryOwnerIdentifier": "317201575",
+        "buildConfigURI": "https://github.com/musutrade/GateProbes/.github/workflows/collector-release.yml@refs/tags/rust-measure-v0.3.1",
+        "buildConfigDigest": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+        "buildTrigger": "push",
+        "runInvocationURI": "https://github.com/musutrade/GateProbes/actions/runs/38338989282/attempts/1",
+        "sourceRepositoryVisibilityAtSigning": "public"
+      },
+      "statement": {
+        "_type": "https://in-toto.io/Statement/v1",
+        "subject": [
+          {
+            "name": "SHA256SUMS",
+            "digest": {
+              "sha256": "f5a294412a75ce17d788440df6359a7944e20095e47d4fb1ee43625e9f052e10"
+            }
+          },
+          {
+            "name": "harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz",
+            "digest": {
+              "sha256": "5d3130b8d6673b9e32133be88fa69e4404f1d4ecc5ae022f7abf008c9b06302f"
+            }
+          },
+          {
+            "name": "harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz.sbom.cdx.json",
+            "digest": {
+              "sha256": "3305b5abb1154ef96f7c28058fccb0a06efc2522d86a9efef91052ffb0d4b50d"
+            }
+          },
+          {
+            "name": "release-inventory.json",
+            "digest": {
+              "sha256": "2913ee7d418503f05d17a2dbd8529e70ed1cc49f148adb9ba9096e0210507c48"
+            }
+          }
+        ],
+        "predicateType": "https://slsa.dev/provenance/v1",
+        "predicate": {
+          "buildDefinition": {
+            "buildType": "https://actions.github.io/buildtypes/workflow/v1",
+            "externalParameters": {
+              "workflow": {
+                "path": ".github/workflows/collector-release.yml",
+                "ref": "refs/tags/rust-measure-v0.3.1",
+                "repository": "https://github.com/musutrade/GateProbes"
+              }
+            },
+            "internalParameters": {
+              "github": {
+                "event_name": "push",
+                "repository_id": "1414071007",
+                "repository_owner_id": "317201575",
+                "runner_environment": "github-hosted"
+              }
+            },
+            "resolvedDependencies": [
+              {
+                "digest": {
+                  "gitCommit": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928"
+                },
+                "uri": "git+https://github.com/musutrade/GateProbes@refs/tags/rust-measure-v0.3.1"
+              }
+            ]
+          },
+          "runDetails": {
+            "builder": {
+              "id": "https://github.com/musutrade/GateProbes/.github/workflows/collector-release.yml@refs/tags/rust-measure-v0.3.1"
+            },
+            "metadata": {
+              "invocationId": "https://github.com/musutrade/GateProbes/actions/runs/38338989282/attempts/1"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

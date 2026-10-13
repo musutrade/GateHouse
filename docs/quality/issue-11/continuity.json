@@ -1,0 +1,1831 @@
+{
+  "schema": "measurer-continuity/v1",
+  "status": "pass",
+  "series": {
+    "analyzer": "harness-gate-rust-measure/0.3.1",
+    "rule": "mccabe-rust-3/1",
+    "instrumentation": "closure-black-box/1",
+    "mapping": "insertions-utf8/1",
+    "selection": "gh315-review-low/1",
+    "configuration": "compiler-target-production/4"
+  },
+  "legacy_archive_sha256": "09645a8b53075d89172efde67250e4bea2967f02184d4f8a5bfdfb389da0eac1",
+  "new_archive_sha256": "5d3130b8d6673b9e32133be88fa69e4404f1d4ecc5ae022f7abf008c9b06302f",
+  "binary_sha256": "f17ec90502005ddb161143cd5683a292fa1ccde7f4715291e0a0f82ae5b519ad",
+  "plugin_manifest_sha256": "274a64a632ca22fae01b4f0f664e611838b251cd9ddc8cbb7789ac8637116cfa",
+  "binary_and_manifest_byte_identical": true,
+  "inputs": 67,
+  "comparisons": 201,
+  "records": [
+    {
+      "input": "../quality-core/comparison.rs",
+      "input_sha256": "c6ae9afd22fc07b0d117ac7e0478d4f8915dbae9958a52a6e8f923829e956ea4",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "c3dd2fab58a334f67bb4a670417b4483471ff14b579fa6c366eeec98e89073a8",
+      "symbols": 6,
+      "complexities_sha256": "edb035b6a72bd0ea89e226f9791c37c9bc9b649fd83c2d3d4bd9ae2588b5ec3d"
+    },
+    {
+      "input": "../quality-core/cross_component.rs",
+      "input_sha256": "6779e7fcf88f26e9705a6db70d496b39e1ad0c11f9055385b472d1d4972a585e",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "38defe141419f1a5a7441faecd969abb2e7fdfdfac5044e01b49bd8fe38f108e",
+      "symbols": 19,
+      "complexities_sha256": "80802ae7481cad676be32499ab9b5fbcda85807610e34e603607259f6a48f17b"
+    },
+    {
+      "input": "../quality-core/evidence.rs",
+      "input_sha256": "a26611be4e8dc0f01f7bbd8d18b24e401ae07f1fe4b45acd276526906c3d8610",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "2c6dd46033520052d38cd61c51c434cf3f58604eb4fe949842ae313a5968ceeb",
+      "symbols": 35,
+      "complexities_sha256": "52c170d16110394ff8b97ce6b0babf882cb78055d9ee6082df4a4f4ea65781bd"
+    },
+    {
+      "input": "../quality-core/json.rs",
+      "input_sha256": "8d9bd3959fb9f9f4f46897ea9b762458dca8ee36d22ae844e242311facca5806",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "33f80f54a87693dc8558408b0f84789655d0856f6fd870d190c656533c66ed73",
+      "symbols": 20,
+      "complexities_sha256": "e04602bddfadf7d38b9a88a19171c008740d289108727333cbd0c5bdca1e2768"
+    },
+    {
+      "input": "../quality-core/mod.rs",
+      "input_sha256": "581fe088100b053c050fe805d97d8c670054a7444cdd8eaeec03b8637d71867d",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "a3be735a4c48e73d27276dec41f0a4429f30b8c7019764e800c5c4d0cc454d17",
+      "symbols": 6,
+      "complexities_sha256": "6c4b01d476a57ee15051441aaa4651f1190aed03d652a8a80c18fe40b157e93f"
+    },
+    {
+      "input": "../quality-core/model.rs",
+      "input_sha256": "b8959e7e3ffdea692a7a6d12bdde62372d58985c5e279f0708ca9a128831169c",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "08430b9e86517d5bf348c9637b8ce277193ca985ae88cb9d13b945c0afd3738f",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "../quality-core/policy.rs",
+      "input_sha256": "fb2942f430c22a60868ddd37f960e460279e8206c53e6fe772c69387005c5fa2",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "88eabfa0dde574a0295076afdd6128c01e50926ef8ad158019d0fad75529e84d",
+      "symbols": 70,
+      "complexities_sha256": "cebf80042c812a7eb6da750fd3957cd0911ebc6ba12a04a7b7846166525abec2"
+    },
+    {
+      "input": "../quality-core/project.rs",
+      "input_sha256": "c061c920be0ae1dbcb951aff65a6c17b43b5821c03288b2eedaf02f66832a03c",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "268275f7db53a89769fab844d172c2e5292214abf7682146c7d794ecfb14d461",
+      "symbols": 25,
+      "complexities_sha256": "174529780714b53f255c63d7df47d4281f0373e1f63bc221cddb3110a65a23a2"
+    },
+    {
+      "input": "../quality-core/project_report.rs",
+      "input_sha256": "326dac87dd9d331e9b25505e3f7591947285c60505eb13f54fe3ea2a9904c78d",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "5f4d2c1627c4e2837169978376b2dd5742131aa5a87a4efc81ee75aaf9875c3a",
+      "symbols": 11,
+      "complexities_sha256": "9af57890661e0ff4411892203c92ee26f90fce17c5518633a69e95dd11ecf8e6"
+    },
+    {
+      "input": "../quality-core/ratchet.rs",
+      "input_sha256": "ff1d7aa524ca5812ac0a61c36c299802ae5e14c21c8d3a60659f08a3ffbf0abd",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "733f39927f9c0ea57a1f5dfb1590c74ed8de4cb6b5a307b237d074e2e1b4f04d",
+      "symbols": 25,
+      "complexities_sha256": "259587cbe1d9eeabea64cec464b33943278d8b84eedc1a09284059c83034ccc2"
+    },
+    {
+      "input": "../quality-core/replay.rs",
+      "input_sha256": "fd43d72e05dadce1fc15e487973602716e9ddcb87012700e02bbe5721c93035a",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "146b1ce6e2d4a8be19d91d07ee052fb9bb873d3fbdfc4c9f5b0efdac4275182d",
+      "symbols": 19,
+      "complexities_sha256": "c9e078b6bb91831394c23799669287eb0c41b7ce2c890779815c4c0cb81be983"
+    },
+    {
+      "input": "../quality-core/schema.rs",
+      "input_sha256": "f0ba389f8e468d551e42cbcbd5423e1bbc6231f65f19200827147be9f376e23d",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "679608c0818e55b65ac546af6872507355d14ca6d0c8989be2df225162e48eec",
+      "symbols": 26,
+      "complexities_sha256": "ede960a4f0004287075be8bfda63b25888d2cfa1ece0c2666201b7c32b1c2ba4"
+    },
+    {
+      "input": "app/commands.rs",
+      "input_sha256": "34a496d81c54cb8ddafc99ea82aba85a15ff0d99c4e47845f1c97d5c66beb620",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "b3b3a6962b47124866f0e72c218c2c51617b647a6436346a4141d62151093e65",
+      "symbols": 13,
+      "complexities_sha256": "bfc793a7198685328d5ff6eee9cb12f13a85b8a2c8ae5c4a29a8358c2709b8d2"
+    },
+    {
+      "input": "app/mod.rs",
+      "input_sha256": "09a1909b3063ec677dc7e6c5f06eb9ccbd86f5a8a5e0780b38cc5fca1c712ab3",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "361c2e27d3ffd2d5450246c4ae75f400f3198021883d30fb6a3483ed76f10f5e",
+      "symbols": 22,
+      "complexities_sha256": "5f879aeedd7b7467be4c1cd63eddbc32de0ba86e34544598cb6ddd53fbcbfaec"
+    },
+    {
+      "input": "app/quality.rs",
+      "input_sha256": "679cc806557c96e0253ff2371005bf0a8ec3e0504c30b4448ec631a9b611c96d",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "7c28a9817d376eb5dfaf1e4dd97a5d6fa57374b625cc2be1ae7405d1cfc85e54",
+      "symbols": 22,
+      "complexities_sha256": "acfd9caf13ed609cdaf3fab8b8a7be5393d3fdf503bee006b0eb9fc5b11bf347"
+    },
+    {
+      "input": "audit/runner.rs",
+      "input_sha256": "f14a4e79fad49a354d20475b64851a994717569c53d5a6bb5ab81fab3c1419e0",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "5b9c849035b77b3e107409223874e1b6bca1a768749b4c9ed0a99f61977edab5",
+      "symbols": 6,
+      "complexities_sha256": "9d9d08e88f836e9bb36214cb14c7bdf6b79dba1eb2cdabe5a9b9a965fd910d36"
+    },
+    {
+      "input": "cli.rs",
+      "input_sha256": "3a5f9fc7594693fd06ba52e8f54e9dc3fc885b92e8f1beec002d460a3833ba06",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "4e7a4239fd066773c11cf3f2d54a95a2d134ef1c998390e90a2b0d71b0fccc5f",
+      "symbols": 1,
+      "complexities_sha256": "46b1884167c4edd308bcf0c04163dd02d05c9742b35e86b57b5f7ed1b82f3850"
+    },
+    {
+      "input": "config/import.rs",
+      "input_sha256": "ade2594fc1f8a198a822b2eec06d65b5ff81bf6285a4e422bb071bfe6c808466",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "e6acdc11c7f5a2b070eb4abd3ea90db4f1bc0da6a5be26d73761625704cd3048",
+      "symbols": 7,
+      "complexities_sha256": "67b0e4397c0da35d559563d7f0a692d48244cd9c5337064bf42a8f9c1f8ec15b"
+    },
+    {
+      "input": "config/loader.rs",
+      "input_sha256": "9ef912226e2168f22d1e7979952c097cbfa4d0cf98ae5eac8dc8fae0b41c8f78",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "19d920122bf9811ba4c7afbab446b2e7f35273c88759aee0540b83fde1a3501d",
+      "symbols": 34,
+      "complexities_sha256": "fce49e89b338956e1183787d738eb2080f890f39a5c85db09d1f8ac17ed4cd64"
+    },
+    {
+      "input": "config/migration.rs",
+      "input_sha256": "27d9a82a0eb39df091141e2ef2ef54c190f2885d6138806f5763a18afd602a4e",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "2e166d28400c34e9273402ca92686d7493abb92e9b65b28d0a2b8a925c93fa91",
+      "symbols": 6,
+      "complexities_sha256": "26af6d1166801fb63b5db102d7834afe49c26ed6bee000498957da62ed95b918"
+    },
+    {
+      "input": "config/mod.rs",
+      "input_sha256": "7f2d4a7b5d8e0d6fd74f178d3d7fb778968639071305e2b275f206e0c5269786",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "957a4577a6b05ca6ea6f656e8b1dc36d7abffea3a6e2c3e3e671103040a8d6f7",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "config/model.rs",
+      "input_sha256": "1d94efde6d1c59baff05eeecbbc46f0572a45161da8e9e4911d8a2e63be3cd23",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "fab6a7d9c16a2632ef78f22c980718d749a29da411c544ccace576d2b34615cb",
+      "symbols": 13,
+      "complexities_sha256": "8f5032bf53d09493b6aa73be50b71c6c689599526bef8dd18ed2bb378f398bea"
+    },
+    {
+      "input": "config/quality/baseline.rs",
+      "input_sha256": "441b78af52d6d8532707ca90c36157164772c8ee4123ddab19f2992ee0e569f1",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "08d291a23f7426196c899ec78c4e1b465acc1f6b2861ac2b98813022e52d8ff6",
+      "symbols": 13,
+      "complexities_sha256": "5155483b7db7701fe8693be0b528ff0282dcacb39f52021042baffd495252f98"
+    },
+    {
+      "input": "config/quality/baseline/git.rs",
+      "input_sha256": "7ea143abbf1d478902d6a7dca5b9f44743279eefb938543ba7a423739969d37a",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "0b375055dee3a9a564e70a0466119817829529e60cdf38cc0e2be909d45c5bc0",
+      "symbols": 7,
+      "complexities_sha256": "51ac0297094a7f72e62f5ff46ffba3d79aa57572683a3a541fa86ff7bd401b31"
+    },
+    {
+      "input": "config/quality/collectors.rs",
+      "input_sha256": "a86cd5ed3d13f1ca0427aa47cb692b3383cdfbe098c42509405faeaa655fb76e",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "103e4f91cca6a4a51dd0abfd5eb06b50a261b36a58e5404661aaace3ce0b1f11",
+      "symbols": 17,
+      "complexities_sha256": "1e8f7b51b2f576e1b9ff06bb8fd331c50b3eeca8f46b05779758b85d61908de2"
+    },
+    {
+      "input": "config/quality/compiler.rs",
+      "input_sha256": "f69378d83749bb5904c98a55542b61c0df87c7c5b5cbf1b243907a8d5247683c",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "5ced0a4e857b7d27cecb4b51800b2d2d8ad974fcdca15e8ef94d60024f6a0f9a",
+      "symbols": 33,
+      "complexities_sha256": "5dd8c5ee6b83bd559115da5b465b90e1007f7b1cc072495082d3305b75950fee"
+    },
+    {
+      "input": "config/quality/mod.rs",
+      "input_sha256": "d9db9b7d1f2bc4d9f8fd462a9cd02749d9b5c9f9521296d4d0aebbfab0ba3895",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "ca55872bbf7f38b800a9f42e2d1800958d366647703a2d79c08d9531a0bc4d02",
+      "symbols": 6,
+      "complexities_sha256": "ba5c9897f9775ec9141c8181e57c311c3b9ae730ef19a2b691c74261d0e8a001"
+    },
+    {
+      "input": "config/quality/model.rs",
+      "input_sha256": "4206caf213e60bfa47ba267a58ce3c0d2bb2fb4bf65e8fb58d431f54c1d15a0e",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "08430b9e86517d5bf348c9637b8ce277193ca985ae88cb9d13b945c0afd3738f",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "config/quality/policy.rs",
+      "input_sha256": "a33214d9d32fb5abe18ad9b068226644dc69d347f0bf400bcf84aa9510afdb10",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "86ba1410135e926861ab527a054f30419ebf6cfc30c363b11e069d25a68fffb8",
+      "symbols": 4,
+      "complexities_sha256": "904115f864a6353fa0238cc90a6f1278d702f5f3eaa64c545c17184edc282c38"
+    },
+    {
+      "input": "config/quality/validation.rs",
+      "input_sha256": "da635aed473871386844d10464a65923c8d079c577debac660dd9ee891d66fb0",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "312146e6201a4a1edcd2b1695912c29acff87df6a4b6d23c267c6c7275f864e0",
+      "symbols": 21,
+      "complexities_sha256": "ae8cdaf4b6336d774c6c69669480989e51ad05e8c23662a8afff10a4cfcef968"
+    },
+    {
+      "input": "config/validation/mod.rs",
+      "input_sha256": "b37928128fd178cce1c8125c8ea11e97249e28503cdd39924a7d151a5f107a8c",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "c548da12ca11189674e514de154b73a5597f39f54dc0b3835fcc79160f73f71d",
+      "symbols": 67,
+      "complexities_sha256": "5fa54202f3b5d2c79aae1550736ac9ae92369be715855978092ae3106ee83ad5"
+    },
+    {
+      "input": "doctor/checks.rs",
+      "input_sha256": "757f2f76c1dfc863aeba76cab607e9a19afd0d45125239aa973c5b49c00cfdca",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "725bbdfa521e319471d7bd9f5297a37b951dd3067e6a021733820036df118de1",
+      "symbols": 35,
+      "complexities_sha256": "3c5c7ef062d1c12302ad7d55d0cf54128f7dd035b1e87884a8e8ca13370cf4d6"
+    },
+    {
+      "input": "failure.rs",
+      "input_sha256": "d83c34130844ba5f4795928c208cf4c94e8e905d592187c64f53686d4c39c721",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "c1311d65b57ee498b1c4888e95f36ea46edcea8de499cc32797e8bcecab8fd45",
+      "symbols": 6,
+      "complexities_sha256": "aca9acc4bec7779732b69ebdb7b1cbebe1ea8e524ad89208e2677e848a947ca8"
+    },
+    {
+      "input": "lib.rs",
+      "input_sha256": "373bde6804041cd4412e9a4881d63d940e0df714f4488ff946350bd36ab82999",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "08430b9e86517d5bf348c9637b8ce277193ca985ae88cb9d13b945c0afd3738f",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "main.rs",
+      "input_sha256": "e2db829879e1e11fc1e85d70257c2c2b5b79c23d191e4a0ff593921d7408c0d6",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "7054c043cae661b5e5b7d663f31adf7761c8ed028783f6b66a82e33d1672d647",
+      "symbols": 1,
+      "complexities_sha256": "06d033ece6645de592db973644cf7357255f24536ff7b03c3b2ace10736f7636"
+    },
+    {
+      "input": "net_policy.rs",
+      "input_sha256": "b6f2d523e7f6a4da73e8295d0bb7ebd68702bb022d9655571bf4c3b07ed7c7df",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "8917d6be1b947b5f8b938368e88351d3d2026e770221e3dc7e84e9f4fd91d60f",
+      "symbols": 10,
+      "complexities_sha256": "7278c032ed51a0bce68d00916bb8852c03bee351ffa285955c73aa0d7bcf0863"
+    },
+    {
+      "input": "preset/catalog.rs",
+      "input_sha256": "0a6fb3b6499046f6ee90622960266200ac21a76c4770b710b3660f6d442de339",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "18eb084f3b1839f6d16d4686a5cbcf3b1598fdab4e6409aaff500629c45b554b",
+      "symbols": 12,
+      "complexities_sha256": "db911778bc34d899ea2f55da2773a99fe550c1cdf6c1dc38a20004cfa9253272"
+    },
+    {
+      "input": "preset/composition.rs",
+      "input_sha256": "9b9436647cfa8be47355d32f1be796d8aebae58c3e9f9874039585e0f7098955",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "fca4010dc1f70d0c47491a7b2b9bb5738fa5c399b5cfff5de47c2bfdbc8390ff",
+      "symbols": 9,
+      "complexities_sha256": "06c4b30e787ab828113da63ee6bcfdab7d91b6be49811b0c19fb9c7732ce2582"
+    },
+    {
+      "input": "preset/filesystem.rs",
+      "input_sha256": "88146b811d8e50b7a141187d6d937da36ae550dfb003ded2c06df4e052261226",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "9fb40c005254917f603e284ffad04e9fe8f030bc904f94d5b10dc5fd027130ca",
+      "symbols": 16,
+      "complexities_sha256": "2ca51cfa51814e64e9fd5c8c5bbde08fd333d51abe9040e11b9ce00f360b4c5c"
+    },
+    {
+      "input": "preset/import.rs",
+      "input_sha256": "a9cd74560ea6b132e14108f88cc49ab519b82aa4b18559b8530f7991bfd15a5d",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "9ba633c8fb59d63fc242806177cbde41619dff33b20447d7e4bbb4c3b8491d97",
+      "symbols": 2,
+      "complexities_sha256": "72c5687dc5a9d6d83e7828ae3f022836a6765dc05f1a56b99e00c458ea3ca84a"
+    },
+    {
+      "input": "preset/initialize.rs",
+      "input_sha256": "f7d4d440414a2ec2fcda0b45df2d9e0a2def79343de10a7eb58b1f8a6f95ec3a",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "10940a35aac1914c2ed60e08473eadfbef6cb4b4173fb4e22c9f78310f9fb616",
+      "symbols": 9,
+      "complexities_sha256": "7ad8d776abec2fd44249be4547f903d3f4b7d2ef95b2f91e87b666ababc089f0"
+    },
+    {
+      "input": "preset/migration.rs",
+      "input_sha256": "03942de8340c3dc1f7dc4d962431aef867aeb8903a6d147ec6ea100de1d92907",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "e4a8de94cb651581a72eca8125a0445867a75bfeeb8ff9fc447daeeec6aac339",
+      "symbols": 4,
+      "complexities_sha256": "44a683aad8233d3fa5b3b8066213abd580577efa714a23c19a87e330998f4714"
+    },
+    {
+      "input": "preset/mod.rs",
+      "input_sha256": "201efe88059130f28cc3961ae72e78af0be9365636a4462b228907a5ba2a61ef",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "af73985a033667fec2bf36d596d479cbf3dae4e5bf430b0a8247cb036e076f4d",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "process/adapter.rs",
+      "input_sha256": "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "41b645b9c6370116cf526965b45b60291a5086ea09296c18880329c4a3e34d02",
+      "symbols": 98,
+      "complexities_sha256": "9e4e579c9ae9f5e5bc574bdd9ca333ae27912a82501bcb76cd87bbeab36822d1"
+    },
+    {
+      "input": "process/command.rs",
+      "input_sha256": "42871289c5060b5f8221309dd2f4cc9263129397042bf069392dff6d4386ac65",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "3be3a02228be998e93af30a1e87294682a716a061551e9ab36aedf288c7bf28d",
+      "symbols": 8,
+      "complexities_sha256": "d8842bf14ddaa132571ec01dbac6b2b6dc087e3b8f1a469861171abe1e905084"
+    },
+    {
+      "input": "process/mod.rs",
+      "input_sha256": "feca5b47192877daa1564a7c56e135d168de28390de3601ebd5f886e2d6ee880",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "c8b687aa09b86a5b0eedc22799724bf779fb82fae36c2e77faedd16507bd20e3",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "process/reader.rs",
+      "input_sha256": "9a6e92c1fd5dbac38b06d6267166ab0171a3782a04ab8648cd673b83a43a74a1",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "c41c77db8c4bcb87838f8558f40e67578fc6bbc8ae8b18b86f83bd1b05d056e2",
+      "symbols": 5,
+      "complexities_sha256": "dcda10abdb2aff9e59bda3e5233bb9d9302c7d6e1e0b391f4782cf39d4838dec"
+    },
+    {
+      "input": "process/replay.rs",
+      "input_sha256": "f7a87b71cebaaf93e80a3927cce9fa0fc7592f4f0c206076458359eaaf6f7ff6",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "a9d90462334dc46288b0d898cb0d2327522c5703f9caeaae7906cf1551d178f6",
+      "symbols": 18,
+      "complexities_sha256": "30c62205599a6a600256ad0c34d49b6a56e68d750950b1ca84bf676053365deb"
+    },
+    {
+      "input": "process/signal.rs",
+      "input_sha256": "111c140f631300965f2e86313ab2b73f7e541db551844e0717f3b388207ad281",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "89f9bc05927c72a225a885aa6c4b050ed652c4b903258af37f08f25a8c571343",
+      "symbols": 5,
+      "complexities_sha256": "44cdec3f01c3b60b99c3b273b883ef2ea3c3db4de219509b5e151c5bc7ffbca8"
+    },
+    {
+      "input": "project/discovery.rs",
+      "input_sha256": "f4761f67eedc8c46e82809400a210c83cc4b17ae3f3afbcc361ef87d56fef824",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "257b426857180ff6453c3469b112497622620322fa122f85851b3b04448a3d8b",
+      "symbols": 21,
+      "complexities_sha256": "5f0c4757be5b9c6b155a16041ea03eb6ed9fc77afdbebd34c07d7b10605251dc"
+    },
+    {
+      "input": "project/input.rs",
+      "input_sha256": "a09479dc3e6a5000473209cfd4c54d259a2fd1d52e7d850e82c0ff0b6566f135",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "3ceb75a3ba43b24583c41034ce5123ca77774f3f6ad74bb71a9bb3ab5b7e516a",
+      "symbols": 20,
+      "complexities_sha256": "6a3e9efb2c616104c633164b348bff671c2dd426d0f49eadaf885cc6299cd596"
+    },
+    {
+      "input": "project/mod.rs",
+      "input_sha256": "88528ebe2710a682e4976e840f561fecbfd4633a4dabcffc156e9350e42f22c1",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "5ccec719669d584e35ca1967ed84bb41b0388a0cebbbe1cb497daa84749a1cf9",
+      "symbols": 8,
+      "complexities_sha256": "e9dd97f637482ae1f242126d0027fd40f50470fe0872fc534e37d4b14ceda0d8"
+    },
+    {
+      "input": "recipes/mod.rs",
+      "input_sha256": "891bb364e74eb92088b96d3186ddf188175d6118eee7c5c59d8f4f75b70db6f7",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "03ec6da263982c042b54381a83c115641d67c1d87b1f1f2e0a916cdb99007bce",
+      "symbols": 1,
+      "complexities_sha256": "038966de9f6b9a901b20b4c6ca8b2a46009feebe031babc842d43690c0bc222b"
+    },
+    {
+      "input": "recipes/postgres.rs",
+      "input_sha256": "c2fff0eecffa17ddbc01d32a485cb519d284dcb420805ec5dbe7439c8c9b7b6f",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "ccde834f1d8a5ea9988dbd40507e98f9a84e31968849cb48b349025c25d12ae5",
+      "symbols": 8,
+      "complexities_sha256": "78626cd67412e1760aa3f43f6230ff56ddcac3cfa2971d74f87432bf401ca3b4"
+    },
+    {
+      "input": "secrets/config.rs",
+      "input_sha256": "a391209412c3c287a5e4517c443029475b1781e6e1cc75ddf3a4466336c8af62",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "ebdcfa3c3343f9ff0b5dfc09fb460bd5ff2732b57f55234f8af12a1d61d285b9",
+      "symbols": 14,
+      "complexities_sha256": "220e4bf51819de0deb2d6d24bebd457e70b4edec960e66b4772bc38460b939e0"
+    },
+    {
+      "input": "service/lease.rs",
+      "input_sha256": "5bd48ad410133713f527abf5d1fffb28bb731d71204381bb26053d7edee54463",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "6378e0cb85891c38489d1cb685996ac43699f370044809165579dc995d7394fc",
+      "symbols": 83,
+      "complexities_sha256": "7c6ae3c7d176ef6d00182967b90a79c230c6907fba92c9ef8eb05fdd0221a67e"
+    },
+    {
+      "input": "service/mod.rs",
+      "input_sha256": "34bd333b073e9c07e9bdcd2d5baf127faf7ab8e2613229e519312e01215aed16",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "5404f8be057b20aaee9dd4168a53f80458502db6085cca836a1228de8e6dd618",
+      "symbols": 47,
+      "complexities_sha256": "696b6f2fdca04a207d9f4935d8ab0bc57f43f184d7b716efd13d283c330bb6f9"
+    },
+    {
+      "input": "service/report_directory.rs",
+      "input_sha256": "9bffce7019a182d8a5cca24e632821b0b51acbb31fcab08ef45407ca34c06d8e",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "58fd5659b0726f26ba56661bc1cc13b813cfa02dd723b3feb6e58c125a5e2da5",
+      "symbols": 7,
+      "complexities_sha256": "f422eac468c9804be8b9476f9ce49943e398ee373f2aaff4d7173efad36461f1"
+    },
+    {
+      "input": "utils/redaction.rs",
+      "input_sha256": "4dd41a24c355a02e5dea4b2cd1f454ed4f8b0c2d8beb9b1371578bc1813c12d9",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "c87a3e5b1a93e1b16d7d0ff57352e130ff8b521cce362c70cfc568aec3b42d64",
+      "symbols": 3,
+      "complexities_sha256": "34993fa07cb3d2f52071509310842e0d0b9018d6b19b26149af25ee12f6258c2"
+    },
+    {
+      "input": "verify/mod.rs",
+      "input_sha256": "12d7fdce72abbd6d7692f8483dcb3bf990856be732d70920afb9dc964f136447",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "70aef537a1f0d1c4b001e021aadb78e7d7c4f492c5c70fe0014ca74b25a2c1ce",
+      "symbols": 28,
+      "complexities_sha256": "75f56a6be12941d8489c48c868f349feebea55e5554fb6f0b9eb169b1ed3c614"
+    },
+    {
+      "input": "verify/parser.rs",
+      "input_sha256": "75ae046db0b72a7c2d984283c5145e5e8a6e323412745046065de75ed3c2dc9b",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "571085af66f7aabbcb4d60e997cfb4e78987e9704959408ac7c935a481b58d9f",
+      "symbols": 17,
+      "complexities_sha256": "81ebac3ec4e5ecc3adb6c27e2ed642456866619d49b65bdac87ff68fea3a1390"
+    },
+    {
+      "input": "verify/quality.rs",
+      "input_sha256": "7ae1a8769c174942d08a9c9344079e648fbd9dbef41e111fb91853f2e621a94b",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "ecc7f011cad968328b6393d70fc489bd7852d7fea348be6aa539b98a85ed6163",
+      "symbols": 20,
+      "complexities_sha256": "baa36acafb8fa51115ae936a2093524d18d5cc19031ad684a26ad452f5520d40"
+    },
+    {
+      "input": "verify/report.rs",
+      "input_sha256": "8f4e46f879d2e1f3a952632dbfa5bc8471f9744e560dbc664a80e50724cf3fb0",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "5bc5cc1b0ec417253bcd4472321ef3ece24d431836af7e3629229470862e3dc4",
+      "symbols": 230,
+      "complexities_sha256": "6a3cb923bfa403c90778399cfc8be998e91e0f5fb37c841780c1797c133e469b"
+    },
+    {
+      "input": "verify/steps.rs",
+      "input_sha256": "7d97f5fc813e6e77253a32c0374446f64b520096bd28425f3ef45f31bc3320f4",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "780e32b44d029c7e321b22af527606d689a551b7bc63b307a82828e78d6a2b89",
+      "symbols": 39,
+      "complexities_sha256": "e5e751aa69e7bf241e7f01e56d0b7deb44506b8997d7156273f819d3d60fe01d"
+    },
+    {
+      "input": "fixture:PROCESS_COMMAND_BASE",
+      "input_sha256": "80118e08ebab122498013269a47a12c6b3dca80107ead21a3fbd81d4856aff61",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "37c7daae02d4fdb87d9f0bb88a399adb5d1d8bff8006cc930029afb342624fd5",
+      "symbols": 4,
+      "complexities_sha256": "0f7d0bb2a2cabe15d13cc659f62fe8110d1f9d3c95c0efa124653f8138cd27c3"
+    },
+    {
+      "input": "fixture:CFG_TRY_SOURCE",
+      "input_sha256": "1735c2b53fd8387699a23572f83b2b8b6986dfdea15cde880aa20275ef6580f8",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "7e3ed9b8d592e0c7eebf62b34af4be3313133e9f83e65b01ad206f69fa05e4a4",
+      "symbols": 2,
+      "complexities_sha256": "1ad6041faf516d0043ca4b91348ab8c8a713496b5b5ce302e0e907e4f7bcbc24"
+    },
+    {
+      "input": "fixture:CFG_MATCH_ARM_SOURCE",
+      "input_sha256": "57ab7b6a4be7bf9d3cd103cb262c201b5ea504ab5f063ed59f37830c125ab771",
+      "target": "x86_64-unknown-linux-gnu",
+      "exit_code": 0,
+      "output_sha256": "38503428751f8942bdf9d2924df6d6a57657577c4fe9ee3ec2099f6c6374b7ac",
+      "symbols": 4,
+      "complexities_sha256": "89ff3f27d320b1601fa78a293284d53d7a9a590aa03890b931958097431f7e68"
+    },
+    {
+      "input": "../quality-core/comparison.rs",
+      "input_sha256": "c6ae9afd22fc07b0d117ac7e0478d4f8915dbae9958a52a6e8f923829e956ea4",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "c4dd3a3f5cd719b7f8eab4263972e44e5b43af1bf3da010598583305456a1146",
+      "symbols": 6,
+      "complexities_sha256": "edb035b6a72bd0ea89e226f9791c37c9bc9b649fd83c2d3d4bd9ae2588b5ec3d"
+    },
+    {
+      "input": "../quality-core/cross_component.rs",
+      "input_sha256": "6779e7fcf88f26e9705a6db70d496b39e1ad0c11f9055385b472d1d4972a585e",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "b95ba6ea995b2ec709937bb476710200e89360d049c547f614d9dbcbf677444f",
+      "symbols": 19,
+      "complexities_sha256": "80802ae7481cad676be32499ab9b5fbcda85807610e34e603607259f6a48f17b"
+    },
+    {
+      "input": "../quality-core/evidence.rs",
+      "input_sha256": "a26611be4e8dc0f01f7bbd8d18b24e401ae07f1fe4b45acd276526906c3d8610",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "37b2fd3c805329490fb01787d31c36807e88a9f6db544704b4dd5f300e6ed34c",
+      "symbols": 35,
+      "complexities_sha256": "52c170d16110394ff8b97ce6b0babf882cb78055d9ee6082df4a4f4ea65781bd"
+    },
+    {
+      "input": "../quality-core/json.rs",
+      "input_sha256": "8d9bd3959fb9f9f4f46897ea9b762458dca8ee36d22ae844e242311facca5806",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "1272012f809c5563be026d26c91804c47d461088b4d2bbce0632326217601601",
+      "symbols": 20,
+      "complexities_sha256": "e04602bddfadf7d38b9a88a19171c008740d289108727333cbd0c5bdca1e2768"
+    },
+    {
+      "input": "../quality-core/mod.rs",
+      "input_sha256": "581fe088100b053c050fe805d97d8c670054a7444cdd8eaeec03b8637d71867d",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "d2ad7d7e70195d3f895b191df0da3c66e93a98f750dfa9e325ca8c77c1013972",
+      "symbols": 6,
+      "complexities_sha256": "6c4b01d476a57ee15051441aaa4651f1190aed03d652a8a80c18fe40b157e93f"
+    },
+    {
+      "input": "../quality-core/model.rs",
+      "input_sha256": "b8959e7e3ffdea692a7a6d12bdde62372d58985c5e279f0708ca9a128831169c",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "0de259bdfb21c21ece0b45edddf449923168ce6bda1287470f561cd6d400e3d8",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "../quality-core/policy.rs",
+      "input_sha256": "fb2942f430c22a60868ddd37f960e460279e8206c53e6fe772c69387005c5fa2",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "404014f990c99610c52a821b7d95859d819e89a93fa1afa7b5df3451f7d0b8c5",
+      "symbols": 70,
+      "complexities_sha256": "cebf80042c812a7eb6da750fd3957cd0911ebc6ba12a04a7b7846166525abec2"
+    },
+    {
+      "input": "../quality-core/project.rs",
+      "input_sha256": "c061c920be0ae1dbcb951aff65a6c17b43b5821c03288b2eedaf02f66832a03c",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "f66c516707c57382b4c63ab0b8c7c4b6f7500db3276971dfb4ce2df677712bea",
+      "symbols": 25,
+      "complexities_sha256": "174529780714b53f255c63d7df47d4281f0373e1f63bc221cddb3110a65a23a2"
+    },
+    {
+      "input": "../quality-core/project_report.rs",
+      "input_sha256": "326dac87dd9d331e9b25505e3f7591947285c60505eb13f54fe3ea2a9904c78d",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "e4ece0ed80928669738a693cf83054dbf7f77301bd7d342d63edaa04feed8578",
+      "symbols": 11,
+      "complexities_sha256": "9af57890661e0ff4411892203c92ee26f90fce17c5518633a69e95dd11ecf8e6"
+    },
+    {
+      "input": "../quality-core/ratchet.rs",
+      "input_sha256": "ff1d7aa524ca5812ac0a61c36c299802ae5e14c21c8d3a60659f08a3ffbf0abd",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "d14b46c8c7e6b987c5df4f31d8d36ba0fa69a912f4555c78224cc2a1425dc685",
+      "symbols": 25,
+      "complexities_sha256": "259587cbe1d9eeabea64cec464b33943278d8b84eedc1a09284059c83034ccc2"
+    },
+    {
+      "input": "../quality-core/replay.rs",
+      "input_sha256": "fd43d72e05dadce1fc15e487973602716e9ddcb87012700e02bbe5721c93035a",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "98eb55a9251aebffe972c290cef568a5227ba0026367cf927e294e3458d7c164",
+      "symbols": 19,
+      "complexities_sha256": "c9e078b6bb91831394c23799669287eb0c41b7ce2c890779815c4c0cb81be983"
+    },
+    {
+      "input": "../quality-core/schema.rs",
+      "input_sha256": "f0ba389f8e468d551e42cbcbd5423e1bbc6231f65f19200827147be9f376e23d",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "05b44b1144ce8c9b82018d462d4f31291a0bc339a2ef0b188b1a67a3b5ebb581",
+      "symbols": 26,
+      "complexities_sha256": "ede960a4f0004287075be8bfda63b25888d2cfa1ece0c2666201b7c32b1c2ba4"
+    },
+    {
+      "input": "app/commands.rs",
+      "input_sha256": "34a496d81c54cb8ddafc99ea82aba85a15ff0d99c4e47845f1c97d5c66beb620",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "014988fc78c05049cb453169cd1531d85a46f772f8c92a44e85c6bfdf8d1b018",
+      "symbols": 13,
+      "complexities_sha256": "bfc793a7198685328d5ff6eee9cb12f13a85b8a2c8ae5c4a29a8358c2709b8d2"
+    },
+    {
+      "input": "app/mod.rs",
+      "input_sha256": "09a1909b3063ec677dc7e6c5f06eb9ccbd86f5a8a5e0780b38cc5fca1c712ab3",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "e2975334cf136dcf04e41658493e47e18eb70253c3adbb31b03c10f6bcf1bcb3",
+      "symbols": 22,
+      "complexities_sha256": "5f879aeedd7b7467be4c1cd63eddbc32de0ba86e34544598cb6ddd53fbcbfaec"
+    },
+    {
+      "input": "app/quality.rs",
+      "input_sha256": "679cc806557c96e0253ff2371005bf0a8ec3e0504c30b4448ec631a9b611c96d",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "f7ea4459280415f8b0cca2697f948ae6116ceb9ca127e4b56147e005edfb774c",
+      "symbols": 22,
+      "complexities_sha256": "acfd9caf13ed609cdaf3fab8b8a7be5393d3fdf503bee006b0eb9fc5b11bf347"
+    },
+    {
+      "input": "audit/runner.rs",
+      "input_sha256": "f14a4e79fad49a354d20475b64851a994717569c53d5a6bb5ab81fab3c1419e0",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "c434d1fc05a4e805243f06d622d41c92f985dc328d154a09a6e52ddb2774bdac",
+      "symbols": 6,
+      "complexities_sha256": "9d9d08e88f836e9bb36214cb14c7bdf6b79dba1eb2cdabe5a9b9a965fd910d36"
+    },
+    {
+      "input": "cli.rs",
+      "input_sha256": "3a5f9fc7594693fd06ba52e8f54e9dc3fc885b92e8f1beec002d460a3833ba06",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "ceb106df83e67b22ee49fe1f0e80db7ba95ed3a175c332c797c270c0e2ca4c8a",
+      "symbols": 1,
+      "complexities_sha256": "46b1884167c4edd308bcf0c04163dd02d05c9742b35e86b57b5f7ed1b82f3850"
+    },
+    {
+      "input": "config/import.rs",
+      "input_sha256": "ade2594fc1f8a198a822b2eec06d65b5ff81bf6285a4e422bb071bfe6c808466",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "ef5cef3de91d81d1dbb1926293518bb4afefbdaba52353ed8e484405c92b4066",
+      "symbols": 7,
+      "complexities_sha256": "67b0e4397c0da35d559563d7f0a692d48244cd9c5337064bf42a8f9c1f8ec15b"
+    },
+    {
+      "input": "config/loader.rs",
+      "input_sha256": "9ef912226e2168f22d1e7979952c097cbfa4d0cf98ae5eac8dc8fae0b41c8f78",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "6749e59b06704e55766cec8b13a25fe9b57777ca1a1dff2df168ca8759692f2e",
+      "symbols": 34,
+      "complexities_sha256": "fce49e89b338956e1183787d738eb2080f890f39a5c85db09d1f8ac17ed4cd64"
+    },
+    {
+      "input": "config/migration.rs",
+      "input_sha256": "27d9a82a0eb39df091141e2ef2ef54c190f2885d6138806f5763a18afd602a4e",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "8e7fd839590f3b549f5d38fe23291b245f587ab921b1863e8f6c2322b1c8ad0a",
+      "symbols": 6,
+      "complexities_sha256": "26af6d1166801fb63b5db102d7834afe49c26ed6bee000498957da62ed95b918"
+    },
+    {
+      "input": "config/mod.rs",
+      "input_sha256": "7f2d4a7b5d8e0d6fd74f178d3d7fb778968639071305e2b275f206e0c5269786",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "91385d01747c3d2322eb6a85c4340b66646d819689deb90eb1098ece630064e7",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "config/model.rs",
+      "input_sha256": "1d94efde6d1c59baff05eeecbbc46f0572a45161da8e9e4911d8a2e63be3cd23",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "12240b2ff09c99b6c07e7a4df44a6fdb26f928d4ea6064ed614ce72e1d08f1aa",
+      "symbols": 13,
+      "complexities_sha256": "8f5032bf53d09493b6aa73be50b71c6c689599526bef8dd18ed2bb378f398bea"
+    },
+    {
+      "input": "config/quality/baseline.rs",
+      "input_sha256": "441b78af52d6d8532707ca90c36157164772c8ee4123ddab19f2992ee0e569f1",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "b71bbba6171b85bef58b274c935e2f866e077325e006cc48448129ccfc2be6de",
+      "symbols": 13,
+      "complexities_sha256": "5155483b7db7701fe8693be0b528ff0282dcacb39f52021042baffd495252f98"
+    },
+    {
+      "input": "config/quality/baseline/git.rs",
+      "input_sha256": "7ea143abbf1d478902d6a7dca5b9f44743279eefb938543ba7a423739969d37a",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "b33a2a5e630aecf2c12352b91d1f441e723a59cd2f955475bb6eff95a075ebf6",
+      "symbols": 7,
+      "complexities_sha256": "51ac0297094a7f72e62f5ff46ffba3d79aa57572683a3a541fa86ff7bd401b31"
+    },
+    {
+      "input": "config/quality/collectors.rs",
+      "input_sha256": "a86cd5ed3d13f1ca0427aa47cb692b3383cdfbe098c42509405faeaa655fb76e",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "2260f3fcaafa3be43230318e0c50b3a34f9c6ce566213f4dd2acb990534eac2c",
+      "symbols": 17,
+      "complexities_sha256": "1e8f7b51b2f576e1b9ff06bb8fd331c50b3eeca8f46b05779758b85d61908de2"
+    },
+    {
+      "input": "config/quality/compiler.rs",
+      "input_sha256": "f69378d83749bb5904c98a55542b61c0df87c7c5b5cbf1b243907a8d5247683c",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "b77d475ca81fcfa2066cf017ca78ab128e0e7a058dc496688385e10cd52719ba",
+      "symbols": 33,
+      "complexities_sha256": "5dd8c5ee6b83bd559115da5b465b90e1007f7b1cc072495082d3305b75950fee"
+    },
+    {
+      "input": "config/quality/mod.rs",
+      "input_sha256": "d9db9b7d1f2bc4d9f8fd462a9cd02749d9b5c9f9521296d4d0aebbfab0ba3895",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "e5ccc21bb9b6d78c3c9c61497f9e5c41e4c2b77b5d5b615d4a399b8a4bd51eec",
+      "symbols": 6,
+      "complexities_sha256": "ba5c9897f9775ec9141c8181e57c311c3b9ae730ef19a2b691c74261d0e8a001"
+    },
+    {
+      "input": "config/quality/model.rs",
+      "input_sha256": "4206caf213e60bfa47ba267a58ce3c0d2bb2fb4bf65e8fb58d431f54c1d15a0e",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "0de259bdfb21c21ece0b45edddf449923168ce6bda1287470f561cd6d400e3d8",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "config/quality/policy.rs",
+      "input_sha256": "a33214d9d32fb5abe18ad9b068226644dc69d347f0bf400bcf84aa9510afdb10",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "e178478ce31e3d6da532bad30faf58802b8b79032e8473025c5844fd8e821566",
+      "symbols": 4,
+      "complexities_sha256": "904115f864a6353fa0238cc90a6f1278d702f5f3eaa64c545c17184edc282c38"
+    },
+    {
+      "input": "config/quality/validation.rs",
+      "input_sha256": "da635aed473871386844d10464a65923c8d079c577debac660dd9ee891d66fb0",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "225f8c27b19088f4cd0910febd3108f06bf9bf7dd51ef496abba4732fa46d3f2",
+      "symbols": 21,
+      "complexities_sha256": "ae8cdaf4b6336d774c6c69669480989e51ad05e8c23662a8afff10a4cfcef968"
+    },
+    {
+      "input": "config/validation/mod.rs",
+      "input_sha256": "b37928128fd178cce1c8125c8ea11e97249e28503cdd39924a7d151a5f107a8c",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "f3ea3cadb0ea965ae46f8cb32519702ad98e3557aadf49783ab1c290e87dd2e9",
+      "symbols": 67,
+      "complexities_sha256": "5fa54202f3b5d2c79aae1550736ac9ae92369be715855978092ae3106ee83ad5"
+    },
+    {
+      "input": "doctor/checks.rs",
+      "input_sha256": "757f2f76c1dfc863aeba76cab607e9a19afd0d45125239aa973c5b49c00cfdca",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "64f1414b85b9bcb4ee0b00df78505674d14540661d2577e440bdb514c14a5305",
+      "symbols": 35,
+      "complexities_sha256": "3c5c7ef062d1c12302ad7d55d0cf54128f7dd035b1e87884a8e8ca13370cf4d6"
+    },
+    {
+      "input": "failure.rs",
+      "input_sha256": "d83c34130844ba5f4795928c208cf4c94e8e905d592187c64f53686d4c39c721",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "185000b48916d0bd12b4712b4f6b83478db9c7f4411859b243a7685129b193cb",
+      "symbols": 6,
+      "complexities_sha256": "aca9acc4bec7779732b69ebdb7b1cbebe1ea8e524ad89208e2677e848a947ca8"
+    },
+    {
+      "input": "lib.rs",
+      "input_sha256": "373bde6804041cd4412e9a4881d63d940e0df714f4488ff946350bd36ab82999",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "0de259bdfb21c21ece0b45edddf449923168ce6bda1287470f561cd6d400e3d8",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "main.rs",
+      "input_sha256": "e2db829879e1e11fc1e85d70257c2c2b5b79c23d191e4a0ff593921d7408c0d6",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "5799d17f2f7622e403b0738c3b667e8720ebea147d28ba36e2dee4983ebc957c",
+      "symbols": 1,
+      "complexities_sha256": "06d033ece6645de592db973644cf7357255f24536ff7b03c3b2ace10736f7636"
+    },
+    {
+      "input": "net_policy.rs",
+      "input_sha256": "b6f2d523e7f6a4da73e8295d0bb7ebd68702bb022d9655571bf4c3b07ed7c7df",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "d8c1121fae0693e47ebc27f3b2f398d3b82ec6ccd428620047f9cc68ea55f1bc",
+      "symbols": 10,
+      "complexities_sha256": "7278c032ed51a0bce68d00916bb8852c03bee351ffa285955c73aa0d7bcf0863"
+    },
+    {
+      "input": "preset/catalog.rs",
+      "input_sha256": "0a6fb3b6499046f6ee90622960266200ac21a76c4770b710b3660f6d442de339",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "ca665f9d2775b4788df150c75b8fe2f661a988a4624ee10fcf64c5bcb1e49852",
+      "symbols": 12,
+      "complexities_sha256": "db911778bc34d899ea2f55da2773a99fe550c1cdf6c1dc38a20004cfa9253272"
+    },
+    {
+      "input": "preset/composition.rs",
+      "input_sha256": "9b9436647cfa8be47355d32f1be796d8aebae58c3e9f9874039585e0f7098955",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "b728a7728ac5cb3e5bc00e805390fbe4797d3f25c806e82fd76282029540d8f5",
+      "symbols": 9,
+      "complexities_sha256": "06c4b30e787ab828113da63ee6bcfdab7d91b6be49811b0c19fb9c7732ce2582"
+    },
+    {
+      "input": "preset/filesystem.rs",
+      "input_sha256": "88146b811d8e50b7a141187d6d937da36ae550dfb003ded2c06df4e052261226",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "b149c6a7d7e8a547dae5488fc87a050eee42283d6a035cd8326ffd3c42c2ab9c",
+      "symbols": 16,
+      "complexities_sha256": "2ca51cfa51814e64e9fd5c8c5bbde08fd333d51abe9040e11b9ce00f360b4c5c"
+    },
+    {
+      "input": "preset/import.rs",
+      "input_sha256": "a9cd74560ea6b132e14108f88cc49ab519b82aa4b18559b8530f7991bfd15a5d",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "f34e0812160b9bdf6630ecabf4bff016c7370317fcd3ec2a723e3d2b0cf84263",
+      "symbols": 2,
+      "complexities_sha256": "72c5687dc5a9d6d83e7828ae3f022836a6765dc05f1a56b99e00c458ea3ca84a"
+    },
+    {
+      "input": "preset/initialize.rs",
+      "input_sha256": "f7d4d440414a2ec2fcda0b45df2d9e0a2def79343de10a7eb58b1f8a6f95ec3a",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "78b57f5272b3b599772547bdcbfa6b69236e8f229bd43811327a5a2687f1f5e5",
+      "symbols": 9,
+      "complexities_sha256": "7ad8d776abec2fd44249be4547f903d3f4b7d2ef95b2f91e87b666ababc089f0"
+    },
+    {
+      "input": "preset/migration.rs",
+      "input_sha256": "03942de8340c3dc1f7dc4d962431aef867aeb8903a6d147ec6ea100de1d92907",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "7519cd771c9265f7fdafb4d130d368f63421f381c84ba22eda3cfeca9435c865",
+      "symbols": 4,
+      "complexities_sha256": "44a683aad8233d3fa5b3b8066213abd580577efa714a23c19a87e330998f4714"
+    },
+    {
+      "input": "preset/mod.rs",
+      "input_sha256": "201efe88059130f28cc3961ae72e78af0be9365636a4462b228907a5ba2a61ef",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "f5e4374ba2a7466cdd8b97e2e0c5a58df6358b5d72c7da9c51c93d9a402cc066",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "process/adapter.rs",
+      "input_sha256": "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "343149cb9afd0d9f7a9b0c8ad55f4b764f8c9d08f31b90bdb52f6979cafb2dc9",
+      "symbols": 98,
+      "complexities_sha256": "9e4e579c9ae9f5e5bc574bdd9ca333ae27912a82501bcb76cd87bbeab36822d1"
+    },
+    {
+      "input": "process/command.rs",
+      "input_sha256": "42871289c5060b5f8221309dd2f4cc9263129397042bf069392dff6d4386ac65",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "94b4b56c3c958f44c89e9c96d25e339832b97b5cc474b518255ace000f207f03",
+      "symbols": 10,
+      "complexities_sha256": "20b30d12d9aeac460e45fb64a0a0d66b427c21c47394e000b29a7f905748b2ea"
+    },
+    {
+      "input": "process/mod.rs",
+      "input_sha256": "feca5b47192877daa1564a7c56e135d168de28390de3601ebd5f886e2d6ee880",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "ce0744823220f88df3df2a8cd3acbb027da10df1a9e0c284e485aa2a7dcb371a",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "process/reader.rs",
+      "input_sha256": "9a6e92c1fd5dbac38b06d6267166ab0171a3782a04ab8648cd673b83a43a74a1",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "34f17cdfc5d341981aadc25ab4fa1ee0dcbb1c128d388b38bd71107bf2605a75",
+      "symbols": 5,
+      "complexities_sha256": "dcda10abdb2aff9e59bda3e5233bb9d9302c7d6e1e0b391f4782cf39d4838dec"
+    },
+    {
+      "input": "process/replay.rs",
+      "input_sha256": "f7a87b71cebaaf93e80a3927cce9fa0fc7592f4f0c206076458359eaaf6f7ff6",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "c848eb820b17192e5ea4ad7faf8483ab2c9759ad0a80f5d79a66072d3991f28c",
+      "symbols": 18,
+      "complexities_sha256": "30c62205599a6a600256ad0c34d49b6a56e68d750950b1ca84bf676053365deb"
+    },
+    {
+      "input": "process/signal.rs",
+      "input_sha256": "111c140f631300965f2e86313ab2b73f7e541db551844e0717f3b388207ad281",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "735fe3dbc86a73e3a0968baecf319c1e153a2a26c0b1dcf170cf86dfcf98f6ab",
+      "symbols": 5,
+      "complexities_sha256": "44cdec3f01c3b60b99c3b273b883ef2ea3c3db4de219509b5e151c5bc7ffbca8"
+    },
+    {
+      "input": "project/discovery.rs",
+      "input_sha256": "f4761f67eedc8c46e82809400a210c83cc4b17ae3f3afbcc361ef87d56fef824",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "027c3fdedf8a4b108eec2239c74bff8ebbb3560c0fb9ea32297b4cc4ca36d1ad",
+      "symbols": 21,
+      "complexities_sha256": "5f0c4757be5b9c6b155a16041ea03eb6ed9fc77afdbebd34c07d7b10605251dc"
+    },
+    {
+      "input": "project/input.rs",
+      "input_sha256": "a09479dc3e6a5000473209cfd4c54d259a2fd1d52e7d850e82c0ff0b6566f135",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "d51c3004364aeb78f78e862a4fe806f5e747ac72635dc1aeb47ea9f374e2d418",
+      "symbols": 20,
+      "complexities_sha256": "6a3e9efb2c616104c633164b348bff671c2dd426d0f49eadaf885cc6299cd596"
+    },
+    {
+      "input": "project/mod.rs",
+      "input_sha256": "88528ebe2710a682e4976e840f561fecbfd4633a4dabcffc156e9350e42f22c1",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "4f3af6e5914c210039f3b07626b080fe510ee66d615bbf2b3db7ae9d24a273c5",
+      "symbols": 8,
+      "complexities_sha256": "e9dd97f637482ae1f242126d0027fd40f50470fe0872fc534e37d4b14ceda0d8"
+    },
+    {
+      "input": "recipes/mod.rs",
+      "input_sha256": "891bb364e74eb92088b96d3186ddf188175d6118eee7c5c59d8f4f75b70db6f7",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "abea2cc14c198785fe8f19e22a27d21aa5515fe8440671e917b365d4573b7e77",
+      "symbols": 1,
+      "complexities_sha256": "038966de9f6b9a901b20b4c6ca8b2a46009feebe031babc842d43690c0bc222b"
+    },
+    {
+      "input": "recipes/postgres.rs",
+      "input_sha256": "c2fff0eecffa17ddbc01d32a485cb519d284dcb420805ec5dbe7439c8c9b7b6f",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "b4c71211f2c8ccd1bd3486416206e6dbf0489639859d7d4e4c4122867521476a",
+      "symbols": 8,
+      "complexities_sha256": "78626cd67412e1760aa3f43f6230ff56ddcac3cfa2971d74f87432bf401ca3b4"
+    },
+    {
+      "input": "secrets/config.rs",
+      "input_sha256": "a391209412c3c287a5e4517c443029475b1781e6e1cc75ddf3a4466336c8af62",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "baee8139bfe1e9e8b8468435dad8e5c138d6655d71ad42bcc5a1822dd107264d",
+      "symbols": 14,
+      "complexities_sha256": "220e4bf51819de0deb2d6d24bebd457e70b4edec960e66b4772bc38460b939e0"
+    },
+    {
+      "input": "service/lease.rs",
+      "input_sha256": "5bd48ad410133713f527abf5d1fffb28bb731d71204381bb26053d7edee54463",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "8475cb9df29851dd6ff1159163275f8dcae757f8f807a726d94e5fa2f6339e50",
+      "symbols": 84,
+      "complexities_sha256": "f85ab436318af85000b3b6ef1eea96f2b90c8a09d65d4e34a0172a149955bef5"
+    },
+    {
+      "input": "service/mod.rs",
+      "input_sha256": "34bd333b073e9c07e9bdcd2d5baf127faf7ab8e2613229e519312e01215aed16",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "bd68132ce3f5b3cbe074069ac15e8e0d8876f08993068d519d29bac38fbfd79c",
+      "symbols": 47,
+      "complexities_sha256": "696b6f2fdca04a207d9f4935d8ab0bc57f43f184d7b716efd13d283c330bb6f9"
+    },
+    {
+      "input": "service/report_directory.rs",
+      "input_sha256": "9bffce7019a182d8a5cca24e632821b0b51acbb31fcab08ef45407ca34c06d8e",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "737054ae8932e6e03f2f67ac2d11b3dc6cec0efa8cd928aad458574d4da3412f",
+      "symbols": 7,
+      "complexities_sha256": "f422eac468c9804be8b9476f9ce49943e398ee373f2aaff4d7173efad36461f1"
+    },
+    {
+      "input": "utils/redaction.rs",
+      "input_sha256": "4dd41a24c355a02e5dea4b2cd1f454ed4f8b0c2d8beb9b1371578bc1813c12d9",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "cb25db189d4d810391c38a4a7d867b806fa2413b19e735afde4855f83e6fe31b",
+      "symbols": 3,
+      "complexities_sha256": "34993fa07cb3d2f52071509310842e0d0b9018d6b19b26149af25ee12f6258c2"
+    },
+    {
+      "input": "verify/mod.rs",
+      "input_sha256": "12d7fdce72abbd6d7692f8483dcb3bf990856be732d70920afb9dc964f136447",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "2bb2566ef16f839d5abeb88025b084738e0c1b2a75c441bb4faf2a544613275d",
+      "symbols": 28,
+      "complexities_sha256": "75f56a6be12941d8489c48c868f349feebea55e5554fb6f0b9eb169b1ed3c614"
+    },
+    {
+      "input": "verify/parser.rs",
+      "input_sha256": "75ae046db0b72a7c2d984283c5145e5e8a6e323412745046065de75ed3c2dc9b",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "abf69d4050a5be2df75d701ae809166aee1410e06d55d5c1f26f6678d8f0b546",
+      "symbols": 17,
+      "complexities_sha256": "81ebac3ec4e5ecc3adb6c27e2ed642456866619d49b65bdac87ff68fea3a1390"
+    },
+    {
+      "input": "verify/quality.rs",
+      "input_sha256": "7ae1a8769c174942d08a9c9344079e648fbd9dbef41e111fb91853f2e621a94b",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "203c0beca8f781963d4bb094f3e6702f4a05a262e1347357d571f40ab3cf271d",
+      "symbols": 20,
+      "complexities_sha256": "baa36acafb8fa51115ae936a2093524d18d5cc19031ad684a26ad452f5520d40"
+    },
+    {
+      "input": "verify/report.rs",
+      "input_sha256": "8f4e46f879d2e1f3a952632dbfa5bc8471f9744e560dbc664a80e50724cf3fb0",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "32faf3ebd9c516257fbb8f5515ab491fbc1051ef61b6b9773a3edfc25de96081",
+      "symbols": 230,
+      "complexities_sha256": "6a3cb923bfa403c90778399cfc8be998e91e0f5fb37c841780c1797c133e469b"
+    },
+    {
+      "input": "verify/steps.rs",
+      "input_sha256": "7d97f5fc813e6e77253a32c0374446f64b520096bd28425f3ef45f31bc3320f4",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "5a177d68cb7e942d76d915535bf6e05a2473476417149e43086bfb6a1e93462e",
+      "symbols": 39,
+      "complexities_sha256": "e5e751aa69e7bf241e7f01e56d0b7deb44506b8997d7156273f819d3d60fe01d"
+    },
+    {
+      "input": "fixture:PROCESS_COMMAND_BASE",
+      "input_sha256": "80118e08ebab122498013269a47a12c6b3dca80107ead21a3fbd81d4856aff61",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "ee2bff36bbef1656dd34df281d01ab65e0b8f0460b88c4425f27fb5af0af8622",
+      "symbols": 4,
+      "complexities_sha256": "0f7d0bb2a2cabe15d13cc659f62fe8110d1f9d3c95c0efa124653f8138cd27c3"
+    },
+    {
+      "input": "fixture:CFG_TRY_SOURCE",
+      "input_sha256": "1735c2b53fd8387699a23572f83b2b8b6986dfdea15cde880aa20275ef6580f8",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "7d8e941a56100ea28a6bcbd5252d90fd974ad40a6b355921624033f939d97bec",
+      "symbols": 2,
+      "complexities_sha256": "1ad6041faf516d0043ca4b91348ab8c8a713496b5b5ce302e0e907e4f7bcbc24"
+    },
+    {
+      "input": "fixture:CFG_MATCH_ARM_SOURCE",
+      "input_sha256": "57ab7b6a4be7bf9d3cd103cb262c201b5ea504ab5f063ed59f37830c125ab771",
+      "target": "x86_64-apple-darwin",
+      "exit_code": 0,
+      "output_sha256": "ca8dc27d1d4c45e8bcb22b2742095b0cef42bd54320634daa47bf1093035260d",
+      "symbols": 4,
+      "complexities_sha256": "89ff3f27d320b1601fa78a293284d53d7a9a590aa03890b931958097431f7e68"
+    },
+    {
+      "input": "../quality-core/comparison.rs",
+      "input_sha256": "c6ae9afd22fc07b0d117ac7e0478d4f8915dbae9958a52a6e8f923829e956ea4",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "8df84f7d5456450330b72c17b6db6c5aa384d896024cf3ba896be3453828ca40",
+      "symbols": 6,
+      "complexities_sha256": "edb035b6a72bd0ea89e226f9791c37c9bc9b649fd83c2d3d4bd9ae2588b5ec3d"
+    },
+    {
+      "input": "../quality-core/cross_component.rs",
+      "input_sha256": "6779e7fcf88f26e9705a6db70d496b39e1ad0c11f9055385b472d1d4972a585e",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "bd51fb024fd41b27dff2eaaad60c54f0bcd110c9098d2aa982328b0e3388c17c",
+      "symbols": 19,
+      "complexities_sha256": "80802ae7481cad676be32499ab9b5fbcda85807610e34e603607259f6a48f17b"
+    },
+    {
+      "input": "../quality-core/evidence.rs",
+      "input_sha256": "a26611be4e8dc0f01f7bbd8d18b24e401ae07f1fe4b45acd276526906c3d8610",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "4719e8dbe4b5a1c8bc298db673a271842c01706744f9b2a19413adf5d1af59bd",
+      "symbols": 35,
+      "complexities_sha256": "a2f4fc37ee3149ff7587c70cb8087d96667d945e7489f62e4f9e8b75fe27048a"
+    },
+    {
+      "input": "../quality-core/json.rs",
+      "input_sha256": "8d9bd3959fb9f9f4f46897ea9b762458dca8ee36d22ae844e242311facca5806",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "54bc99f61261bcf5163900edf2e66a83a9df5d03313936458fd953effba32087",
+      "symbols": 20,
+      "complexities_sha256": "e04602bddfadf7d38b9a88a19171c008740d289108727333cbd0c5bdca1e2768"
+    },
+    {
+      "input": "../quality-core/mod.rs",
+      "input_sha256": "581fe088100b053c050fe805d97d8c670054a7444cdd8eaeec03b8637d71867d",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "9cbcfe3fec14ef51f4ef0a45978c04fc90ed277b1403960e35f648701286d3bc",
+      "symbols": 6,
+      "complexities_sha256": "6c4b01d476a57ee15051441aaa4651f1190aed03d652a8a80c18fe40b157e93f"
+    },
+    {
+      "input": "../quality-core/model.rs",
+      "input_sha256": "b8959e7e3ffdea692a7a6d12bdde62372d58985c5e279f0708ca9a128831169c",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "cd08231f446a67b37f6ae81eb733589091ae95be1fbc7518c9a2a27e4ed19b4c",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "../quality-core/policy.rs",
+      "input_sha256": "fb2942f430c22a60868ddd37f960e460279e8206c53e6fe772c69387005c5fa2",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "326cc796240bab226455c9d7ca16eaa2ed5aebaee28eca59c44954ab3adcb4e1",
+      "symbols": 70,
+      "complexities_sha256": "cebf80042c812a7eb6da750fd3957cd0911ebc6ba12a04a7b7846166525abec2"
+    },
+    {
+      "input": "../quality-core/project.rs",
+      "input_sha256": "c061c920be0ae1dbcb951aff65a6c17b43b5821c03288b2eedaf02f66832a03c",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "e1715356dba8fc53f0f00e0855bdd784e2b7859e0a636f2519f46f554a20e2a5",
+      "symbols": 25,
+      "complexities_sha256": "174529780714b53f255c63d7df47d4281f0373e1f63bc221cddb3110a65a23a2"
+    },
+    {
+      "input": "../quality-core/project_report.rs",
+      "input_sha256": "326dac87dd9d331e9b25505e3f7591947285c60505eb13f54fe3ea2a9904c78d",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "e08fb9c61fae1be115a91cb90dfe523de4c584b832b312ea0800db71c7b04284",
+      "symbols": 11,
+      "complexities_sha256": "9af57890661e0ff4411892203c92ee26f90fce17c5518633a69e95dd11ecf8e6"
+    },
+    {
+      "input": "../quality-core/ratchet.rs",
+      "input_sha256": "ff1d7aa524ca5812ac0a61c36c299802ae5e14c21c8d3a60659f08a3ffbf0abd",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "80b5b3080ba5cd23394d1bb53994ee64a911a62b1acae16d0d41e06929091a4d",
+      "symbols": 25,
+      "complexities_sha256": "259587cbe1d9eeabea64cec464b33943278d8b84eedc1a09284059c83034ccc2"
+    },
+    {
+      "input": "../quality-core/replay.rs",
+      "input_sha256": "fd43d72e05dadce1fc15e487973602716e9ddcb87012700e02bbe5721c93035a",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "e720cf11d5f19e470b6304678c254f5fc9ca753eeea1976213aff4800b10886e",
+      "symbols": 19,
+      "complexities_sha256": "c9e078b6bb91831394c23799669287eb0c41b7ce2c890779815c4c0cb81be983"
+    },
+    {
+      "input": "../quality-core/schema.rs",
+      "input_sha256": "f0ba389f8e468d551e42cbcbd5423e1bbc6231f65f19200827147be9f376e23d",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "0b15a98e33225383178fb2fd59f260cc6a6079b97a196a4f2ca24a6f50b87fcb",
+      "symbols": 26,
+      "complexities_sha256": "ede960a4f0004287075be8bfda63b25888d2cfa1ece0c2666201b7c32b1c2ba4"
+    },
+    {
+      "input": "app/commands.rs",
+      "input_sha256": "34a496d81c54cb8ddafc99ea82aba85a15ff0d99c4e47845f1c97d5c66beb620",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "b188df1bd83ee5a19d1376d6186d82654dac4f3666f531298d3f0177eacd172a",
+      "symbols": 13,
+      "complexities_sha256": "bfc793a7198685328d5ff6eee9cb12f13a85b8a2c8ae5c4a29a8358c2709b8d2"
+    },
+    {
+      "input": "app/mod.rs",
+      "input_sha256": "09a1909b3063ec677dc7e6c5f06eb9ccbd86f5a8a5e0780b38cc5fca1c712ab3",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "1463fae626f363334362c552c28f7bf273bbffd09fa175fbfb6b0c94c22b1f10",
+      "symbols": 22,
+      "complexities_sha256": "5f879aeedd7b7467be4c1cd63eddbc32de0ba86e34544598cb6ddd53fbcbfaec"
+    },
+    {
+      "input": "app/quality.rs",
+      "input_sha256": "679cc806557c96e0253ff2371005bf0a8ec3e0504c30b4448ec631a9b611c96d",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "de93ff32fea714bf4c239edab88cc1442483e6249a5c00d34bc151fd4ae417ee",
+      "symbols": 22,
+      "complexities_sha256": "acfd9caf13ed609cdaf3fab8b8a7be5393d3fdf503bee006b0eb9fc5b11bf347"
+    },
+    {
+      "input": "audit/runner.rs",
+      "input_sha256": "f14a4e79fad49a354d20475b64851a994717569c53d5a6bb5ab81fab3c1419e0",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "c448d37d88bfe01afe13110278ff27e5ca7581c101de8e6b87c4ef85edb16b6a",
+      "symbols": 6,
+      "complexities_sha256": "9d9d08e88f836e9bb36214cb14c7bdf6b79dba1eb2cdabe5a9b9a965fd910d36"
+    },
+    {
+      "input": "cli.rs",
+      "input_sha256": "3a5f9fc7594693fd06ba52e8f54e9dc3fc885b92e8f1beec002d460a3833ba06",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "bc7f94bc5dbf75cf10c943bf5700b41ecbc78b382b3de0a79fa1558dc986623a",
+      "symbols": 1,
+      "complexities_sha256": "46b1884167c4edd308bcf0c04163dd02d05c9742b35e86b57b5f7ed1b82f3850"
+    },
+    {
+      "input": "config/import.rs",
+      "input_sha256": "ade2594fc1f8a198a822b2eec06d65b5ff81bf6285a4e422bb071bfe6c808466",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "06dbc6065753dc6274dfad71d387bf45c40b49fd4e26b4cee285706ae04925d9",
+      "symbols": 7,
+      "complexities_sha256": "67b0e4397c0da35d559563d7f0a692d48244cd9c5337064bf42a8f9c1f8ec15b"
+    },
+    {
+      "input": "config/loader.rs",
+      "input_sha256": "9ef912226e2168f22d1e7979952c097cbfa4d0cf98ae5eac8dc8fae0b41c8f78",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "2525dd77ae4749ac71e93d4e6e343f3bc428558b12ccfaa35b6002541852b913",
+      "symbols": 34,
+      "complexities_sha256": "fce49e89b338956e1183787d738eb2080f890f39a5c85db09d1f8ac17ed4cd64"
+    },
+    {
+      "input": "config/migration.rs",
+      "input_sha256": "27d9a82a0eb39df091141e2ef2ef54c190f2885d6138806f5763a18afd602a4e",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "998577a6d958c7cc4fabed4c5d4f264304c38ab41250e2556674b0d727f2fcd0",
+      "symbols": 6,
+      "complexities_sha256": "26af6d1166801fb63b5db102d7834afe49c26ed6bee000498957da62ed95b918"
+    },
+    {
+      "input": "config/mod.rs",
+      "input_sha256": "7f2d4a7b5d8e0d6fd74f178d3d7fb778968639071305e2b275f206e0c5269786",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "f87c750a1caf57bdf7fc3f3b83720fa93a177cd84c4bac11cff54b2ab1683f7b",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "config/model.rs",
+      "input_sha256": "1d94efde6d1c59baff05eeecbbc46f0572a45161da8e9e4911d8a2e63be3cd23",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "1edfc131655f610e462013087dc622a73ea32f67848980f7bb5bd2a9428771d3",
+      "symbols": 13,
+      "complexities_sha256": "8f5032bf53d09493b6aa73be50b71c6c689599526bef8dd18ed2bb378f398bea"
+    },
+    {
+      "input": "config/quality/baseline.rs",
+      "input_sha256": "441b78af52d6d8532707ca90c36157164772c8ee4123ddab19f2992ee0e569f1",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "cb50ea68fc5adb5b32f0f627f740019e45463bb09b6c55762a9f5f01833d8069",
+      "symbols": 13,
+      "complexities_sha256": "5155483b7db7701fe8693be0b528ff0282dcacb39f52021042baffd495252f98"
+    },
+    {
+      "input": "config/quality/baseline/git.rs",
+      "input_sha256": "7ea143abbf1d478902d6a7dca5b9f44743279eefb938543ba7a423739969d37a",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "024017160e423d765af7935c0d2d696c26c25ac1037387135c20cd08c11a5b28",
+      "symbols": 7,
+      "complexities_sha256": "3fffaa2560aa254b37d94212ffeb331bf4f3cc1f6e1f397edd275a3b4903cc87"
+    },
+    {
+      "input": "config/quality/collectors.rs",
+      "input_sha256": "a86cd5ed3d13f1ca0427aa47cb692b3383cdfbe098c42509405faeaa655fb76e",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "31967fa985321bd6a4f452d671c071768a6c66bb444ebc9b33a8b0f8cc7556c3",
+      "symbols": 17,
+      "complexities_sha256": "1e8f7b51b2f576e1b9ff06bb8fd331c50b3eeca8f46b05779758b85d61908de2"
+    },
+    {
+      "input": "config/quality/compiler.rs",
+      "input_sha256": "f69378d83749bb5904c98a55542b61c0df87c7c5b5cbf1b243907a8d5247683c",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "2f523fe670d8ed03cd1dddedc76261429040474b5e2e24bcfc362ba7c454ea68",
+      "symbols": 33,
+      "complexities_sha256": "5dd8c5ee6b83bd559115da5b465b90e1007f7b1cc072495082d3305b75950fee"
+    },
+    {
+      "input": "config/quality/mod.rs",
+      "input_sha256": "d9db9b7d1f2bc4d9f8fd462a9cd02749d9b5c9f9521296d4d0aebbfab0ba3895",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "ae3bf180a074a3d341ac7371e9427bae5ca30e2864752cc3f496161346424871",
+      "symbols": 6,
+      "complexities_sha256": "ba5c9897f9775ec9141c8181e57c311c3b9ae730ef19a2b691c74261d0e8a001"
+    },
+    {
+      "input": "config/quality/model.rs",
+      "input_sha256": "4206caf213e60bfa47ba267a58ce3c0d2bb2fb4bf65e8fb58d431f54c1d15a0e",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "cd08231f446a67b37f6ae81eb733589091ae95be1fbc7518c9a2a27e4ed19b4c",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "config/quality/policy.rs",
+      "input_sha256": "a33214d9d32fb5abe18ad9b068226644dc69d347f0bf400bcf84aa9510afdb10",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "87af9148f8092ee7d918888f227eb81604f8fcc13f63ff814ac7380dc1947b9f",
+      "symbols": 4,
+      "complexities_sha256": "904115f864a6353fa0238cc90a6f1278d702f5f3eaa64c545c17184edc282c38"
+    },
+    {
+      "input": "config/quality/validation.rs",
+      "input_sha256": "da635aed473871386844d10464a65923c8d079c577debac660dd9ee891d66fb0",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "ea5a2b882e7c2ac2a2b83d3f4838252e776d22513285173c8ec0b9560646b9e7",
+      "symbols": 21,
+      "complexities_sha256": "ae8cdaf4b6336d774c6c69669480989e51ad05e8c23662a8afff10a4cfcef968"
+    },
+    {
+      "input": "config/validation/mod.rs",
+      "input_sha256": "b37928128fd178cce1c8125c8ea11e97249e28503cdd39924a7d151a5f107a8c",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "5b6216644394e7ab3aebb6d60fc3e25dd8171b372d9fa951fb23e8925d4cb46f",
+      "symbols": 67,
+      "complexities_sha256": "5fa54202f3b5d2c79aae1550736ac9ae92369be715855978092ae3106ee83ad5"
+    },
+    {
+      "input": "doctor/checks.rs",
+      "input_sha256": "757f2f76c1dfc863aeba76cab607e9a19afd0d45125239aa973c5b49c00cfdca",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "1d4e3208c8f14c93be89fd8a4f4d11eb3431e7ed408d42775ec0226ede00b3e9",
+      "symbols": 35,
+      "complexities_sha256": "3c5c7ef062d1c12302ad7d55d0cf54128f7dd035b1e87884a8e8ca13370cf4d6"
+    },
+    {
+      "input": "failure.rs",
+      "input_sha256": "d83c34130844ba5f4795928c208cf4c94e8e905d592187c64f53686d4c39c721",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "27d3aa0071d1c8d34a791acadf24cc179d8dd324b6742ed7ee6a5f31b7243cb5",
+      "symbols": 6,
+      "complexities_sha256": "aca9acc4bec7779732b69ebdb7b1cbebe1ea8e524ad89208e2677e848a947ca8"
+    },
+    {
+      "input": "lib.rs",
+      "input_sha256": "373bde6804041cd4412e9a4881d63d940e0df714f4488ff946350bd36ab82999",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "cd08231f446a67b37f6ae81eb733589091ae95be1fbc7518c9a2a27e4ed19b4c",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "main.rs",
+      "input_sha256": "e2db829879e1e11fc1e85d70257c2c2b5b79c23d191e4a0ff593921d7408c0d6",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "08e47d5df8b820eece251324b27433fd4919cee6f804bd3329d81a8302df802e",
+      "symbols": 1,
+      "complexities_sha256": "06d033ece6645de592db973644cf7357255f24536ff7b03c3b2ace10736f7636"
+    },
+    {
+      "input": "net_policy.rs",
+      "input_sha256": "b6f2d523e7f6a4da73e8295d0bb7ebd68702bb022d9655571bf4c3b07ed7c7df",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "292ccd910368aab90dba5fda48afd5b3fdaec223cc2ebeb7292c21ae86089f59",
+      "symbols": 10,
+      "complexities_sha256": "7278c032ed51a0bce68d00916bb8852c03bee351ffa285955c73aa0d7bcf0863"
+    },
+    {
+      "input": "preset/catalog.rs",
+      "input_sha256": "0a6fb3b6499046f6ee90622960266200ac21a76c4770b710b3660f6d442de339",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "4110eb335ff7f02d0de598f3533c2ce80b002a940eb1f0379644507abfb94445",
+      "symbols": 12,
+      "complexities_sha256": "db911778bc34d899ea2f55da2773a99fe550c1cdf6c1dc38a20004cfa9253272"
+    },
+    {
+      "input": "preset/composition.rs",
+      "input_sha256": "9b9436647cfa8be47355d32f1be796d8aebae58c3e9f9874039585e0f7098955",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "a18119e8278e7471c26fc15dbb9a566e01d349a9977e84d25e0cdd53af9be91e",
+      "symbols": 9,
+      "complexities_sha256": "06c4b30e787ab828113da63ee6bcfdab7d91b6be49811b0c19fb9c7732ce2582"
+    },
+    {
+      "input": "preset/filesystem.rs",
+      "input_sha256": "88146b811d8e50b7a141187d6d937da36ae550dfb003ded2c06df4e052261226",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "3576ed767a0d3f9807a86a03c0f330b9d8cd5f225e1ac0d54c3a5e81837ab592",
+      "symbols": 16,
+      "complexities_sha256": "2ca51cfa51814e64e9fd5c8c5bbde08fd333d51abe9040e11b9ce00f360b4c5c"
+    },
+    {
+      "input": "preset/import.rs",
+      "input_sha256": "a9cd74560ea6b132e14108f88cc49ab519b82aa4b18559b8530f7991bfd15a5d",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "594191cd7d540373cf99332e85cb18ed88f3b98aec01f1a51162464fcd02218c",
+      "symbols": 2,
+      "complexities_sha256": "72c5687dc5a9d6d83e7828ae3f022836a6765dc05f1a56b99e00c458ea3ca84a"
+    },
+    {
+      "input": "preset/initialize.rs",
+      "input_sha256": "f7d4d440414a2ec2fcda0b45df2d9e0a2def79343de10a7eb58b1f8a6f95ec3a",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "76d18b4169cae6ebd158a3dec6b8200f44bcbde05140d049a063ed529645e8fd",
+      "symbols": 9,
+      "complexities_sha256": "7ad8d776abec2fd44249be4547f903d3f4b7d2ef95b2f91e87b666ababc089f0"
+    },
+    {
+      "input": "preset/migration.rs",
+      "input_sha256": "03942de8340c3dc1f7dc4d962431aef867aeb8903a6d147ec6ea100de1d92907",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "f1c632ca9ac7e4facae976afae77f8f19f88b54224d5c3d3e1927ab0a219ca91",
+      "symbols": 4,
+      "complexities_sha256": "44a683aad8233d3fa5b3b8066213abd580577efa714a23c19a87e330998f4714"
+    },
+    {
+      "input": "preset/mod.rs",
+      "input_sha256": "201efe88059130f28cc3961ae72e78af0be9365636a4462b228907a5ba2a61ef",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "b5eee908f8e3d25b9ae264360f3c476399f22f11e7d721fa23c1159b5a1431c5",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "process/adapter.rs",
+      "input_sha256": "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "7dbe06c96cf06bdc0f2f3d3bf2c37c544c622cc1f7de454cdc30acddbe0073a5",
+      "symbols": 98,
+      "complexities_sha256": "9e4e579c9ae9f5e5bc574bdd9ca333ae27912a82501bcb76cd87bbeab36822d1"
+    },
+    {
+      "input": "process/command.rs",
+      "input_sha256": "42871289c5060b5f8221309dd2f4cc9263129397042bf069392dff6d4386ac65",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "5998bfe54747b9508bbdb41e6dfc0de955d1304af86bbf0ee046afe16456efe1",
+      "symbols": 3,
+      "complexities_sha256": "f49b9dc62ee7904aeb02fbcc8b7ebaf9eb91d9ba12129d9961d5940ad48854ba"
+    },
+    {
+      "input": "process/mod.rs",
+      "input_sha256": "feca5b47192877daa1564a7c56e135d168de28390de3601ebd5f886e2d6ee880",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "0d8389b41093116146ddd74c59050779c9e1b425cdb22d3ecfccc2641422993d",
+      "symbols": 0,
+      "complexities_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "input": "process/reader.rs",
+      "input_sha256": "9a6e92c1fd5dbac38b06d6267166ab0171a3782a04ab8648cd673b83a43a74a1",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "c66c097247130622c032925fb4188266fc02fdfab18964dc4068cb196d025c1a",
+      "symbols": 5,
+      "complexities_sha256": "57834c297df0a8aa130ffe0a98da2c6d026cb8f8c7cc9ab8152a7856e7934aa8"
+    },
+    {
+      "input": "process/replay.rs",
+      "input_sha256": "f7a87b71cebaaf93e80a3927cce9fa0fc7592f4f0c206076458359eaaf6f7ff6",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "f9827ac24506c342f5aa7dabd821b58c560f4992949ae326bd2c208d5271c97e",
+      "symbols": 17,
+      "complexities_sha256": "3d42c70789f271fced38fda1f4462b7202c68e3351f550109f01f1feb50c025c"
+    },
+    {
+      "input": "process/signal.rs",
+      "input_sha256": "111c140f631300965f2e86313ab2b73f7e541db551844e0717f3b388207ad281",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "d057c0a684970150d37e7efb77fab57c11e1f1c2a6f526596604d1dbd50e3a3b",
+      "symbols": 4,
+      "complexities_sha256": "87bd597abf58ccdcab0fc741e9bb4fcb32a3c888aeaed11850c8621d13c264a9"
+    },
+    {
+      "input": "project/discovery.rs",
+      "input_sha256": "f4761f67eedc8c46e82809400a210c83cc4b17ae3f3afbcc361ef87d56fef824",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "289f7f59d6ab257526b3b2c62e9b092c37d28d46064d2474e78f5b7fe6365660",
+      "symbols": 21,
+      "complexities_sha256": "5f0c4757be5b9c6b155a16041ea03eb6ed9fc77afdbebd34c07d7b10605251dc"
+    },
+    {
+      "input": "project/input.rs",
+      "input_sha256": "a09479dc3e6a5000473209cfd4c54d259a2fd1d52e7d850e82c0ff0b6566f135",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "b081410c2843e952b5bbd1f91031dfc0ed03ff7a9df247ad569ff3db66aed216",
+      "symbols": 20,
+      "complexities_sha256": "6a3e9efb2c616104c633164b348bff671c2dd426d0f49eadaf885cc6299cd596"
+    },
+    {
+      "input": "project/mod.rs",
+      "input_sha256": "88528ebe2710a682e4976e840f561fecbfd4633a4dabcffc156e9350e42f22c1",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "bbadaf82c3187a88e460e17d823d827af69add6458a898bd526edc9ee34052a7",
+      "symbols": 8,
+      "complexities_sha256": "e9dd97f637482ae1f242126d0027fd40f50470fe0872fc534e37d4b14ceda0d8"
+    },
+    {
+      "input": "recipes/mod.rs",
+      "input_sha256": "891bb364e74eb92088b96d3186ddf188175d6118eee7c5c59d8f4f75b70db6f7",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "fd3e51fd1ef9c7e9bf6636e1cd7ec5458577450ebcb3ad4cc2146b9ebcaa5f32",
+      "symbols": 1,
+      "complexities_sha256": "038966de9f6b9a901b20b4c6ca8b2a46009feebe031babc842d43690c0bc222b"
+    },
+    {
+      "input": "recipes/postgres.rs",
+      "input_sha256": "c2fff0eecffa17ddbc01d32a485cb519d284dcb420805ec5dbe7439c8c9b7b6f",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "56cf748f2a06c4ebcfb392496b9f06201a6e9ef73cfbc5541cb7f016b0978833",
+      "symbols": 8,
+      "complexities_sha256": "78626cd67412e1760aa3f43f6230ff56ddcac3cfa2971d74f87432bf401ca3b4"
+    },
+    {
+      "input": "secrets/config.rs",
+      "input_sha256": "a391209412c3c287a5e4517c443029475b1781e6e1cc75ddf3a4466336c8af62",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "6fb1b18adbc5c7f234a4637aca250894d17f1b36037d97495412d5e31f8202d2",
+      "symbols": 14,
+      "complexities_sha256": "220e4bf51819de0deb2d6d24bebd457e70b4edec960e66b4772bc38460b939e0"
+    },
+    {
+      "input": "service/lease.rs",
+      "input_sha256": "5bd48ad410133713f527abf5d1fffb28bb731d71204381bb26053d7edee54463",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "b3c6691a0a86cbff6f2b79db36ad04160a74697c2e307768a33aa0b4674ec865",
+      "symbols": 84,
+      "complexities_sha256": "1692127b33cd07aec1ca302f5ec7ca7f564b261a426793eb83b6f56ee3975d4e"
+    },
+    {
+      "input": "service/mod.rs",
+      "input_sha256": "34bd333b073e9c07e9bdcd2d5baf127faf7ab8e2613229e519312e01215aed16",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "65efb14d09e9437e7419d391ea9538433e759c104fc8efc677a27a0091724d98",
+      "symbols": 47,
+      "complexities_sha256": "696b6f2fdca04a207d9f4935d8ab0bc57f43f184d7b716efd13d283c330bb6f9"
+    },
+    {
+      "input": "service/report_directory.rs",
+      "input_sha256": "9bffce7019a182d8a5cca24e632821b0b51acbb31fcab08ef45407ca34c06d8e",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "39755fe6d94c46e84c855450b6379bb4d96e5e6ad490dc331cfb88ab43920d7c",
+      "symbols": 6,
+      "complexities_sha256": "9138b517a28521117cbb11833a01027b549141c59e3edaf065bfb22bde00fc58"
+    },
+    {
+      "input": "utils/redaction.rs",
+      "input_sha256": "4dd41a24c355a02e5dea4b2cd1f454ed4f8b0c2d8beb9b1371578bc1813c12d9",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "533deb21e339437e1f966ea733ae42750eb102e319132e6b19e9298affc680b3",
+      "symbols": 3,
+      "complexities_sha256": "34993fa07cb3d2f52071509310842e0d0b9018d6b19b26149af25ee12f6258c2"
+    },
+    {
+      "input": "verify/mod.rs",
+      "input_sha256": "12d7fdce72abbd6d7692f8483dcb3bf990856be732d70920afb9dc964f136447",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "e5dbf5e6d2073c49fe28fb1424057d0dabaa8223e7ab08a2b656c2fc3ddf2c52",
+      "symbols": 28,
+      "complexities_sha256": "75f56a6be12941d8489c48c868f349feebea55e5554fb6f0b9eb169b1ed3c614"
+    },
+    {
+      "input": "verify/parser.rs",
+      "input_sha256": "75ae046db0b72a7c2d984283c5145e5e8a6e323412745046065de75ed3c2dc9b",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "7a1ed597e0a498c5149f2406c9a7ec7a14c827a44d4ac1318721d716cefe0890",
+      "symbols": 17,
+      "complexities_sha256": "81ebac3ec4e5ecc3adb6c27e2ed642456866619d49b65bdac87ff68fea3a1390"
+    },
+    {
+      "input": "verify/quality.rs",
+      "input_sha256": "7ae1a8769c174942d08a9c9344079e648fbd9dbef41e111fb91853f2e621a94b",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "d5325925a5bcebe06de153ab971a8ecaadd9ab6c17205d419927e59c00342b4c",
+      "symbols": 20,
+      "complexities_sha256": "baa36acafb8fa51115ae936a2093524d18d5cc19031ad684a26ad452f5520d40"
+    },
+    {
+      "input": "verify/report.rs",
+      "input_sha256": "8f4e46f879d2e1f3a952632dbfa5bc8471f9744e560dbc664a80e50724cf3fb0",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "21b67d5d8ac046688a15b1e8d470efebd96f6d147c02589fdcf6af2fc97af15c",
+      "symbols": 230,
+      "complexities_sha256": "6a3cb923bfa403c90778399cfc8be998e91e0f5fb37c841780c1797c133e469b"
+    },
+    {
+      "input": "verify/steps.rs",
+      "input_sha256": "7d97f5fc813e6e77253a32c0374446f64b520096bd28425f3ef45f31bc3320f4",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "eeb80d41ae46738eab12edef0984afb4d55de189162c6ab95bb101e68119918e",
+      "symbols": 39,
+      "complexities_sha256": "e5e751aa69e7bf241e7f01e56d0b7deb44506b8997d7156273f819d3d60fe01d"
+    },
+    {
+      "input": "fixture:PROCESS_COMMAND_BASE",
+      "input_sha256": "80118e08ebab122498013269a47a12c6b3dca80107ead21a3fbd81d4856aff61",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "0c0f1f55da930945e7b3474181d30edf7053e0a7bbf4a8a46d0d35edcd0cb580",
+      "symbols": 3,
+      "complexities_sha256": "f49b9dc62ee7904aeb02fbcc8b7ebaf9eb91d9ba12129d9961d5940ad48854ba"
+    },
+    {
+      "input": "fixture:CFG_TRY_SOURCE",
+      "input_sha256": "1735c2b53fd8387699a23572f83b2b8b6986dfdea15cde880aa20275ef6580f8",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "8e496fac7996adcf1c168a39e2e950048522b162444fa2015dcfcadc2f45b425",
+      "symbols": 2,
+      "complexities_sha256": "1ad6041faf516d0043ca4b91348ab8c8a713496b5b5ce302e0e907e4f7bcbc24"
+    },
+    {
+      "input": "fixture:CFG_MATCH_ARM_SOURCE",
+      "input_sha256": "57ab7b6a4be7bf9d3cd103cb262c201b5ea504ab5f063ed59f37830c125ab771",
+      "target": "x86_64-pc-windows-msvc",
+      "exit_code": 0,
+      "output_sha256": "d145fff77d6039be4012cbb9c29830822bb88d19fa1863656757d3c6d415826e",
+      "symbols": 4,
+      "complexities_sha256": "89ff3f27d320b1601fa78a293284d53d7a9a590aa03890b931958097431f7e68"
+    }
+  ],
+  "lineage": "No metric or series migration. Identical binary and manifest; unchanged measurement/instrumentation/join/ratchet code. Provenance changes explicitly; base and head are measured with the same new tool declaration. Retained historical reports remain immutable."
+}
