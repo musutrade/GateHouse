@@ -29,24 +29,18 @@
 
 ## 发布状态
 
-**核心拆分与清理后的版本尚未发布。** GateHouse 尚未发布 Core 二进制版本；
-最新已发布核心仍是旧 Harness-Gate 仓库的 **0.4.8**，早于核心移除插件发布链路。
-安装 0.4.8 得到的是当时的发行内容。
+**Core 0.4.9 已准备发布。** 这是 GateHouse 拆分后的首个核心版本：生态预设
+外置，核心发行清单仅包含 Core 二进制与元数据，采集器由 GateProbes 独立交付。
+发布和公开验证进度见[交付状态](docs/release-status.md)与
+[0.4.9 发布指南](docs/releases/0.4.9.zh-CN.md)。发布完成前，最新已发布核心
+仍是旧 Harness-Gate 仓库的 0.4.8。
 
-当前开发源码已将生态预设外置到 GateProbes，核心发布工作流也已停止打包四个
-独立采集器。GateProbes 的插件发布与 Core 发布分别进行。源码 manifest 仍写
-`0.4.8`，这个保留的版本号不能证明这些改动已发布。详见
-[未发布变更](CHANGELOG.md#unreleased)与[交付状态](docs/release-status.md)。
+本次保留[已接受的 Phase 1 基线](docs/benchmarks/phase-1/README.md)。旧 #346
+候选因计时口径变化而被拒绝，不会通过此次发布重置基线、历史债务或度量系列。
+命令与 crate 名仍为 `harness-gate`；历史 0.4.8 及其插件资产保留原有签名身份。
 
-### 最新已发布核心：0.4.8（拆分前）
-
-Core **0.4.8** 为 core/plugin 拆分做准备：每种 schema 角色只有一个可编辑源，决策夹具移入核心 crate，并首次把固定版本的 Rust 测量器 `0.3.1` 作为独立包发布。本次同时提供独立安装的 Rust source-risk RC7、TypeScript risk RC4、HTTP JSON contract RC5 与 Rust 测量器 0.3.1。Core 负责编排和质量决策；版本说明与安装见[发布指南](docs/releases/0.4.8.zh-CN.md)，验证回执见[交付状态](docs/release-status.md)。
-
-Core **0.4.8** 标签内的安装器默认选择独立插件 **0.1.0-rc.7**，增加依赖归属缓存与签名 monorepo 源路径绑定。Rust/LLVM 和 Python 仍作为外部依赖；固定版本用法见[独立插件安装指南](docs/quality/standalone-installation.md)。
-
-当前仓库的安装器默认选择 GateProbes native **0.1.0-rc.8**；这不会改变
-0.4.8 标签内冻结的安装器或 Core 的测量消费 pin。两种安装路径与签名身份见
-[独立插件安装指南](docs/quality/standalone-installation.md)。
+当前安装器选择 GateProbes native **0.1.0-rc.8**，Core 0.4.9 使用 GateHouse
+的 `release.yml` 签名身份，详见[独立插件安装指南](docs/quality/standalone-installation.md)。
 
 ## 阅读导航
 

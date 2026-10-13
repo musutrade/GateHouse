@@ -37,13 +37,12 @@ capability. Application-specific tests stay with the application.
 
 ## Version and installation
 
-**The split Core is unreleased.** GateHouse has no Core binary release yet.
-The latest published Core is **0.4.8** in Harness-Gate, before the removal of
-plugin publication from Core. The development manifest retains `0.4.8`, but
-external preset loading and the reduced Core release inventory are unreleased
-changes; see the [changelog](CHANGELOG.md#unreleased). Published 0.4.8 embeds
-its earlier presets; the current source build embeds only `generic` and loads
-reviewed GateProbes presets through `--presets-dir` or `HARNESS_GATE_PRESETS_DIR`.
+Core **0.4.9** is prepared as the first split Core release from GateHouse;
+publication and public verification are tracked in [release status](docs/release-status.md).
+Until that completes, the latest published Core remains Harness-Gate 0.4.8.
+Core 0.4.9 embeds only `generic`, loads reviewed GateProbes presets through
+`--presets-dir` or `HARNESS_GATE_PRESETS_DIR`, and publishes a Core-only inventory.
+The accepted performance baseline and quality/debt semantics are retained.
 
 The migration did not publish a new Core binary or re-sign historical assets.
 The current repository installer selects GateProbes native RC8; the installer

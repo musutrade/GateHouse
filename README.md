@@ -31,28 +31,22 @@ and [migration acceptance](docs/gatehouse-migration-acceptance.md).
 
 ## Release status
 
-**The Core split and cleanup are unreleased.** GateHouse has not published a
-Core binary release. The latest published Core is **0.4.8** in Harness-Gate,
-from before plugin publication was removed from Core. Installing 0.4.8 does not
-install the current split Core source.
+**Core 0.4.9 is prepared for publication.** It is the first split Core release
+from GateHouse: ecosystem presets are external and the Core release inventory
+contains only Core binaries and metadata. GateProbes delivers collectors
+independently. Publication and public verification are tracked in
+[release status](docs/release-status.md) and the [0.4.9 release guide](docs/releases/0.4.9.zh-CN.md).
+Until publication completes, the latest published Core remains Harness-Gate 0.4.8.
 
-The current development tree loads ecosystem presets from GateProbes and its
-Core release workflow no longer packages the four independent collectors.
-Plugin releases in GateProbes are separate from a Core release. The source
-manifest still says `0.4.8`; that retained number does not establish publication
-of these changes. See [unreleased changes](CHANGELOG.md#unreleased) and
-[release status](docs/release-status.md).
-
-### Latest published Core: 0.4.8 (before the split)
-
-Core **0.4.8** prepares the core/plugin split: every schema role has one editable source, the decision fixtures live in the core crate, and the pinned Rust measurer **0.3.1** is published as an independent package for the first time. Independently installed Rust source-risk RC7, TypeScript risk RC4, HTTP JSON contract RC5 and Rust measurer 0.3.1 packages are included in the release. Core owns orchestration and quality decisions. See the [release guide](docs/releases/0.4.8.zh-CN.md) and [verified delivery status](docs/release-status.md).
-
-The installer tagged with Core **0.4.8** selects standalone Rust/MIR plugin **0.1.0-rc.7** by default. RC7 adds dependency-attribution caching and signed monorepo source-prefix binding. Matching Rust/LLVM and Python remain external dependencies; see the [standalone installation guide](docs/quality/standalone-installation.md).
+The accepted [Phase 1 baseline](docs/benchmarks/phase-1/README.md) is retained.
+The legacy #346 candidate was rejected after evidence review; no baseline, debt
+or measurement series is reset by this release. The `harness-gate` name stays
+unchanged. Historical 0.4.8 releases and their bundled plugin assets remain
+available at their original signed identities.
 
 The current repository installer selects GateProbes native **0.1.0-rc.8**;
-this does not change the installer frozen in the 0.4.8 tag or Core's measurement
-consumption pin. See [standalone installation](docs/quality/standalone-installation.md)
-for the two installation paths and their signing identities.
+Core 0.4.9 uses GateHouse's `release.yml` signing identity. See
+[standalone installation](docs/quality/standalone-installation.md).
 
 ## Navigation
 

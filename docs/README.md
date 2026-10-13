@@ -5,10 +5,10 @@ collectors and ecosystem presets; historical Harness-Gate releases retain their
 original identities. See [repository migration](gatehouse-migration.md) and
 [migration acceptance](gatehouse-migration-acceptance.md).
 
-**The split Core is unreleased:** the latest published Core remains the
-pre-split 0.4.8 release in Harness-Gate. The current development manifest retains
-that number. GateProbes plugin releases do not publish the updated Core; see
-[release status](release-status.md#unreleased-core-split-and-cleanup).
+**Core 0.4.9 is prepared for publication.** It is the first split Core release
+from GateHouse. Until publication and verification complete, Harness-Gate 0.4.8
+remains the latest published Core. Follow [release status](release-status.md)
+for the exact delivery state.
 
 Start with [English README](../README.md) or [中文 README](../README.zh-CN.md).
 Current published versions, verified boundaries and issue disposition are in
