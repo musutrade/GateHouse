@@ -5,10 +5,9 @@ collectors and ecosystem presets; historical Harness-Gate releases retain their
 original identities. See [repository migration](gatehouse-migration.md) and
 [migration acceptance](gatehouse-migration-acceptance.md).
 
-**Core 0.4.9 is prepared for publication.** It is the first split Core release
-from GateHouse. Until publication and verification complete, Harness-Gate 0.4.8
-remains the latest published Core. Follow [release status](release-status.md)
-for the exact delivery state.
+**Core 0.4.9 is published on GitHub.** See [release status](release-status.md)
+and [public verification](releases/0.4.9-public-verification.md) for the separate
+GitHub, crates.io and runtime acceptance states.
 
 Start with [English README](../README.md) or [中文 README](../README.zh-CN.md).
 Current published versions, verified boundaries and issue disposition are in

@@ -1,19 +1,28 @@
 # Published releases and acceptance
 
-## Core 0.4.9 release preparation, 2026-10-13
+## Core 0.4.9 public delivery, 2026-10-13
 
-Status: **prepared; publication and public verification pending**. This is the
-first split Core release from GateHouse, with external ecosystem presets and a
-Core-only release inventory. Plugin packages publish independently in GateProbes.
-The release retains the accepted Phase 1 baseline and original historical
-quality/debt evidence; the rejected #346 candidate is not adopted.
+**GitHub release and public verification: pass.** The first split Core release
+is published as [v0.4.9](https://github.com/musutrade/GateHouse/releases/tag/v0.4.9)
+from `4d5b15a24c91a17b4823ec1626048cdfb20834da`, after exact protected-main
+[CI 38385214782](https://github.com/musutrade/GateHouse/actions/runs/38385214782)
+passed. [Release 38389039570](https://github.com/musutrade/GateHouse/actions/runs/38389039570)
+passed policy, four platform builds, release quality and signed GitHub publication.
 
-Version, changelog and release-quality data restoration are reviewed through a
-PR, followed by exact protected-main CI, an immutable v0.4.9 tag, four-platform
-builds, release quality gates, environment review, signing/provenance, GitHub
-Release and crates.io publication. The publication receipt will be added after
-public verification. Until then, the latest published Core remains
-Harness-Gate v0.4.8. See the [0.4.9 release guide](releases/0.4.9.zh-CN.md).
+All 21 public files match the release inventory. Seven subjects passed exact-tag
+Sigstore identity and exact-source/signer provenance verification. Fresh Linux
+installation passed version/digest checks and generic verification with complete
+evidence. All three real GateProbes ecosystem presets initialized and passed
+configuration validation. This is not additional measurement certification.
+
+**crates.io publication: blocked.** GateHouse did not provide
+`CARGO_REGISTRY_TOKEN`; Cargo rejected the empty `--token` argument. The GitHub
+release is complete; the latest registry version remains 0.4.8. Once the token
+is configured, retry only the failed crate job against the same immutable tag.
+
+The accepted performance baseline and quality/debt semantics are retained. See
+[the public receipt](releases/0.4.9-public-verification.md) and
+[installation guide](releases/0.4.9.zh-CN.md). Historical assets remain unchanged.
 
 ## GateHouse source migration, 2026-10-13
 

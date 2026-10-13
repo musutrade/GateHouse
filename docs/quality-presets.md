@@ -1,6 +1,6 @@
 # Quality presets and explicit migration
 
-This guide describes the current GateHouse source build. Published Core 0.4.8
+This guide describes Core 0.4.9 and current GateHouse source builds. Historical Core 0.4.8
 still embeds the ecosystem presets and does not accept `--presets-dir`; use
 `harness-gate init --preset rust-api` with that release. See the
 [version-specific quick start](../README.md#installation-and-quick-start).

@@ -49,14 +49,14 @@ Historical release evidence (2026-09-03):
   constitute DevRail staging, shadow/canary, rollback-authority, or R-07
   OS-sandbox acceptance.
 
-## Current release preparation (2026-10-13)
+## Current public delivery (2026-10-13)
 
-Core **0.4.9** is prepared for GateHouse's first signed Core release. The latest
-published Core remains Harness-Gate 0.4.8 until that workflow completes.
-Core 0.4.9 publishes only its four platform binaries, Core SBOM and metadata;
-GateProbes owns independent collector publication. The accepted performance and
-quality/debt baselines are retained. See [release status](release-status.md) and
-the [0.4.9 guide](releases/0.4.9.zh-CN.md).
+Core **0.4.9** is published on GitHub from verified main `4d5b15a` with four
+platform binaries, Core SBOM and signed metadata. GateProbes owns independent
+collector publication. Registry and public installation states are tracked
+separately in [release status](release-status.md) and the
+[public verification receipt](releases/0.4.9-public-verification.md). The accepted
+performance and quality/debt baselines are retained.
 
 GateHouse has active `main` and `release-tags` rulesets (24975950 and 24975954).
 The `release` environment (24147678356) requires owner `higoalespn` review,
