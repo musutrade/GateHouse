@@ -6,22 +6,42 @@ Python are external dependencies. The stable engine remains an explicit candidat
 
 ## Publication status
 
-Core `0.4.7` selects native `0.1.0-rc.7`, which is published for all four
-supported platforms. Core 0.4.7 is also published and publicly verified; see the release record. RC7 adds dependency-attribution caching and signed monorepo
-source-prefix binding. See the [verified release record](../release-status.md)
-and [independent candidate package guide](../releases/0.4.7.zh-CN.md).
+### Historical tagged Core 0.4.8 installer
+
+The installer frozen in Core `0.4.8` selects Harness-Gate native `0.1.0-rc.7`.
+Use the immutable tag when reproducing that release:
 
 ```bash
 curl --fail --show-error --location --proto '=https' --tlsv1.2 \
   -o /tmp/harness-gate-install.sh \
-  https://raw.githubusercontent.com/musutrade/Harness-Gate/v0.4.7/install.sh
-bash /tmp/harness-gate-install.sh --version v0.4.7 --with-rust \
+  https://raw.githubusercontent.com/musutrade/Harness-Gate/v0.4.8/install.sh
+bash /tmp/harness-gate-install.sh --version v0.4.8 --with-rust \
   --rust-version 0.1.0-rc.7
 ```
 
-Core alone uses `--version v0.4.7`. To install only the native plugin, use
-`--rust-only --rust-version 0.1.0-rc.7`; no Core version is required. These
-commands use Bash (Git Bash on Windows). No default Rust toolchain is changed.
+Core alone uses `--version v0.4.8`; the historical plugin alone uses
+`--rust-only --rust-version 0.1.0-rc.7` with that same tagged installer.
+
+### Current GateHouse repository installer
+
+From a reviewed GateHouse checkout, install the independently published
+GateProbes native RC8 explicitly:
+
+```bash
+bash install.sh --rust-only --rust-version 0.1.0-rc.8
+```
+
+To also install the existing Core release, use
+`bash install.sh --version v0.4.8 --with-rust --rust-version 0.1.0-rc.8`.
+The current installer verifies Core 0.4.8 against Harness-Gate and native RC8
+against GateProbes. Core v0.4.9 onward routes to GateHouse; this does not announce
+a new Core release. There is no fallback to another repository or signer.
+In particular, use the historical tagged installer above for RC7.
+
+These commands use Bash (Git Bash on Windows) and do not change the default Rust
+toolchain. Publication and platform acceptance are recorded in
+[release status](../release-status.md); installing RC8 does not automatically
+migrate a project's measurement series, baseline or Core consumption pin.
 
 ## Versions, platforms and destinations
 
@@ -38,7 +58,7 @@ lookup or fallback to another platform, engine or historical runtime bundle.
 | macOS Apple Silicon | `harness-gate-rust-collector-macos-arm64` |
 | Windows x86_64 | `harness-gate-rust-collector-windows-amd64.exe` |
 
-RC7 passed release acceptance on these four hosts. This does not certify an
+RC7 and GateProbes RC8 passed release acceptance on these four hosts. This does not certify an
 arbitrary host ABI. Missing release assets fail installation.
 
 Both programs default to `~/.local/bin`. `--install-dir` changes that private

@@ -1,5 +1,10 @@
 # Quality presets and explicit migration
 
+This guide describes the current GateHouse source build. Published Core 0.4.8
+still embeds the ecosystem presets and does not accept `--presets-dir`; use
+`harness-gate init --preset rust-api` with that release. See the
+[version-specific quick start](../README.md#installation-and-quick-start).
+
 `init --presets-dir /path/to/GateProbes/presets --preset rust-api`, `angular-only`, and `angular-rust-postgres` now write
 coherent flow + quality configuration, policy/series files under
 `.harness-gate/packs/`, security configuration and `.harness-gate/QUALITY.md`.
