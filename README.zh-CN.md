@@ -22,25 +22,24 @@
 | **[GateProbes](https://github.com/musutrade/GateProbes)** | 独立交付的采集器与生态预设。 |
 | **[Harness-Gate](https://github.com/musutrade/Harness-Gate)** | 历史源码、Issue，以及 Core 0.4.8 及以前的发行资产和签名身份。 |
 
-源码迁移没有发布新的 Core 版本。当前源码包含已发布 0.4.8 之后的改动，
-包括外部预设加载；请按下方对应版本的快速开始操作。普通源码构建无需下载
+源码迁移没有发布新的 Core 版本。当前源码与 Core 0.4.9 均支持
+外部预设加载；请按下方对应版本的快速开始操作。普通源码构建无需下载
 历史证据，完整回归与文档检查使用[固定摘要的可选数据](test-data/README.md)。
 完整入口见[文档目录](docs/README.md)与[迁移验收](docs/gatehouse-migration-acceptance.md)。
 
 ## 发布状态
 
-**Core 0.4.9 已准备发布。** 这是 GateHouse 拆分后的首个核心版本：生态预设
-外置，核心发行清单仅包含 Core 二进制与元数据，采集器由 GateProbes 独立交付。
-发布和公开验证进度见[交付状态](docs/release-status.md)与
-[0.4.9 发布指南](docs/releases/0.4.9.zh-CN.md)。发布完成前，最新已发布核心
-仍是旧 Harness-Gate 仓库的 0.4.8。
+**Core 0.4.9 已在 GitHub 发布。** 这是 GateHouse 拆分后的首个核心版本：生态
+预设外置，核心发行清单仅包含 Core 二进制与元数据，采集器由 GateProbes 独立
+交付。安装见[0.4.9 发布指南](docs/releases/0.4.9.zh-CN.md)，公开验证见
+[交付回执](docs/releases/0.4.9-public-verification.md)。
 
-本次保留[已接受的 Phase 1 基线](docs/benchmarks/phase-1/README.md)。旧 #346
-候选因计时口径变化而被拒绝，不会通过此次发布重置基线、历史债务或度量系列。
-命令与 crate 名仍为 `harness-gate`；历史 0.4.8 及其插件资产保留原有签名身份。
+crates.io 发布因 GateHouse 缺少发布令牌而待完成，当前公开 crate 仍为 0.4.8。
+安装 Core 0.4.9 请使用下方 GitHub 二进制安装器。
 
-当前安装器选择 GateProbes native **0.1.0-rc.8**，Core 0.4.9 使用 GateHouse
-的 `release.yml` 签名身份，详见[独立插件安装指南](docs/quality/standalone-installation.md)。
+本次保留[已接受的 Phase 1 基线](docs/benchmarks/phase-1/README.md)，旧 #346
+候选已在证据审查后拒绝采纳。历史 0.4.8 与插件资产保留原有身份；当前安装器
+独立选择 GateProbes native **0.1.0-rc.8**。
 
 ## 阅读导航
 
@@ -82,15 +81,14 @@ component、profile、命令、路径、parser 和 service 都来自 TOML。常�
 
 ## 安装
 
-### 从 Crates.io 安装（推荐）
+### crates.io 发布待完成
 
-```bash
-cargo install harness-gate --version 0.4.8 --locked
-```
+Core 0.4.9 请使用下方 GitHub 安装器；当前 registry 仍为旧版 0.4.8。
+详见[交付状态](docs/release-status.md)。
 
 ### 从 GitHub Release 安装（预编译二进制）
 
-从不可变的 [GitHub Release tag](https://github.com/musutrade/Harness-Gate/releases/tag/v0.4.8) 下载适合你平台的二进制文件：
+从不可变的 [GitHub Release tag](https://github.com/musutrade/GateHouse/releases/tag/v0.4.9) 下载适合你平台的二进制文件：
 
 - **Linux (x86_64)**: `harness-gate-linux-amd64`
 - **macOS (Intel)**: `harness-gate-macos-amd64`
@@ -103,8 +101,8 @@ cargo install harness-gate --version 0.4.8 --locked
 ```bash
 curl --fail --show-error --location --proto '=https' --tlsv1.2 \
   -o /tmp/harness-gate-install.sh \
-  https://raw.githubusercontent.com/musutrade/Harness-Gate/v0.4.8/install.sh
-bash /tmp/harness-gate-install.sh --version v0.4.8
+  https://raw.githubusercontent.com/musutrade/GateHouse/v0.4.9/install.sh
+bash /tmp/harness-gate-install.sh --version v0.4.9
 harness-gate --version
 ```
 
@@ -114,11 +112,11 @@ harness-gate --version
 
 ### 可选 Rust 插件
 
-默认仅安装 Core，不下载 Rust 分析工具链。原生插件沿用 MIR 测量引擎，匹配的 Rust/LLVM 和 Python 由用户独立安装。原生插件 `0.1.0-rc.7` 已完成四平台发布；Core `0.4.8` 也已发布并完成公开安装验收，详见交付状态。本次独立候选包（含首次发布的 Rust 测量器）的安装、验证和测量序列边界见[本次发布指南](docs/releases/0.4.8.zh-CN.md)。
-
-[独立插件安装指南](docs/quality/standalone-installation.md)说明 `--with-rust`、`--rust-only` 和独立的 `--rust-version` 选择。stable 引擎保留为显式候选，不自动切换度量系列或基线。安装不会替项目接受可信证据或修改默认 Rust 工具链。
-
-原有 RC3 整包安装及离线归档保留[历史安装指南](docs/quality/rust-collector-installation.md)。新的安装器不搬迁或删除旧环境；历史 Core tag 中的安装器继续保留各自的版本绑定。
+Core 单独安装不下载 Rust 分析工具链。当前安装器可独立安装 GateProbes
+native `0.1.0-rc.8`，匹配的 Rust/LLVM 和 Python 由用户提供。固定版本、历史
+安装器与信任边界见[独立插件指南](docs/quality/standalone-installation.md)，
+0.4.9 命令见[发布指南](docs/releases/0.4.9.zh-CN.md)。安装插件不自动采纳
+测量系列或基线，历史标签内的安装器继续保留原有 pin 与签名身份。
 
 ### 从源码安装
 
@@ -169,12 +167,12 @@ sha256sum --check SHA256SUMS
 cosign verify-blob --signature harness-gate-linux-amd64.sig \
   --certificate harness-gate-linux-amd64.crt \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity 'https://github.com/musutrade/Harness-Gate/.github/workflows/release.yml@refs/tags/v0.4.8' \
+  --certificate-identity 'https://github.com/musutrade/GateHouse/.github/workflows/release.yml@refs/tags/v0.4.9' \
   harness-gate-linux-amd64
 cosign verify-blob --signature harness-gate.sbom.cdx.json.sig \
   --certificate harness-gate.sbom.cdx.json.crt \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity 'https://github.com/musutrade/Harness-Gate/.github/workflows/release.yml@refs/tags/v0.4.8' \
+  --certificate-identity 'https://github.com/musutrade/GateHouse/.github/workflows/release.yml@refs/tags/v0.4.9' \
   harness-gate.sbom.cdx.json
 ```
 
@@ -185,20 +183,10 @@ SBOM 记录源码提交、`Cargo.lock` 摘要和构建工具链。发布流程�
 
 ## 安装与快速开始
 
-### 已发布的 Core 0.4.8
+### Core 0.4.9 与当前源码构建
 
-上方安装的发行包内置生态预设，不使用开发版的外部目录参数：
-
-```bash
-harness-gate --version
-harness-gate presets
-harness-gate --project-root /path/to/new-project init --preset rust-api
-```
-
-请在已有 Git 项目中操作，新目录先运行 `git init`，再按下方步骤检查配置、
-准备可信主机输入并验证。
-
-### 当前 GateHouse 源码构建
+Core 0.4.9 和当前源码构建使用外部生态预设目录。历史 Core 0.4.8 内置预设，
+使用该版本时省略 `--presets-dir`。
 
 从源码安装后，选择审阅过的 GateProbes checkout 中的 `presets/` 目录。
 Core 仅内置 `generic`，详见[外部预设接入](docs/quality-presets.md)。

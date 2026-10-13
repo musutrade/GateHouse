@@ -23,30 +23,27 @@ It handles changed paths, secret scanning, architecture auditing, environment va
 | **[Harness-Gate](https://github.com/musutrade/Harness-Gate)** | Historical source, issues, release assets and signing identities through Core 0.4.8. |
 
 The source migration did not publish a new Core version. The current checkout
-includes changes beyond the published 0.4.8 package, including external preset
-loading. Use the matching quick-start path below. Ordinary source builds need no
+uses the external preset loading shipped in Core 0.4.9. Use the
+version-specific quick-start path below. Ordinary source builds need no
 historical evidence download; full regression and documentation checks use
 [pinned optional data](test-data/README.md). See the [documentation index](docs/README.md)
 and [migration acceptance](docs/gatehouse-migration-acceptance.md).
 
 ## Release status
 
-**Core 0.4.9 is prepared for publication.** It is the first split Core release
-from GateHouse: ecosystem presets are external and the Core release inventory
+**Core 0.4.9 is published on GitHub.** It is the first split Core release from
+GateHouse: ecosystem presets are external and the Core release inventory
 contains only Core binaries and metadata. GateProbes delivers collectors
-independently. Publication and public verification are tracked in
-[release status](docs/release-status.md) and the [0.4.9 release guide](docs/releases/0.4.9.zh-CN.md).
-Until publication completes, the latest published Core remains Harness-Gate 0.4.8.
+independently. See the [release guide](docs/releases/0.4.9.zh-CN.md) and
+[public verification receipt](docs/releases/0.4.9-public-verification.md).
 
-The accepted [Phase 1 baseline](docs/benchmarks/phase-1/README.md) is retained.
-The legacy #346 candidate was rejected after evidence review; no baseline, debt
-or measurement series is reset by this release. The `harness-gate` name stays
-unchanged. Historical 0.4.8 releases and their bundled plugin assets remain
-available at their original signed identities.
+crates.io publication is pending a GateHouse publishing token; the latest
+published crate remains 0.4.8. Use the GitHub binary installer for Core 0.4.9.
 
-The current repository installer selects GateProbes native **0.1.0-rc.8**;
-Core 0.4.9 uses GateHouse's `release.yml` signing identity. See
-[standalone installation](docs/quality/standalone-installation.md).
+The accepted [Phase 1 baseline](docs/benchmarks/phase-1/README.md) is retained;
+the legacy #346 candidate was rejected after evidence review. Historical 0.4.8
+releases and their plugin assets retain their original identities. The current
+installer selects GateProbes native **0.1.0-rc.8** independently of Core.
 
 ## Navigation
 
@@ -94,16 +91,15 @@ actual collector/series. New metric semantics require separate contract review.
 
 ## Installation
 
-### Install from Crates.io (Recommended)
+### Crates.io publication pending
 
-```bash
-cargo install harness-gate --version 0.4.8 --locked
-```
+Core 0.4.9 is available from GitHub below. The registry still serves the earlier
+0.4.8 crate; see [publication status](docs/release-status.md).
 
 ### Install from GitHub Release (Pre-built Binaries)
 
 Download the binary for your platform from an immutable [GitHub Release
-tag](https://github.com/musutrade/Harness-Gate/releases/tag/v0.4.8):
+tag](https://github.com/musutrade/GateHouse/releases/tag/v0.4.9):
 
 - **Linux (x86_64)**: `harness-gate-linux-amd64`
 - **macOS (Intel)**: `harness-gate-macos-amd64`
@@ -117,8 +113,8 @@ the pinned source revision, then select the immutable Core release explicitly:
 ```bash
 curl --fail --show-error --location --proto '=https' --tlsv1.2 \
   -o /tmp/harness-gate-install.sh \
-  https://raw.githubusercontent.com/musutrade/Harness-Gate/v0.4.8/install.sh
-bash /tmp/harness-gate-install.sh --version v0.4.8
+  https://raw.githubusercontent.com/musutrade/GateHouse/v0.4.9/install.sh
+bash /tmp/harness-gate-install.sh --version v0.4.9
 harness-gate --version
 ```
 
@@ -130,22 +126,13 @@ source installation additionally requires `git` and Rust `cargo`.
 
 ### Optional Rust collection
 
-Core does not download a Rust analysis toolchain by default. The
-[native standalone delivery](docs/quality/native-external-toolchain.md) retains
-the old measurement engine and publishes the compiled plugin using Core's signed
-release process. Matching Rust/LLVM and Python are external dependencies.
-Core `0.4.8` selects native `0.1.0-rc.7`, which is published for all four platforms.
-Core 0.4.8 is published; see the [verified release record](docs/release-status.md).
-RC7 adds dependency-attribution caching and signed monorepo source-prefix binding.
-The independent candidate packages and their measurement-series
-boundaries are described in the [release guide](docs/releases/0.4.8.zh-CN.md).
-
-The [standalone installation guide](docs/quality/standalone-installation.md)
-explains `--with-rust`, `--rust-only` and independent `--rust-version` selection.
-The stable engine remains an explicit candidate; metrics and baselines do not
-switch automatically. Existing RC3 bundled installations and offline archives
-retain their [historical installation guide](docs/quality/rust-collector-installation.md).
-Historical Core tags keep their original installer pins.
+Core alone does not download a Rust analysis toolchain. The current installer
+can independently install GateProbes native `0.1.0-rc.8`; matching Rust/LLVM and
+Python are external collection dependencies. See the
+[standalone guide](docs/quality/standalone-installation.md) and
+[0.4.9 installer commands](docs/releases/0.4.9.zh-CN.md).
+Installing a plugin does not adopt a measurement series or baseline.
+Historical tagged installers retain their original pins and identities.
 
 Release assets include `SHA256SUMS`, a CycloneDX SBOM, and Sigstore signatures/certificates. For
 a manual integrity check, download all listed assets, `SHA256SUMS`, and the matching
@@ -156,7 +143,7 @@ sha256sum --check SHA256SUMS
 cosign verify-blob --signature harness-gate-linux-amd64.sig \
   --certificate harness-gate-linux-amd64.crt \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity 'https://github.com/musutrade/Harness-Gate/.github/workflows/release.yml@refs/tags/v0.4.8' \
+  --certificate-identity 'https://github.com/musutrade/GateHouse/.github/workflows/release.yml@refs/tags/v0.4.9' \
   harness-gate-linux-amd64
 ```
 
@@ -213,21 +200,10 @@ The stable machine failure registry is documented in
 
 ## Installation and Quick Start
 
-### Published Core 0.4.8
+### Core 0.4.9 and current source builds
 
-The package installed above embeds the ecosystem presets. Use its commands
-without the development-only external catalog option:
-
-```bash
-harness-gate --version
-harness-gate presets
-harness-gate --project-root /path/to/new-project init --preset rust-api
-```
-
-Use an existing Git worktree (or run `git init` first), then follow the shared
-configuration and trust-provisioning steps below.
-
-### Current GateHouse source build
+Core 0.4.9 and the current source build use an external ecosystem catalog.
+Historical Core 0.4.8 embeds its presets; with that version omit `--presets-dir`.
 
 After installing from source, select a reviewed GateProbes checkout's `presets/`
 directory. Core embeds only `generic`; see [external preset setup](docs/quality-presets.md).
