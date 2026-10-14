@@ -243,21 +243,40 @@ retry count, flaky state, parser completeness, and shard identity.
     cwd = "{root}"
     log = "backend_tests.log"
     timeout_secs = 300
-    runner = { version = 1, kind = "cargo-test", threads = 4,
+    runner = { version = 2, kind = "cargo-test", threads = 4,
+               required_program = "cargo",
+               threads_args = ["--test-threads", "{threads}"], threads_args_after = "--",
                result_format = "junit", isolation = "schema-per-worker" }
 
 | Field | Required | Constraints |
 | --- | --- | --- |
-| version | Yes | Runner contract version, currently 1. |
-| kind | Yes | Runner ID; cargo-test requires program = cargo. |
-| threads | No | 1..=256; cargo-test adds -- --test-threads N. |
-| threads_env | No | Thread-count variable; required for non-cargo runners when threads are set. |
+| version | Yes | Runner contract version, currently 2; v1 is rejected with a migration diagnostic. |
+| kind | Yes | Opaque runner ID; command behavior comes from declarations. |
+| threads | No | 1..=256; the concurrency budget. |
+| threads_env | No | Thread-count variable; requires threads. |
+| required_program | No | Require this exact step executable. |
+| threads_args | No | Thread argument templates; requires threads and at least one `{threads}` placeholder. Other placeholders are rejected. |
+| threads_args_after | No | Literal token after which to insert thread arguments; append token if absent. Requires threads_args. Omitted means append arguments. |
 | args | No | Runner-specific arguments. |
 | args_position | No | Zero-based insertion index; omitted means append. |
 | result_format | No | regex, junit, trx, or json; default regex. |
 | isolation | Yes | shared, schema-per-worker, or database-per-worker. |
 
-threads > 1 cannot use shared isolation. With global parallelism, external
+Arguments are composed in order: insert `args` at `args_position`, then insert
+expanded `threads_args` after the first `threads_args_after` token, or append
+when no token is declared. Duplicate user flags stay in their original order;
+the invoked runner retains authority over their command-line conflict behavior.
+`threads > 1` requires `threads_env` or `threads_args`, and cannot use shared isolation.
+
+Runner v1 must be explicitly migrated with GateProbes
+[`tools/runners/migrate.py`](https://github.com/musutrade/GateProbes/blob/main/tools/runners/migrate.py).
+It consumes the external Cargo definition and writes a new flow, preserving
+policy, parser, isolation, shard and retry values. Run `config check` with the new
+Core before replacement. Keep the original flow and binary together for rollback;
+v2 declarations are incompatible with Core releases supporting only runner v1.
+The overall flow version remains 2. See [ADR 0054](adr/0054-declarative-runner-inputs.md).
+
+ With global parallelism, external
 steps must declare runner isolation. Worker identity is passed through reserved
 HARNESS_GATE_ISOLATION_* variables and cleaned up after the invocation.
 

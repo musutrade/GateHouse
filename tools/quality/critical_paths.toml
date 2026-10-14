@@ -51,9 +51,9 @@ sha256 = "bbb7f1d90d741f41c6cb761f1433f4cb7c8ca168fac0082bd366a9377ae149a8"
 [paths.test_source]
 path = "tests/failure_paths_test.rs"
 symbol = "verification_cleanup_cancel_and_report_precedence_retains_resource_evidence"
-start = 575
-end = 812
-sha256 = "52ddee154904a475bb10f05b119321959187063d3627aa5d7bfedb0667759d31"
+start = 580
+end = 817
+sha256 = "7c80c2cf89dd4c88b700ccaa90be7cd6901ee1037421347cb9c78768221b0fa1"
 [[paths.probes]]
 line = 250
 column = 24
@@ -103,9 +103,9 @@ assertions = ["assert!(!step.passed);", "assert_eq!(step.detail.as_deref(), Some
 [paths.source]
 path = "src/verify/steps.rs"
 symbol = "execute"
-start = 392
-end = 457
-sha256 = "7d97f5fc813e6e77253a32c0374446f64b520096bd28425f3ef45f31bc3320f4"
+start = 398
+end = 463
+sha256 = "908258e45a615fcfd575b9fec0f13fb705409942a278dcc55d3428f1e1212ec1"
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "non_zero_step_retains_exit_detail_and_log"
@@ -113,7 +113,7 @@ start = 301
 end = 318
 sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
 [[paths.probes]]
-line = 456
+line = 462
 column = 5
 text = "Ok(result)"
 
@@ -134,7 +134,7 @@ path = "src/verify/steps.rs"
 symbol = "run_configured_step"
 start = 18
 end = 131
-sha256 = "7d97f5fc813e6e77253a32c0374446f64b520096bd28425f3ef45f31bc3320f4"
+sha256 = "908258e45a615fcfd575b9fec0f13fb705409942a278dcc55d3428f1e1212ec1"
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "service_failure_does_not_skip_unrelated_steps"
@@ -219,9 +219,9 @@ assertions = ["assert!(!step.passed);", "Some(\"RESULT_ZERO\")"]
 [paths.source]
 path = "src/verify/steps.rs"
 symbol = "execute"
-start = 392
-end = 457
-sha256 = "7d97f5fc813e6e77253a32c0374446f64b520096bd28425f3ef45f31bc3320f4"
+start = 398
+end = 463
+sha256 = "908258e45a615fcfd575b9fec0f13fb705409942a278dcc55d3428f1e1212ec1"
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "parser_failure_marks_step_failed"
@@ -229,7 +229,7 @@ start = 347
 end = 380
 sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
 [[paths.probes]]
-line = 439
+line = 445
 column = 21
 text = "FailureCode::ResultZero"
 

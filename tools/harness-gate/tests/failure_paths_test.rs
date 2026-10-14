@@ -417,7 +417,7 @@ fn configured_runner_service_isolation_and_shards_match_the_executed_process() {
         for sharded in [false, true] {
             let root = fixture();
             let threads = if isolation == "shared" { 1 } else { 2 };
-            let runner = format!("\n[steps.runner]\nversion = 1\nkind = 'custom'\nthreads = {threads}\nthreads_env = 'PROBE_THREADS'\nargs = ['inserted']\nargs_position = 1\nresult_format = 'regex'\nisolation = '{isolation}'\n");
+            let runner = format!("\n[steps.runner]\nversion = 2\nkind = 'custom'\nthreads = {threads}\nthreads_env = 'PROBE_THREADS'\nthreads_args = ['--workers={{threads}}']\nargs = ['inserted']\nargs_position = 1\nresult_format = 'regex'\nisolation = '{isolation}'\n");
             let mut flow = FLOW.replace(
                 "timeout_secs = 20",
                 "timeout_secs = 20\nservices = ['fixture']\nremove_env = ['GH93_REMOVED']",
@@ -462,11 +462,16 @@ PY
             let metadata = &step["runner"];
             assert_eq!(
                 metadata["effective_args"],
-                serde_json::json!(["probe.sh", "inserted", "original"])
+                serde_json::json!([
+                    "probe.sh",
+                    "inserted",
+                    "original",
+                    format!("--workers={threads}")
+                ])
             );
             assert_eq!(
                 observed["args"],
-                serde_json::json!(["inserted", "original"])
+                serde_json::json!(["inserted", "original", format!("--workers={threads}")])
             );
             assert_eq!(observed["env"]["PROBE_SERVICE"], "fixture-value");
             assert_eq!(observed["env"]["PROBE_THREADS"], threads.to_string());

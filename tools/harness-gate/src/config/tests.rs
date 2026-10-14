@@ -149,10 +149,13 @@ fn versioned_runner_contract_accepts_explicit_isolation() {
         .find(|step| step.id == "rust.tests")
         .expect("rust tests step");
     step.runner = Some(RunnerConfig {
-        version: 1,
-        kind: "cargo-test".into(),
+        version: 2,
+        kind: "external-runner".into(),
         threads: Some(4),
-        threads_env: None,
+        threads_env: Some("RUST_TEST_THREADS".into()),
+        required_program: None,
+        threads_args: Vec::new(),
+        threads_args_after: None,
         args: vec!["--nocapture".into()],
         args_position: None,
         result_format: RunnerResultFormat::Junit,
@@ -171,10 +174,13 @@ fn runner_rejects_shared_isolation_for_multiple_workers() {
         .find(|step| step.id == "rust.tests")
         .expect("rust tests step");
     step.runner = Some(RunnerConfig {
-        version: 1,
-        kind: "cargo-test".into(),
+        version: 2,
+        kind: "external-runner".into(),
         threads: Some(2),
-        threads_env: None,
+        threads_env: Some("RUST_TEST_THREADS".into()),
+        required_program: None,
+        threads_args: Vec::new(),
+        threads_args_after: None,
         args: Vec::new(),
         args_position: None,
         result_format: RunnerResultFormat::Regex,
@@ -196,10 +202,13 @@ fn generic_runner_requires_an_explicit_thread_environment() {
         .find(|step| step.id == "rust.tests")
         .expect("rust tests step");
     step.runner = Some(RunnerConfig {
-        version: 1,
+        version: 2,
         kind: "generic".into(),
         threads: Some(2),
         threads_env: None,
+        required_program: None,
+        threads_args: Vec::new(),
+        threads_args_after: None,
         args: Vec::new(),
         args_position: None,
         result_format: RunnerResultFormat::Regex,
@@ -222,10 +231,13 @@ fn generic_runner_requires_an_explicit_thread_environment() {
 fn runner_contract_rejects_invalid_fields() {
     fn runner() -> RunnerConfig {
         RunnerConfig {
-            version: 1,
+            version: 2,
             kind: "generic".into(),
             threads: Some(1),
             threads_env: None,
+            required_program: None,
+            threads_args: Vec::new(),
+            threads_args_after: None,
             args: Vec::new(),
             args_position: None,
             result_format: RunnerResultFormat::Regex,
@@ -241,7 +253,7 @@ fn runner_contract_rejects_invalid_fields() {
         .expect("rust tests step");
 
     config.steps[step_index].runner = Some(RunnerConfig {
-        version: 2,
+        version: 99,
         ..runner()
     });
     assert!(config
@@ -251,7 +263,7 @@ fn runner_contract_rejects_invalid_fields() {
         .contains("runner version"));
 
     config.steps[step_index].runner = Some(RunnerConfig {
-        kind: "cargo-test".into(),
+        required_program: Some("cargo".into()),
         ..runner()
     });
     config.steps[step_index].program = "git".into();
@@ -438,10 +450,13 @@ fn runner_thread_environment_cannot_shadow_service_injection() {
         .expect("rust tests step");
     step.services = vec!["test-db".into()];
     step.runner = Some(RunnerConfig {
-        version: 1,
+        version: 2,
         kind: "generic".into(),
         threads: Some(2),
         threads_env: Some("RUST_TEST_THREADS".into()),
+        required_program: None,
+        threads_args: Vec::new(),
+        threads_args_after: None,
         args: Vec::new(),
         args_position: None,
         result_format: RunnerResultFormat::Regex,
@@ -1203,10 +1218,13 @@ fn external_step_diagnostics_cover_paths_logs_timeouts_and_references() {
 
 fn runner_fixture() -> RunnerConfig {
     RunnerConfig {
-        version: 1,
+        version: 2,
         kind: "generic".into(),
         threads: Some(1),
         threads_env: None,
+        required_program: None,
+        threads_args: Vec::new(),
+        threads_args_after: None,
         args: Vec::new(),
         args_position: None,
         result_format: RunnerResultFormat::Regex,
@@ -1218,7 +1236,7 @@ fn runner_fixture() -> RunnerConfig {
 fn runner_diagnostics_cover_version_kind_program_and_thread_contracts() {
     let mut config = repository_config();
     config.steps[0].runner = Some(RunnerConfig {
-        version: 2,
+        version: 99,
         ..runner_fixture()
     });
     assert_diagnostic(&config, "steps[0].runner.version", "HGCFG-RUNNER-VERSION");
@@ -1232,11 +1250,11 @@ fn runner_diagnostics_cover_version_kind_program_and_thread_contracts() {
 
     let mut config = repository_config();
     config.steps[0].runner = Some(RunnerConfig {
-        kind: "cargo-test".into(),
+        required_program: Some("cargo".into()),
         ..runner_fixture()
     });
     config.steps[0].program = "git".into();
-    assert_diagnostic(&config, "steps[0].runner.kind", "HGCFG-INVALID-FIELD");
+    assert_diagnostic(&config, "steps[0].runner", "HGCFG-INVALID-FIELD");
 
     let mut config = repository_config();
     config.steps[0].runner = Some(RunnerConfig {
@@ -1643,4 +1661,77 @@ fn configuration_documents_above_the_size_limit_are_rejected_before_parsing() {
         format!("{diagnostics}").contains("exceeds the size limit"),
         "{diagnostics}"
     );
+}
+
+#[test]
+fn runner_v2_declarations_fail_closed_without_name_exemptions() {
+    let mut config = repository_config();
+    for runner in [
+        RunnerConfig {
+            required_program: Some("".into()),
+            ..runner_fixture()
+        },
+        RunnerConfig {
+            required_program: Some("cargo\0".into()),
+            ..runner_fixture()
+        },
+        RunnerConfig {
+            threads_args: vec!["{threads}".into()],
+            threads_args_after: Some("{other}".into()),
+            ..runner_fixture()
+        },
+        RunnerConfig {
+            version: 1,
+            ..runner_fixture()
+        },
+        RunnerConfig {
+            kind: "cargo-test".into(),
+            threads: Some(2),
+            ..runner_fixture()
+        },
+        RunnerConfig {
+            threads_args: vec!["--workers".into()],
+            ..runner_fixture()
+        },
+        RunnerConfig {
+            threads: None,
+            threads_args: vec!["{threads}".into()],
+            ..runner_fixture()
+        },
+        RunnerConfig {
+            threads_args: vec!["{other}".into(), "{threads}".into()],
+            ..runner_fixture()
+        },
+        RunnerConfig {
+            threads_args_after: Some("--".into()),
+            ..runner_fixture()
+        },
+        RunnerConfig {
+            threads_args: vec!["{threads}".into()],
+            threads_args_after: Some("".into()),
+            ..runner_fixture()
+        },
+        RunnerConfig {
+            threads_args: vec!["{threads}\0".into()],
+            ..runner_fixture()
+        },
+    ] {
+        config.steps[0].runner = Some(runner);
+        assert!(config.validate().is_err());
+        let source = toml::to_string(&config).unwrap();
+        assert!(FlowConfig::from_source_with_diagnostics(&source, None, None).is_err());
+    }
+    for kind in ["cargo-test", "never-seen-before"] {
+        config.steps[0].runner = Some(RunnerConfig {
+            kind: kind.into(),
+            threads: Some(2),
+            required_program: Some(config.steps[0].program.clone()),
+            threads_args: vec!["--workers={threads}".into()],
+            threads_args_after: Some("SEP".into()),
+            ..runner_fixture()
+        });
+        config.validate().unwrap();
+        let source = toml::to_string(&config).unwrap();
+        FlowConfig::from_source_with_diagnostics(&source, None, None).unwrap();
+    }
 }

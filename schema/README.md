@@ -46,6 +46,10 @@ requires a new schema version and an ADR. The audit rules file has its own
 migration contract; see the
 [audit v2 migration section](../docs/configuration.md#audit-v2-migration).
 
+The nested runner contract is version 2. Runner v1 requires explicit external
+migration; see [ADR 0054](../docs/adr/0054-declarative-runner-inputs.md).
+The enclosing flow contract remains version 2.
+
 Invocation metadata is a separate supplemental record: `invocation.json`
 declares `metadata_version: 2`; records without that field are legacy version 1.
 The compatibility `toolchain` string is now `"unknown"`, and checkout `commit`

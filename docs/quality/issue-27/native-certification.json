@@ -1,0 +1,248 @@
+{
+  "schema": "runner-validation-certification/v1",
+  "base_commit": "fbf580917b1c0bf16ef7b700680b407a4a5c8db9",
+  "candidate_source_sha256": "3e2596f40a714340046a9ec83202ff91cfc57facf7dcd31b78d16638d6abcd4d",
+  "series": {
+    "analyzer": "harness-gate-rust-measure/0.3.1",
+    "rule": "mccabe-rust-3/1",
+    "instrumentation": "closure-black-box/1",
+    "mapping": "insertions-utf8/1",
+    "selection": "gh315-review-low/1",
+    "configuration": "compiler-target-production/4"
+  },
+  "configuration": {
+    "target": "x86_64-unknown-linux-gnu",
+    "cfg": [
+      "debug_assertions",
+      "panic=\"unwind\"",
+      "target_abi=\"\"",
+      "target_arch=\"x86_64\"",
+      "target_endian=\"little\"",
+      "target_env=\"gnu\"",
+      "target_family=\"unix\"",
+      "target_feature=\"fxsr\"",
+      "target_feature=\"sse\"",
+      "target_feature=\"sse2\"",
+      "target_has_atomic=\"16\"",
+      "target_has_atomic=\"32\"",
+      "target_has_atomic=\"64\"",
+      "target_has_atomic=\"8\"",
+      "target_has_atomic=\"ptr\"",
+      "target_has_atomic_primitive_alignment=\"16\"",
+      "target_has_atomic_primitive_alignment=\"32\"",
+      "target_has_atomic_primitive_alignment=\"64\"",
+      "target_has_atomic_primitive_alignment=\"8\"",
+      "target_has_atomic_primitive_alignment=\"ptr\"",
+      "target_os=\"linux\"",
+      "target_pointer_width=\"64\"",
+      "target_vendor=\"unknown\"",
+      "unix"
+    ]
+  },
+  "measurer_sha256": "f17ec90502005ddb161143cd5683a292fa1ccde7f4715291e0a0f82ae5b519ad",
+  "artifacts_sha256": {
+    "manifest.json": "03615930b89ccbfc1c54339560fcbcd906b161132391189e1206504b9064153e",
+    "coverage.json": "8e4321362ec3eab0ae1fc51fe99d1223fa3bb35b738661c69f53cb4bccbf608e",
+    "risk.json": "506e034977a3fe01aaa0ef123c169fb9c21cdaae18d43971e5f3243e8379d0a8"
+  },
+  "raw_artifacts": "/home/gem/dev-tmp/gatehouse-issue27-certification",
+  "native_platform": "Linux amd64",
+  "focused_tests": 64,
+  "functions": [
+    {
+      "source": "config/validation/steps.rs",
+      "name": "validate_runner_diagnostic",
+      "kind": "function",
+      "span": [
+        353,
+        1,
+        447,
+        2
+      ],
+      "syntax_sha256": "b7ce8ce8bfd3a859fd64c19d909559cc72dca41c3d07d9cdbc205508429460f8",
+      "source_sha256": "3e2596f40a714340046a9ec83202ff91cfc57facf7dcd31b78d16638d6abcd4d",
+      "cc": 17,
+      "lines": {
+        "covered": 90,
+        "count": 90,
+        "percent": 100.0
+      },
+      "regions": {
+        "covered": 73,
+        "count": 73,
+        "percent": 100.0
+      },
+      "crap_exact": [
+        17,
+        1
+      ],
+      "passed": true
+    },
+    {
+      "source": "config/validation/steps.rs",
+      "name": "validate_runner",
+      "kind": "function",
+      "span": [
+        525,
+        1,
+        587,
+        2
+      ],
+      "syntax_sha256": "c2599756540ec33584dec605f5a0bc90815164216fd807d3d6ce2a47790e6362",
+      "source_sha256": "3e2596f40a714340046a9ec83202ff91cfc57facf7dcd31b78d16638d6abcd4d",
+      "cc": 17,
+      "lines": {
+        "covered": 39,
+        "count": 39,
+        "percent": 100.0
+      },
+      "regions": {
+        "covered": 55,
+        "count": 57,
+        "percent": 96.49122807017544
+      },
+      "crap_exact": [
+        17,
+        1
+      ],
+      "passed": true
+    },
+    {
+      "source": "config/validation/steps.rs",
+      "name": "validate_runner_declaration",
+      "kind": "function",
+      "span": [
+        590,
+        1,
+        620,
+        2
+      ],
+      "syntax_sha256": "0baea2c817b13f36abc7e7d01e5586aee7a31cde267effc3948178a3edc70c65",
+      "source_sha256": "3e2596f40a714340046a9ec83202ff91cfc57facf7dcd31b78d16638d6abcd4d",
+      "cc": 14,
+      "lines": {
+        "covered": 27,
+        "count": 29,
+        "percent": 93.10344827586206
+      },
+      "regions": {
+        "covered": 38,
+        "count": 42,
+        "percent": 90.47619047619048
+      },
+      "crap_exact": [
+        343014,
+        24389
+      ],
+      "passed": true
+    }
+  ],
+  "ast_targets": {
+    "x86_64-unknown-linux-gnu": [
+      {
+        "name": "validate_runner_diagnostic",
+        "kind": "function",
+        "span": [
+          353,
+          1,
+          447,
+          2
+        ],
+        "cc": 17
+      },
+      {
+        "name": "validate_runner",
+        "kind": "function",
+        "span": [
+          525,
+          1,
+          587,
+          2
+        ],
+        "cc": 17
+      },
+      {
+        "name": "validate_runner_declaration",
+        "kind": "function",
+        "span": [
+          590,
+          1,
+          620,
+          2
+        ],
+        "cc": 14
+      }
+    ],
+    "aarch64-apple-darwin": [
+      {
+        "name": "validate_runner_diagnostic",
+        "kind": "function",
+        "span": [
+          353,
+          1,
+          447,
+          2
+        ],
+        "cc": 17
+      },
+      {
+        "name": "validate_runner",
+        "kind": "function",
+        "span": [
+          525,
+          1,
+          587,
+          2
+        ],
+        "cc": 17
+      },
+      {
+        "name": "validate_runner_declaration",
+        "kind": "function",
+        "span": [
+          590,
+          1,
+          620,
+          2
+        ],
+        "cc": 14
+      }
+    ],
+    "x86_64-pc-windows-msvc": [
+      {
+        "name": "validate_runner_diagnostic",
+        "kind": "function",
+        "span": [
+          353,
+          1,
+          447,
+          2
+        ],
+        "cc": 17
+      },
+      {
+        "name": "validate_runner",
+        "kind": "function",
+        "span": [
+          525,
+          1,
+          587,
+          2
+        ],
+        "cc": 17
+      },
+      {
+        "name": "validate_runner_declaration",
+        "kind": "function",
+        "span": [
+          590,
+          1,
+          620,
+          2
+        ],
+        "cc": 14
+      }
+    ]
+  },
+  "scope": "Focused certification of added inventory path; complete same-series base/head hosted measurement remains required."
+}

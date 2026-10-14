@@ -363,7 +363,7 @@ fn validate_runner_diagnostic(
         return Err(ValidationIssue::new(
             ConfigIssueKind::RunnerVersion,
             format!("{base}.runner.version"),
-            "runner version is unsupported",
+            "runner version is unsupported; migrate to runner v2 using GateProbes tools/runners/migrate.py",
         ));
     }
     check(
@@ -371,13 +371,11 @@ fn validate_runner_diagnostic(
         ConfigIssueKind::InvalidField,
         format!("{base}.runner.kind"),
     )?;
-    if runner.kind == "cargo-test" && step.program != "cargo" {
-        return Err(ValidationIssue::new(
-            ConfigIssueKind::InvalidField,
-            format!("{base}.runner.kind"),
-            "cargo-test runner requires program cargo",
-        ));
-    }
+    check(
+        validate_runner_declaration(step, runner),
+        ConfigIssueKind::InvalidField,
+        format!("{base}.runner"),
+    )?;
     if let Some(threads) = runner.threads {
         if threads == 0 || threads > 256 {
             return Err(ValidationIssue::new(
@@ -409,13 +407,13 @@ fn validate_runner_diagnostic(
         }
     }
     if runner.threads.is_some_and(|threads| threads > 1)
-        && runner.kind != "cargo-test"
         && runner.threads_env.is_none()
+        && runner.threads_args.is_empty()
     {
         return Err(ValidationIssue::new(
             ConfigIssueKind::InvalidField,
             format!("{base}.runner.threads_env"),
-            "runner threads requires threads_env",
+            "runner threads requires threads_env or threads_args",
         ));
     }
     if runner.threads.is_some_and(|threads| threads > 1)
@@ -534,12 +532,7 @@ fn validate_runner(config: &FlowConfig, step: &StepConfig, runner: &RunnerConfig
         );
     }
     validate_id("runner kind", &runner.kind)?;
-    if runner.kind == "cargo-test" && step.program != "cargo" {
-        bail!(
-            "step {:?} cargo-test runner requires program \"cargo\"",
-            step.id
-        );
-    }
+    validate_runner_declaration(step, runner)?;
     if let Some(threads) = runner.threads {
         if threads == 0 || threads > 256 {
             bail!(
@@ -561,11 +554,11 @@ fn validate_runner(config: &FlowConfig, step: &StepConfig, runner: &RunnerConfig
         }
     }
     if runner.threads.is_some_and(|threads| threads > 1)
-        && runner.kind != "cargo-test"
         && runner.threads_env.is_none()
+        && runner.threads_args.is_empty()
     {
         bail!(
-            "step {:?} runner threads requires threads_env unless kind is cargo-test",
+            "step {:?} runner threads requires threads_env or threads_args",
             step.id
         );
     }
@@ -591,6 +584,39 @@ fn validate_runner(config: &FlowConfig, step: &StepConfig, runner: &RunnerConfig
         &format!("step {} runner args", step.id),
         &runner.args,
     )
+}
+
+// These constraints depend only on declarations, never the runner ID.
+fn validate_runner_declaration(step: &StepConfig, runner: &RunnerConfig) -> Result<()> {
+    if let Some(program) = &runner.required_program {
+        if program.is_empty() || program.contains('\0') || &step.program != program {
+            bail!("runner requires program {program:?}");
+        }
+    }
+    if !runner.threads_args.is_empty() {
+        if runner.threads.is_none() {
+            bail!("runner threads_args requires threads");
+        }
+        if !runner
+            .threads_args
+            .iter()
+            .any(|arg| arg.contains("{threads}"))
+        {
+            bail!("runner threads_args must carry the {{threads}} budget");
+        }
+        for argument in &runner.threads_args {
+            let expanded = argument.replace("{threads}", "1");
+            if expanded.contains(['{', '}', '\0']) {
+                bail!("runner threads_args contains an unsupported template");
+            }
+        }
+    }
+    if let Some(token) = &runner.threads_args_after {
+        if runner.threads_args.is_empty() || token.is_empty() || token.contains(['{', '}', '\0']) {
+            bail!("runner threads_args_after requires thread arguments and a literal token");
+        }
+    }
+    Ok(())
 }
 
 pub(super) fn validate_arguments(config: &FlowConfig, owner: &str, args: &[String]) -> Result<()> {
