@@ -257,6 +257,27 @@ fn both() {
         with self.assertRaisesRegex(ValueError, 'incompatible base/head target configurations'):
             compare(base, head)
 
+    def test_scope_detection_inventory_and_instrumentation(self):
+        path = 'scope/detection.rs'
+        self.assertIn(path, SOURCE_FILES)
+        source = (ROOT / 'tools/harness-gate/src' / path).read_text(encoding='utf-8')
+        for target in ('x86_64-unknown-linux-gnu', 'aarch64-apple-darwin', 'x86_64-pc-windows-msvc'):
+            with self.subTest(target=target):
+                inventory = self.inventory(source, target)
+                symbols = inventory['symbols']
+                self.assertEqual([s['name'] for s in symbols if s['kind'] == 'function'],
+                                 ['detect', 'ensure_git_worktree'])
+                self.assertFalse(any(s['test'] for s in symbols))
+                transformed, edits = instrument(source, inventory)
+                reparsed = self.inventory(transformed, target)
+                self.assertEqual([s['name'] for s in reparsed['symbols']],
+                                 [s['name'] for s in symbols])
+                self.assertEqual([complexity(s['raw']) for s in reparsed['symbols']],
+                                 [complexity(s['raw']) for s in symbols])
+                self.assertTrue(all(s['kind'] != 'closure' for s in symbols))
+                self.assertEqual(edits, [])
+                self.assertEqual(transformed, source)
+
     def test_native_inventory_has_separate_identity_and_contracts(self):
         with tempfile.TemporaryDirectory() as temp:
             file = Path(temp) / "input.rs"
