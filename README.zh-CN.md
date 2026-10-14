@@ -29,13 +29,13 @@
 
 ## 发布状态
 
-**Core 0.4.9 已在 GitHub 发布。** 这是 GateHouse 拆分后的首个核心版本：生态
+**Core 0.4.9 已在 GitHub 与 crates.io 发布。** 这是 GateHouse 拆分后的首个核心版本：生态
 预设外置，核心发行清单仅包含 Core 二进制与元数据，采集器由 GateProbes 独立
 交付。安装见[0.4.9 发布指南](docs/releases/0.4.9.zh-CN.md)，公开验证见
 [交付回执](docs/releases/0.4.9-public-verification.md)。
 
-crates.io 发布因 GateHouse 缺少发布令牌而待完成，当前公开 crate 仍为 0.4.8。
-安装 Core 0.4.9 请使用下方 GitHub 二进制安装器。
+公开 crate 与原 `v0.4.9` 源码一致，并已通过全新 Linux registry 安装验证。
+详见[crate 验证回执](docs/releases/0.4.9-crate-public-verification.md)。
 
 本次保留[已接受的 Phase 1 基线](docs/benchmarks/phase-1/README.md)，旧 #346
 候选已在证据审查后拒绝采纳。历史 0.4.8 与插件资产保留原有身份；当前安装器
@@ -81,10 +81,16 @@ component、profile、命令、路径、parser 和 service 都来自 TOML。常�
 
 ## 安装
 
-### crates.io 发布待完成
+### 从 crates.io 安装
 
-Core 0.4.9 请使用下方 GitHub 安装器；当前 registry 仍为旧版 0.4.8。
-详见[交付状态](docs/release-status.md)。
+需要 Rust 1.88 或更新版本：
+
+```bash
+cargo install harness-gate --version 0.4.9 --locked
+```
+
+[发布与安装验证](docs/releases/0.4.9-crate-public-verification.md)记录了
+registry 摘要、原 tag 源码和全新 Linux 安装验证。
 
 ### 从 GitHub Release 安装（预编译二进制）
 

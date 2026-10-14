@@ -31,14 +31,14 @@ and [migration acceptance](docs/gatehouse-migration-acceptance.md).
 
 ## Release status
 
-**Core 0.4.9 is published on GitHub.** It is the first split Core release from
+**Core 0.4.9 is published on GitHub and crates.io.** It is the first split Core release from
 GateHouse: ecosystem presets are external and the Core release inventory
 contains only Core binaries and metadata. GateProbes delivers collectors
 independently. See the [release guide](docs/releases/0.4.9.zh-CN.md) and
 [public verification receipt](docs/releases/0.4.9-public-verification.md).
 
-crates.io publication is pending a GateHouse publishing token; the latest
-published crate remains 0.4.8. Use the GitHub binary installer for Core 0.4.9.
+The public crate matches the original `v0.4.9` source and passed a fresh Linux
+registry installation; see the [crate verification receipt](docs/releases/0.4.9-crate-public-verification.md).
 
 The accepted [Phase 1 baseline](docs/benchmarks/phase-1/README.md) is retained;
 the legacy #346 candidate was rejected after evidence review. Historical 0.4.8
@@ -91,10 +91,16 @@ actual collector/series. New metric semantics require separate contract review.
 
 ## Installation
 
-### Crates.io publication pending
+### Install from crates.io
 
-Core 0.4.9 is available from GitHub below. The registry still serves the earlier
-0.4.8 crate; see [publication status](docs/release-status.md).
+With Rust 1.88 or newer:
+
+```bash
+cargo install harness-gate --version 0.4.9 --locked
+```
+
+[Publication and installation verification](docs/releases/0.4.9-crate-public-verification.md)
+records the registry checksum, original tag source and fresh Linux smoke test.
 
 ### Install from GitHub Release (Pre-built Binaries)
 
