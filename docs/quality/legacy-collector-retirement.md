@@ -59,3 +59,14 @@ product decision and a reviewed measurement migration satisfying Engineering
 Policy section 10. It needs its own identity, approval and acceptance review.
 Copying this archive or the old production template is not that approval, and
 the native RC8 release does not waive the bundled-product hold.
+
+## Source cleanup after retirement (issue #13)
+
+The legacy packaging/signing/installer scripts and six delivery-test modules now
+reside byte-for-byte under `retired/legacy-collector/snapshot`, with a frozen
+manifest and the exact original source commit. Core release CI still executes
+all 64 original methods through `tools/release/tests/test_frozen_legacy.py`.
+The active migration-hold test continues reading the original archived YAML.
+The temporary test layout links shared protocols and Core tools to their single
+editable sources; it introduces no installed product or publication entry.
+See [the cleanup record](issue-13/README.md) for the per-file inventory and rollback.

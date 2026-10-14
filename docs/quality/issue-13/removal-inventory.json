@@ -1,0 +1,1432 @@
+{
+  "schema": "core-plugin-source-cleanup/v1",
+  "restore_commit": "da8e8a58a4ac5959dc0346b79bad4a4437b964cb",
+  "gateprobes_revision": "a762f0c4c7da3945367b870bccc39aac8069132f",
+  "accepted_handoff": "docs/quality/ci-plugin-test-handoff.json",
+  "paths": [
+    "tools/quality/rust-collector-runtime",
+    "tools/quality/rust-measure",
+    "tools/quality/rust-native-driver",
+    "tools/quality/rust-native-plugin",
+    "tools/quality/rust-source-risk",
+    "tools/quality/typescript-risk",
+    "tools/quality/http-json-contract",
+    "tools/quality/build_rust_collector.py",
+    "tools/quality/collect_typescript_contracts.py",
+    "tools/quality/rust_collector_contract.py",
+    "tools/quality/rust_collector_delivery.py",
+    "tools/quality/rust_collector_entry.py",
+    "tools/quality/rust_collector_project.py",
+    "tools/quality/rust_native.py",
+    "tools/quality/rust_native_classify.py",
+    "tools/quality/rust_native_config.py",
+    "tools/quality/rust_native_driver.py",
+    "tools/quality/rust_native_policy.py",
+    "tools/quality/rust_native_replay.py",
+    "tools/quality/typescript_acceptance.py",
+    "tools/quality/typescript_advisory.py",
+    "tools/quality/typescript_contracts.py",
+    "tools/quality/typescript_reference.py",
+    "tools/quality/typescript_semantics.py"
+  ],
+  "files": {
+    "tools/quality/build_rust_collector.py": {
+      "sha256": "cb5b2abf75c0ecd61f8c4a82ef9a026c763c14d448202fc164f9011fa82a7870",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/quality/build_rust_collector.py",
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/build_rust_collector.py"
+      ],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": "cb5b2abf75c0ecd61f8c4a82ef9a026c763c14d448202fc164f9011fa82a7870"
+    },
+    "tools/quality/collect_typescript_contracts.py": {
+      "sha256": "7bcc45f52f5a2d8fdebc6294523ed9101f33f10a9e3eaec8a87bcf31e75f82c0",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "7bcc45f52f5a2d8fdebc6294523ed9101f33f10a9e3eaec8a87bcf31e75f82c0"
+    },
+    "tools/quality/http-json-contract/LICENSE": {
+      "sha256": "5b9835780a3cd7518d7637c6730a26c1141d24a00a413364264c2a4091c0e6d9",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "LICENSE",
+        "plugins/http-json-contract/LICENSE",
+        "plugins/rust-measure/LICENSE",
+        "plugins/rust-native-plugin/LICENSE",
+        "plugins/rust-source-risk/LICENSE",
+        "plugins/typescript-risk/LICENSE"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "5b9835780a3cd7518d7637c6730a26c1141d24a00a413364264c2a4091c0e6d9"
+    },
+    "tools/quality/http-json-contract/README.md": {
+      "sha256": "faf3a461d7f23ccaebff4cdb41fe723c0cdaa52c6703072a00e2f09ea28976bd",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "faf3a461d7f23ccaebff4cdb41fe723c0cdaa52c6703072a00e2f09ea28976bd"
+    },
+    "tools/quality/http-json-contract/business.test.cjs": {
+      "sha256": "3a53c9bff28c74279a5beb9de26a62be98b3ab3b4a1d7749c108ebede00c306d",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/http-json-contract/business.test.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "3a53c9bff28c74279a5beb9de26a62be98b3ab3b4a1d7749c108ebede00c306d"
+    },
+    "tools/quality/http-json-contract/cli.cjs": {
+      "sha256": "a4c042caad8ad55850007c905697608f36d31b15913d5a710810a4001044cdba",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/http-json-contract/cli.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "a4c042caad8ad55850007c905697608f36d31b15913d5a710810a4001044cdba"
+    },
+    "tools/quality/http-json-contract/clients.cjs": {
+      "sha256": "de8fe3c9b83169aa0f9cfdc99bdd6fd16a8b0722c761719cf718fadc3b0a079b",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/http-json-contract/clients.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "de8fe3c9b83169aa0f9cfdc99bdd6fd16a8b0722c761719cf718fadc3b0a079b"
+    },
+    "tools/quality/http-json-contract/legacy-measure.cjs": {
+      "sha256": "8c53bfca159e7659fdba146a6d43919a4f7790677a144905fdb0b0fc50ebc45e",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/http-json-contract/legacy-measure.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "8c53bfca159e7659fdba146a6d43919a4f7790677a144905fdb0b0fc50ebc45e"
+    },
+    "tools/quality/http-json-contract/measure.cjs": {
+      "sha256": "68784d2faa75af66461aa1d87b92e95b657c8639d79055e55f273767ec1ed21b",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/http-json-contract/measure.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "68784d2faa75af66461aa1d87b92e95b657c8639d79055e55f273767ec1ed21b"
+    },
+    "tools/quality/http-json-contract/npm-shrinkwrap.json": {
+      "sha256": "a7a3625e87a356dcffe77aa5205218c9c8f838decdb5d8cbf596c705e221a164",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/http-json-contract/npm-shrinkwrap.json"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "a7a3625e87a356dcffe77aa5205218c9c8f838decdb5d8cbf596c705e221a164"
+    },
+    "tools/quality/http-json-contract/package.json": {
+      "sha256": "0e41e26d81c434ea45c151338549d9f658fae26fec3f6c9cc17ab5b6169a366f",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "0e41e26d81c434ea45c151338549d9f658fae26fec3f6c9cc17ab5b6169a366f"
+    },
+    "tools/quality/http-json-contract/project.cjs": {
+      "sha256": "4abc0644f5acdcee9b3d65cc5b6e9a9f4a2761375861132a054ef227d6cf5ea4",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/http-json-contract/project.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "4abc0644f5acdcee9b3d65cc5b6e9a9f4a2761375861132a054ef227d6cf5ea4"
+    },
+    "tools/quality/http-json-contract/protocol.cjs": {
+      "sha256": "58c5cd96bc550c7b8f208386e44bb7370cc6f70e3e6601bdf70e057072fe237e",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/http-json-contract/protocol.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "58c5cd96bc550c7b8f208386e44bb7370cc6f70e3e6601bdf70e057072fe237e"
+    },
+    "tools/quality/http-json-contract/schema.cjs": {
+      "sha256": "f8cd588ac2deac396d070e3f798aaad27919a8de2cc5f6fdfbba3957b054089a",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/http-json-contract/schema.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "f8cd588ac2deac396d070e3f798aaad27919a8de2cc5f6fdfbba3957b054089a"
+    },
+    "tools/quality/http-json-contract/strict-json.cjs": {
+      "sha256": "853cc56381c2ed275d5f6c4dd25a75ea80edca89e030b79bdc447f6258181d09",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/http-json-contract/strict-json.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "853cc56381c2ed275d5f6c4dd25a75ea80edca89e030b79bdc447f6258181d09"
+    },
+    "tools/quality/http-json-contract/test.cjs": {
+      "sha256": "82831c3dcc9e6ee86cb2540525703842f9aef699bbdafcd684d769b74fe2ef13",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/http-json-contract/test.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "82831c3dcc9e6ee86cb2540525703842f9aef699bbdafcd684d769b74fe2ef13"
+    },
+    "tools/quality/rust-collector-runtime/cc": {
+      "sha256": "79aaf8eafe6590db1883f0924fd394be5ec8a19a193f557ba5ac69e15ec0f755",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "79aaf8eafe6590db1883f0924fd394be5ec8a19a193f557ba5ac69e15ec0f755"
+    },
+    "tools/quality/rust-collector-runtime/harness-gate-rust-collector": {
+      "sha256": "d1f88ff60b1bab3c46b425cc4901fa1c6e3cd732d5d3008aa8b5264639459bc2",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "d1f88ff60b1bab3c46b425cc4901fa1c6e3cd732d5d3008aa8b5264639459bc2"
+    },
+    "tools/quality/rust-collector-runtime/native-wrapper": {
+      "sha256": "0994684d7fbeeb47836eaa03df4e022ec61f4478d5a2127ce2481e72604a43a4",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "0994684d7fbeeb47836eaa03df4e022ec61f4478d5a2127ce2481e72604a43a4"
+    },
+    "tools/quality/rust-collector-runtime/native_wrapper.py": {
+      "sha256": "a8ff050292426f9d1a974ce8724c82c6cc1df4700e745f406c6f76ee1ee33c38",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "a8ff050292426f9d1a974ce8724c82c6cc1df4700e745f406c6f76ee1ee33c38"
+    },
+    "tools/quality/rust-collector-runtime/pkg-config": {
+      "sha256": "8a22fdfd82c23fabb772b06ea23e8f3b824dd95f0f672751d6e0649a52bfbe65",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "8a22fdfd82c23fabb772b06ea23e8f3b824dd95f0f672751d6e0649a52bfbe65"
+    },
+    "tools/quality/rust-measure/Cargo.lock": {
+      "sha256": "bcdbad54b75431ca01275eb9a671334c5bf9008958d5edd1d16956d419db66a8",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust-measure/Cargo.lock",
+        "plugins/rust-measure/Cargo.lock"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "bcdbad54b75431ca01275eb9a671334c5bf9008958d5edd1d16956d419db66a8"
+    },
+    "tools/quality/rust-measure/Cargo.toml": {
+      "sha256": "b906c51b311e34150d15b55ad0d32ad8d65735baf3052f3c723c4bced4e98044",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/quality/rust-measure/Cargo.toml",
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust-measure/Cargo.toml"
+      ],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": "b906c51b311e34150d15b55ad0d32ad8d65735baf3052f3c723c4bced4e98044"
+    },
+    "tools/quality/rust-measure/README.md": {
+      "sha256": "9ee7e6564150ad4e4f7c9644ffbd4dd941b30ce25ba3f0bf7f13ca2c4c7d113b",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-measure/README.md"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "9ee7e6564150ad4e4f7c9644ffbd4dd941b30ce25ba3f0bf7f13ca2c4c7d113b"
+    },
+    "tools/quality/rust-measure/plugin.json": {
+      "sha256": "274a64a632ca22fae01b4f0f664e611838b251cd9ddc8cbb7789ac8637116cfa",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/quality/rust-measure/plugin.json",
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust-measure/plugin.json",
+        "plugins/rust-measure/plugin.json"
+      ],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": "274a64a632ca22fae01b4f0f664e611838b251cd9ddc8cbb7789ac8637116cfa"
+    },
+    "tools/quality/rust-measure/src/configuration.rs": {
+      "sha256": "cfd0b9f31855bdd492c456b6879752a067aa6e1c4c58148cac45db57afa2cf03",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust-measure/src/configuration.rs",
+        "plugins/rust-measure/src/configuration.rs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "cfd0b9f31855bdd492c456b6879752a067aa6e1c4c58148cac45db57afa2cf03"
+    },
+    "tools/quality/rust-measure/src/main.rs": {
+      "sha256": "6b9707ecca94913a7528092adb606b03d45a5bb778a25d387221a1d28f3309cc",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust-measure/src/main.rs",
+        "plugins/rust-measure/src/main.rs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "6b9707ecca94913a7528092adb606b03d45a5bb778a25d387221a1d28f3309cc"
+    },
+    "tools/quality/rust-measure/src/native.rs": {
+      "sha256": "25253d0c21200bff991460e1bd64eec4b5b9a776cb759d6f0b4fe2fa3e7f681d",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust-measure/src/native.rs",
+        "plugins/rust-measure/src/native.rs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "25253d0c21200bff991460e1bd64eec4b5b9a776cb759d6f0b4fe2fa3e7f681d"
+    },
+    "tools/quality/rust-native-driver/Cargo.lock": {
+      "sha256": "73e6a295bc1c4a4709e4efa684f1e00b5a5f0bcd04c51c7cebe66b04e8894666",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-native-driver/Cargo.lock"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "73e6a295bc1c4a4709e4efa684f1e00b5a5f0bcd04c51c7cebe66b04e8894666"
+    },
+    "tools/quality/rust-native-driver/Cargo.toml": {
+      "sha256": "3ccaa624ace4290a69b70b91bc0df99bd2462c86d8e620c2258e8709845a037d",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-native-driver/Cargo.toml"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "3ccaa624ace4290a69b70b91bc0df99bd2462c86d8e620c2258e8709845a037d"
+    },
+    "tools/quality/rust-native-driver/README.md": {
+      "sha256": "709b0a3f1b837c71511f7a1c6f2755312e411490689f63937720eab001b2e906",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "709b0a3f1b837c71511f7a1c6f2755312e411490689f63937720eab001b2e906"
+    },
+    "tools/quality/rust-native-driver/bootstrap.py": {
+      "sha256": "65104b19e33132eefcfad05c38385a03c9d04ea8961008b5798a6019f68916dd",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-native-driver/bootstrap.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "65104b19e33132eefcfad05c38385a03c9d04ea8961008b5798a6019f68916dd"
+    },
+    "tools/quality/rust-native-driver/src/main.rs": {
+      "sha256": "09240d9beaa8adaddf8782870a0a433d5293f314e46e7b6bbfb788d3efa6be8a",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-native-driver/src/main.rs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "09240d9beaa8adaddf8782870a0a433d5293f314e46e7b6bbfb788d3efa6be8a"
+    },
+    "tools/quality/rust-native-plugin/Cargo.toml": {
+      "sha256": "3b88937f5f9e781f81c88a2bb1abe977c26f147a58055724cc95b519f7835765",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "3b88937f5f9e781f81c88a2bb1abe977c26f147a58055724cc95b519f7835765"
+    },
+    "tools/quality/rust-native-plugin/README.md": {
+      "sha256": "a5001678a29834904566af4e08f68f4ee9347f9e8f7b34aed9b960231c3a9cd0",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "a5001678a29834904566af4e08f68f4ee9347f9e8f7b34aed9b960231c3a9cd0"
+    },
+    "tools/quality/rust-native-plugin/accept.py": {
+      "sha256": "bafb5290080e0260d3ad0c8e602c3a91c5339ed30da8b228e5628b1bb68c538f",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "bafb5290080e0260d3ad0c8e602c3a91c5339ed30da8b228e5628b1bb68c538f"
+    },
+    "tools/quality/rust-native-plugin/build.py": {
+      "sha256": "6fd96f96038a4d0f565fac489ad6bd3583bdefe63d205541b5b6b7920f125df0",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "6fd96f96038a4d0f565fac489ad6bd3583bdefe63d205541b5b6b7920f125df0"
+    },
+    "tools/quality/rust-native-plugin/launcher.rs": {
+      "sha256": "5be0b4eb535bde2cf3c64f51997ebd1b4a654bab0e36fc6df159a72d7a906e83",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-native-plugin/launcher.rs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "5be0b4eb535bde2cf3c64f51997ebd1b4a654bab0e36fc6df159a72d7a906e83"
+    },
+    "tools/quality/rust-native-plugin/locked_notices.py": {
+      "sha256": "b4c0bc48462d5b4106a9ff51b5d193fe4fc3a1f2ed4c7cc455d5a18633226319",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-native-plugin/locked_notices.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "b4c0bc48462d5b4106a9ff51b5d193fe4fc3a1f2ed4c7cc455d5a18633226319"
+    },
+    "tools/quality/rust-native-plugin/native_external.py": {
+      "sha256": "64b5bafc0cce945aa8ef670ea4309c04c2d7af4f11d6e9ecde1e92c191e439b6",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-native-plugin/native_external.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "64b5bafc0cce945aa8ef670ea4309c04c2d7af4f11d6e9ecde1e92c191e439b6"
+    },
+    "tools/quality/rust-source-risk/.gitignore": {
+      "sha256": "df7ee02ce7aaed623b63ce44a9567a7017ff8e4957c3b2ad6e6e8624128d4e7d",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/.gitignore"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "df7ee02ce7aaed623b63ce44a9567a7017ff8e4957c3b2ad6e6e8624128d4e7d"
+    },
+    "tools/quality/rust-source-risk/LICENSE": {
+      "sha256": "5b9835780a3cd7518d7637c6730a26c1141d24a00a413364264c2a4091c0e6d9",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "LICENSE",
+        "plugins/http-json-contract/LICENSE",
+        "plugins/rust-measure/LICENSE",
+        "plugins/rust-native-plugin/LICENSE",
+        "plugins/rust-source-risk/LICENSE",
+        "plugins/typescript-risk/LICENSE"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "5b9835780a3cd7518d7637c6730a26c1141d24a00a413364264c2a4091c0e6d9"
+    },
+    "tools/quality/rust-source-risk/README.md": {
+      "sha256": "823e2ef8229089b222f8d3fe4cbab90b6ed102c8a7b28a8ee52c111403d5b019",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "823e2ef8229089b222f8d3fe4cbab90b6ed102c8a7b28a8ee52c111403d5b019"
+    },
+    "tools/quality/rust-source-risk/acceptance.py": {
+      "sha256": "069b92d51dbe8a0d8d2a805198b912352e608e49cdb8fc0b8bfac774e6a6cf19",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/acceptance.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "069b92d51dbe8a0d8d2a805198b912352e608e49cdb8fc0b8bfac774e6a6cf19"
+    },
+    "tools/quality/rust-source-risk/ast/Cargo.lock": {
+      "sha256": "9ac91ee39be0492a04a3b227127c493b501ca1a578292ff35bc252ab52616c09",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/ast/Cargo.lock"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "9ac91ee39be0492a04a3b227127c493b501ca1a578292ff35bc252ab52616c09"
+    },
+    "tools/quality/rust-source-risk/ast/Cargo.toml": {
+      "sha256": "8cd71f4c82fdd9c4baf2c95a42f2cd2d2cb6b0b16d49d667dc4bbc256efd32a7",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/ast/Cargo.toml"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "8cd71f4c82fdd9c4baf2c95a42f2cd2d2cb6b0b16d49d667dc4bbc256efd32a7"
+    },
+    "tools/quality/rust-source-risk/ast/src/main.rs": {
+      "sha256": "f4ba1cecd19cd73104f7d32e21dfcac58202ac5f02dc8272c78f27ce818d1673",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/ast/src/main.rs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "f4ba1cecd19cd73104f7d32e21dfcac58202ac5f02dc8272c78f27ce818d1673"
+    },
+    "tools/quality/rust-source-risk/ast/src/select.rs": {
+      "sha256": "50b0b2aad436eef27781db03c09bda6bc37cf56302f35eea067383729eefb60d",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/ast/src/select.rs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "50b0b2aad436eef27781db03c09bda6bc37cf56302f35eea067383729eefb60d"
+    },
+    "tools/quality/rust-source-risk/capture.py": {
+      "sha256": "06de8e00a4efd77b5efafa80b625532e8d6f4e3844f3131a743ded253ee6c5de",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/capture.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "06de8e00a4efd77b5efafa80b625532e8d6f4e3844f3131a743ded253ee6c5de"
+    },
+    "tools/quality/rust-source-risk/fixtures/closure_without_counter.rs": {
+      "sha256": "356f4f8771e80ce01790e1cc8ff83799281e73aac254114ac042cddb8c0bca08",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/fixtures/closure_without_counter.rs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "356f4f8771e80ce01790e1cc8ff83799281e73aac254114ac042cddb8c0bca08"
+    },
+    "tools/quality/rust-source-risk/fixtures/closures.rs": {
+      "sha256": "9adc005a9e6f16eb7ea1a44f2813c742f19a139f493aa512fd8de9e047f53ee6",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/fixtures/closures.rs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "9adc005a9e6f16eb7ea1a44f2813c742f19a139f493aa512fd8de9e047f53ee6"
+    },
+    "tools/quality/rust-source-risk/measure.py": {
+      "sha256": "3e5fd31b01f81cabf2d3c1394cd5b267928c41af795acf3ae06f309598c626df",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/measure.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "3e5fd31b01f81cabf2d3c1394cd5b267928c41af795acf3ae06f309598c626df"
+    },
+    "tools/quality/rust-source-risk/plugin.json": {
+      "sha256": "17b6f71b6da0559abe53102b746fbcb71d369689d28f81ed08ba60b1586dd367",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/plugin.json"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "17b6f71b6da0559abe53102b746fbcb71d369689d28f81ed08ba60b1586dd367"
+    },
+    "tools/quality/rust-source-risk/plugin.py": {
+      "sha256": "bbbb40a12e103daa4cb41778e483dc33d39a3ba223413fdc175f2faa99bb2ba2",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/plugin.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "bbbb40a12e103daa4cb41778e483dc33d39a3ba223413fdc175f2faa99bb2ba2"
+    },
+    "tools/quality/rust-source-risk/test_closures.py": {
+      "sha256": "f9a428ac4eea03895be7aaaae35b2097728078e833bb7a28935c32e157693fff",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/test_closures.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "f9a428ac4eea03895be7aaaae35b2097728078e833bb7a28935c32e157693fff"
+    },
+    "tools/quality/rust-source-risk/test_compressed_artifacts.py": {
+      "sha256": "99b7c33a338802ceaa4c36d996efa4c0f041dadf5044ecf7cfc4c9215d4a740a",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/test_compressed_artifacts.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "99b7c33a338802ceaa4c36d996efa4c0f041dadf5044ecf7cfc4c9215d4a740a"
+    },
+    "tools/quality/rust-source-risk/test_measure.py": {
+      "sha256": "81d8f2d2b3dbdb1b88ec75783e20e09cc299de6c37bc3103d2e966ff4f326a46",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/test_measure.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "81d8f2d2b3dbdb1b88ec75783e20e09cc299de6c37bc3103d2e966ff4f326a46"
+    },
+    "tools/quality/rust-source-risk/test_preflight.py": {
+      "sha256": "e241a7b0f282ec9c37b7634dbf5e9b72139b05d7bd65e7d9e36e2d74692c6bc1",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/test_preflight.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "e241a7b0f282ec9c37b7634dbf5e9b72139b05d7bd65e7d9e36e2d74692c6bc1"
+    },
+    "tools/quality/rust-source-risk/test_protocol.py": {
+      "sha256": "227efb8ed0dcbae6821ffa52e0790ebcb6414e4773de9ef1915484f55f5d7142",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/test_protocol.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "227efb8ed0dcbae6821ffa52e0790ebcb6414e4773de9ef1915484f55f5d7142"
+    },
+    "tools/quality/rust-source-risk/test_toolchain_compatibility.py": {
+      "sha256": "5437a95536d44bdf25b6d4873aad9f7dddb5f116a87a4b325d255e700899d0ab",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-source-risk/test_toolchain_compatibility.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "5437a95536d44bdf25b6d4873aad9f7dddb5f116a87a4b325d255e700899d0ab"
+    },
+    "tools/quality/rust_collector_contract.py": {
+      "sha256": "9d9aa499cbed81293980c57c4ef96fd8b350ccb12acdeddf0b39f84115c62d71",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/quality/rust_collector_contract.py",
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust_collector_contract.py",
+        "plugins/rust-native-plugin/rust_collector_contract.py"
+      ],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": "9d9aa499cbed81293980c57c4ef96fd8b350ccb12acdeddf0b39f84115c62d71"
+    },
+    "tools/quality/rust_collector_delivery.py": {
+      "sha256": "bbfabb192a8534ae31d9678b106a6a9758dc9c6fa31c45baff2d213bed14efd9",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/quality/rust_collector_delivery.py",
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust_collector_delivery.py",
+        "plugins/rust-native-plugin/rust_collector_delivery.py"
+      ],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": "bbfabb192a8534ae31d9678b106a6a9758dc9c6fa31c45baff2d213bed14efd9"
+    },
+    "tools/quality/rust_collector_entry.py": {
+      "sha256": "d13233de8cb94692bd916ef9e9c0f86ac0ebb39fbc81d30e9fd6883fc24cbdc5",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust_collector_entry.py",
+        "plugins/rust-native-plugin/rust_collector_entry.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "d13233de8cb94692bd916ef9e9c0f86ac0ebb39fbc81d30e9fd6883fc24cbdc5"
+    },
+    "tools/quality/rust_collector_project.py": {
+      "sha256": "b9873d9fab94c88f7eb1638ea845d7a7d5093af6a0d8eef2b6e1c53be0e22b07",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust_collector_project.py",
+        "plugins/rust-native-plugin/rust_collector_project.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "b9873d9fab94c88f7eb1638ea845d7a7d5093af6a0d8eef2b6e1c53be0e22b07"
+    },
+    "tools/quality/rust_native.py": {
+      "sha256": "cafd5670a7d040f2beb7dbc5f5880825391bc19a6ccafece30e7bcd6b0ea5767",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust_native.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "cafd5670a7d040f2beb7dbc5f5880825391bc19a6ccafece30e7bcd6b0ea5767"
+    },
+    "tools/quality/rust_native_classify.py": {
+      "sha256": "b952ae1c7c5ed335013387e314898cccacd813720c200ddcdffdba2dc08916e7",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust_native_classify.py",
+        "plugins/rust-native-plugin/rust_native_classify.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "b952ae1c7c5ed335013387e314898cccacd813720c200ddcdffdba2dc08916e7"
+    },
+    "tools/quality/rust_native_config.py": {
+      "sha256": "4e1c80301839111098ffa17fb27830aabdd253f3088e0541b0884b24fb24edef",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust_native_config.py",
+        "plugins/rust-native-plugin/rust_native_config.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "4e1c80301839111098ffa17fb27830aabdd253f3088e0541b0884b24fb24edef"
+    },
+    "tools/quality/rust_native_driver.py": {
+      "sha256": "52c717a76e9e45d5e1524654312ed513872a30f32d545c67e9451b0fca9ae93b",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/quality/rust_native_driver.py",
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust_native_driver.py",
+        "plugins/rust-native-plugin/rust_native_driver.py"
+      ],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": "52c717a76e9e45d5e1524654312ed513872a30f32d545c67e9451b0fca9ae93b"
+    },
+    "tools/quality/rust_native_policy.py": {
+      "sha256": "7d44632b9f82284628ba6fe1742823b390644632a482a80f2bf0decd317cbcda",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/rust_native_policy.py",
+        "plugins/rust-native-plugin/rust_native_policy.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "7d44632b9f82284628ba6fe1742823b390644632a482a80f2bf0decd317cbcda"
+    },
+    "tools/quality/rust_native_replay.py": {
+      "sha256": "a09d13ec1ae36919a9622e518d21c3fa37ac693f031b2a6bfc3ae9425d03bee9",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "a09d13ec1ae36919a9622e518d21c3fa37ac693f031b2a6bfc3ae9425d03bee9"
+    },
+    "tools/quality/tests/test_native_artifact_paths.py": {
+      "sha256": "970522363180ddd259378a04fec48a0c654f076f69f98c9f68e1a0bfef5f5570",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "970522363180ddd259378a04fec48a0c654f076f69f98c9f68e1a0bfef5f5570"
+    },
+    "tools/quality/tests/test_rust_collector_contract.py": {
+      "sha256": "7e58f991221785996da3849597e1eb9eef93f2495e0ff5b7f2f969d26c809f47",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/quality/tests/test_rust_collector_contract.py",
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/tests/test_rust_collector_contract.py"
+      ],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": "7e58f991221785996da3849597e1eb9eef93f2495e0ff5b7f2f969d26c809f47"
+    },
+    "tools/quality/tests/test_rust_collector_delivery.py": {
+      "sha256": "e9089f217ae2b8c5c7453f4854f02b5d8509959725d83f36bb11952597e55e54",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/tests/test_rust_collector_delivery.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "e9089f217ae2b8c5c7453f4854f02b5d8509959725d83f36bb11952597e55e54"
+    },
+    "tools/quality/tests/test_rust_collector_project.py": {
+      "sha256": "456eba2acfb29f002039d94d929eea6359eb21aec35d2274ebc51ba7b5ea49e7",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/tests/test_rust_collector_project.py",
+        "plugins/rust-native-plugin/tests/test_rust_collector_project.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "456eba2acfb29f002039d94d929eea6359eb21aec35d2274ebc51ba7b5ea49e7"
+    },
+    "tools/quality/tests/test_rust_collector_runtime.py": {
+      "sha256": "8c1edfaad51f3bd6d98666c5290acdafbab82fe980f611a41ab9f03df221dd49",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/tests/test_rust_collector_runtime.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "8c1edfaad51f3bd6d98666c5290acdafbab82fe980f611a41ab9f03df221dd49"
+    },
+    "tools/quality/tests/test_rust_native.py": {
+      "sha256": "0528d2884bc6d85f52cd2de54ad11d920482e493f8bead0aa4e93fd4c5706aa1",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/tests/test_rust_native.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "0528d2884bc6d85f52cd2de54ad11d920482e493f8bead0aa4e93fd4c5706aa1"
+    },
+    "tools/quality/tests/test_rust_native_classify.py": {
+      "sha256": "2a17af6780549c2dd22931746322147d0827f3bf49f00db5956d33762e2a0182",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "2a17af6780549c2dd22931746322147d0827f3bf49f00db5956d33762e2a0182"
+    },
+    "tools/quality/tests/test_rust_native_driver.py": {
+      "sha256": "71e523d8c829bb476483ddb35b825e93a086eb9d8e1a5f2bbaf7575b9091bcc7",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/rust-native-plugin/tests/test_rust_native_driver.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "71e523d8c829bb476483ddb35b825e93a086eb9d8e1a5f2bbaf7575b9091bcc7"
+    },
+    "tools/quality/tests/test_typescript_acceptance.py": {
+      "sha256": "f7883f72732e115408f9c7d63bec293e1cc227a0f23488b96eb51dab82d3b32c",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_acceptance.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "f7883f72732e115408f9c7d63bec293e1cc227a0f23488b96eb51dab82d3b32c"
+    },
+    "tools/quality/tests/test_typescript_advisory.py": {
+      "sha256": "4d67af9a2bcc9e0e4414ee6fb49d3ffd9a1a26a3cfaf25e826c781d26982a506",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_advisory.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "4d67af9a2bcc9e0e4414ee6fb49d3ffd9a1a26a3cfaf25e826c781d26982a506"
+    },
+    "tools/quality/tests/test_typescript_contracts.py": {
+      "sha256": "4cc116aeaedd251cd0901cc44dd59e1198bca1c8f6780d05ec1ac5c754bde02d",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_contracts.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "4cc116aeaedd251cd0901cc44dd59e1198bca1c8f6780d05ec1ac5c754bde02d"
+    },
+    "tools/quality/tests/test_typescript_reference.py": {
+      "sha256": "eb8cf4a15a741e32ce0b2d4ebf0ee5f30790da37c38ea1b6317d72cc9f55b642",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_reference.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "eb8cf4a15a741e32ce0b2d4ebf0ee5f30790da37c38ea1b6317d72cc9f55b642"
+    },
+    "tools/quality/tests/test_typescript_semantics.py": {
+      "sha256": "b98e9fe1bf1fdaa7d64cc4515d0102084a76e1f93509e3d5c4ceda8c798b675f",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/tests/test_typescript_semantics.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "b98e9fe1bf1fdaa7d64cc4515d0102084a76e1f93509e3d5c4ceda8c798b675f"
+    },
+    "tools/quality/typescript-risk/LICENSE": {
+      "sha256": "5b9835780a3cd7518d7637c6730a26c1141d24a00a413364264c2a4091c0e6d9",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "LICENSE",
+        "plugins/http-json-contract/LICENSE",
+        "plugins/rust-measure/LICENSE",
+        "plugins/rust-native-plugin/LICENSE",
+        "plugins/rust-source-risk/LICENSE",
+        "plugins/typescript-risk/LICENSE"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "5b9835780a3cd7518d7637c6730a26c1141d24a00a413364264c2a4091c0e6d9"
+    },
+    "tools/quality/typescript-risk/README.md": {
+      "sha256": "506e9819a526eb7dcffbdb57f715949aa7c8bf07088f9eb68ace829bb95ee71f",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "506e9819a526eb7dcffbdb57f715949aa7c8bf07088f9eb68ace829bb95ee71f"
+    },
+    "tools/quality/typescript-risk/cli.cjs": {
+      "sha256": "bb853a3fcc291d1323926759275c00853df71afbefe301c5bb6a8cfdcb03a241",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/typescript-risk/cli.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "bb853a3fcc291d1323926759275c00853df71afbefe301c5bb6a8cfdcb03a241"
+    },
+    "tools/quality/typescript-risk/measure.cjs": {
+      "sha256": "fc2ebbac4bc53a69ff52728d5e9aac041e065ca64c3011727b4de25969ce3461",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/typescript-risk/measure.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "fc2ebbac4bc53a69ff52728d5e9aac041e065ca64c3011727b4de25969ce3461"
+    },
+    "tools/quality/typescript-risk/npm-shrinkwrap.json": {
+      "sha256": "8ce31dd48b2892a551af822fa97b0f9bdb579e8cbcbd6a1ce4c92788dcfdd92e",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/typescript-risk/npm-shrinkwrap.json"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "8ce31dd48b2892a551af822fa97b0f9bdb579e8cbcbd6a1ce4c92788dcfdd92e"
+    },
+    "tools/quality/typescript-risk/package.json": {
+      "sha256": "2d6eab71d6d92c07841a85fb5c6d8893125ae2aac4f741b3a4d583afe32df25b",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/typescript-risk/package.json"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "2d6eab71d6d92c07841a85fb5c6d8893125ae2aac4f741b3a4d583afe32df25b"
+    },
+    "tools/quality/typescript-risk/plugin.json": {
+      "sha256": "ba6be759693847020ebcc613e065aa4b8f43eef323dbbda5a4778350617b2c0d",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/typescript-risk/plugin.json"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "ba6be759693847020ebcc613e065aa4b8f43eef323dbbda5a4778350617b2c0d"
+    },
+    "tools/quality/typescript-risk/project.cjs": {
+      "sha256": "cdbc09d3a332df4ce927f7ef63842c244a5e9b3d0f1de4a70901ad7ed5435fad",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/typescript-risk/project.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "cdbc09d3a332df4ce927f7ef63842c244a5e9b3d0f1de4a70901ad7ed5435fad"
+    },
+    "tools/quality/typescript-risk/protocol.cjs": {
+      "sha256": "09575a6b7d9de8f86bd6ac4323d04c7a072f158e1338806058e5e83d8b644d26",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/typescript-risk/protocol.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "09575a6b7d9de8f86bd6ac4323d04c7a072f158e1338806058e5e83d8b644d26"
+    },
+    "tools/quality/typescript-risk/strict-json.cjs": {
+      "sha256": "4ff65921404282e6caf8d9e289545a1b344545de3d56429ed62041354a009d43",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/typescript-risk/strict-json.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "4ff65921404282e6caf8d9e289545a1b344545de3d56429ed62041354a009d43"
+    },
+    "tools/quality/typescript-risk/test-core.cjs": {
+      "sha256": "86f4cb43c2b8c0cc279695d8c6265ce7c1106521b50ad3ebb5675fa1a1cc76d9",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/typescript-risk/test-core.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "86f4cb43c2b8c0cc279695d8c6265ce7c1106521b50ad3ebb5675fa1a1cc76d9"
+    },
+    "tools/quality/typescript-risk/test.cjs": {
+      "sha256": "38ac62212eb90fa788de259000706a12b47f1c98d4199e494d95ab77c251ebb8",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "plugins/typescript-risk/test.cjs"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "38ac62212eb90fa788de259000706a12b47f1c98d4199e494d95ab77c251ebb8"
+    },
+    "tools/quality/typescript_acceptance.py": {
+      "sha256": "73d3f5a6cfb65b162863074c23815a6044fde64bd578423316e68503bb180342",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/typescript_acceptance.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "73d3f5a6cfb65b162863074c23815a6044fde64bd578423316e68503bb180342"
+    },
+    "tools/quality/typescript_advisory.py": {
+      "sha256": "2f1bb5b82b5b83717db499240c84028d6c9a9a77bdcd1ae5b4d6d0033c9ab3d5",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/typescript_advisory.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "2f1bb5b82b5b83717db499240c84028d6c9a9a77bdcd1ae5b4d6d0033c9ab3d5"
+    },
+    "tools/quality/typescript_contracts.py": {
+      "sha256": "be30cd166091ab263cf344620fdaaedd3cfaa7a4ff61c0f3cdd971606b3637e9",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/typescript_contracts.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "be30cd166091ab263cf344620fdaaedd3cfaa7a4ff61c0f3cdd971606b3637e9"
+    },
+    "tools/quality/typescript_reference.py": {
+      "sha256": "347ec0c980e77d519a5b956af49762f6be9a3d15d6d03a8ad697ded1186b490b",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/typescript_reference.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "347ec0c980e77d519a5b956af49762f6be9a3d15d6d03a8ad697ded1186b490b"
+    },
+    "tools/quality/typescript_semantics.py": {
+      "sha256": "71ac267b84ca2c2cb24f88ec0d03fd05df84d63d61687f40d3eea0cd642647bc",
+      "owner": "GateProbes",
+      "disposition": "deleted-after-accepted-handoff",
+      "frozen_path": null,
+      "gateprobes_same_bytes": [
+        "compatibility/legacy-core/snapshot/tools/quality/typescript_semantics.py"
+      ],
+      "prior_consumer": "accepted delegated plugin tests; Core uses pinned artifacts",
+      "accepted_transferred_sha256": "71ac267b84ca2c2cb24f88ec0d03fd05df84d63d61687f40d3eea0cd642647bc"
+    },
+    "tools/release/bootstrap_collector.sh": {
+      "sha256": "0970a1222920198b6c6cdce253effdb2e71fda09534d45c08310aee1b0dc3195",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/bootstrap_collector.sh",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/build_collector_bootstrap.py": {
+      "sha256": "9c54a8b4bf92e52cf6bf02346032e348bbad2dfedc5d597c11b145ffb285911e",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/build_collector_bootstrap.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/build_user_installer.py": {
+      "sha256": "86877bafdd43166adccc43c8e9b723c9fed80207c4c41c9d4158d2f4533abc89",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/build_user_installer.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/collector_assets.py": {
+      "sha256": "0243f894c49dcd639c60b720adb2a688c3d966acb2f48ac2d85779dfc0049e52",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/collector_assets.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/collector_components.py": {
+      "sha256": "b8d4a4f88a420d3ccf54691bc57c277789c3db1f6db31f7df2888b5c80f2f438",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/collector_components.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/collector_dry_run.py": {
+      "sha256": "7bf85fc945e35c920acb5ef9e38324de38d3f2f21d30c11a069277d688a9515a",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/collector_dry_run.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/collector_light_install.py": {
+      "sha256": "3cef75cb07b4f3b7c213d61ceb42c76659d8d52c485d2b5f6fe68f10b56b28ac",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/collector_light_install.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/collector_maintenance.py": {
+      "sha256": "028c1f4876a3554ca8a7597d6009e109f610bdbeecfe99159d7df06015467a47",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/collector_maintenance.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/collector_receipt.py": {
+      "sha256": "d7f98a24a98281687949703d30e8c41c576fb07c0ae556d85958b726fbbff8d2",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/collector_receipt.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/collector_release_policy.py": {
+      "sha256": "d22b80f570e34f0f36aeafc1825708eb67bb6255661ba82ee21be3bb54d52978",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/collector_release_policy.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/collector_sigstore.py": {
+      "sha256": "70b06613fea2faa672fe995b7c20c6b3c088e18f1219f9e50c3fc0f5c1a7b47b",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/collector_sigstore.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/collector_store.py": {
+      "sha256": "02c4dcabcb1494aeff64fa992615e0cb3ebff39f5554a9ddbf1f48b4b2ea8d85",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/collector_store.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/collector_transport.py": {
+      "sha256": "0447730c462adbdc8f95ef4944c59b1b153ff524108b72e0a3ca4af9fcf3077d",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/collector_transport.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/download_collector_release.py": {
+      "sha256": "d5aed69958384a122c0e7e301d8ddfdbfeac4ed3cd00ad9df048994e1ddffb3f",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/download_collector_release.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/friendly_collector_install.py": {
+      "sha256": "956e9cbd1fb55de63822563f6a062d9da89bcd32dcf267041c9636e4aee37628",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/friendly_collector_install.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/install_collector.py": {
+      "sha256": "bcd45e04edc51f74878d6d297b4b97458b4de840a208440a7aac3d440287dae2",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/install_collector.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/package_independent_collectors.py": {
+      "sha256": "30bcc4893a1065ba7fdbb8c59c9ad9144f874695f9d12c45301f0a75b90b3452",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/package_independent_collectors.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/prepare_collector_candidate.py": {
+      "sha256": "fe922a037f610d75c1062a66bef40afca282c6b56c8d6c40ec672acdf25c8e0e",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/prepare_collector_candidate.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/production_collector_release.py": {
+      "sha256": "2046f91b832d6aac7f190854961d4a1006cb4549d9c146437b401c9596bc10a3",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/production_collector_release.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/production_installer.py": {
+      "sha256": "a0bf55d16934a9a7ab1a00300f612501aff12b340869c083c566507351b5a97a",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/production_installer.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/publish_user_installer.py": {
+      "sha256": "ceae066ff201db19bb91bda3c1b15a78b61b9642488c708ba96e95e58829f959",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/publish_user_installer.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/rust-collector-release.production.yml": {
+      "sha256": "02c1b85c3713f17ea1a687b33b393d0db6215c1548c68166f6abedd9ab948ede",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/rust-collector-release.production.yml",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/sign_collector_candidate.py": {
+      "sha256": "ab02cfbf4443f5d7bc8c00b3f0db19d5064cdb7110c112936b19e4c35339798e",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/sign_collector_candidate.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/stage_collector_candidate.py": {
+      "sha256": "4b1bc4b526a1b0dffe36a0908d3000033b8d11ca7a311a7f513f5c38faad14e5",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/stage_collector_candidate.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/tests/measure_business_dependency_upgrade.py": {
+      "sha256": "6db65a266c02242c16f6d63c8e06d04459ab9eed649d38c1dd38770f486b8532",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/tests/measure_business_dependency_upgrade.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/tests/measure_collector_components.py": {
+      "sha256": "29d9e607499b4728d4515182ac5ceebdacb291520dca67197751abfed6c8c6ac",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/tests/measure_collector_components.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/tests/test_collector_components.py": {
+      "sha256": "bf65937f18c1bc282b59328ca9302e7849b5206bef1f50cc7e11604ec2147f25",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/tests/test_collector_components.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/tests/test_collector_delivery.py": {
+      "sha256": "7674dd94acce43d039540cd3349d835d242659d36392358652bf0afcf98052ed",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/tests/test_collector_delivery.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/tests/test_collector_production.py": {
+      "sha256": "ca2ae215073267e7ca5f496e9afbee27a19a7e9cf9f6fb4ddb89880124e905cc",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/tests/test_collector_production.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/tests/test_collector_transport.py": {
+      "sha256": "c669d31ea263f01e33f53906babeab44572330feb71371b63907adebce8acd1d",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/tests/test_collector_transport.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/tests/test_component_publication.py": {
+      "sha256": "53aa15b33192406f7b68930431c2cc7299e51175cb922609d68a6ece45cb95ab",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/tests/test_component_publication.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    },
+    "tools/release/tests/test_independent_collector_package.py": {
+      "sha256": "6e2bf091dd51666861739d345de7522467d22e88b484f3a7189e1754d1922fd8",
+      "owner": "GateProbes",
+      "disposition": "frozen-legacy-delivery",
+      "frozen_path": "retired/legacy-collector/snapshot/tools/release/tests/test_independent_collector_package.py",
+      "gateprobes_same_bytes": [],
+      "prior_consumer": "legacy release suite",
+      "accepted_transferred_sha256": null
+    }
+  },
+  "retained_core_inputs": [
+    "tools/quality/rust_reference.py",
+    "tools/quality/fixtures",
+    "tools/harness-gate/fixtures",
+    "tools/quality/schema",
+    "schema",
+    "tools/release/release_policy.py",
+    "tools/release/release_inventory.py",
+    "tools/release/generate-sbom.py"
+  ],
+  "policy": "Engineering Policy unchanged; no measurement, baseline, waiver or authority change.",
+  "gateprobes_git_tree_sha": "a762f0c4c7da3945367b870bccc39aac8069132f",
+  "retained_historical_helpers": {
+    "tools/quality/tests/native_policy_fixture.py": "Unchanged mandatory native handoff input; historical helper, not locally selected. GateProbes owns its executing test consumers.",
+    "tools/quality/tests/rust_collector_config_fixture.py": "Unchanged mandatory dependency-audit/handoff input. GateProbes executes its historical consumers.",
+    "tools/quality/tests/rust_collector_clean_host.py": "Historical manual reproduction helper; absent plugin implementation is not silently restored or skipped. Recover the exact original implementation set for historical reproduction; active native acceptance belongs to GateProbes."
+  }
+}

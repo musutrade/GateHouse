@@ -69,9 +69,9 @@ modules need explicit Python package discovery. Only the original four native
 module names may use the prior native handoff, and newly transferred modules must
 appear with GateProbes ownership in the real compatibility result.
 
-The existing `Quality Script Tests` job verifies the receipt, removes all 24
-plugin implementation paths from its disposable checkout and then executes the
-ordinary selector. It keeps the same check name and required aggregate. The
+The existing `Quality Script Tests` job verifies the receipt, asserts that all 24
+plugin implementation paths and the recorded removed files are absent, and then
+executes the ordinary selector. It keeps the same check name and required aggregate. The
 manual `core_isolation_check.py` uses this same selector instead of its former
 15-module exclusion list. Core-owned preset and TypeScript policy tests therefore
 remain in both ordinary and isolated Core execution.
@@ -90,5 +90,7 @@ Superseded failed/cancelled runs remain visible in GitHub.
 The receipt and original test bodies remain reviewable. If parity is withdrawn,
 revert the handoff/selector together and restore local tests before accepting new
 Core consumer changes. Historical archives, immutable releases and baseline/debt
-inputs remain untouched. Physical source deletion and measurer pin migration are
-separate GateHouse #13 and #11 work.
+inputs remain untouched. Issue #11 accepted the independent measurer pin. Issue #13 now removes the
+transferred local sources/tests and freezes the remaining delivery protections;
+see [cleanup and rollback](issue-13/README.md). The original handoff receipt and
+executed digests are unchanged.

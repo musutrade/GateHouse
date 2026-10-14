@@ -36,8 +36,8 @@ UNITTEST_SUMMARY = re.compile(r'^Ran (\d+) tests? in ', re.M)
 UNITTEST_RESULT = re.compile(r'^(OK|FAILED)(?: \(([^)]*)\))?$', re.M)
 
 # Plugin implementation sources owned by GateProbes (`CORE_PLUGIN_SPLIT.md`,
-# design boundary table). The list must stay exact: a missing path fails the
-# check so the isolation never silently stops excluding moved code.
+# design boundary table). Keep the historical list exact. Current Core source
+# cleanup asserts absence; isolation of older commits still removes these paths.
 PLUGIN_IMPLEMENTATION = (
     'tools/quality/rust-collector-runtime',
     'tools/quality/rust-measure',
@@ -74,6 +74,17 @@ REQUIRED_CORE_INPUTS = (
     'install.sh',
     'docs/quality/gh-146/python-boundary.json',
 )
+
+
+def check_source_cleanup(copy: Path) -> None:
+    """Reject restored plugin copies while keeping the accepted handoff intact."""
+    inventory = json.loads((copy / 'docs/quality/issue-13/removal-inventory.json').read_text())
+    require(inventory.get('schema') == 'core-plugin-source-cleanup/v1', 'invalid cleanup inventory')
+    require(inventory['paths'] == list(PLUGIN_IMPLEMENTATION), 'cleanup implementation scope changed')
+    for relative in (*PLUGIN_IMPLEMENTATION, *inventory['files']):
+        path = copy / relative
+        require(not path.exists() and not path.is_symlink(), f'plugin source restored: {relative}')
+    check_required_inputs(copy)
 
 
 def require(condition: bool, message: str) -> None:
@@ -200,6 +211,8 @@ def main() -> int:
 
     snapshot(args.commit, workdir)
     copy = workdir / 'src'
+    if (copy / 'docs/quality/issue-13/removal-inventory.json').exists():
+        check_source_cleanup(copy)
     report['excluded_plugin_implementation'] = exclude_plugin_implementation(copy, require_all=False)
     report['local_git_head'] = init_local_git(copy)
     check_required_inputs(copy)

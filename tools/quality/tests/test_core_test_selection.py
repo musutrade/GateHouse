@@ -283,7 +283,7 @@ class CoreTestSelectionTests(unittest.TestCase):
     def test_repository_workflow_uses_guarded_selection(self):
         workflow = (run_core.ROOT / '.github/workflows/ci.yml').read_text()
         self.assertIn('python3 tools/quality/tests/run_core.py', workflow)
-        self.assertIn('exclude_plugin_implementation(Path.cwd(), require_all=False)', workflow)
+        self.assertIn('check_source_cleanup(Path.cwd())', workflow)
         self.assertNotIn('cargo test --locked --manifest-path tools/quality/rust-source-risk', workflow)
         self.assertNotIn('cargo build --locked --manifest-path tools/quality/rust-source-risk', workflow)
         delegated = run_core.read_receipt(run_core.ROOT)['delegated_tests']

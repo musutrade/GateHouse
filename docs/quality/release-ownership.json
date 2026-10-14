@@ -4,34 +4,10 @@
   "owners": {
     "gatehouse": [
       ".github/workflows/release.yml",
-      "install.sh"
+      "install.sh",
+      "tools/release/frozen_legacy.py"
     ],
-    "gateprobes": [
-      "tools/release/bootstrap_collector.sh",
-      "tools/release/build_collector_bootstrap.py",
-      "tools/release/build_user_installer.py",
-      "tools/release/collector_assets.py",
-      "tools/release/collector_components.py",
-      "tools/release/collector_dry_run.py",
-      "tools/release/collector_light_install.py",
-      "tools/release/collector_maintenance.py",
-      "tools/release/collector_receipt.py",
-      "tools/release/collector_release_policy.py",
-      "tools/release/collector_sigstore.py",
-      "tools/release/collector_store.py",
-      "tools/release/collector_transport.py",
-      "tools/release/download_collector_release.py",
-      "tools/release/friendly_collector_install.py",
-      "tools/release/install_collector.py",
-      "tools/release/package_independent_collectors.py",
-      "tools/release/prepare_collector_candidate.py",
-      "tools/release/production_collector_release.py",
-      "tools/release/production_installer.py",
-      "tools/release/publish_user_installer.py",
-      "tools/release/rust-collector-release.production.yml",
-      "tools/release/sign_collector_candidate.py",
-      "tools/release/stage_collector_candidate.py"
-    ]
+    "gateprobes": []
   },
   "shared": {
     "tools/release/generate-sbom.py": "gatehouse",
@@ -86,7 +62,7 @@
   },
   "shared_copy_rule": "Gatehouse owns the single editable source. When GateProbes is created it carries generated copies of these files from a pinned GateHouse revision; it never edits its own copy independently.",
   "plugin_release_identity": "Declared by GateProbes: its own repository, tag prefix, workflow path and environment rules. A URL substitution must never implicitly change the signed identity GateHouse trusts.",
-  "unowned_note": "tools/release/tests follows the scripts it covers and splits with them; it is not classified here.",
+  "unowned_note": "Active release tests are Core/shared-tool governance. Legacy plugin delivery tests and scripts are frozen with exact inventory under retired/legacy-collector.",
   "retired_workflows": {
     "retired/workflows/native-collector-release.yml": {
       "owner": "gatehouse",
@@ -113,5 +89,12 @@
       "publication_state": "paused-not-migrated",
       "retirement_record": "docs/quality/legacy-collector-retirement.md"
     }
+  },
+  "frozen_legacy_delivery": {
+    "manifest": "retired/legacy-collector/manifest.json",
+    "owner": "gateprobes",
+    "disposition": "frozen-core-protection-tests",
+    "restore_commit": "da8e8a58a4ac5959dc0346b79bad4a4437b964cb",
+    "note": "Paused product; Core executes original negative/lifecycle tests from verified frozen bytes. Any future revival belongs to GateProbes."
   }
 }

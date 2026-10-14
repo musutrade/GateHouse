@@ -1,0 +1,291 @@
+{
+  "schema": "frozen-legacy-delivery/v1",
+  "source_commit": "da8e8a58a4ac5959dc0346b79bad4a4437b964cb",
+  "snapshot": "retired/legacy-collector/snapshot",
+  "files": {
+    "tools/release/bootstrap_collector.sh": {
+      "sha256": "0970a1222920198b6c6cdce253effdb2e71fda09534d45c08310aee1b0dc3195",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/build_collector_bootstrap.py": {
+      "sha256": "9c54a8b4bf92e52cf6bf02346032e348bbad2dfedc5d597c11b145ffb285911e",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/build_user_installer.py": {
+      "sha256": "86877bafdd43166adccc43c8e9b723c9fed80207c4c41c9d4158d2f4533abc89",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/collector_assets.py": {
+      "sha256": "0243f894c49dcd639c60b720adb2a688c3d966acb2f48ac2d85779dfc0049e52",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/collector_components.py": {
+      "sha256": "b8d4a4f88a420d3ccf54691bc57c277789c3db1f6db31f7df2888b5c80f2f438",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/collector_dry_run.py": {
+      "sha256": "7bf85fc945e35c920acb5ef9e38324de38d3f2f21d30c11a069277d688a9515a",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/collector_light_install.py": {
+      "sha256": "3cef75cb07b4f3b7c213d61ceb42c76659d8d52c485d2b5f6fe68f10b56b28ac",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/collector_maintenance.py": {
+      "sha256": "028c1f4876a3554ca8a7597d6009e109f610bdbeecfe99159d7df06015467a47",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/collector_receipt.py": {
+      "sha256": "d7f98a24a98281687949703d30e8c41c576fb07c0ae556d85958b726fbbff8d2",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/collector_release_policy.py": {
+      "sha256": "d22b80f570e34f0f36aeafc1825708eb67bb6255661ba82ee21be3bb54d52978",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/collector_sigstore.py": {
+      "sha256": "70b06613fea2faa672fe995b7c20c6b3c088e18f1219f9e50c3fc0f5c1a7b47b",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/collector_store.py": {
+      "sha256": "02c4dcabcb1494aeff64fa992615e0cb3ebff39f5554a9ddbf1f48b4b2ea8d85",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/collector_transport.py": {
+      "sha256": "0447730c462adbdc8f95ef4944c59b1b153ff524108b72e0a3ca4af9fcf3077d",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/download_collector_release.py": {
+      "sha256": "d5aed69958384a122c0e7e301d8ddfdbfeac4ed3cd00ad9df048994e1ddffb3f",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/friendly_collector_install.py": {
+      "sha256": "956e9cbd1fb55de63822563f6a062d9da89bcd32dcf267041c9636e4aee37628",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/install_collector.py": {
+      "sha256": "bcd45e04edc51f74878d6d297b4b97458b4de840a208440a7aac3d440287dae2",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/package_independent_collectors.py": {
+      "sha256": "30bcc4893a1065ba7fdbb8c59c9ad9144f874695f9d12c45301f0a75b90b3452",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/prepare_collector_candidate.py": {
+      "sha256": "fe922a037f610d75c1062a66bef40afca282c6b56c8d6c40ec672acdf25c8e0e",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/production_collector_release.py": {
+      "sha256": "2046f91b832d6aac7f190854961d4a1006cb4549d9c146437b401c9596bc10a3",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/production_installer.py": {
+      "sha256": "a0bf55d16934a9a7ab1a00300f612501aff12b340869c083c566507351b5a97a",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/publish_user_installer.py": {
+      "sha256": "ceae066ff201db19bb91bda3c1b15a78b61b9642488c708ba96e95e58829f959",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/rust-collector-release.production.yml": {
+      "sha256": "02c1b85c3713f17ea1a687b33b393d0db6215c1548c68166f6abedd9ab948ede",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/sign_collector_candidate.py": {
+      "sha256": "ab02cfbf4443f5d7bc8c00b3f0db19d5064cdb7110c112936b19e4c35339798e",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/stage_collector_candidate.py": {
+      "sha256": "4b1bc4b526a1b0dffe36a0908d3000033b8d11ca7a311a7f513f5c38faad14e5",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/release/tests/test_collector_components.py": {
+      "sha256": "bf65937f18c1bc282b59328ca9302e7849b5206bef1f50cc7e11604ec2147f25",
+      "owner": "GateProbes",
+      "consumer": "Core CI frozen legacy delivery suite"
+    },
+    "tools/release/tests/test_collector_delivery.py": {
+      "sha256": "7674dd94acce43d039540cd3349d835d242659d36392358652bf0afcf98052ed",
+      "owner": "GateProbes",
+      "consumer": "Core CI frozen legacy delivery suite"
+    },
+    "tools/release/tests/test_collector_production.py": {
+      "sha256": "ca2ae215073267e7ca5f496e9afbee27a19a7e9cf9f6fb4ddb89880124e905cc",
+      "owner": "GateProbes",
+      "consumer": "Core CI frozen legacy delivery suite"
+    },
+    "tools/release/tests/test_collector_transport.py": {
+      "sha256": "c669d31ea263f01e33f53906babeab44572330feb71371b63907adebce8acd1d",
+      "owner": "GateProbes",
+      "consumer": "Core CI frozen legacy delivery suite"
+    },
+    "tools/release/tests/test_component_publication.py": {
+      "sha256": "53aa15b33192406f7b68930431c2cc7299e51175cb922609d68a6ece45cb95ab",
+      "owner": "GateProbes",
+      "consumer": "Core CI frozen legacy delivery suite"
+    },
+    "tools/release/tests/test_independent_collector_package.py": {
+      "sha256": "6e2bf091dd51666861739d345de7522467d22e88b484f3a7189e1754d1922fd8",
+      "owner": "GateProbes",
+      "consumer": "Core CI frozen legacy delivery suite"
+    },
+    "tools/release/tests/measure_business_dependency_upgrade.py": {
+      "sha256": "6db65a266c02242c16f6d63c8e06d04459ab9eed649d38c1dd38770f486b8532",
+      "owner": "GateProbes",
+      "consumer": "Core CI frozen legacy delivery suite"
+    },
+    "tools/release/tests/measure_collector_components.py": {
+      "sha256": "29d9e607499b4728d4515182ac5ceebdacb291520dca67197751abfed6c8c6ac",
+      "owner": "GateProbes",
+      "consumer": "Core CI frozen legacy delivery suite"
+    },
+    "tools/quality/build_rust_collector.py": {
+      "sha256": "cb5b2abf75c0ecd61f8c4a82ef9a026c763c14d448202fc164f9011fa82a7870",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/quality/rust_collector_contract.py": {
+      "sha256": "9d9aa499cbed81293980c57c4ef96fd8b350ccb12acdeddf0b39f84115c62d71",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/quality/rust_collector_delivery.py": {
+      "sha256": "bbfabb192a8534ae31d9678b106a6a9758dc9c6fa31c45baff2d213bed14efd9",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/quality/rust_native_driver.py": {
+      "sha256": "52c717a76e9e45d5e1524654312ed513872a30f32d545c67e9451b0fca9ae93b",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/quality/tests/test_rust_collector_contract.py": {
+      "sha256": "7e58f991221785996da3849597e1eb9eef93f2495e0ff5b7f2f969d26c809f47",
+      "owner": "GateProbes",
+      "consumer": "Core CI frozen legacy delivery suite"
+    },
+    "tools/quality/rust-measure/Cargo.toml": {
+      "sha256": "b906c51b311e34150d15b55ad0d32ad8d65735baf3052f3c723c4bced4e98044",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    },
+    "tools/quality/rust-measure/plugin.json": {
+      "sha256": "274a64a632ca22fae01b4f0f664e611838b251cd9ddc8cbb7789ac8637116cfa",
+      "owner": "GateProbes",
+      "consumer": "frozen legacy delivery rejection/lifecycle tests"
+    }
+  },
+  "shared_sources": [
+    "tools/quality/collector_runner.py",
+    "tools/quality/harness_evidence.py",
+    "tools/quality/project_model.py",
+    "tools/quality/quality_evidence.py",
+    "tools/release/release_policy.py"
+  ],
+  "shared_inputs": [
+    "LICENSE",
+    "schema",
+    "tools/quality/schema",
+    "retired/workflows",
+    "tools/quality/fixtures/collectors/synthetic.py"
+  ],
+  "test_modules": [
+    "test_collector_components",
+    "test_collector_delivery",
+    "test_collector_production",
+    "test_collector_transport",
+    "test_component_publication",
+    "test_independent_collector_package"
+  ],
+  "policy": "Engineering Policy unchanged. Frozen tests do not authorize signing/publication or product revival.",
+  "expected_methods": [
+    "test_collector_components.ComponentTests.test_bootstrap_uncached_plan_and_default_deny_do_not_download",
+    "test_collector_components.ComponentTests.test_cache_capacity_does_not_remove_unknown_files",
+    "test_collector_components.ComponentTests.test_cache_usage_counts_resumable_ranges_and_preserves_them",
+    "test_collector_components.ComponentTests.test_cleanup_refuses_unowned_content_and_store_symlinks",
+    "test_collector_components.ComponentTests.test_cleanup_waits_for_install_lock_and_preserves_references",
+    "test_collector_components.ComponentTests.test_corrupt_and_oversize_compressed_object_cleans_partial",
+    "test_collector_components.ComponentTests.test_exact_external_reuse_is_private_copy_and_version_similarity_insufficient",
+    "test_collector_components.ComponentTests.test_failed_selfcheck_and_disk_write_preserve_current_and_recover",
+    "test_collector_components.ComponentTests.test_legacy_migration_export_and_interrupted_receipt_write",
+    "test_collector_components.ComponentTests.test_offline_user_entry_authenticates_and_installs_missing_objects",
+    "test_collector_components.ComponentTests.test_plugin_revision_does_not_change_toolchain_revision",
+    "test_collector_components.ComponentTests.test_preflight_policy_and_space_fail_before_acquisition",
+    "test_collector_components.ComponentTests.test_receipt_and_shared_content_tampering_block_selection",
+    "test_collector_components.ComponentTests.test_three_plugin_upgrades_tool_upgrade_retention_and_rollback",
+    "test_collector_delivery.DeliveryTests.test_exact_tag_abi_and_host_trust_rejected",
+    "test_collector_delivery.DeliveryTests.test_existing_version_and_corrupt_rollback_fail_closed",
+    "test_collector_delivery.DeliveryTests.test_installer_root_and_asset_links_are_rejected",
+    "test_collector_delivery.DeliveryTests.test_interruption_recovery_at_each_activation_boundary",
+    "test_collector_delivery.DeliveryTests.test_missing_extra_unsigned_tampered_assets",
+    "test_collector_delivery.DeliveryTests.test_recovery_preserves_unowned_staging_evidence",
+    "test_collector_delivery.DeliveryTests.test_sigkill_preserves_active_and_recovery_is_idempotent",
+    "test_collector_delivery.DeliveryTests.test_signed_but_inconsistent_provenance_sbom_and_inventory",
+    "test_collector_delivery.DeliveryTests.test_signed_install_rollback_uninstall_preserves_evidence",
+    "test_collector_delivery.DeliveryTests.test_signed_trailing_archive_payload_is_rejected",
+    "test_collector_delivery.DeliveryTests.test_traversal_links_duplicates_extra_and_missing_archive_payload",
+    "test_collector_delivery.DeliveryTests.test_uninstall_recovers_partial_deletion",
+    "test_collector_delivery.DeliveryTests.test_uninstall_refuses_unowned_data_and_symlinks",
+    "test_collector_delivery.DeliveryTests.test_unsigned_payload_digest_and_unsafe_permissions",
+    "test_collector_delivery.EligibilityTests.test_default_rehearsal_and_explicit_publication_remain_protected",
+    "test_collector_delivery.EligibilityTests.test_independent_eligibility_reuses_exact_main_ci_without_core_version",
+    "test_collector_delivery.EligibilityTests.test_only_independent_exact_stable_or_rc_tags",
+    "test_collector_delivery.EligibilityTests.test_personal_approval_pins_owner_and_versions_the_receipt",
+    "test_collector_delivery.EligibilityTests.test_production_template_uses_restricted_runner_group",
+    "test_collector_delivery.EligibilityTests.test_protected_approval_is_mandatory",
+    "test_collector_delivery.EligibilityTests.test_receipt_cannot_drop_ci_or_approval",
+    "test_collector_production.ApprovalTests.test_every_license_payload_and_redistribution_decision_required",
+    "test_collector_production.ApprovalTests.test_every_validation_must_be_successful_current_and_hash_pinned",
+    "test_collector_production.ApprovalTests.test_publication_reuses_only_the_exact_private_acceptance_tag",
+    "test_collector_production.ApprovalTests.test_wrong_source_and_unsuccessful_main_ci_stop_preflight",
+    "test_collector_production.BootstrapAuthenticationTests.test_authenticate_before_any_archive_execution",
+    "test_collector_production.PrivateCandidateTests.test_changed_packet_assets_trust_and_existing_output_reject",
+    "test_collector_production.PrivateCandidateTests.test_private_candidate_needs_no_future_install_receipt_and_creates_no_release",
+    "test_collector_production.PrivateCandidateTests.test_wrong_packet_hash_source_stable_version_and_bad_ci_reject",
+    "test_collector_production.ProductionSignatureTests.test_download_requires_exact_original_bytes_including_signature",
+    "test_collector_production.ProductionSignatureTests.test_exact_identity_offline_trust_and_no_ambient_overrides",
+    "test_collector_production.ProductionSignatureTests.test_missing_extra_and_tampered_assets",
+    "test_collector_production.ProductionSignatureTests.test_other_valid_signed_candidate_cannot_replace_approved_bytes",
+    "test_collector_production.ProductionSignatureTests.test_rejects_wrong_identity_unattested_or_bad_inclusion_verifier_result",
+    "test_collector_production.ProductionSignatureTests.test_unsigned_missing_bundle_tamper_and_changed_verifier",
+    "test_collector_production.ProductionSignatureTests.test_unsigned_preparation_does_not_create_provenance_or_eligibility",
+    "test_collector_production.ProductionSignatureTests.test_unsigned_preparation_rejects_payload_substitution",
+    "test_collector_transport.TransportTests.test_corrupt_bundle_and_cache_are_rejected",
+    "test_collector_transport.TransportTests.test_download_retries_short_ranges_and_reuses_completed_ranges",
+    "test_collector_transport.TransportTests.test_exact_roundtrip_dedup_and_plugin_upgrade_reuses_toolchain",
+    "test_collector_transport.TransportTests.test_offline_download_cache_survives_removed_source",
+    "test_collector_transport.TransportTests.test_pinned_existing_verifier_is_reused_but_changed_binary_is_not",
+    "test_collector_transport.TransportTests.test_recipe_overflow_and_path_injection_rejected",
+    "test_collector_transport.TransportTests.test_server_ignoring_range_is_rejected",
+    "test_component_publication.PublicationTest.test_failed_shard_verification_keeps_all_releases_draft",
+    "test_component_publication.PublicationTest.test_shards_and_all_paginated_assets_verified_before_installer_publication",
+    "test_independent_collector_package.ExtractedPackageTests.test_missing_runtime_lockfile_blocks_the_archive",
+    "test_independent_collector_package.MeasurerPackageTests.test_checked_in_measurer_identity_matches_the_risk_series",
+    "test_independent_collector_package.MeasurerPackageTests.test_measurer_archive_name_is_exact",
+    "test_independent_collector_package.MeasurerPackageTests.test_measurer_identity_pins_cargo_name_and_version"
+  ]
+}

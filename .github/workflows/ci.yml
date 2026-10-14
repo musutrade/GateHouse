@@ -629,14 +629,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
-          # Verify the accepted handoff before stripping this disposable checkout.
+          # Verify accepted delegation and physical cleanup in the real checkout.
           python3 tools/quality/tests/run_core.py --list > /dev/null
           python3 - <<'PY'
           from pathlib import Path
           import sys
           sys.path.insert(0, 'tools/quality')
-          from core_isolation_check import exclude_plugin_implementation
-          exclude_plugin_implementation(Path.cwd(), require_all=False)
+          from core_isolation_check import check_source_cleanup
+          check_source_cleanup(Path.cwd())
           PY
           python3 tools/quality/tests/run_core.py
           python3 -m py_compile tools/quality/*.py tools/quality/tests/*.py

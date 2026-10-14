@@ -298,3 +298,12 @@ remaining plugins, and the release/signing identity switch last.
 > GateHouse publication's actual signing/provenance acceptance. Future signer
 > routing is contract-tested, not presented as a new signing ceremony. The
 > paused bundled-product disposition under 4.3 remains unchanged.
+
+> **Physical cleanup follow-up (GateHouse #13, 2026-10-14):** the 24 plugin
+> implementation roots and 13 delegated test copies are removed after the
+> accepted #10/#11 handoffs and #12 retirement. Still-consumed legacy delivery
+> bytes are explicitly frozen outside active tools, and their 64 original
+> tests continue in ordinary Core release CI. Shared tools and Core fixtures
+> remain. [The cleanup inventory](../../../docs/quality/issue-13/README.md)
+> records original hashes, owners, consumers, destinations and exact rollback.
+> Engineering Policy semantics and the original acceptance receipts are unchanged.
