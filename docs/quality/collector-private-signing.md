@@ -1,5 +1,11 @@
 # Private RC signing before installation acceptance
 
+> Historical design: the legacy workflow is now
+> [retired and archived](legacy-collector-retirement.md). The operations below
+> remain suspended by its migration hold. They do not describe an available
+> Core signing entry; any future revival belongs to GateProbes after an explicit
+> product decision and reviewed measurement migration.
+
 The former preparation flow required successful production-signature and fresh
 installation receipts before the first production signature could exist. The
 manual collector workflow now accepts an optional `signing_packet_sha256` input.

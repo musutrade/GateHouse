@@ -10,7 +10,8 @@ ROOT = Path(__file__).resolve().parents[3]
 
 class StableCollectorPolicyTests(unittest.TestCase):
     def test_legacy_publication_hold_rejects_all_mutating_operations(self):
-        text = (ROOT / '.github/workflows/rust-collector-release.yml').read_text()
+        self.assertFalse((ROOT / '.github/workflows/rust-collector-release.yml').exists())
+        text = (ROOT / 'retired/workflows/rust-collector-release.yml').read_text()
         start = text.index('      - name: Enforce stable Rust collector migration hold')
         end = text.index('      - uses:', start)
         block = text[start:end]
