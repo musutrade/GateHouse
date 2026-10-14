@@ -918,6 +918,26 @@ HTML 模板和 JUnit 输出是可选的。每次验证的规范证据写入
 `<reports>/invocations/<invocation_id>/`，包括 `invocation.json`、`scope.json`、步骤日志和报告；
 为兼容现有消费者，`test_result.json` 与 `test_result.md` 仍会镜像到报告根目录：
 
+`invocation.json` 现在声明 `metadata_version = 2`；没有该字段的历史记录视为版本 1。
+现有字段及 machine-result、manifest、registry 的 schema 版本 1 保持兼容，Core 仍能读取
+历史元数据。兼容字段 `toolchain` 保留字符串类型，但版本 2 固定为 `"unknown"`；通用验证
+不调用 `rustc`，也不从 PATH 推断项目工具链。原先依赖此字段的消费者应迁移到所选步骤的
+runner 描述（程序、实际参数、声明的环境）和 collector 证据中绑定的工具来源信息。
+runner 描述只是声明，不能证明编译器版本；`executor_version` 表示 Core 包版本，不能代表
+构建 Core 的编译器或项目工具链。
+
+`commit` 是可选的 checkout 上下文，在项目发现时采样一次，报告和 staged 调用复用该值。
+`git rev-parse --verify HEAD^{commit}` 只接受有效的 SHA-1/SHA-256 commit ID；执行超时为
+1 秒，stdout/stderr 各限 4 KiB、合计 8 KiB，输出读取共享 200 ms 截止时间，并沿用执行器
+有界的进程树终止和回收机制。缺少 Git/HEAD、非零退出、超时、输出溢出、无效 UTF-8 或
+异常格式均记为 `commit = "unknown"`，working-tree 来源上下文同时为 `working-tree:unknown`。
+取消会终止调用并回收探测进程树，不会转为可选成功；写入 `invocation.json` 时不执行外部命令。
+发现阶段取消发生在 invocation 分配前，会输出 CLI 错误，不会生成成功的 invocation 报告。
+
+可选上下文不能替代必需的源码/工具链证据。staged 快照等必需 Git 操作、runner/collector
+门禁仍按原有规则失败关闭，消费者不得把 `unknown` 视为已验证身份。回滚旧 Core 会恢复旧
+元数据行为及其 Rust 探测，不改写历史报告、不采纳新 baseline，也不更换测量系列。
+
 ```toml
 [report_templates]
 root = "templates/harness-gate"

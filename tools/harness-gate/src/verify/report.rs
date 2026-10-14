@@ -570,6 +570,7 @@ pub(super) struct Invocation {
 
 #[derive(Debug, Serialize)]
 struct InvocationMetadata<'a> {
+    metadata_version: u32,
     invocation_id: &'a str,
     created_at: String,
     profile: &'a str,
@@ -651,6 +652,7 @@ pub(super) fn write_invocation_metadata_with_request(
     request_id: Option<&str>,
 ) -> Result<()> {
     let metadata = InvocationMetadata {
+        metadata_version: 2,
         invocation_id: &invocation.id,
         created_at: chrono::Utc::now().to_rfc3339(),
         profile,
@@ -665,9 +667,11 @@ pub(super) fn write_invocation_metadata_with_request(
             .into_owned(),
         configuration_digest: &project.input().configuration_digest,
         executor_version: env!("CARGO_PKG_VERSION"),
-        commit: current_commit(project.repository_root()),
+        commit: project.input().commit.clone(),
         platform: format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH),
-        toolchain: rustc_version(),
+        // Compatibility placeholder: actual tool identities belong to the
+        // selected runner/collector evidence, not a probe of ambient PATH.
+        toolchain: "unknown".into(),
         request_id: request_id.map(str::to_string),
     };
     let contents = serde_json::to_vec_pretty(&metadata).context("serialize invocation metadata")?;
@@ -678,31 +682,6 @@ pub(super) fn write_invocation_metadata_with_request(
         false,
     )
     .map(|_| ())
-}
-
-fn current_commit(repository_root: &Path) -> String {
-    std::process::Command::new("git")
-        .args(["rev-parse", "HEAD"])
-        .current_dir(repository_root)
-        .output()
-        .ok()
-        .filter(|output| output.status.success())
-        .and_then(|output| String::from_utf8(output.stdout).ok())
-        .map(|value| value.trim().to_string())
-        .filter(|value| !value.is_empty())
-        .unwrap_or_else(|| "unknown".into())
-}
-
-fn rustc_version() -> String {
-    std::process::Command::new("rustc")
-        .arg("--version")
-        .output()
-        .ok()
-        .filter(|output| output.status.success())
-        .and_then(|output| String::from_utf8(output.stdout).ok())
-        .map(|value| value.trim().to_string())
-        .filter(|value| !value.is_empty())
-        .unwrap_or_else(|| "unknown".into())
 }
 
 pub(super) fn mirror_legacy_outputs(
@@ -2754,6 +2733,36 @@ mod tests {
         assert!(output.status.success());
         let project = crate::project::Project::discover(Some(root), None).unwrap();
         (temporary, project)
+    }
+
+    #[test]
+    fn invocation_metadata_reuses_checkout_context_and_keeps_legacy_reading() {
+        let (_temporary, mut project) = retention_project("metadata-v2");
+        project.invocation_input.commit = "a".repeat(40);
+        let invocation = allocate_invocation(&project).unwrap();
+        super::write_invocation_metadata(&invocation, &project, "full", false).unwrap();
+        let mut metadata: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(invocation.root.join("invocation.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(metadata["metadata_version"], 2);
+        assert_eq!(metadata["commit"], "a".repeat(40));
+        assert_eq!(metadata["toolchain"], "unknown");
+        assert_eq!(metadata["executor_version"], env!("CARGO_PKG_VERSION"));
+        let report = retention_report(&invocation, &project);
+        let mut failures = Vec::new();
+        super::validate_invocation_metadata(&invocation.root, &report, &mut failures);
+        assert!(failures.is_empty(), "{failures:?}");
+        // Version 1 records remain valid; no historical artifact is rewritten.
+        metadata.as_object_mut().unwrap().remove("metadata_version");
+        metadata["toolchain"] = serde_json::json!("rustc legacy-ambient-version");
+        std::fs::write(
+            invocation.root.join("invocation.json"),
+            serde_json::to_vec(&metadata).unwrap(),
+        )
+        .unwrap();
+        super::validate_invocation_metadata(&invocation.root, &report, &mut failures);
+        assert!(failures.is_empty(), "{failures:?}");
     }
 
     fn retention_report(

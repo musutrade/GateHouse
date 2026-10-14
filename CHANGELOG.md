@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Remove the unrelated ambient `rustc` probe from generic verification metadata.
+  Reuse the optional checkout commit sampled at project discovery, with bounded
+  Git execution, output and cancellation cleanup. Invocation metadata version 2
+  retains `toolchain` as an `unknown` compatibility placeholder; actual runner
+  and collector tool identities remain in their own descriptions and evidence.
 - Apply `scope.unmatched = "all"` fallback only when changed paths include an
   unmatched path. Clean trees select no components and fully matched changes
   retain incremental selection; explicit `--all` and default fail-closed

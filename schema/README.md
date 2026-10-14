@@ -46,6 +46,14 @@ requires a new schema version and an ADR. The audit rules file has its own
 migration contract; see the
 [audit v2 migration section](../docs/configuration.md#audit-v2-migration).
 
+Invocation metadata is a separate supplemental record: `invocation.json`
+declares `metadata_version: 2`; records without that field are legacy version 1.
+The compatibility `toolchain` string is now `"unknown"`, and checkout `commit`
+is optional context from a bounded discovery probe. The machine-result,
+artifact-manifest and artifact-registry schemas stay at version 1. Tool identity
+consumers should migrate to runner descriptions and bound collector evidence;
+see the [metadata migration and failure semantics](../docs/configuration.md#15-reports-templates-and-notifications).
+
 For a human-readable configuration guide, read the
 [English configuration reference](../docs/configuration.md) or the
 [Chinese configuration reference](../docs/configuration.zh-CN.md). The

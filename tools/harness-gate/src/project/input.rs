@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 static SNAPSHOT_COUNTER: AtomicU64 = AtomicU64::new(1);
 
@@ -36,6 +36,8 @@ pub(crate) struct InvocationInput {
     pub(crate) mode: InputMode,
     pub(crate) project_identity: String,
     pub(crate) source_identity: String,
+    /// Optional HEAD context sampled at discovery, distinct from snapshot identity.
+    pub(crate) commit: String,
     pub(crate) execution_root: PathBuf,
     pub(crate) configuration_digest: String,
     #[serde(skip)]
@@ -65,17 +67,12 @@ impl InvocationInput {
         let root = repository_root
             .canonicalize()
             .with_context(|| format!("resolve project root {}", repository_root.display()))?;
-        let head = git::capture(&root, ["rev-parse", "HEAD"])
-            .ok()
-            .filter(|output| output.status.success())
-            .and_then(|output| String::from_utf8(output.stdout).ok())
-            .map(|value| value.trim().to_string())
-            .filter(|value| !value.is_empty())
-            .unwrap_or_else(|| "unknown".into());
+        let head = optional_head(&root)?;
         Ok(Self {
             mode: InputMode::WorkingTree,
             project_identity: root.to_string_lossy().into_owned(),
             source_identity: format!("working-tree:{head}"),
+            commit: head,
             execution_root: root,
             configuration_digest: digest_bytes(config_bytes),
             snapshot: None,
@@ -85,6 +82,7 @@ impl InvocationInput {
     pub(crate) fn materialize_staged(
         repository_root: &Path,
         configuration_path: &Path,
+        commit: &str,
     ) -> Result<Self> {
         let root = repository_root
             .canonicalize()
@@ -130,6 +128,7 @@ impl InvocationInput {
             mode: InputMode::Staged,
             project_identity: root.to_string_lossy().into_owned(),
             source_identity: format!("git-tree:{tree_id}"),
+            commit: commit.to_string(),
             execution_root: snapshot_root,
             configuration_digest: config_digest,
             snapshot: Some(guard),
@@ -139,6 +138,44 @@ impl InvocationInput {
     pub(crate) fn is_snapshot(&self) -> bool {
         self.snapshot.is_some()
     }
+}
+
+/// Optional checkout context, never a substitute for required source evidence.
+/// Sample once at discovery with a small budget; cancellation remains an error.
+fn optional_head(project_root: &Path) -> Result<String> {
+    if crate::process::cancelled() {
+        bail!("Git metadata probe was cancelled");
+    }
+    let output = crate::process::capture_with_limits(
+        "git",
+        &[
+            "rev-parse".into(),
+            "--verify".into(),
+            "HEAD^{commit}".into(),
+        ],
+        project_root,
+        Duration::from_secs(1),
+        crate::process::CaptureLimits {
+            stdout_bytes: 4096,
+            stderr_bytes: 4096,
+            total_bytes: 8192,
+            reader_deadline: Duration::from_millis(200),
+        },
+    );
+    if crate::process::cancelled() {
+        bail!("Git metadata probe was cancelled");
+    }
+    Ok(output
+        .ok()
+        .filter(|output| output.status.success())
+        .and_then(|output| parse_commit(&output.stdout))
+        .unwrap_or_else(|| "unknown".into()))
+}
+
+fn parse_commit(stdout: &[u8]) -> Option<String> {
+    let value = std::str::from_utf8(stdout).ok()?.trim();
+    (matches!(value.len(), 40 | 64) && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .then(|| value.to_string())
 }
 
 fn allocate_snapshot_root() -> Result<PathBuf> {
@@ -213,4 +250,33 @@ fn digest_bytes(bytes: &[u8]) -> String {
     let mut digest = Sha256::new();
     digest.update(bytes);
     format!("sha256:{:x}", digest.finalize())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_commit;
+
+    #[test]
+    fn optional_commit_accepts_only_git_object_ids() {
+        for size in [40, 64] {
+            let sha = "a".repeat(size);
+            assert_eq!(
+                parse_commit(format!("{sha}\n").as_bytes()),
+                Some(sha.clone())
+            );
+            assert_eq!(parse_commit(format!("{sha}\r\n").as_bytes()), Some(sha));
+        }
+        for output in [
+            vec![],
+            b"HEAD\n".to_vec(),
+            b"not-a-commit\n".to_vec(),
+            "a".repeat(39).into_bytes(),
+            "a".repeat(41).into_bytes(),
+            "g".repeat(40).into_bytes(),
+            format!("{}\n{}", "a".repeat(40), "b".repeat(40)).into_bytes(),
+            vec![0xff; 40],
+        ] {
+            assert_eq!(parse_commit(&output), None, "{output:?}");
+        }
+    }
 }
