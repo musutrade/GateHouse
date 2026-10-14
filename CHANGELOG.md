@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-14
+
+### Breaking
+
+- Move Postgres URL isolation, health checks, recipes and legacy migration to
+  GateProbes. Core requires explicit, digest-bound `service_checks`; old v1 and
+  v2 `external_value_policy` configurations require plugin migration. Core
+  retains requiredness, lifecycle and final blocking decisions. Quality policy,
+  thresholds, baseline/debt/ratchet and release authority are unchanged.
+
 ### Fixed
 
 - Include both source and destination paths when selecting components for a Git
