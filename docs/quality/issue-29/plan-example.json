@@ -1,0 +1,179 @@
+{
+  "diagnostics": [],
+  "plan": {
+    "components": [
+      {
+        "id": "project",
+        "reasons": [
+          {
+            "code": "ALL_COMPONENTS",
+            "message": "Explicit all mode selects every component."
+          }
+        ],
+        "rules": [
+          0
+        ],
+        "selected": true
+      }
+    ],
+    "configuration_digest": "sha256:a94fe8a870333b129c0c41cb98ddcf2573b3f99407e0153a13b97d17af78c87b",
+    "execution_order": [
+      "builtin.secret-scan",
+      "builtin.architecture-audit",
+      "project.diff-check"
+    ],
+    "nodes": [
+      {
+        "component": null,
+        "depends_on": [],
+        "id": "builtin.secret-scan",
+        "input": null,
+        "kind": "builtin-gate",
+        "label": "secret scan",
+        "profiles": null,
+        "reasons": [
+          {
+            "code": "MANDATORY_BUILTIN_GATE",
+            "message": "Core requires this built-in gate regardless of component or profile filtering."
+          }
+        ],
+        "required_by": [
+          "builtin.architecture-audit"
+        ],
+        "selected": true,
+        "services": null
+      },
+      {
+        "component": null,
+        "depends_on": [
+          "builtin.secret-scan"
+        ],
+        "id": "builtin.architecture-audit",
+        "input": null,
+        "kind": "builtin-gate",
+        "label": "architecture audit",
+        "profiles": null,
+        "reasons": [
+          {
+            "code": "MANDATORY_BUILTIN_GATE",
+            "message": "Core requires this built-in gate regardless of component or profile filtering."
+          }
+        ],
+        "required_by": [
+          "project.diff-check"
+        ],
+        "selected": true,
+        "services": null
+      },
+      {
+        "component": "project",
+        "depends_on": [
+          "builtin.architecture-audit"
+        ],
+        "id": "project.diff-check",
+        "input": "repository",
+        "kind": "external-step",
+        "label": "Git whitespace check",
+        "profiles": [
+          "full"
+        ],
+        "reasons": [
+          {
+            "code": "COMPONENT_AND_PROFILE",
+            "message": "Component and profile both select this step."
+          }
+        ],
+        "required_by": [],
+        "selected": true,
+        "services": []
+      },
+      {
+        "component": "project",
+        "depends_on": [],
+        "id": "project.staged-diff-check",
+        "input": "repository",
+        "kind": "external-step",
+        "label": "staged Git whitespace check",
+        "profiles": [
+          "hook"
+        ],
+        "reasons": [
+          {
+            "code": "PROFILE_NOT_INCLUDED",
+            "message": "The step does not participate in the selected profile."
+          }
+        ],
+        "required_by": [],
+        "selected": false,
+        "services": []
+      }
+    ],
+    "notice": "Selection plan only. Commands, services, signed requests and quality evidence were not executed or authenticated; no verification result is available.",
+    "paths": [],
+    "profile": "full",
+    "profiles": [
+      {
+        "id": "full",
+        "reasons": [
+          {
+            "code": "PROFILE_DEFAULT",
+            "message": "Selected by project.default_profile."
+          }
+        ],
+        "selected": true
+      },
+      {
+        "id": "hook",
+        "reasons": [
+          {
+            "code": "PROFILE_NOT_SELECTED",
+            "message": "A different profile was selected."
+          }
+        ],
+        "selected": false
+      }
+    ],
+    "project": "tmpdtphrdjj",
+    "quality": {
+      "enabled": false,
+      "reasons": [
+        {
+          "code": "QUALITY_NOT_CONFIGURED",
+          "message": "No quality.toml is configured."
+        }
+      ]
+    },
+    "rules": [
+      {
+        "components": [
+          "project"
+        ],
+        "index": 0,
+        "paths": [],
+        "patterns": [
+          "**"
+        ],
+        "reasons": [
+          {
+            "code": "RULE_NOT_MATCHED",
+            "message": "No changed path matched this rule; explicit/all selection does not require a rule match."
+          }
+        ],
+        "selected": false
+      }
+    ],
+    "runtime_inputs": "not_validated",
+    "scope": {
+      "changed_files": [],
+      "components": [
+        "project"
+      ],
+      "mode": "all",
+      "unmatched_files": []
+    },
+    "services": []
+  },
+  "schema": "verification-plan/v1",
+  "status": "planned",
+  "verification_result": null
+}

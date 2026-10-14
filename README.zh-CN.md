@@ -770,3 +770,5 @@ python3 tools/quality/docs_consistency.py
 本地质量脚本测试和 CI 使用的精确采集命令见 [tools/quality/README.md](tools/quality/README.md)。覆盖率、函数风险和隔离的关键路径证据共同构成 PR 和 push 上的 `Required Quality Aggregate`。关键路径采集器现在每次采集只构建一次插桩二进制，默认最多并发运行两个隔离测试；`--jobs 1` 选择串行执行，`--jobs N` 接受 1 到 8 个 worker。基准数据见[采集基准](docs/benchmarks/critical-path-collection/README.md)。生成的 baseline 仍只是待审候选；采纳策略见 [ADR-0039](docs/adr/0039-required-risk-and-traceability-gates.md)。
 
 完整回归数据按需下载并按摘要缓存；基础源码构建无需下载证据。见[测试数据准备](test-data/README.md)。
+
+执行前可用 [verify --plan](docs/verification-plan.zh-CN.md) 查看选择、排除、依赖及服务/质量输入原因；--json 输出版本化接口，计划不表示验证 PASS。

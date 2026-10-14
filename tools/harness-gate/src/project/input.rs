@@ -63,6 +63,44 @@ impl Drop for SnapshotGuard {
 }
 
 impl InvocationInput {
+    /// A private configuration view, not an executable source snapshot. Empty
+    /// placeholders preserve indexed path existence; only configuration/policy
+    /// blobs are read. Source bytes and signed request bodies are never needed.
+    pub(crate) fn inspect_staged(root: &Path, config: &Path, commit: &str) -> Result<Self> {
+        let index = git::capture(root, ["ls-files", "--stage", "-z"])?;
+        if !index.status.success() {
+            bail!("cannot inspect staged Git index");
+        }
+        let snapshot_root = allocate_snapshot_root()?;
+        let guard = Arc::new(SnapshotGuard {
+            root: snapshot_root.clone(),
+        });
+        let entries = inspect_index_entries(&snapshot_root, &index.stdout)?;
+        hydrate_index_config(root, &snapshot_root, &entries, &git::index_path(config)?)?;
+        let quality_path = crate::config::quality::QUALITY_CONFIG_PATH;
+        if entries.contains_key(quality_path) {
+            hydrate_index_config(root, &snapshot_root, &entries, quality_path)?;
+            let quality: toml::Value =
+                toml::from_str(&fs::read_to_string(snapshot_root.join(quality_path))?)?;
+            if let Some(policies) = quality.get("policies").and_then(toml::Value::as_table) {
+                for policy in policies.values() {
+                    if let Some(file) = policy.get("policy_file").and_then(toml::Value::as_str) {
+                        hydrate_index_config(root, &snapshot_root, &entries, file)?;
+                    }
+                }
+            }
+        }
+        Ok(Self {
+            mode: InputMode::Staged,
+            project_identity: root.to_string_lossy().into_owned(),
+            source_identity: format!("git-index-metadata:{}", digest_bytes(&index.stdout)),
+            commit: commit.into(),
+            execution_root: snapshot_root,
+            configuration_digest: String::new(),
+            snapshot: Some(guard),
+        })
+    }
+
     pub(crate) fn working_tree(repository_root: &Path, config_bytes: &[u8]) -> Result<Self> {
         let root = repository_root
             .canonicalize()
@@ -138,6 +176,79 @@ impl InvocationInput {
     pub(crate) fn is_snapshot(&self) -> bool {
         self.snapshot.is_some()
     }
+}
+
+fn inspect_index_entries(
+    root: &Path,
+    bytes: &[u8],
+) -> Result<std::collections::BTreeMap<String, String>> {
+    let mut entries = std::collections::BTreeMap::new();
+    for entry in bytes
+        .split(|byte| *byte == 0)
+        .filter(|entry| !entry.is_empty())
+    {
+        let entry = std::str::from_utf8(entry).context("non-UTF-8 index entry")?;
+        let (metadata, path) = entry.split_once('\t').context("malformed index entry")?;
+        let fields = metadata.split_whitespace().collect::<Vec<_>>();
+        if fields.len() != 3 || fields[2] != "0" || !matches!(fields[0], "100644" | "100755") {
+            bail!("staged plan requires regular, resolved index entries: {path:?}");
+        }
+        let destination = super::resolve_repo_path(root, Path::new(path), "indexed path", false)?;
+        fs::create_dir_all(destination.parent().context("indexed path has no parent")?)?;
+        fs::File::create(destination)?;
+        entries.insert(path.into(), fields[1].into());
+    }
+    Ok(entries)
+}
+
+fn hydrate_index_config(
+    repository: &Path,
+    snapshot: &Path,
+    entries: &std::collections::BTreeMap<String, String>,
+    name: &str,
+) -> Result<()> {
+    let id = entries
+        .get(name)
+        .with_context(|| format!("required staged configuration {name:?} is missing"))?;
+    let destination =
+        super::resolve_repo_path(snapshot, Path::new(name), "staged configuration", true)?;
+    reject_plan_config_filters(repository, name)?;
+    let blob = git::capture(repository, ["cat-file", "blob", id])?;
+    if !blob.status.success() {
+        bail!("cannot read staged configuration {name:?}");
+    }
+    fs::write(destination, blob.stdout)?;
+    Ok(())
+}
+
+/// Execution's checkout-index may transform configuration with a user filter.
+/// A read-only preview cannot execute that filter or promise its output, so
+/// refuse this case explicitly rather than explain a different configuration.
+fn reject_plan_config_filters(root: &Path, name: &str) -> Result<()> {
+    for cached in [false, true] {
+        let mut args = vec!["check-attr", "-z"];
+        if cached {
+            args.push("--cached");
+        }
+        args.extend(["filter", "working-tree-encoding", "ident", "--", name]);
+        let attributes = git::capture(root, args)?;
+        if !attributes.status.success() {
+            bail!("cannot inspect staged configuration filters for {name:?}");
+        }
+        let fields = attributes
+            .stdout
+            .split(|byte| *byte == 0)
+            .collect::<Vec<_>>();
+        if fields.len() != 10 {
+            bail!("malformed Git attribute response");
+        }
+        for entry in fields[..9].chunks_exact(3) {
+            if !matches!(entry[2], b"unspecified" | b"unset") {
+                bail!("staged configuration {name:?} has a checkout filter/encoding/ident transformation; a read-only plan cannot determine its output");
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Optional checkout context, never a substitute for required source evidence.
@@ -255,6 +366,32 @@ fn digest_bytes(bytes: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::parse_commit;
+
+    #[test]
+    fn readonly_index_view_rejects_conflicts_links_and_traversal_without_git_writes() {
+        let root = tempfile::tempdir().unwrap();
+        for bytes in [
+            &b"100644 deadbeef 1\tconflict\0"[..],
+            &b"120000 deadbeef 0\tlink\0"[..],
+            &b"160000 deadbeef 0\tsubmodule\0"[..],
+            &b"100644 deadbeef 0\t../escape\0"[..],
+            &b"100644 deadbeef 0\t/absolute\0"[..],
+            &b"missing-tab\0"[..],
+            &b"\xff\0"[..],
+        ] {
+            assert!(super::inspect_index_entries(root.path(), bytes).is_err());
+        }
+        let entries = super::inspect_index_entries(
+            root.path(),
+            b"100755 deadbeef 0\tdir/name\nwith tab\t.txt\0",
+        )
+        .unwrap();
+        assert_eq!(entries["dir/name\nwith tab\t.txt"], "deadbeef");
+        assert!(root.path().join("dir/name\nwith tab\t.txt").is_file());
+        assert!(
+            super::hydrate_index_config(root.path(), root.path(), &entries, "missing").is_err()
+        );
+    }
 
     #[test]
     fn optional_commit_accepts_only_git_object_ids() {

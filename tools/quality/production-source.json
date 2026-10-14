@@ -10,6 +10,7 @@
         "src/app/commands.rs",
         "src/app/mod.rs",
         "src/app/output.rs",
+        "src/app/plan.rs",
         "src/app/quality.rs"
       ]
     },
@@ -194,6 +195,7 @@
     "verify": {
       "blocking": true,
       "files": [
+        "src/verify/inspection.rs",
         "src/verify/mod.rs",
         "src/verify/parser.rs",
         "src/verify/plan.rs",

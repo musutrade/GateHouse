@@ -1,3 +1,4 @@
+pub(crate) mod inspection;
 pub(crate) mod parser;
 mod plan;
 mod quality;
@@ -23,6 +24,24 @@ use std::collections::BTreeSet;
 use std::path::Path;
 use std::sync::Mutex;
 use steps::{print_external_result, print_result};
+
+/// Shared scope selection for execution and read-only plan inspection.
+pub(crate) fn select_scope(
+    project: &Project,
+    mode: &crate::scope::ScopeMode,
+    components: &[String],
+) -> Result<ScopeResult, crate::error::CliError> {
+    if components.is_empty() {
+        return Ok(crate::scope::detect(project, mode)?);
+    }
+    let known = project.config.components();
+    for component in components {
+        if !known.contains(component) {
+            return Err(anyhow::anyhow!("unknown component {component:?}").into());
+        }
+    }
+    Ok(explicit_scope(components))
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum VerifyError {

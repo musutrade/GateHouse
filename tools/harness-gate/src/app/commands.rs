@@ -50,6 +50,8 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
             scope: args,
             components,
             profile,
+            plan: _,
+            json: _,
         } => run_verify(project, args.mode(), components, profile),
         Commands::Hook => run_hook(project),
         Commands::ParseLogs { input, output } => {
@@ -212,19 +214,7 @@ fn run_verify(
         ScopeMode::All => project.clone().with_input_mode(InputMode::All),
         ScopeMode::WorkingTree => project.clone(),
     };
-    let selected = if components.is_empty() {
-        crate::scope::detect(&execution_project, &mode)?
-    } else {
-        let known = execution_project.config.components();
-        for component in &components {
-            if !known.contains(component) {
-                return Err(CliError::from(anyhow::anyhow!(
-                    "unknown component {component:?}"
-                )));
-            }
-        }
-        crate::verify::explicit_scope(&components)
-    };
+    let selected = crate::verify::select_scope(&execution_project, &mode, &components)?;
     let profile =
         profile.unwrap_or_else(|| execution_project.config.project.default_profile.clone());
     Ok(crate::verify::run(

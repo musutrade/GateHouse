@@ -11,7 +11,17 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<str>,
 {
-    let args = command_args(args);
+    let mut args = command_args(args);
+    // Git's optional index refresh and configured filesystem-monitor hooks are
+    // unnecessary for metadata reads, including read-only plan inspection.
+    args.splice(
+        0..0,
+        [
+            "--no-optional-locks".into(),
+            "-c".into(),
+            "core.fsmonitor=false".into(),
+        ],
+    );
     crate::process::capture("git", &args, project_root, GIT_TIMEOUT)
         .with_context(|| format!("run git {}", args.join(" ")))
 }

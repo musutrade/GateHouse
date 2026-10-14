@@ -22,14 +22,29 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
             paths.extend(
                 git::null_terminated_paths(
                     &project.root,
-                    ["diff", "--no-renames", "--name-only", "-z"],
+                    [
+                        "diff",
+                        "--no-ext-diff",
+                        "--no-textconv",
+                        "--no-renames",
+                        "--name-only",
+                        "-z",
+                    ],
                 )
                 .map_err(ScopeError::git)?,
             );
             paths.extend(
                 git::null_terminated_paths(
                     &project.root,
-                    ["diff", "--cached", "--no-renames", "--name-only", "-z"],
+                    [
+                        "diff",
+                        "--no-ext-diff",
+                        "--no-textconv",
+                        "--cached",
+                        "--no-renames",
+                        "--name-only",
+                        "-z",
+                    ],
                 )
                 .map_err(ScopeError::git)?,
             );
@@ -46,7 +61,15 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
             paths.extend(
                 git::null_terminated_paths(
                     &project.root,
-                    ["diff", "--cached", "--no-renames", "--name-only", "-z"],
+                    [
+                        "diff",
+                        "--no-ext-diff",
+                        "--no-textconv",
+                        "--cached",
+                        "--no-renames",
+                        "--name-only",
+                        "-z",
+                    ],
                 )
                 .map_err(ScopeError::git)?,
             );
@@ -65,7 +88,15 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
             paths.extend(
                 git::null_terminated_paths(
                     &project.root,
-                    ["diff", "--no-renames", "--name-only", "-z", range.as_str()],
+                    [
+                        "diff",
+                        "--no-ext-diff",
+                        "--no-textconv",
+                        "--no-renames",
+                        "--name-only",
+                        "-z",
+                        range.as_str(),
+                    ],
                 )
                 .map_err(ScopeError::git)?,
             );

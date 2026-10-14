@@ -51,6 +51,14 @@ impl Project {
         Ok(snapshot)
     }
 
+    /// Inspect staged configuration using only read-only Git commands. No
+    /// write-tree, checkout filters, report allocation or repository writes.
+    pub(crate) fn staged_plan_snapshot(&self) -> Result<Self> {
+        let relative = self.config_path.strip_prefix(&self.execution_root)?;
+        let input = InvocationInput::inspect_staged(&self.root, relative, &self.input().commit)?;
+        Self::from_input(self.root.clone(), relative, input)
+    }
+
     fn from_input(root: PathBuf, config_relative: &Path, input: InvocationInput) -> Result<Self> {
         let execution_root = input.execution_root.clone();
         let config_path = execution_root.join(config_relative);

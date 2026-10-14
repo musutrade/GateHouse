@@ -700,3 +700,5 @@ Generated baselines remain review-only candidates; adoption policy is
 [ADR-0039](docs/adr/0039-required-risk-and-traceability-gates.md).
 
 Full regression data is fetched explicitly and cached by digest; ordinary source builds need no evidence download. See [test data](test-data/README.md).
+
+Preview selection before executing commands with [verify --plan](docs/verification-plan.md). Add --json for the versioned explanation interface; planning never reports verification PASS.

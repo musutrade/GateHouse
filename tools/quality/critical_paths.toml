@@ -161,9 +161,9 @@ assertions = ["assert!(!report.passed);", "step.label == \"secret scan\" && !ste
 [paths.source]
 path = "src/verify/mod.rs"
 symbol = "run_selected"
-start = 182
-end = 340
-sha256 = "12d7fdce72abbd6d7692f8483dcb3bf990856be732d70920afb9dc964f136447"
+start = 201
+end = 359
+sha256 = "abe34f1515f69867a0c826ce2106f97972587b1e98ec9f296f983bf7c60efbf6"
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "gate_failure_writes_compatible_report"
@@ -171,7 +171,7 @@ start = 552
 end = 574
 sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
 [[paths.probes]]
-line = 322
+line = 341
 column = 5
 text = "publish_report(&report, &invocation_project, project, &mut progress)?;"
 
@@ -409,3 +409,32 @@ sha256 = "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0"
 line = 126
 column = 9
 text = "platform::sync_directory(&self.directory).map_err(failure)?;"
+
+[[paths]]
+id = "plan.readonly"
+module = "app"
+test = "staged_plan_uses_indexed_configuration_without_filters_objects_reports_or_tokens"
+platforms = ["linux", "macos"]
+platform_note = "Unix Git/filter fixture; Windows CLI parsing and existing native tests remain required."
+observable = "Plan reads staged configuration without changing any repository or Git file, invoking configured filters/monitors, allocating reports or consuming requests."
+rule = "critical-path-source-v2"
+owner = "Harness-Gate maintainers"
+review_date = "2026-10-14"
+binary = "verify_plan_test"
+assertions = ["assert_eq!(snapshot(root), before);", "assert!(!root.join(\"forbidden-called\").exists());"]
+[paths.source]
+path = "src/app/plan.rs"
+symbol = "inspect"
+start = 43
+end = 60
+sha256 = "232b9fc7d46323368402ea01b6cbc9ffb40ef89f244595b731c41172b49430e1"
+[paths.test_source]
+path = "tests/verify_plan_test.rs"
+symbol = "staged_plan_uses_indexed_configuration_without_filters_objects_reports_or_tokens"
+start = 433
+end = 485
+sha256 = "4486ed01c335bf3b727f1ccb80f3cc8875b3cb4d86f0458852b744fe416ba93d"
+[[paths.probes]]
+line = 50
+column = 5
+text = "let project = Project::discover(root, config)?;"
