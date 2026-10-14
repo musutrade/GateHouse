@@ -54,7 +54,6 @@ pub fn capture_cleanup(
     capture_command(program, args, cwd, timeout, false, CaptureLimits::default())
 }
 
-#[cfg(test)]
 pub(crate) fn capture_with_limits(
     program: &str,
     args: &[String],

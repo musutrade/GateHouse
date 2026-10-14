@@ -621,6 +621,40 @@ Artifacts are invocation-relative ordinary files with kind, byte count, and
 SHA-256. Missing, extra, outside, replaced, or symlinked artifacts make
 evidence_complete false.
 
+`invocation.json` now declares `metadata_version = 2` (older records without
+this field are version 1). Existing fields and machine-result/manifest/registry
+schema version 1 remain compatible; Core still reads historical metadata.
+`toolchain` remains a string for compatibility and is always `"unknown"` in
+version 2. Generic verification does not invoke `rustc` or infer a project's
+toolchain from ambient PATH. Consumers that previously used this field as a
+tool identity must use the selected step's runner description (program,
+effective arguments and declared environment) and the collector's bound tool
+provenance in its evidence instead. A runner description is a declaration, not
+proof of a compiler version. `executor_version` identifies the Core package,
+not the compiler used to build Core or the project's toolchain.
+
+`commit` is optional checkout context sampled once during project discovery
+and reused in reports, including staged invocations. It accepts only a valid
+SHA-1 or SHA-256 commit ID from `git rev-parse --verify HEAD^{commit}`. The
+probe has a one-second execution timeout, 4 KiB per output stream, an 8 KiB
+combined budget and a 200 ms shared reader deadline, plus the executor's
+bounded process-tree termination/reaping. Missing Git/HEAD, nonzero exit,
+timeout, output overflow, invalid UTF-8 or malformed output produces
+`commit = "unknown"`; working-tree source context likewise becomes
+`working-tree:unknown`. Cancellation aborts the invocation with an error and
+reclaims the probe tree rather than becoming optional success. No metadata
+commands run while writing `invocation.json`.
+Cancellation during discovery occurs before invocation allocation, so it emits
+a CLI error without creating a successful invocation report.
+
+This optional context does not satisfy required source/toolchain evidence.
+Required Git operations (such as staged snapshot creation) and required
+runner/collector gates retain their existing fail-closed semantics. Downstream
+consumers must not treat `unknown` as a verified identity. Rollback to an older
+Core restores the legacy metadata behavior, including its ambient Rust probe;
+it does not rewrite retained reports, adopt a baseline or change a measurement
+series.
+
 Reports, logs, audit output, SBOMs, and webhook diagnostics redact cookies,
 authorization headers, Bearer/Basic credentials, API keys, passwords, private
 key blocks, and common database URL values. The latest 50 invocations are

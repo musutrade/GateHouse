@@ -44,7 +44,8 @@ impl Project {
                     self.config_path.display()
                 )
             })?;
-        let input = InvocationInput::materialize_staged(&self.root, config_relative)?;
+        let input =
+            InvocationInput::materialize_staged(&self.root, config_relative, &self.input().commit)?;
         let mut snapshot = Self::from_input(self.root.clone(), config_relative, input)?;
         snapshot.replay_state_dir = self.replay_state_dir.clone();
         Ok(snapshot)

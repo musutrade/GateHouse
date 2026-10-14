@@ -36,10 +36,6 @@ pub struct Project {
 }
 
 impl Project {
-    pub(crate) fn repository_root(&self) -> &std::path::Path {
-        &self.root
-    }
-
     pub(crate) fn input(&self) -> &InvocationInput {
         &self.invocation_input
     }

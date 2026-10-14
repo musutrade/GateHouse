@@ -1410,7 +1410,9 @@ fn main() {
     let mut cmd = {
         if mode == "live-anchor" {
             let mut cmd = Command::new("python3");
-            cmd.args(["-c", "import os,signal,time; from pathlib import Path; signal.signal(signal.SIGTERM,lambda *_:os._exit(7)); Path(os.environ['LIVE_READY']).write_text(str(os.getpid())); time.sleep(30)"]);
+            // Publish readiness only after the complete PID has been written.
+            // Creating the final file first lets the parent observe empty bytes.
+            cmd.args(["-c", "import os,signal,time; from pathlib import Path; signal.signal(signal.SIGTERM,lambda *_:os._exit(7)); ready=Path(os.environ['LIVE_READY']); pending=ready.with_suffix('.tmp'); pending.write_text(str(os.getpid())); pending.replace(ready); time.sleep(30)"]);
             cmd
         } else {
             let mut cmd = Command::new("sh");
