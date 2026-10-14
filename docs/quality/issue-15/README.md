@@ -42,9 +42,11 @@ independent plugin releases have their own immutable asset protection.
 [GitHub's documented setting](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes)
 only applies to future releases. GateProbes currently has it enabled. [GateProbes PR #19](https://github.com/musutrade/GateProbes/pull/19) supplies fresh
 30-file/ten-subject verification and future safeguards. The remaining
-#17 change must enforce the setting before publication, verify actual postpublication
-`draft`, `prerelease`, `immutable`, exact asset bytes, signing identity and source,
-and retain a machine receipt. Legacy RC8 must be reported as `legacy-mutable`,
+#17 change must verify actual postpublication `draft`, `prerelease`, `immutable`,
+exact asset bytes, signing identity and source, and retain a machine receipt.
+The settings API requires Administration:read; settings inspection uses the
+operator's existing authentication, while ordinary publication verification uses
+its normal Actions token without a new administrative credential. Legacy RC8 must be reported as `legacy-mutable`,
 never as fully protected. Its existing tag rules prohibit update/deletion without
 bypass, but signatures/digest verification remain necessary for asset consumption.
 
