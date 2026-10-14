@@ -770,6 +770,14 @@
         "kind": {
           "type": "string"
         },
+        "required_program": {
+          "description": "Optional executable constraint supplied by the runner definition.",
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "result_format": {
           "default": "regex",
           "allOf": [
@@ -788,6 +796,22 @@
           "maximum": 256.0,
           "minimum": 1.0
         },
+        "threads_args": {
+          "description": "Arguments carrying the thread budget; `{threads}` expands to its count.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "threads_args_after": {
+          "description": "Insert thread arguments after the first matching token, appending it if absent. Without a token, append thread arguments.",
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "threads_env": {
           "default": null,
           "type": [
@@ -798,7 +822,8 @@
         "version": {
           "type": "integer",
           "format": "uint32",
-          "minimum": 0.0
+          "maximum": 2.0,
+          "minimum": 2.0
         }
       },
       "additionalProperties": false

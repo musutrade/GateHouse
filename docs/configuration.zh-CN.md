@@ -273,26 +273,40 @@ cwd = "{root}"
 log = "backend_tests.log"
 timeout_secs = 300
 
-runner = { version = 1, kind = "cargo-test", threads = 4,
+runner = { version = 2, kind = "cargo-test", threads = 4,
+           required_program = "cargo",
+           threads_args = ["--test-threads", "{threads}"], threads_args_after = "--",
            result_format = "junit", isolation = "schema-per-worker" }
 ```
 
 | 字段 | 必需 | 说明 |
 | --- | --- | --- |
-| `version` | 是 | runner 契约版本，当前为 `1` |
-| `kind` | 是 | runner 类型 ID；`cargo-test` 要求 `program = "cargo"` |
-| `threads` | 否 | runner worker 数，范围 1 到 256；`cargo-test` 会生成 `-- --test-threads N` |
+| `version` | 是 | runner 契约版本，当前为 `2`；v1 必须显式迁移 |
+| `kind` | 是 | runner 类型 ID；Core 不按名称选择命令行为 |
+| `threads` | 否 | runner worker 数，范围 1 到 256 |
 | `threads_env` | 否 | 将线程数注入子进程的环境变量；设置时必须同时设置 `threads` |
+| `required_program` | 否 | 要求步骤使用指定的 executable |
+| `threads_args` | 否 | 线程参数模板；要求设置 `threads`，且至少一个 `{threads}` 占位符；不接受其他占位符 |
+| `threads_args_after` | 否 | 在线程参数前定位的字面 token；取第一个匹配，缺少时追加 token；要求设置 `threads_args`；省略则追加参数 |
 | `args` | 否 | runner 专用参数 |
 | `args_position` | 否 | 将 `args` 插入原始步骤参数的索引；省略时追加 |
 | `result_format` | 否 | `regex`（默认）、`junit`、`trx` 或 `json`；标准结果解析契约仍在逐步建设 |
 | `isolation` | 是 | `shared`、`schema-per-worker` 或 `database-per-worker` |
 
-`threads > 1` 时不能使用 `shared` 隔离；非 `cargo-test` runner 还必须声明 `threads_env`，
+先按 `args_position` 插入 `args`，再展开并插入 `threads_args`。用户重复参数保留原顺序，
+冲突处理仍由子进程决定。`threads > 1` 时不能使用 `shared` 隔离，且必须声明
+`threads_env` 或 `threads_args`，
 否则 `config check` 会在启动 service 或 worker 前失败。schema/database runner 会为每次
 invocation 生成唯一 worker ID，并通过 `HARNESS_GATE_ISOLATION_*` 环境变量传入；执行结束
 会写入 terminal marker 并清理 active state。启用全局并行时，所有外部步骤也必须声明 runner
 隔离，避免隐式共享资源。不要通过字符串拼接或未声明的环境变量修改测试线程参数。
+
+旧 runner v1 通过 GateProbes
+[`tools/runners/migrate.py`](https://github.com/musutrade/GateProbes/blob/main/tools/runners/migrate.py)
+显式迁移。工具读取外部 Cargo 定义并生成新 flow，保留 policy、parser、隔离、shard 和重试配置。
+替换前用新 Core 运行 `config check`；回滚时同时恢复原 flow 和旧 Core。仅支持 runner v1
+的旧 Core 无法读取 v2 声明。整体 flow version 仍为 2，详见
+[ADR 0054](adr/0054-declarative-runner-inputs.md)。
 
 ## 7. `[policy]`
 

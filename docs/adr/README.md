@@ -94,3 +94,5 @@ When an ADR is superseded:
 - [ADR-0050: Guaranteed serial dispatch and shared-service ordering](0050-serial-shared-service-ordering.md)
 
 - [ADR-0051: Lightweight collector storage and independent upgrades](0051-lightweight-collector-storage.md)
+
+- [ADR-0054: Declarative runner inputs](0054-declarative-runner-inputs.md)

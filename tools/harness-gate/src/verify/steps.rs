@@ -346,19 +346,25 @@ fn runner_inputs(
     let insertion = runner.args_position.unwrap_or(effective_args.len());
     effective_args.splice(insertion..insertion, runner.args.iter().cloned());
 
-    if runner.kind == "cargo-test" {
-        if let Some(threads) = runner.threads {
-            let insertion = effective_args
-                .iter()
-                .position(|argument| argument == "--")
-                .map(|index| index + 1)
-                .unwrap_or_else(|| {
-                    effective_args.push("--".into());
-                    effective_args.len()
-                });
+    if let Some(threads) = runner.threads {
+        if !runner.threads_args.is_empty() {
+            let insertion = match &runner.threads_args_after {
+                Some(token) => effective_args
+                    .iter()
+                    .position(|argument| argument == token)
+                    .map(|index| index + 1)
+                    .unwrap_or_else(|| {
+                        effective_args.push(token.clone());
+                        effective_args.len()
+                    }),
+                None => effective_args.len(),
+            };
             effective_args.splice(
                 insertion..insertion,
-                ["--test-threads".into(), threads.to_string()],
+                runner
+                    .threads_args
+                    .iter()
+                    .map(|argument| argument.replace("{threads}", &threads.to_string())),
             );
         }
     }
@@ -581,10 +587,13 @@ mod tests {
     #[test]
     fn runner_arguments_and_environment_are_recorded() {
         let runner = RunnerConfig {
-            version: 1,
+            version: 2,
             kind: "generic".into(),
             threads: Some(3),
             threads_env: Some("TEST_THREADS".into()),
+            required_program: None,
+            threads_args: Vec::new(),
+            threads_args_after: None,
             args: vec!["--runner-flag".into()],
             args_position: Some(1),
             result_format: RunnerResultFormat::Json,
@@ -600,12 +609,15 @@ mod tests {
     }
 
     #[test]
-    fn cargo_test_threads_are_inserted_after_the_test_separator() {
+    fn declared_threads_are_inserted_after_the_separator() {
         let runner = RunnerConfig {
-            version: 1,
-            kind: "cargo-test".into(),
+            version: 2,
+            kind: "external-runner".into(),
             threads: Some(4),
             threads_env: None,
+            required_program: None,
+            threads_args: vec!["--test-threads".into(), "{threads}".into()],
+            threads_args_after: Some("--".into()),
             args: vec!["--nocapture".into()],
             args_position: None,
             result_format: RunnerResultFormat::Junit,
@@ -615,5 +627,46 @@ mod tests {
             runner_inputs(&runner, &["test".into(), "--".into()]).expect("runner inputs");
 
         assert_eq!(args, ["test", "--", "--test-threads", "4", "--nocapture"]);
+    }
+    #[test]
+    fn declared_argument_order_and_conflicts_are_name_independent() {
+        for kind in ["cargo-test", "unknown-runner"] {
+            let mut runner = RunnerConfig {
+                version: 2,
+                kind: kind.into(),
+                threads: Some(4),
+                threads_env: None,
+                required_program: None,
+                threads_args: vec!["--workers".into(), "{threads}".into()],
+                threads_args_after: Some("SEP".into()),
+                args: vec!["tail".into()],
+                args_position: None,
+                result_format: RunnerResultFormat::Regex,
+                isolation: TestIsolation::SchemaPerWorker,
+            };
+            for (input, expected) in [
+                (vec!["run"], vec!["run", "tail", "SEP", "--workers", "4"]),
+                (
+                    vec!["run", "SEP", "--workers=9"],
+                    vec!["run", "SEP", "--workers", "4", "--workers=9", "tail"],
+                ),
+                (
+                    vec!["run", "SEP", "SEP"],
+                    vec!["run", "SEP", "--workers", "4", "SEP", "tail"],
+                ),
+            ] {
+                let (args, report) = runner_inputs(
+                    &runner,
+                    &input.into_iter().map(String::from).collect::<Vec<_>>(),
+                )
+                .unwrap();
+                assert_eq!(args, expected);
+                assert_eq!(report.effective_args, args);
+            }
+            runner.args_position = Some(0);
+            runner.threads_args_after = None;
+            let (args, _) = runner_inputs(&runner, &["run".into()]).unwrap();
+            assert_eq!(args, ["tail", "run", "--workers", "4"]);
+        }
     }
 }

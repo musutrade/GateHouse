@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 pub const CONFIG_VERSION: u32 = 2;
 pub const DEFAULT_CONFIG_PATH: &str = ".harness-gate/flow.toml";
-pub const RUNNER_CONFIG_VERSION: u32 = 1;
+pub const RUNNER_CONFIG_VERSION: u32 = 2;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -485,6 +485,7 @@ pub enum StepInput {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct RunnerConfig {
+    #[schemars(range(min = 2, max = 2))]
     pub version: u32,
     pub kind: String,
     #[serde(default)]
@@ -492,6 +493,16 @@ pub struct RunnerConfig {
     pub threads: Option<usize>,
     #[serde(default)]
     pub threads_env: Option<String>,
+    /// Optional executable constraint supplied by the runner definition.
+    #[serde(default)]
+    pub required_program: Option<String>,
+    /// Arguments carrying the thread budget; `{threads}` expands to its count.
+    #[serde(default)]
+    pub threads_args: Vec<String>,
+    /// Insert thread arguments after the first matching token, appending it if absent.
+    /// Without a token, append thread arguments.
+    #[serde(default)]
+    pub threads_args_after: Option<String>,
     #[serde(default)]
     pub args: Vec<String>,
     /// Insert runner arguments at this index in the configured step arguments.
