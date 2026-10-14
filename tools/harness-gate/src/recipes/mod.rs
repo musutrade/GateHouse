@@ -82,7 +82,7 @@ fn run_check(
         );
     }
     let result: CheckResult = serde_json::from_slice(&output.stdout)
-        .context("required service check result missing or malformed")?;
+        .map_err(|_| anyhow::anyhow!("required service check result missing or malformed"))?;
     if result.protocol != check.protocol
         || result.plugin != check.plugin
         || result.version != check.version

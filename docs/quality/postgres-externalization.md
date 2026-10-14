@@ -74,9 +74,23 @@ Developer evidence is frozen outside the checkout and delivered to the task
 coordinator. Installed candidate acceptance exercises doctor, service steps and
 verify plus failures using a fixed plugin artifact; Core is not rebuilt by
 acceptance. It uses a deterministic health fixture because this host has no
-`pg_isready`; it does not certify a live database daemon. Compatible released
-Core, hosted required quality/critical-path certification, independent signed
-package publication and actual daemon acceptance remain separate gates.
+host-installed `pg_isready`. Additional local acceptance on 2026-10-14 passed
+the same 43 doctor/service-step/verify case records with real `pg_isready` and
+an isolated `postgres:16-alpine` container (image
+`sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea`).
+The client ran through `docker exec`, with no published ports; the temporary
+container was removed afterward. This certifies that Linux candidate path,
+not a host client installation or another platform.
+
+The local release-profile plugin archive also passed extracted-artifact and
+prepared-preset acceptance with a candidate Core, and generated a CycloneDX 1.5
+SBOM containing 62 components. All seven original preset steps, execution
+policy, collectors, policies, full/ci memberships and generated policy files
+were checked; the historical catalog and pack bytes remain unchanged.
+Malformed plugin results have a fixed diagnostic so parser errors cannot
+publish private values. Compatible released Core, hosted required
+quality/critical-path certification and independent signed package publication
+remain separate gates.
 
 The production inventory retains the original coverage thresholds and boundaries.
 Deleted recipe measurement is supported as an absent source on head;

@@ -80,6 +80,25 @@ fn required_check_rejects_missing_tampered_failed_and_incompatible_results() {
 
 #[cfg(unix)]
 #[test]
+fn malformed_check_diagnostics_do_not_publish_private_values() {
+    for response in [
+        r#"{"protocol":"gate-service-check/v1","plugin":"fixture","version":"1","mode":"external","success":"PRIVATE_SERVICE_VALUE"}"#,
+        r#"{"PRIVATE_SERVICE_VALUE":true}"#,
+    ] {
+        let (root, check) = check_fixture(&format!("printf '%s' '{response}'"));
+        let error =
+            run_check(&check, root.path(), Some("opaque"), Duration::from_secs(1)).unwrap_err();
+        let diagnostic = format!("{error:#}");
+        assert!(diagnostic.contains("result missing or malformed"));
+        assert!(
+            !diagnostic.contains("PRIVATE_SERVICE_VALUE"),
+            "{diagnostic}"
+        );
+    }
+}
+
+#[cfg(unix)]
+#[test]
 fn required_check_receives_private_value_and_explicit_environment_only() {
     let body = r#"[ "$GATE_CHECK_VALUE" = 'opaque-secret' ] || exit 1
 [ "$GATE_CHECK_MODE" = 'external' ] || exit 2
