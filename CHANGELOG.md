@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Apply `scope.unmatched = "all"` fallback only when changed paths include an
+  unmatched path. Clean trees select no components and fully matched changes
+  retain incremental selection; explicit `--all` and default fail-closed
+  behavior are unchanged.
+
 ## [0.5.0] - 2026-10-14
 
 ### Breaking

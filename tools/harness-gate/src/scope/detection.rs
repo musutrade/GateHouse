@@ -85,8 +85,10 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
                 files: unmatched_files.join(", "),
             });
         }
-        UnmatchedScope::All => components.extend(project.config.components()),
-        UnmatchedScope::Fail | UnmatchedScope::Ignore => {}
+        UnmatchedScope::All if !unmatched_files.is_empty() => {
+            components.extend(project.config.components());
+        }
+        UnmatchedScope::Fail | UnmatchedScope::All | UnmatchedScope::Ignore => {}
     }
     Ok(ScopeResult {
         mode: mode_label,

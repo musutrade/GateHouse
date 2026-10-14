@@ -462,9 +462,13 @@ partial results fail closed as `RESULT_ZERO`, `RESULT_PARSE_FAILURE`, or
     patterns = ["services/api/**"]
     components = ["api"]
 
-unmatched defaults to fail. all runs every component and ignore drops unmatched
-paths. Rules map Git paths to component IDs and the selected set is recorded in
-the machine result.
+unmatched defaults to fail and rejects any changed path without a matching rule.
+all selects every component only when at least one changed path is unmatched;
+a clean tree selects none, and fully matched changes select only their mapped
+components. ignore drops unmatched paths from component selection. Explicit
+--all always selects every component, regardless of changed paths or this policy.
+Rules map Git paths to component IDs and the selected set is recorded in the
+machine result.
 
 ## 12. Steps and built-in gates
 
