@@ -64,7 +64,7 @@ class RiskScopeTests(unittest.TestCase):
         })
         self.assertIn('process/command.rs', SOURCE_FILES)
         self.assertNotIn('process/task.rs', SOURCE_FILES)
-        self.assertNotIn('process/capture.rs', SOURCE_FILES)
+        self.assertIn('process/capture.rs', SOURCE_FILES)
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')},
                          {'service/lease.rs', 'service/mod.rs', 'service/report_directory.rs'})
 
@@ -75,6 +75,7 @@ class RiskScopeTests(unittest.TestCase):
                 ('tools/harness-gate/src/process/tests.rs', True),
                 ('tools/harness-gate/src/process/replay.rs', True),
                 ('tools/harness-gate/src/process/command.rs', True),
+                ('tools/harness-gate/src/process/capture.rs', True),
                 ('tools/harness-gate/src/project/discovery.rs', True),
                 ('tools/harness-gate/src/project/mod.rs', True),
                 ('tools/harness-gate/src/utils/redaction.rs', True),

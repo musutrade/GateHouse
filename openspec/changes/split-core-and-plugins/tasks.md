@@ -328,3 +328,19 @@ remaining plugins, and the release/signing identity switch last.
 > verification. Legacy RC8 remains mutable; mandatory future protection is now
 > checked against actual published state. This does not retroactively lock RC8
 > or promote an RC to stable.
+
+
+> **4.2 correction (GateHouse #24, 2026-10-14):** the earlier completion
+> recorded an internal module move, leaving Postgres policy/model/schema,
+> service/doctor and v1 migration in Core. That did not satisfy externalization.
+> The candidate removes the dedicated runtime and enum, declares required
+> digest/version-bound `gate-service-check/v1` processes, and transfers URL,
+> isolation, external health, managed recipes and migration to GateProbes.
+> Old v1/v2 inputs fail with explicit migration help; frozen fixtures and the
+> original dated receipts above remain unchanged. Source implementation and
+> installed candidate acceptance are distinct from compatible released-Core,
+> independent package/signing and live-daemon certification, which remain
+> pending. No publication is claimed here. Engineering Policy requiredness,
+> thresholds, baseline/debt/ratchet, measurement series, final decisions and
+> release authority are unchanged. See the
+> [current contract and consumer inventory](../../../docs/quality/postgres-externalization.md).

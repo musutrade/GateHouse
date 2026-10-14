@@ -82,6 +82,17 @@
     "scope": {
       "$ref": "#/definitions/ScopeConfig"
     },
+    "service_checks": {
+      "description": "Every declared service check is mandatory before exposing the service.",
+      "default": {},
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ServiceCheck"
+        }
+      }
+    },
     "services": {
       "default": {},
       "type": "object",
@@ -434,13 +445,6 @@
         }
       },
       "additionalProperties": false
-    },
-    "ExternalValuePolicy": {
-      "type": "string",
-      "enum": [
-        "none",
-        "isolated-postgres"
-      ]
     },
     "NotificationsConfig": {
       "type": "object",
@@ -854,6 +858,49 @@
       },
       "additionalProperties": false
     },
+    "ServiceCheck": {
+      "type": "object",
+      "required": [
+        "executable",
+        "plugin",
+        "protocol",
+        "sha256",
+        "timeout_secs",
+        "version"
+      ],
+      "properties": {
+        "executable": {
+          "type": "string"
+        },
+        "pass_env": {
+          "description": "Only these host environment names are forwarded. Values never enter argv.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "plugin": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "timeout_secs": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
     "ServiceConfig": {
       "oneOf": [
         {
@@ -888,14 +935,6 @@
               "type": [
                 "string",
                 "null"
-              ]
-            },
-            "external_value_policy": {
-              "default": "none",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/ExternalValuePolicy"
-                }
               ]
             },
             "healthcheck": {

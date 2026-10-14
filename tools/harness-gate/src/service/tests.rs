@@ -393,7 +393,6 @@ fn docker_service_uses_a_valid_external_value_without_docker() {
             image_env: None,
             external_env: Some(name.into()),
             inject_env: "TEST_DATABASE_URL".into(),
-            external_value_policy: crate::config::ExternalValuePolicy::IsolatedPostgres,
             startup_timeout_secs: 1,
             timeout_env: None,
             container_port: 5432,
@@ -414,6 +413,7 @@ fn docker_service_uses_a_valid_external_value_without_docker() {
 }
 
 #[test]
+#[cfg(unix)]
 fn docker_service_rejects_an_invalid_external_value_before_any_runtime() {
     let (_workspace, mut project) = project();
     let name = "HARNESS_GATE_DOCKER_INVALID_EXTERNAL_FIXTURE";
@@ -426,7 +426,6 @@ fn docker_service_rejects_an_invalid_external_value_before_any_runtime() {
             image_env: None,
             external_env: Some(name.into()),
             inject_env: "TEST_DATABASE_URL".into(),
-            external_value_policy: crate::config::ExternalValuePolicy::IsolatedPostgres,
             startup_timeout_secs: 1,
             timeout_env: None,
             container_port: 5432,
@@ -435,11 +434,12 @@ fn docker_service_rejects_an_invalid_external_value_before_any_runtime() {
             connection: "postgres://unused".into(),
         },
     );
+    crate::recipes::tests::install_fixture(&mut project, "database", false);
     let mut manager = ServiceManager::new(&project);
     let error = manager
         .environment("database")
         .expect_err("a production-like database name must fail closed");
-    assert!(error.to_string().contains("must end with"), "{error:?}");
+    assert!(error.to_string().contains("reported failure"), "{error:?}");
     std::env::remove_var(name);
 }
 
@@ -456,7 +456,6 @@ fn exclusive_external_service_is_not_reused_after_its_last_lease() {
             image_env: None,
             external_env: Some(name.into()),
             inject_env: "TEST_DATABASE_URL".into(),
-            external_value_policy: crate::config::ExternalValuePolicy::IsolatedPostgres,
             startup_timeout_secs: 1,
             timeout_env: None,
             container_port: 5432,
@@ -498,7 +497,6 @@ fn podman_runtime_uses_external_service_without_starting_a_container() {
             image_env: None,
             external_env: Some(name.into()),
             inject_env: "TEST_DATABASE_URL".into(),
-            external_value_policy: crate::config::ExternalValuePolicy::IsolatedPostgres,
             startup_timeout_secs: 1,
             timeout_env: None,
             container_port: 5432,
@@ -529,7 +527,6 @@ fn managed_service_lease_excludes_concurrent_users() {
             image_env: None,
             external_env: Some(name.into()),
             inject_env: "EXCLUSIVE_URL".into(),
-            external_value_policy: crate::config::ExternalValuePolicy::IsolatedPostgres,
             startup_timeout_secs: 1,
             timeout_env: None,
             container_port: 5432,
@@ -558,4 +555,123 @@ fn managed_service_lease_excludes_concurrent_users() {
             .expect("second lease after release");
     });
     std::env::remove_var(name);
+}
+
+#[cfg(unix)]
+#[test]
+fn managed_availability_keeps_check_daemon_and_image_failures_blocking() {
+    use sha2::{Digest, Sha256};
+    use std::os::unix::fs::PermissionsExt;
+    if std::env::var_os("HG_MANAGED_AVAILABILITY_CHILD").is_none() {
+        let root = tempfile::tempdir().unwrap();
+        let binary = root.path().join("docker");
+        std::fs::write(
+            &binary,
+            r#"#!/bin/sh
+printf '%s\n' "$*" >> "$HG_FAKE_RUNTIME_LOG"
+case "$1" in
+ info) exit "${HG_FAKE_INFO_EXIT:-0}";;
+ image) exit "${HG_FAKE_IMAGE_EXIT:-0}";;
+ *) exit 99;;
+esac
+"#,
+        )
+        .unwrap();
+        std::fs::set_permissions(&binary, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let mut paths = vec![root.path().to_path_buf()];
+        paths.extend(std::env::split_paths(
+            &std::env::var_os("PATH").unwrap_or_default(),
+        ));
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "service::tests::managed_availability_keeps_check_daemon_and_image_failures_blocking", "--nocapture"])
+            .env("HG_MANAGED_AVAILABILITY_CHILD", "1")
+            .env("HG_FAKE_RUNTIME_LOG", root.path().join("runtime.log"))
+            .env("PATH", std::env::join_paths(paths).unwrap())
+            .output().unwrap();
+        assert!(
+            output.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return;
+    }
+    let (_workspace, mut project) = project();
+    std::env::remove_var("HG_MANAGED_EXTERNAL_VALUE");
+    project.config.services.insert(
+        "database".into(),
+        ServiceConfig::Docker {
+            runtime: crate::config::ContainerRuntimeKind::Docker,
+            image: "fixture-image".into(),
+            image_env: None,
+            external_env: Some("HG_MANAGED_EXTERNAL_VALUE".into()),
+            inject_env: "TEST_DATABASE_URL".into(),
+            startup_timeout_secs: 5,
+            timeout_env: None,
+            container_port: 1234,
+            environment: Default::default(),
+            healthcheck: vec!["true".into()],
+            connection: "opaque:{host_port}".into(),
+        },
+    );
+    let bind_check = |project: &mut Project, success| {
+        crate::recipes::tests::install_fixture(project, "database", success);
+        let path =
+            std::path::PathBuf::from(&project.config.service_checks["database"][0].executable);
+        let source = std::fs::read_to_string(&path).unwrap();
+        let managed = source.replace("\"mode\":\"external\"", "\"mode\":\"managed\"");
+        assert_ne!(managed, source);
+        std::fs::write(&path, managed).unwrap();
+        project.config.service_checks.get_mut("database").unwrap()[0].sha256 =
+            format!("{:x}", Sha256::digest(std::fs::read(path).unwrap()));
+    };
+    let log = std::path::PathBuf::from(std::env::var_os("HG_FAKE_RUNTIME_LOG").unwrap());
+    bind_check(&mut project, false);
+    std::fs::write(&log, "").unwrap();
+    assert!(check_available(&project, "database", Duration::from_secs(5)).is_err());
+    assert_eq!(
+        std::fs::read_to_string(&log).unwrap(),
+        "",
+        "required check must precede runtime commands"
+    );
+    bind_check(&mut project, true);
+    for (info, image, success, calls) in [
+        ("1", "0", false, "info\n"),
+        ("0", "1", false, "info\nimage inspect fixture-image\n"),
+        ("0", "0", true, "info\nimage inspect fixture-image\n"),
+    ] {
+        std::env::set_var("HG_FAKE_INFO_EXIT", info);
+        std::env::set_var("HG_FAKE_IMAGE_EXIT", image);
+        std::fs::write(&log, "").unwrap();
+        assert_eq!(
+            check_available(&project, "database", Duration::from_secs(5)).is_ok(),
+            success
+        );
+        assert_eq!(std::fs::read_to_string(&log).unwrap(), calls);
+    }
+    std::env::set_var("HG_MANAGED_EXTERNAL_VALUE", "");
+    assert!(check_available(&project, "database", Duration::from_secs(5)).is_ok());
+    if let ServiceConfig::Docker { external_env, .. } =
+        project.config.services.get_mut("database").unwrap()
+    {
+        *external_env = None;
+    }
+    assert!(check_available(&project, "database", Duration::from_secs(5)).is_ok());
+    assert!(check_available(&project, "unknown", Duration::from_secs(5)).is_err());
+    project.config.services.insert(
+        "environment".into(),
+        ServiceConfig::Environment {
+            source_env: "HG_MANAGED_ENVIRONMENT_VALUE".into(),
+            inject_env: "FIXTURE_VALUE".into(),
+        },
+    );
+    std::env::remove_var("HG_MANAGED_ENVIRONMENT_VALUE");
+    assert!(check_available(&project, "environment", Duration::from_secs(5)).is_err());
+    std::env::set_var("HG_MANAGED_ENVIRONMENT_VALUE", "");
+    assert!(check_available(&project, "environment", Duration::from_secs(5)).is_err());
+    crate::recipes::tests::install_fixture(&mut project, "environment", true);
+    std::env::set_var("HG_MANAGED_ENVIRONMENT_VALUE", "opaque");
+    assert!(check_available(&project, "environment", Duration::from_secs(5)).is_ok());
+    crate::recipes::tests::install_fixture(&mut project, "environment", false);
+    assert!(check_available(&project, "environment", Duration::from_secs(5)).is_err());
 }

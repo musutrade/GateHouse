@@ -19,6 +19,9 @@ pub struct FlowConfig {
     pub doctor: DoctorConfig,
     #[serde(default)]
     pub services: BTreeMap<String, ServiceConfig>,
+    /// Every declared service check is mandatory before exposing the service.
+    #[serde(default)]
+    pub service_checks: BTreeMap<String, Vec<ServiceCheck>>,
     #[serde(default)]
     pub parsers: BTreeMap<String, ParserConfig>,
     #[serde(default)]
@@ -278,8 +281,6 @@ pub enum ServiceConfig {
         #[serde(default)]
         external_env: Option<String>,
         inject_env: String,
-        #[serde(default)]
-        external_value_policy: ExternalValuePolicy,
         startup_timeout_secs: u64,
         #[serde(default)]
         timeout_env: Option<String>,
@@ -313,12 +314,18 @@ impl ContainerRuntimeKind {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
-#[serde(rename_all = "kebab-case")]
-pub enum ExternalValuePolicy {
-    #[default]
-    None,
-    IsolatedPostgres,
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ServiceCheck {
+    pub executable: String,
+    pub sha256: String,
+    pub protocol: String,
+    pub plugin: String,
+    pub version: String,
+    pub timeout_secs: u64,
+    /// Only these host environment names are forwarded. Values never enter argv.
+    #[serde(default)]
+    pub pass_env: BTreeSet<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

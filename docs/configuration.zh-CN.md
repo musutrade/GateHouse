@@ -8,6 +8,10 @@
 
 本文档说明 `.harness-gate/flow.toml` 和审计规则文件的完整配置模型。首次接入请先阅读上一级的 [操作手册](../README.md)，再按需查阅本参考。
 
+`config import --execution-only` 离线保留兼容的 Arc-Flow v2 执行声明。旧外部服务策略须先由
+GateProbes 迁移；导入器保留通用 `service_checks` 的 required 程序绑定而不执行它们。
+未迁移策略会得到迁移指引，且不会发布部分配置或导入报告。
+
 ## 1. 文件与加载顺序
 
 默认项目配置是仓库内的 `.harness-gate/flow.toml`。`harness-gate` 从当前目录向父目录查找该文件，也可以显式指定：
@@ -459,7 +463,6 @@ image = "postgres:16-alpine"
 image_env = "ARC_FLOW_POSTGRES_IMAGE"
 external_env = "TEST_DATABASE_URL"
 inject_env = "TEST_DATABASE_URL"
-external_value_policy = "isolated-postgres"
 startup_timeout_secs = 30
 timeout_env = "ARC_FLOW_DATABASE_TIMEOUT_SECS"
 container_port = 5432
@@ -475,7 +478,6 @@ connection = "postgres://test:test@127.0.0.1:{host_port}/app_test"
 | `image_env`            | 否   | 覆盖镜像名                                     |
 | `external_env`         | 否   | 若该变量已设置，直接使用其值并跳过 Docker      |
 | `inject_env`           | 是   | 注入测试步骤的变量名                           |
-| `external_value_policy` | 否  | 外部值安全策略；测试 PostgreSQL 使用 `isolated-postgres` |
 | `startup_timeout_secs` | 是   | 整个 Docker 启动过程的秒数，范围 1 到 300      |
 | `timeout_env`          | 否   | 覆盖启动超时                                   |
 | `container_port`       | 是   | 容器监听端口；宿主端口随机绑定到 `127.0.0.1`   |
@@ -485,9 +487,33 @@ connection = "postgres://test:test@127.0.0.1:{host_port}/app_test"
 
 服务按需启动，同一轮验证内复用。选定 runtime 的 daemon 探测、容器创建、端口查询和健康检查共享一个启动截止时间；验证成功、失败、超时或收到中断信号时都会在独立清理超时内尝试 `<runtime> rm --force`。镜像不会自动拉取，先用 `<runtime> pull <image>` 准备。清理错误会被收集到验证结果并使验证失败，避免把容器泄漏报告为成功。
 
-`isolated-postgres` 会要求 URL 使用 `postgres`/`postgresql` 协议，数据库名以 `_test` 或
-`-test` 结尾，并拒绝与当前 `DATABASE_URL` 指向同一数据库。默认只允许本机回环地址；确需
-使用已确认隔离的远程测试库时，额外设置 `ARC_FLOW_ALLOW_REMOTE_TEST_DATABASE=1`。
+Postgres URL 隔离与健康检查由 GateProbes 的
+[Postgres 服务插件](https://github.com/musutrade/GateProbes/tree/main/plugins/postgres-service)负责。
+必须显式绑定已验证安装的插件，以下路径与摘要须替换为实际值：
+
+```toml
+[[service_checks.test-postgres]]
+executable = "/opt/gateprobes/gateprobes-postgres"
+sha256 = "<已安装程序的 64 位 SHA-256>"
+protocol = "gate-service-check/v1"
+plugin = "gateprobes-postgres"
+version = "0.1.0"
+timeout_secs = 15
+pass_env = ["DATABASE_URL", "HARNESS_GATE_ALLOW_REMOTE_TEST_DATABASE", "PATH", "SYSTEMROOT"]
+```
+
+声明的检查全部为 required，空列表无效。Core 在项目根目录执行插件，清空继承环境后只传递
+`pass_env`，另注入 `GATE_CHECK_PROTOCOL`、`GATE_CHECK_MODE`（`external` 或 `managed`）及
+外部服务的 `GATE_CHECK_VALUE`。连接值不会进入 argv 或公开插件诊断。Core 在执行前后校验
+程序摘要，要求受限 JSON 输出的 protocol/plugin/version/mode 完全匹配且 `success = true`。
+缺失、篡改、不兼容、超时、崩溃、缺失/畸形结果或检查失败均阻断依赖步骤。Doctor 使用同一
+服务准备和检查规则，需声明 required 的 service doctor check。托管容器使用上述明确健康配方；
+外部 Postgres 健康检查要求 PATH 中存在 `pg_isready`。
+
+Core 保留 requiredness、通用执行、服务生命周期、租约、清理与最终阻断决策。插件升级需要
+显式重绑 version/摘要，无需重编译 Core。Core v0.4.9 不支持此候选协议；正式 Core 与插件
+包的认证仍待完成。旧 `external_value_policy`（包括 `none`）会给出迁移错误；单独删除字段
+不能保持原有 Postgres 检查强度。
 
 一个步骤可以依赖多个服务：
 
@@ -971,12 +997,12 @@ IPv4 的 IPv6 形式（IPv4-mapped/compatible、NAT64 `64:ff9b::/96`、6to4）�
 
 ### v1 到 v2 配置迁移和安全修复
 
-v1 配置使用迁移命令生成 v2 文件，源文件不会被删除：
+v1 数据库配方与旧 v2 外部策略由已安装的 GateProbes 插件迁移。Core 的 `config migrate`
+会明确拒绝并提供操作指引。保留源文件，生成新文件，检查插件绑定后用兼容 Core 验证：
 
 ```bash
-harness-gate --project-root /path/to/project config migrate \
-  --input legacy.flow.toml \
-  --output .harness-gate/flow.toml
+gateprobes-postgres migrate --input /path/to/project/legacy.flow.toml \
+  --output /path/to/project/.harness-gate/flow.toml --project my-project
 harness-gate --project-root /path/to/project config check
 ```
 
@@ -1077,3 +1103,7 @@ adapter 通过 stdin 接收一份 JSON，请在 stdout 只返回一份 JSON 对�
 malformed 响应和上述校验错误统一映射为 `ADAPTER_PROTOCOL_FAILURE`，并尝试清理 adapter 的进程组。
 reader 在独立 deadline 后不会阻塞调用方。该 host 当前是独立执行入口；若要把 adapter 纳入验证
 DAG，应先在上层编排器中显式安排 invocation 和结果映射。
+
+迁移退出条件：活动配置均使用显式 required 检查以及已验证兼容的正式 Core/插件组合。
+回滚须同时恢复保留的旧 flow 与兼容的不可变 Core/插件产物；不通过移除检查绕过验证。
+Engineering Policy 的 requiredness、阈值、baseline/debt/ratchet 和发布权威保持不变。

@@ -78,6 +78,22 @@ impl FlowConfig {
         repository_root: Option<&Path>,
     ) -> std::result::Result<Self, ConfigDiagnostics> {
         let source_map = SourceMap::from_source(source);
+        if let Ok(raw) = toml::from_str::<toml::Value>(source) {
+            let old = raw
+                .get("services")
+                .and_then(toml::Value::as_table)
+                .is_some_and(|services| {
+                    services
+                        .values()
+                        .any(|s| s.get("external_value_policy").is_some())
+                });
+            if old {
+                return Err(ConfigDiagnostics::single("HGCFG-EXTERNAL-SERVICE-MIGRATION", "services",
+                    "built-in external service policies have been removed",
+                    "run the GateProbes recipe migration (gateprobes-postgres migrate --input <PATH> --output <NEW_PATH> --project <NAME>), then config check; retain the source for rollback")
+                    .with_source_opt(source_path));
+            }
+        }
         reject_audit_config_interpolation(source, &source_map, source_path)?;
         let source = interpolate_environment(source, source_path)?;
         let mut config: Self = toml::from_str(&source)

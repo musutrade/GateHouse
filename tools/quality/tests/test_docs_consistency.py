@@ -23,11 +23,21 @@ class DocsExecutionTests(unittest.TestCase):
                                         str(docs.CRATE / "Cargo.toml")])
             self.assertEqual(argv[6], "--")
             root = Path(argv[argv.index("--project-root") + 1])
+            stderr = ""
+            rejected = False
             if "init" in argv:
                 preset = argv[argv.index("--preset") + 1]
                 roots[root] = preset
                 operation = f"init:{preset}"
-                if preset != "generic" and failure != "missing-preset-quality":
+                if preset == "angular-rust-postgres":
+                    rejected = True
+                    stderr = "gateprobes-postgres migrate --input <PATH> --output <NEW_PATH> --project <NAME>"
+                    if failure == "legacy-published":
+                        (root / ".harness-gate").mkdir()
+                        (root / ".harness-gate/flow.toml").touch()
+                    if failure == "legacy-no-help":
+                        stderr = "invalid configuration"
+                elif preset != "generic" and failure != "missing-preset-quality":
                     (root / ".harness-gate").mkdir(exist_ok=True)
                     (root / ".harness-gate/quality.toml").touch()
                 if preset == "generic" and failure == "implicit-generic-quality":
@@ -35,10 +45,14 @@ class DocsExecutionTests(unittest.TestCase):
                     (root / ".harness-gate/quality.toml").touch()
             elif "migrate" in argv:
                 operation = "migrate"
-                if failure != "missing-secrets":
+                rejected = True
+                stderr = "gateprobes-postgres migrate --input <PATH> --output <NEW_PATH> --project <NAME>"
+                if failure == "migration-published":
                     (root / ".harness-gate/secrets.toml").touch()
-                if failure == "implicit-migration-quality":
-                    (root / ".harness-gate/quality.toml").touch()
+                if failure == "migration-source-modified":
+                    (root / "legacy.flow.toml").write_text("modified")
+                if failure == "migration-no-help":
+                    stderr = "invalid configuration"
             elif "export" in argv:
                 plane = "quality" if "--quality" in argv else "flow"
                 operation = "quality-schema" if plane == "quality" else "schema"
@@ -48,7 +62,7 @@ class DocsExecutionTests(unittest.TestCase):
             else:
                 operation = f"check:{roots[root]}" if root in roots else ("check:quality" if (root / ".harness-gate/quality.toml").exists() else "check:migration")
             calls.append(operation)
-            return subprocess.CompletedProcess(argv, int(operation == failure))
+            return subprocess.CompletedProcess(argv, int(rejected) if operation != failure else int(not rejected), stdout="", stderr=stderr)
 
         with tempfile.TemporaryDirectory() as directory, \
                 patch.object(docs.subprocess, "run", side_effect=execute), \
@@ -66,8 +80,8 @@ class DocsExecutionTests(unittest.TestCase):
         calls, report = self.exercise()
         # Independent inventory: a newly added preset must also be explicitly reviewed.
         presets = ["angular-only", "angular-rust-postgres", "generic", "rust-api"]
-        self.assertEqual(calls, [op for preset in presets for op in (f"init:{preset}", f"check:{preset}")]
-                         + ["migrate", "check:migration", "check:quality", "schema", "quality-schema"])
+        self.assertEqual(calls, [op for preset in presets for op in ((f"init:{preset}",) if preset == "angular-rust-postgres" else (f"init:{preset}", f"check:{preset}"))]
+                         + ["migrate", "check:quality", "schema", "quality-schema"])
         self.assertEqual(report["status"], "pass")
         self.assertEqual(len(report["examples"]), 4)
         for field in ("language_docs_valid", "schema_synced", "quality_schema_synced", "quality_example_valid", "machine_schema_valid",
@@ -78,9 +92,12 @@ class DocsExecutionTests(unittest.TestCase):
             self.assertEqual(report[field]["status"], "pass")
 
     def test_each_cli_failure_and_migration_schema_drift_still_blocks(self):
-        for failure in ([op for preset in ("angular-only", "angular-rust-postgres", "generic", "rust-api")
+        for failure in ([op for preset in ("angular-only", "generic", "rust-api")
                          for op in (f"init:{preset}", f"check:{preset}")]
-                        + ["missing-preset-quality", "implicit-generic-quality", "implicit-migration-quality", "migrate", "check:migration", "missing-secrets", "schema", "schema-drift", "check:quality", "quality-schema", "quality-schema-drift"]):
+                        + ["init:angular-rust-postgres", "legacy-published", "legacy-no-help",
+                           "missing-preset-quality", "implicit-generic-quality", "migration-published",
+                           "migrate", "migration-source-modified", "migration-no-help",
+                           "schema", "schema-drift", "check:quality", "quality-schema", "quality-schema-drift"]):
             with self.subTest(failure=failure):
                 _, report = self.exercise(failure)
                 self.assertEqual(report["status"], "fail")

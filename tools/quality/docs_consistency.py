@@ -183,8 +183,17 @@ def executable_checks() -> dict:
             initialized = subprocess.run(
                 [*command, "init", "--project-root", str(root), "--preset", preset_name,
                  "--presets-dir", str(CRATE / "fixtures/preset-compat")],
-                cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                cwd=ROOT, capture_output=True, text=True,
             )
+            if 'external_value_policy' in preset.read_text():
+                checked = (initialized.returncode != 0
+                           and 'gateprobes-postgres migrate' in initialized.stderr
+                           and not (root / '.harness-gate/flow.toml').exists())
+                examples.append({'path': str(preset.relative_to(ROOT)),
+                                 'quality_generated': (root / '.harness-gate/quality.toml').is_file(),
+                                 'behavior': 'actionable legacy rejection',
+                                 'status': 'pass' if checked else 'fail'})
+                continue
             checked = initialized.returncode == 0 and subprocess.run(
                 [*command, "config", "check", "--project-root", str(root)],
                 cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -202,15 +211,12 @@ def executable_checks() -> dict:
         (root / ".harness-gate").mkdir()
         migration = subprocess.run(
             [*command, "--project-root", str(root), "config", "migrate", "--input", "legacy.flow.toml", "--output", ".harness-gate/flow.toml"],
-            cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            cwd=ROOT, capture_output=True, text=True,
         )
-        (root / ".harness-gate" / "audit.toml").write_text((CRATE / "presets" / "empty.audit.toml").read_text())
-        migration_checked = migration.returncode == 0 and subprocess.run(
-            [*command, "config", "check", "--project-root", str(root)],
-            cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        ).returncode == 0
-        migration_checked = (migration_checked and (root / ".harness-gate" / "secrets.toml").is_file()
-                             and not (root / ".harness-gate/quality.toml").exists())
+        migration_checked = (migration.returncode != 0
+                             and 'gateprobes-postgres migrate' in migration.stderr
+                             and (root / 'legacy.flow.toml').read_bytes() == migration_fixture.read_bytes()
+                             and not any((root / '.harness-gate').iterdir()))
     workflow_fixture = ROOT / "tools" / "harness-gate" / "fixtures" / "workflow"
     with tempfile.TemporaryDirectory(prefix="harness-gate-quality-example-") as directory:
         root = Path(directory)

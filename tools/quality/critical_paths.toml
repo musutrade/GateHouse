@@ -191,8 +191,8 @@ assertions = ["assert_failure(&output);"]
 path = "src/config/loader.rs"
 symbol = "from_source_with_diagnostics"
 start = 75
-end = 97
-sha256 = "9ef912226e2168f22d1e7979952c097cbfa4d0cf98ae5eac8dc8fae0b41c8f78"
+end = 113
+sha256 = "3932ac93408a8492cd1c97ae116fd5b4b9440029713f5a8624b2191900c8febf"
 [paths.test_source]
 path = "tests/integration_test.rs"
 symbol = "test_config_check_invalid"
@@ -200,7 +200,7 @@ start = 114
 end = 125
 sha256 = "71b8eb53defc51863c70aa8d95c928d86de72bc8a1dcb41b658c5b04b573853c"
 [[paths.probes]]
-line = 83
+line = 99
 column = 32
 text = "let mut config: Self = toml::from_str(&source)"
 

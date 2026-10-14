@@ -169,7 +169,8 @@ Generate a reference in a separate directory; review and copy quality/policy
 files, align project identity, paths and flow profiles, then provision trusted
 inputs and run config check and complete verification. Follow the exact
 [adoption steps](quality-presets.md#enablement-and-migration).
-`config migrate` only migrates execution schema v1 to v2. `init --force` replaces
+`config migrate` now rejects the legacy v1 database recipe with GateProbes migration help.
+Use `gateprobes-postgres migrate` to bind required service checks; quality is preserved separately. `init --force` replaces
 generated files and is not an adoption shortcut. `generic` preserves existing quality.
 
 Rollback is an explicit reviewed configuration change: retain reports, policies,

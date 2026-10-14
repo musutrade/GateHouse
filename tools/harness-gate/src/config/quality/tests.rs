@@ -27,8 +27,22 @@ fn arc_admin_quality_validates_with_imported_flow_and_rejects_binding_loss() {
         root.join(QUALITY_CONFIG_PATH),
     )
     .unwrap();
-    let flow: FlowConfig =
-        toml::from_str(&fs::read_to_string(fixture.join("import/flow.toml")).unwrap()).unwrap();
+    // Keep the frozen import untouched. This test validates quality bindings;
+    // adapt its removed service policy to an explicit required external check.
+    let source = fs::read_to_string(fixture.join("import/flow.toml")).unwrap();
+    assert!(FlowConfig::from_source(&source).is_err());
+    let source = source.replace("external_value_policy = \"isolated-postgres\"", "");
+    let executable = toml::Value::String(
+        std::env::current_exe()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned(),
+    );
+    let source = format!(
+        "{source}\n[[service_checks.test-postgres]]\nexecutable = {executable}\nsha256 = \"{}\"\nprotocol = \"gate-service-check/v1\"\nplugin = \"fixture\"\nversion = \"1\"\ntimeout_secs = 15\n",
+        "0".repeat(64)
+    );
+    let flow = FlowConfig::from_source(&source).unwrap();
     let quality = QualityConfig::load_optional(&root, &flow).unwrap().unwrap();
     assert_eq!(quality.profiles.len(), 2);
     assert_eq!(quality.profiles["hook"].assurance, Assurance::Partial);

@@ -12,6 +12,10 @@ For generated quality defaults, composable packs and flow-only adoption, see
 For compatible Arc-Flow v2 execution declarations, `harness-gate config import --execution-only`
 generates configuration and a deterministic parity/UX report. See
 [Arc-Admin import and runtime limitations](dogfood/arc-admin/import/README.md).
+Legacy external service policies must first be migrated by GateProbes. The
+offline importer preserves explicit generic `service_checks` and their required
+artifact bindings without executing them; it refuses legacy policies with
+migration help and publishes no partial configuration.
 
 For optional `.harness-gate/quality.toml` v1, collector authority and flow/quality
 cross-validation, see the [quality configuration reference](quality-configuration.md).
@@ -354,7 +358,6 @@ Managed services use an existing local OCI image and never pull implicitly:
     image_env = "HARNESS_GATE_POSTGRES_IMAGE"
     external_env = "TEST_DATABASE_URL"
     inject_env = "TEST_DATABASE_URL"
-    external_value_policy = "isolated-postgres"
     startup_timeout_secs = 30
     timeout_env = "HARNESS_GATE_DATABASE_TIMEOUT_SECS"
     container_port = 5432
@@ -365,12 +368,40 @@ Managed services use an existing local OCI image and never pull implicitly:
 runtime is docker by default or compatible podman. image, inject_env,
 startup_timeout_secs, container_port, healthcheck, and connection are
 required. image_env, external_env, timeout_env, and environment are optional.
-external_value_policy is none or isolated-postgres.
+Postgres URL isolation and health checks belong to the GateProbes
+[Postgres service plugin](https://github.com/musutrade/GateProbes/tree/main/plugins/postgres-service).
+Declare the installed artifact as a required check (replace the path and digest
+with the actual verified installation):
 
-The isolated-postgres policy accepts only loopback connections to a test
-database with the configured test suffix and credentials. Service injection
-names must be unique within a step and cannot collide with runner thread
-variables or remove_env.
+    [[service_checks.test-postgres]]
+    executable = "/opt/gateprobes/gateprobes-postgres"
+    sha256 = "<64-character installed artifact SHA-256>"
+    protocol = "gate-service-check/v1"
+    plugin = "gateprobes-postgres"
+    version = "0.1.0"
+    timeout_secs = 15
+    pass_env = ["DATABASE_URL", "HARNESS_GATE_ALLOW_REMOTE_TEST_DATABASE", "PATH", "SYSTEMROOT"]
+
+Every declared check is required; an empty check list is invalid. Core runs the
+artifact in the project root with a cleared environment, forwarding only
+`pass_env` and injecting `GATE_CHECK_PROTOCOL`, `GATE_CHECK_MODE` (`external` or
+`managed`) and, for an external service, `GATE_CHECK_VALUE`. Values never enter
+argv or published plugin diagnostics. Core checks the executable digest before
+and after execution, then validates a bounded JSON result containing the exact
+protocol, plugin, version, mode and `success = true`. Missing or modified
+artifacts, incompatible identity, malformed/missing results, failure, crash and
+timeout block the dependent step. Doctor uses the same service preparation and
+checks; include a required service doctor check. Managed container health uses
+the explicit recipe above; external Postgres health requires `pg_isready` on PATH.
+
+Core retains requiredness, process execution, service lifecycle, leases, cleanup
+and the final blocking decision. Plugin upgrades require explicit digest/version
+rebinding and do not rebuild Core. Core v0.4.9 does not support this candidate
+contract; released-Core/package certification is pending. Old
+`external_value_policy` configurations are rejected with a migration diagnostic,
+including `none`; removing the field alone does not preserve Postgres assurance.
+Service injection names must be unique within a step and cannot collide with
+runner thread variables or remove_env.
 
 ## 10. Parsers
 
@@ -640,11 +671,13 @@ ADAPTER_PROTOCOL_FAILURE code.
 
 ## 17. v1 to v2 checklist
 
-Use migration to create a v2 file without deleting the source:
+The legacy v1 database recipe and old v2 external policies require the installed
+GateProbes plugin. Core's `config migrate` rejects them with actionable help.
+Generate a new file, retain the source, review the bound artifact, and validate
+with a compatible Core before adoption:
 
-    harness-gate --project-root /path/to/project config migrate \
-      --input legacy.flow.toml \
-      --output .harness-gate/flow.toml
+    gateprobes-postgres migrate --input /path/to/project/legacy.flow.toml \
+      --output /path/to/project/.harness-gate/flow.toml --project my-project
     harness-gate --project-root /path/to/project config check
 
 Keep version = 2 explicit. When preflight rejects a file, follow the
@@ -656,3 +689,10 @@ rewrites configuration.
 For generated schema files, validation commands, and release compatibility
 guarantees, see the [schema catalog](../schema/README.md) and the repository
 [README](../README.md).
+
+Migration exit condition: all active configurations use explicit required checks
+and a verified compatible released Core/plugin pair. Rollback restores the retained
+flow and its compatible immutable Core/plugin artifacts together; do not combine
+a migrated flow with v0.4.9 or downgrade checks to bypass validation. Engineering
+Policy requiredness, thresholds, baseline/debt/ratchet and release authority remain
+unchanged.

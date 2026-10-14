@@ -2,8 +2,8 @@ use super::diagnostic::{
     ConfigDiagnostic, ConfigDiagnostics, DiagnosticSeverity, RelatedDiagnostic, SourceMap,
 };
 use super::model::{
-    DoctorCheck, DoctorCheckKind, ExternalValuePolicy, FlowConfig, ParserConfig, PathScope,
-    ScopeRule, ServiceConfig, CONFIG_VERSION,
+    DoctorCheck, DoctorCheckKind, FlowConfig, ParserConfig, PathScope, ScopeRule, ServiceConfig,
+    CONFIG_VERSION,
 };
 use anyhow::{bail, Context, Result};
 use globset::Glob;
@@ -206,6 +206,13 @@ impl FlowConfig {
                 validate_service_entry(id, service),
             );
         }
+        collect_result(
+            source_map,
+            diagnostics,
+            ConfigIssueKind::InvalidField,
+            "service_checks",
+            self.validate_service_checks(),
+        );
         for (id, parser) in &self.parsers {
             let path = format!("parsers[\"{id}\"]");
             collect_result(
@@ -407,6 +414,7 @@ impl FlowConfig {
         }
 
         self.validate_services()?;
+        self.validate_service_checks()?;
         self.validate_parsers()?;
         self.validate_doctor()?;
         self.validate_scope()?;
@@ -594,6 +602,24 @@ impl FlowConfig {
         Ok(())
     }
 
+    fn validate_service_checks(&self) -> Result<()> {
+        for (id, checks) in &self.service_checks {
+            if !self.services.contains_key(id) || checks.is_empty() {
+                bail!("service_checks must name a service and contain at least one required check");
+            }
+            for check in checks {
+                crate::recipes::validate_check(check)?;
+                for name in &check.pass_env {
+                    validate_env_name("service_checks.pass_env", name)?;
+                    if name.starts_with("GATE_CHECK_") {
+                        bail!("GATE_CHECK_ environment names are reserved");
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn validate_parsers(&self) -> Result<()> {
         for (id, parser) in &self.parsers {
             validate_parser_entry(id, parser)?;
@@ -685,7 +711,6 @@ fn validate_service_entry(id: &str, service: &ServiceConfig) -> Result<()> {
             image_env,
             external_env,
             inject_env,
-            external_value_policy,
             startup_timeout_secs,
             timeout_env,
             container_port,
@@ -708,9 +733,6 @@ fn validate_service_entry(id: &str, service: &ServiceConfig) -> Result<()> {
             }
             if let Some(name) = external_env {
                 validate_env_name("service.external_env", name)?;
-            }
-            if *external_value_policy != ExternalValuePolicy::None && external_env.is_none() {
-                bail!("Docker service {id:?} external_value_policy requires external_env");
             }
             validate_env_name("service.inject_env", inject_env)?;
             if healthcheck.is_empty() {

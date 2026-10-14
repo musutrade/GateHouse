@@ -38,6 +38,75 @@ fn repository_configuration_is_valid() {
 }
 
 #[test]
+fn direct_validation_rejects_invalid_identity_paths_aliases_and_required_checks() {
+    type Mutation = fn(&mut FlowConfig);
+    let valid = repository_config();
+    valid.validate().unwrap();
+    let cases: &[(&str, Mutation)] = &[
+        ("version", |c| c.version = 1),
+        ("project name", |c| c.project.name.clear()),
+        ("default profile", |c| {
+            c.project.default_profile = "invalid profile".into()
+        }),
+        ("hook profile", |c| {
+            c.project.hook_profile = "invalid profile".into()
+        }),
+        ("report path", |c| c.paths.reports = "../outside".into()),
+        ("audit path", |c| c.paths.audit_config = "../outside".into()),
+        ("secrets path", |c| {
+            c.paths.secrets_config = "../outside".into()
+        }),
+        ("reserved alias", |c| {
+            c.paths.aliases.insert(
+                "root".into(),
+                PathAlias {
+                    path: "src".into(),
+                    env: None,
+                },
+            );
+        }),
+        ("invalid alias", |c| {
+            c.paths.aliases.insert(
+                "invalid alias".into(),
+                PathAlias {
+                    path: "src".into(),
+                    env: None,
+                },
+            );
+        }),
+        ("alias path", |c| {
+            c.paths.aliases.insert(
+                "extra".into(),
+                PathAlias {
+                    path: "../outside".into(),
+                    env: None,
+                },
+            );
+        }),
+        ("alias environment", |c| {
+            c.paths.aliases.insert(
+                "extra".into(),
+                PathAlias {
+                    path: "src".into(),
+                    env: Some("INVALID-NAME".into()),
+                },
+            );
+        }),
+        ("missing service", |c| {
+            c.service_checks.insert("missing".into(), Vec::new());
+        }),
+    ];
+    for (label, mutate) in cases {
+        let mut invalid = valid.clone();
+        mutate(&mut invalid);
+        assert!(
+            invalid.validate().is_err(),
+            "{label} must fail direct validation"
+        );
+    }
+}
+
+#[test]
 fn execution_policy_defaults_to_serial_and_four_workers_when_enabled() {
     let config = repository_config();
     assert!(!config.execution.parallel);
@@ -567,47 +636,8 @@ cwd = "{root}"
 log = "app_check.log"
 timeout_secs = 60
 "#;
-    let migrated = migrate_v1(source, "example").expect("migrate");
-    assert_eq!(migrated.version, 2);
-    assert_eq!(migrated.project.name, "example");
-    assert_eq!(migrated.paths.secrets_config, ".harness-gate/secrets.toml");
-    assert!(migrated.policy.required_steps.contains(&"app.check".into()));
-
-    // The legacy database becomes the recipe's frozen service. This exact
-    // mapping is the compatibility contract for version 1 configurations.
-    let service = migrated
-        .services
-        .get(crate::recipes::postgres::LEGACY_SERVICE_ID)
-        .expect("legacy database service");
-    assert_eq!(
-        serde_json::to_value(service).expect("serialize migrated service"),
-        serde_json::json!({
-            "kind": "docker",
-            "runtime": "docker",
-            "image": "postgres:16-alpine",
-            "image_env": "HARNESS_GATE_POSTGRES_IMAGE",
-            "external_env": "TEST_DATABASE_URL",
-            "inject_env": "TEST_DATABASE_URL",
-            "external_value_policy": "isolated-postgres",
-            "startup_timeout_secs": 30,
-            "timeout_env": "HARNESS_GATE_DATABASE_TIMEOUT_SECS",
-            "container_port": 5432,
-            "environment": {
-                "POSTGRES_USER": "test",
-                "POSTGRES_PASSWORD": "test",
-                "POSTGRES_DB": "test"
-            },
-            "healthcheck": ["pg_isready", "-U", "test", "-d", "test"],
-            "connection": "postgres://test:test@127.0.0.1:{host_port}/test"
-        })
-    );
-    assert!(migrated.doctor.checks.iter().any(|check| {
-        matches!(
-            &check.kind,
-            DoctorCheckKind::Service { service }
-                if service == crate::recipes::postgres::LEGACY_SERVICE_ID
-        )
-    }));
+    let error = migrate_v1(source, "example").expect_err("external migration required");
+    assert!(error.to_string().contains("gateprobes-postgres migrate"));
 }
 
 #[test]
@@ -627,7 +657,7 @@ connection = "postgres://unused"
         .expect_err("unknown service recipes must keep failing closed");
     let message = error.to_string();
     assert!(
-        message.contains("unknown variant") && message.contains("isolated-postgres"),
+        message.contains("unknown field") && message.contains("external_value_policy"),
         "{message}"
     );
 }

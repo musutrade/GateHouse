@@ -108,32 +108,16 @@ fn migration_cli_preserves_source_and_refuses_overwrite() {
     assert!(!missing.status.success());
     assert!(String::from_utf8_lossy(&missing.stderr).contains("requires --input"));
     assert!(!root.path().join(".harness-gate/flow.toml").exists());
-    success(
-        command(root.path())
-            .args(["--config", "legacy.toml", "config", "migrate"])
-            .output()
-            .unwrap(),
-    );
-    success(
-        command(root.path())
-            .args(["config", "check"])
-            .output()
-            .unwrap(),
-    );
-    assert_eq!(
-        fs::read_to_string(root.path().join("legacy.toml")).unwrap(),
-        legacy
-    );
-    assert!(root.path().join(".harness-gate/secrets.toml").is_file());
-    let migrated = fs::read(root.path().join(".harness-gate/flow.toml")).unwrap();
     let refused = command(root.path())
-        .args(["config", "migrate", "--input", "legacy.toml"])
+        .args(["--config", "legacy.toml", "config", "migrate"])
         .output()
         .unwrap();
     assert!(!refused.status.success());
+    assert!(String::from_utf8_lossy(&refused.stderr).contains("gateprobes-postgres migrate"));
+    assert!(!root.path().join(".harness-gate/flow.toml").exists());
     assert_eq!(
-        fs::read(root.path().join(".harness-gate/flow.toml")).unwrap(),
-        migrated
+        fs::read_to_string(root.path().join("legacy.toml")).unwrap(),
+        legacy
     );
 }
 
