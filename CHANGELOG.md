@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Include both source and destination paths when selecting components for a Git
+  rename in staged, working-tree and base scope. Renames no longer omit source
+  component verification, regardless of Git rename settings.
+
 ### Changed
 
 - Consume the fixed GateProbes Rust measurer release with repository/tag/workflow
