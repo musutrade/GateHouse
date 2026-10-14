@@ -47,13 +47,13 @@ fn inspect(
     components: &[String],
     profile: Option<&str>,
 ) -> Result<serde_json::Value> {
-    let project = Project::discover(root, config)?;
+    let project = Project::discover_for_plan(root, config)?;
     let project = if matches!(mode, ScopeMode::Staged) {
         project.staged_plan_snapshot()?
     } else {
         project
     };
-    let scope = crate::verify::select_scope(&project, mode, components)?;
+    let scope = crate::verify::select_scope(&project, mode, components, true)?;
     let explicit_profile = profile.is_some();
     let profile = profile.unwrap_or(&project.config.project.default_profile);
     inspection::build(&project, &scope, profile, explicit_profile)

@@ -214,7 +214,7 @@ fn run_verify(
         ScopeMode::All => project.clone().with_input_mode(InputMode::All),
         ScopeMode::WorkingTree => project.clone(),
     };
-    let selected = crate::verify::select_scope(&execution_project, &mode, &components)?;
+    let selected = crate::verify::select_scope(&execution_project, &mode, &components, false)?;
     let profile =
         profile.unwrap_or_else(|| execution_project.config.project.default_profile.clone());
     Ok(crate::verify::run(

@@ -110,6 +110,10 @@ fn fixture(policy: &str) -> TempDir {
     git(root, &["config", "user.name", "Plan Test"]);
     git(root, &["config", "user.email", "plan@example.invalid"]);
     git(root, &["config", "commit.gpgsign", "false"]);
+    // Keep fixture commits from launching detached maintenance that can race
+    // the subsequent byte-for-byte repository immutability assertion.
+    git(root, &["config", "maintenance.auto", "false"]);
+    git(root, &["config", "gc.auto", "0"]);
     fs::write(
         root.join(".harness-gate/flow.toml"),
         FLOW.replace("unmatched = \"fail\"", &format!("unmatched = \"{policy}\"")),
@@ -482,6 +486,43 @@ fn staged_plan_uses_indexed_configuration_without_filters_objects_reports_or_tok
             .contains("checkout filter"));
         assert_eq!(snapshot(root), before);
     }
+    // A partial clone's missing config must fail without running a remote
+    // helper or hydrating Git objects during preview.
+    fs::write(root.join(".gitattributes"), "").unwrap();
+    git(
+        root,
+        &["-c", "core.fsmonitor=false", "add", ".gitattributes"],
+    );
+    fs::write(
+        root.join("fetch-forbidden.sh"),
+        "echo fetch >> forbidden-called\nexit 1\n",
+    )
+    .unwrap();
+    git(
+        root,
+        &["config", "remote.origin.url", "ext::sh fetch-forbidden.sh"],
+    );
+    git(root, &["config", "remote.origin.promisor", "true"]);
+    git(root, &["config", "protocol.ext.allow", "always"]);
+    let missing = format!("100644,{},.harness-gate/flow.toml", "1".repeat(40));
+    git(
+        root,
+        &[
+            "-c",
+            "core.fsmonitor=false",
+            "update-index",
+            "--info-only",
+            "--cacheinfo",
+            &missing,
+        ],
+    );
+    let before = snapshot(root);
+    let output = gate(root, &["verify", "--plan", "--staged", "--json"]);
+    assert!(!output.status.success());
+    let invalid: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(invalid["status"], "invalid");
+    assert_eq!(snapshot(root), before);
+    assert!(!root.join("forbidden-called").exists());
 }
 
 #[test]

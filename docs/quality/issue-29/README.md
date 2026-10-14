@@ -44,3 +44,5 @@ executable availability, signatures, nonce freshness, service readiness or
 measurement evidence. The CLI/configuration versions, existing scope/result
 formats and Engineering Policy semantics are unchanged. Interface rollback
 removes the flag/schema/projection together without resetting evidence/history.
+
+Hosted CI first exposed two fixture portability issues: detached Git maintenance raced the unchanged-byte assertion, and a parser test used a non-canonical temporary path and Unix-only filename on Windows. Fixtures now disable their own automatic maintenance, use canonical roots and portable filenames, and retain the Unix newline/tab case. The complete byte comparison is retained. Additional partial-clone tests reject a missing config object without invoking a configured remote helper or changing Git files.

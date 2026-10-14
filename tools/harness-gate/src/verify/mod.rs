@@ -30,9 +30,10 @@ pub(crate) fn select_scope(
     project: &Project,
     mode: &crate::scope::ScopeMode,
     components: &[String],
+    readonly: bool,
 ) -> Result<ScopeResult, crate::error::CliError> {
     if components.is_empty() {
-        return Ok(crate::scope::detect(project, mode)?);
+        return Ok(crate::scope::detect_with_access(project, mode, readonly)?);
     }
     let known = project.config.components();
     for component in components {

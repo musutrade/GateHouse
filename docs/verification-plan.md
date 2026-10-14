@@ -98,3 +98,5 @@ and verification reports are unchanged. Consumers should check the schema marker
 a future incompatible plan change requires a new version. Revert the plan flag,
 schema and explanation modules together to remove the interface. Historical
 evidence and baselines must not be reset during rollback.
+
+Git-backed previews require Git with --no-lazy-fetch support. Missing partial-clone objects fail with diagnostics instead of launching remote helpers, fetching data or writing Git objects. Existing execution commands retain their normal Git behavior. Preview also omits the optional HEAD object probe because it does not produce an execution source identity.

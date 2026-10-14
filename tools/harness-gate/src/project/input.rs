@@ -67,7 +67,7 @@ impl InvocationInput {
     /// placeholders preserve indexed path existence; only configuration/policy
     /// blobs are read. Source bytes and signed request bodies are never needed.
     pub(crate) fn inspect_staged(root: &Path, config: &Path, commit: &str) -> Result<Self> {
-        let index = git::capture(root, ["ls-files", "--stage", "-z"])?;
+        let index = git::capture_readonly(root, ["ls-files", "--stage", "-z"])?;
         if !index.status.success() {
             bail!("cannot inspect staged Git index");
         }
@@ -101,11 +101,21 @@ impl InvocationInput {
         })
     }
 
-    pub(crate) fn working_tree(repository_root: &Path, config_bytes: &[u8]) -> Result<Self> {
+    pub(crate) fn working_tree(
+        repository_root: &Path,
+        config_bytes: &[u8],
+        readonly: bool,
+    ) -> Result<Self> {
         let root = repository_root
             .canonicalize()
             .with_context(|| format!("resolve project root {}", repository_root.display()))?;
-        let head = optional_head(&root)?;
+        // Preview needs effective configuration, not an executable source
+        // identity. Avoid a HEAD object probe that could hydrate a partial clone.
+        let head = if readonly {
+            "not-sampled".into()
+        } else {
+            optional_head(&root)?
+        };
         Ok(Self {
             mode: InputMode::WorkingTree,
             project_identity: root.to_string_lossy().into_owned(),
@@ -213,7 +223,7 @@ fn hydrate_index_config(
     let destination =
         super::resolve_repo_path(snapshot, Path::new(name), "staged configuration", true)?;
     reject_plan_config_filters(repository, name)?;
-    let blob = git::capture(repository, ["cat-file", "blob", id])?;
+    let blob = git::capture_readonly(repository, ["cat-file", "blob", id])?;
     if !blob.status.success() {
         bail!("cannot read staged configuration {name:?}");
     }
@@ -231,7 +241,7 @@ fn reject_plan_config_filters(root: &Path, name: &str) -> Result<()> {
             args.push("--cached");
         }
         args.extend(["filter", "working-tree-encoding", "ident", "--", name]);
-        let attributes = git::capture(root, args)?;
+        let attributes = git::capture_readonly(root, args)?;
         if !attributes.status.success() {
             bail!("cannot inspect staged configuration filters for {name:?}");
         }
@@ -370,6 +380,7 @@ mod tests {
     #[test]
     fn readonly_index_view_rejects_conflicts_links_and_traversal_without_git_writes() {
         let root = tempfile::tempdir().unwrap();
+        let canonical_root = root.path().canonicalize().unwrap();
         for bytes in [
             &b"100644 deadbeef 1\tconflict\0"[..],
             &b"120000 deadbeef 0\tlink\0"[..],
@@ -379,15 +390,24 @@ mod tests {
             &b"missing-tab\0"[..],
             &b"\xff\0"[..],
         ] {
-            assert!(super::inspect_index_entries(root.path(), bytes).is_err());
+            assert!(super::inspect_index_entries(&canonical_root, bytes).is_err());
         }
         let entries = super::inspect_index_entries(
-            root.path(),
-            b"100755 deadbeef 0\tdir/name\nwith tab\t.txt\0",
+            &canonical_root,
+            b"100755 deadbeef 0\tdir/name with spaces.txt\0",
         )
         .unwrap();
-        assert_eq!(entries["dir/name\nwith tab\t.txt"], "deadbeef");
-        assert!(root.path().join("dir/name\nwith tab\t.txt").is_file());
+        assert_eq!(entries["dir/name with spaces.txt"], "deadbeef");
+        assert!(canonical_root.join("dir/name with spaces.txt").is_file());
+        #[cfg(unix)]
+        {
+            let entries = super::inspect_index_entries(
+                &canonical_root,
+                b"100755 deadbeef 0\tdir/name\nwith tab\t.txt\0",
+            )
+            .unwrap();
+            assert_eq!(entries["dir/name\nwith tab\t.txt"], "deadbeef");
+        }
         assert!(
             super::hydrate_index_config(root.path(), root.path(), &entries, "missing").is_err()
         );

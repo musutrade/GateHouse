@@ -58,3 +58,5 @@ index 条目会明确报错。配置文件若在 index 或工作区属性中使�
 这是新增 CLI/JSON 接口，不修改 flow v2、quality v1、scope JSON 或验证报告。
 消费方检查 schema 标记；不兼容输出变化必须升级版本。回滚时一起撤回 plan
 参数、schema 和解释模块，不重置已有证据或基线。
+
+需要 Git 的预览要求 Git 支持 --no-lazy-fetch。部分克隆缺失对象时明确报错，不调用远程 helper、不获取或写入 Git 对象；普通执行命令保留原有 Git 行为。预览也跳过可选的 HEAD 对象探测，因为它不生成执行用的源码身份。

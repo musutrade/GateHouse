@@ -11,6 +11,14 @@ use std::collections::BTreeSet;
 /// Disable rename folding in every diff so both the removed source and added
 /// destination participate in scope, independent of the user's Git settings.
 pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeResult, ScopeError> {
+    detect_with_access(project, mode, false)
+}
+
+pub(crate) fn detect_with_access(
+    project: &Project,
+    mode: &ScopeMode,
+    readonly: bool,
+) -> std::result::Result<ScopeResult, ScopeError> {
     if matches!(mode, ScopeMode::All) {
         return Ok(ScopeResult::all(project));
     }
@@ -20,7 +28,7 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
     let mode_label = match mode {
         ScopeMode::WorkingTree => {
             paths.extend(
-                git::null_terminated_paths(
+                git::scope_paths(
                     &project.root,
                     [
                         "diff",
@@ -30,11 +38,12 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
                         "--name-only",
                         "-z",
                     ],
+                    readonly,
                 )
                 .map_err(ScopeError::git)?,
             );
             paths.extend(
-                git::null_terminated_paths(
+                git::scope_paths(
                     &project.root,
                     [
                         "diff",
@@ -45,13 +54,15 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
                         "--name-only",
                         "-z",
                     ],
+                    readonly,
                 )
                 .map_err(ScopeError::git)?,
             );
             paths.extend(
-                git::null_terminated_paths(
+                git::scope_paths(
                     &project.root,
                     ["ls-files", "--others", "--exclude-standard", "-z"],
+                    readonly,
                 )
                 .map_err(ScopeError::git)?,
             );
@@ -59,7 +70,7 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
         }
         ScopeMode::Staged => {
             paths.extend(
-                git::null_terminated_paths(
+                git::scope_paths(
                     &project.root,
                     [
                         "diff",
@@ -70,6 +81,7 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
                         "--name-only",
                         "-z",
                     ],
+                    readonly,
                 )
                 .map_err(ScopeError::git)?,
             );
@@ -77,8 +89,13 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
         }
         ScopeMode::Base(reference) => {
             let revision = format!("{reference}^{{commit}}");
-            let output = git::capture(&project.root, ["rev-parse", "--verify", revision.as_str()])
-                .map_err(ScopeError::git)?;
+            let args = ["rev-parse", "--verify", revision.as_str()];
+            let output = if readonly {
+                git::capture_readonly(&project.root, args)
+            } else {
+                git::capture(&project.root, args)
+            }
+            .map_err(ScopeError::git)?;
             if !output.status.success() {
                 return Err(ScopeError::Git {
                     message: format!("base reference does not exist: {reference}"),
@@ -86,7 +103,7 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
             }
             let range = format!("{reference}...HEAD");
             paths.extend(
-                git::null_terminated_paths(
+                git::scope_paths(
                     &project.root,
                     [
                         "diff",
@@ -97,6 +114,7 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
                         "-z",
                         range.as_str(),
                     ],
+                    readonly,
                 )
                 .map_err(ScopeError::git)?,
             );

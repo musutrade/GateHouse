@@ -161,9 +161,9 @@ assertions = ["assert!(!report.passed);", "step.label == \"secret scan\" && !ste
 [paths.source]
 path = "src/verify/mod.rs"
 symbol = "run_selected"
-start = 201
-end = 359
-sha256 = "abe34f1515f69867a0c826ce2106f97972587b1e98ec9f296f983bf7c60efbf6"
+start = 202
+end = 360
+sha256 = "e38e930f772ce7ff72c33116e6887988a21ed38f0bbeb35d40677e629cb04d05"
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "gate_failure_writes_compatible_report"
@@ -171,7 +171,7 @@ start = 552
 end = 574
 sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
 [[paths.probes]]
-line = 341
+line = 342
 column = 5
 text = "publish_report(&report, &invocation_project, project, &mut progress)?;"
 
@@ -427,14 +427,14 @@ path = "src/app/plan.rs"
 symbol = "inspect"
 start = 43
 end = 60
-sha256 = "232b9fc7d46323368402ea01b6cbc9ffb40ef89f244595b731c41172b49430e1"
+sha256 = "433f5ea81204692918695ade4edce5e8d66c5b5b0d13a941176deb552fa67dc5"
 [paths.test_source]
 path = "tests/verify_plan_test.rs"
 symbol = "staged_plan_uses_indexed_configuration_without_filters_objects_reports_or_tokens"
-start = 433
-end = 485
-sha256 = "4486ed01c335bf3b727f1ccb80f3cc8875b3cb4d86f0458852b744fe416ba93d"
+start = 437
+end = 526
+sha256 = "ef9c57a911469fdcc8b31501f1c2175ff2999ee746c46848d49953438c81652d"
 [[paths.probes]]
 line = 50
 column = 5
-text = "let project = Project::discover(root, config)?;"
+text = "let project = Project::discover_for_plan(root, config)?;"
