@@ -24,6 +24,8 @@ selection based on different configuration; source filters are never executed.
 | Existing #23/#25 integration regressions | Four tests passed, retaining both rename endpoints and conditional unmatched=all fallback without forcing all steps |
 | Clippy all targets, warnings denied | Passed |
 | Production inventory tests | 14 passed; new production modules belong to blocking app/verify boundaries |
+| Risk measurement/inventory/instrumentation | 40 tests passed, including three-target new-source AST checks and rejection of old/mixed selections |
+| Quality orchestration | 26 tests passed |
 | Critical-path inventory tests | 18 passed; bindings refreshed, new isolated plan.readonly scenario added, mandatory policy unchanged |
 | Valid/invalid CLI JSON against Draft 2020-12 schema | Passed; no reports created |
 | Pure documentation consistency | Passed |
@@ -46,3 +48,18 @@ formats and Engineering Policy semantics are unchanged. Interface rollback
 removes the flag/schema/projection together without resetting evidence/history.
 
 Hosted CI first exposed two fixture portability issues: detached Git maintenance raced the unchanged-byte assertion, and a parser test used a non-canonical temporary path and Unix-only filename on Windows. Fixtures now disable their own automatic maintenance, use canonical roots and portable filenames, and retain the Unix newline/tab case. The complete byte comparison is retained. Additional partial-clone tests reject a missing config object without invoking a configured remote helper or changing Git files.
+
+## Self-measurement selection migration
+
+The first hosted risk preflight correctly refused four changed production paths
+outside the prior gh315-review-low/1 source selection. This review adds the plan,
+compiled matcher and Git modules plus the declaration-only scope module, while
+preserving every existing selected source and original hotspot. The selection
+identity is explicitly gh29-verify-plan/1. Both base and head must be freshly
+measured using that identical expanded inventory, pinned analyzer 0.3.1,
+mccabe-rust-3/1, compiler target, closure instrumentation and LLVM join.
+Base absence of new files remains verified against Git; no old report is reused
+as if it belonged to the new selection. Historical reports, retained baselines,
+thresholds, original debt/ratchet rules and product collector series are unchanged.
+Selection rollback restores the old source_measure selection and inventory
+together; never compare a report from one selection with the other.

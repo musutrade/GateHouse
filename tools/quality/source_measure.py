@@ -22,7 +22,7 @@ from production_coverage import counts, require
 
 SERIES = {"analyzer": "harness-gate-rust-measure/0.3.1", "rule": "mccabe-rust-3/1",
           "instrumentation": "closure-black-box/1", "mapping": "insertions-utf8/1",
-          "selection": "gh315-review-low/1", "configuration": "compiler-target-production/4"}
+          "selection": "gh29-verify-plan/1", "configuration": "compiler-target-production/4"}
 PREFIX = "{ ::std::hint::black_box(()); "
 SUFFIX = " }"
 HOTSPOTS = {
@@ -50,6 +50,10 @@ SOURCE_FILES = sorted({f"preset/{name}.rs" for name in ("catalog", "composition"
     # Issue #27: runner validation is measured with the existing AST/LLVM series.
     # Base and head use the same expanded inventory.
     {"config/validation/steps.rs"} |
+    # Issue #29 measurement review: preserve every earlier source and add the
+    # explanation/matcher/Git boundary. Recollect BOTH commits under this new
+    # selection identity; historical reports and thresholds are unchanged.
+    {"app/plan.rs", "verify/inspection.rs", "config/scope.rs", "utils/git.rs", "scope/mod.rs"} |
     {f"config/quality/{name}.rs" for name in ("mod", "model", "policy", "validation", "compiler", "collectors", "baseline", "baseline/git")} |
     {f"../quality-core/{name}.rs" for name in (
     "comparison", "cross_component", "evidence", "json", "mod", "model",

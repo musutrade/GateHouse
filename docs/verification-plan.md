@@ -88,7 +88,7 @@ Runtime executable availability, environment values, signed-request authenticity
 nonce freshness, evidence digests and service readiness remain unvalidated.
 Quality workflow state and request paths are requirements, not approvals.
 A later Git/configuration change can produce a different plan; run verify normally
-to obtain the authoritative result. No protocol, measurement-series, requiredness,
+to obtain the authoritative result. No product protocol, collector measurement-series, requiredness,
 threshold, baseline/debt/ratchet, waiver or publication authority is changed.
 
 ## Compatibility and rollback
@@ -100,3 +100,5 @@ schema and explanation modules together to remove the interface. Historical
 evidence and baselines must not be reset during rollback.
 
 Git-backed previews require Git with --no-lazy-fetch support. Missing partial-clone objects fail with diagnostics instead of launching remote helpers, fetching data or writing Git objects. Existing execution commands retain their normal Git behavior. Preview also omits the optional HEAD object probe because it does not produce an execution source identity.
+
+Core self-measurement selection expands to gh29-verify-plan/1, with fresh base/head collection under the same expanded inventory; see the [measurement migration](quality/issue-29/README.md). Historical reports, thresholds and debt/ratchet rules are preserved.
