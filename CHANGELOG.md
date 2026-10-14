@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Consume the fixed GateProbes Rust measurer release with repository/tag/workflow
+  provenance verification, bounded extraction and explicit legacy rollback. The
+  measurement binary, series, thresholds and debt/ratchet semantics are unchanged.
+
 ## [0.4.9] - 2026-10-13
 
 ### Changed

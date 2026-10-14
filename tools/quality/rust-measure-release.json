@@ -1,10 +1,16 @@
 {
-  "schema": "rust-measure-release-pin/v1",
-  "release": "v0.4.8",
+  "schema": "rust-measure-release-pin/v2",
+  "release": "rust-measure-v0.3.1",
   "asset": "harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz",
-  "sha256": "09645a8b53075d89172efde67250e4bea2967f02184d4f8a5bfdfb389da0eac1",
+  "sha256": "5d3130b8d6673b9e32133be88fa69e4404f1d4ecc5ae022f7abf008c9b06302f",
   "analyzer": "harness-gate-rust-measure",
   "version": "0.3.1",
   "rule": "mccabe-rust-3",
-  "executable": "harness-gate-rust-measure"
+  "executable": "harness-gate-rust-measure",
+  "repository": "musutrade/GateProbes",
+  "source_commit": "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928",
+  "workflow": ".github/workflows/collector-release.yml",
+  "oidc_issuer": "https://token.actions.githubusercontent.com",
+  "certificate_identity": "https://github.com/musutrade/GateProbes/.github/workflows/collector-release.yml@refs/tags/rust-measure-v0.3.1",
+  "binary_sha256": "f17ec90502005ddb161143cd5683a292fa1ccde7f4715291e0a0f82ae5b519ad"
 }

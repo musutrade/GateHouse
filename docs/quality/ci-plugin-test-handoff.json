@@ -856,7 +856,6 @@
     "tools/harness-gate/fixtures/preset-compat/rust-api.flow.toml": "450683bc424d105454f5afa00e1cf8e05ccd1e51aac0b3096afdd70ca60d081c",
     "tools/harness-gate/presets/default.secrets.toml": "f50ee579024104cc20818cd628d1cad42404a6d3c53e11cdb85d464afefe3345",
     "tools/harness-gate/presets/empty.audit.toml": "5f8421315aac8c39fb6ad09dba572297b5ca264f111b231ad46f04e836f30adf",
-    "tools/quality/ci_quality.py": "391ded3e2680874d5787761490fab9193bd959689e691fce6a51354bfa42fe5b",
     "tools/quality/collector_runner.py": "9dc0321243e388295572c49c0848310da0ff8bf7ba29f006446ed102b8646dcb",
     "tools/quality/complexity_analyzer.py": "b39907e62acfc4b4bec4d6db2b054053b2d7ffe702528bf60e8f1e30874b88ab",
     "tools/quality/critical_paths.py": "16bbdf441308c2a3ef56bfa748b6c8a447d059c19798a5b84ff5218655a8f3b1",
@@ -917,7 +916,6 @@
     "tools/quality/schema/rust-collector-plugin.schema.json": "432ee89d57eb08b1a0606d544391d8d5ef704948fc4a37d9f3bd96246a4ed8ef",
     "tools/quality/schema/rust-project-collector-binding.schema.json": "59cac4184eefc1ae3dc227b0c706d2748df761fc62bf7304dd4c6407761effee",
     "tools/quality/schema/subject-mappings.schema.json": "6a139b941278287af42f220004d4761742ce8d22c7b3bbcf9148fc9405510eaa",
-    "tools/quality/source_measure.py": "52ecd7e33018ca3480d9aa78099e6037774b5e4f807265111e8f977c57fe5f8f",
     "tools/quality/tests/core_typescript_fixture.py": "9c81b2445eb84da8f702a740eb4bb850cbe5695350a3ed632ec2b925f91f20b5",
     "tools/quality/tests/native_policy_fixture.py": "02edf6dff3b4b7ccba3afcde1a09ec0f40b0565e8afbf638f572ece302d934af",
     "tools/quality/tests/test_preset_packs.py": "1ccb8483bf68be73358af635ca4a491a1561a28db96636441080f59735983547",
@@ -926,7 +924,8 @@
     "tools/maintenance/restore_evidence.py": "57a52f698d7ca180dcdead72c8aceb51c0b89a256086accd8983234547a999a3",
     "test-data/manifest.json": "5672aa4651823f99b8bf55d282bb50669c78fedbebd0c0c5033d63b1fc7247b9",
     "tools/quality/fixtures/generic-core/manifest.json": "9f5556f20160cac696d361e7d51c8a5ebf28d44edb7ce36ffd64ae0724c142a2",
-    "tools/quality/tests/test_policy_engine.py": "18e0a4ceef15bce206a2a43b4a299e7bce5214ce224ac0dd8da1c9e69e6cb9f2"
+    "tools/quality/tests/test_policy_engine.py": "18e0a4ceef15bce206a2a43b4a299e7bce5214ce224ac0dd8da1c9e69e6cb9f2",
+    "tools/quality/tests/rust_collector_config_fixture.py": "c3ee57529ac3265f3f281b13f54f3c0f13333796ebab69c9d823839985ff0e96"
   },
   "transferred_sources": {
     "tools/quality/build_rust_collector.py": "cb5b2abf75c0ecd61f8c4a82ef9a026c763c14d448202fc164f9011fa82a7870",
@@ -1120,5 +1119,13 @@
     "test_preset_packs": "Core generic composition/policy/reference regressions read frozen preset-compat snapshots; current templates and migration parity run in GateProbes.",
     "test_typescript_policy": "Retain generic policy/debt/history reference tests, including mixed Rust/TypeScript historical series; these exercise Core decisions."
   },
-  "policy": "Engineering Policy unchanged. Rust Core retains decisions, requiredness, thresholds, measurement identity, baseline/debt/ratchet and release authority. Held bundled-runtime methods are not passing assurance or independently delivered native-plugin parity."
+  "policy": "Engineering Policy unchanged. Rust Core retains decisions, requiredness, thresholds, measurement identity, baseline/debt/ratchet and release authority. Held bundled-runtime methods are not passing assurance or independently delivered native-plugin parity.",
+  "scope_review": {
+    "issue": "https://github.com/musutrade/GateHouse/issues/11",
+    "prior_receipt": "docs/quality/issue-11/prior-test-handoff.json",
+    "note": "Remove two unrelated Core-only release consumers from the plugin parity boundary. Delegated modules and their transitive local imports do not use either consumer. Core measurement tests remain local and required; all actual plugin/shared inputs retain their original hashes. No plugin CI acceptance is renewed or implied.",
+    "dependency_audit": "docs/quality/issue-11/plugin-dependencies.json",
+    "dependency_audit_sha256": "c144f7b47c7d43d7308a6874693192061bb6445ef431713c4a833fca35654530",
+    "prior_receipt_sha256": "9cae49e588ac06b3e370df982b987594cdbbb131e63ca00e66dfa45fcbfa1fd8"
+  }
 }

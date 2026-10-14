@@ -1,0 +1,10 @@
+{
+  "schema": "rust-measure-release-pin/v1",
+  "release": "v0.4.8",
+  "asset": "harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz",
+  "sha256": "09645a8b53075d89172efde67250e4bea2967f02184d4f8a5bfdfb389da0eac1",
+  "analyzer": "harness-gate-rust-measure",
+  "version": "0.3.1",
+  "rule": "mccabe-rust-3",
+  "executable": "harness-gate-rust-measure"
+}

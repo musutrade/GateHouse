@@ -1,0 +1,851 @@
+{
+  "caller_method": "Direct Python AST imports plus literal script paths in tracked Python, workflow YAML and shell files; transitive required roles reviewed against ci.yml. Documentation examples are not execution callers. Standalone entry points without automatic callers explicitly identify manual CLI use.",
+  "modules": [
+    {
+      "module": "tools/quality/baseline_delivery.py",
+      "category": "A",
+      "purpose": "Precheck Actions PR permission and bind the original run, attempt, artifact and exact candidate before PR delivery-only retry.",
+      "callers": [
+        ".github/workflows/quality-baseline-refresh.yml",
+        "tools/quality/tests/test_baseline_delivery.py"
+      ],
+      "ci_role": "Baseline refresh CI transport and delivery integrity; may block PR delivery. Quality Script Tests cover real Git/ZIP fixtures with simulated GitHub responses.",
+      "release_impact": "Not packaged in the release binary. Cannot measure metrics, adopt a baseline, approve a generic release or replace required Rust checks.",
+      "authoritative_status": "CI transport only; Rust retains generic policy and release decision authority. Unknown permission is not precheck PASS; enterprise policy restrictions remain external.",
+      "final_disposition": "Retain maintained Python CI delivery tooling with fail-closed candidate/evidence binding and independent human baseline review; no generic release-approval path.",
+      "sha256": "d7017a8557fb68140f1ec80edb3c7e834ebf775aa1c5b667c01d8a928f139470"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/quality-baseline-refresh.yml"
+      ],
+      "category": "A",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/benchmarks.py",
+      "notes": "",
+      "purpose": "Capture deterministic verification, test, and release-small baselines.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "10264b7f3f132dc9d01c019b77e365f60dd15023fc4611f65d4dbdfd9bb184dd"
+    },
+    {
+      "module": "tools/quality/ci_acceptance.py",
+      "category": "A",
+      "purpose": "Validate retained configured CI acceptance receipt integrity without evaluating quality policy.",
+      "callers": [
+        ".github/workflows/ci.yml",
+        "tools/quality/tests/test_ci_acceptance.py"
+      ],
+      "ci_role": "Required Linux Test receipt validation and artifact retention.",
+      "release_impact": "Existing required Test job can block release eligibility; not packaged in release binary.",
+      "authoritative_status": "Test evidence integrity only; Rust retains generic policy authority.",
+      "final_disposition": "Retain maintained Python CI tooling.",
+      "sha256": "65a01b94e268accf563da2679fcd4a370c71082108a0a56ed91eb44b14f13f99"
+    },
+    {
+      "module": "tools/quality/ci_artifact.py",
+      "category": "A",
+      "purpose": "Seal and fail-closed validate retained quality artifact identity and file hashes before cross-job consumption.",
+      "callers": [
+        ".github/workflows/ci.yml",
+        "tools/quality/tests/test_ci_state.py"
+      ],
+      "ci_role": "Required quality producer transport seal and advisory generic-shadow consumer validation; existing native quality policy unchanged",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "authoritative_status": "CI infrastructure only; no transfer of generic or release decision authority.",
+      "final_disposition": "Retain Python CI tooling; preserve native quality policy and required assurance.",
+      "sha256": "c81c676ffb8f420dee474278e636849910cfc9376a3bf2fa7dba17877ee92b6c"
+    },
+    {
+      "module": "tools/quality/ci_cargo.py",
+      "category": "A",
+      "purpose": "Resolve and record CI Cargo target paths and mutable cache compatibility identity.",
+      "callers": [
+        ".github/actions/cargo-state/action.yml",
+        "tools/quality/ci_artifact.py",
+        "tools/quality/contracts.py",
+        "tools/quality/tests/test_ci_state.py"
+      ],
+      "ci_role": "Required CI infrastructure; cache optimization only, no quality policy authority",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "authoritative_status": "CI infrastructure only; no transfer of generic or release decision authority.",
+      "final_disposition": "Retain Python CI tooling; preserve native quality policy and required assurance.",
+      "sha256": "74afdfc3b558d1bf72e0fa7cfc172f3d1f69fcc25e11f15e687af70c8ce9a777"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        ".github/workflows/ci.yml",
+        "tools/quality/rust_reference.py",
+        "tools/quality/tests/test_ci_quality.py",
+        "tools/quality/tests/test_rust_equivalence.py"
+      ],
+      "category": "A",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/ci_quality.py",
+      "notes": "",
+      "purpose": "Required CI policy and fresh, review-only quality candidates (schema 1).",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "469dae4e2f74654a8c353f7be0f416b8d1abac0d64e3ae1d951c4f23548ace41"
+    },
+    {
+      "authoritative_status": "Non-authoritative hosted CI measurement tooling; no release or quality decision authority",
+      "callers": [
+        "tools/quality/tests/test_ci_timing.py",
+        "Manual CLI documented in docs/quality/ci-topology/after-state.md"
+      ],
+      "category": "A",
+      "ci_role": "Quality-scripts regression coverage; offline hosted comparison",
+      "final_disposition": "Retain maintained Python CI/dev tooling; no authority transfer.",
+      "module": "tools/quality/ci_comparison.py",
+      "purpose": "Compare retained hosted timing distributions and cache/artifact overhead without granting quality authority.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "8e4a17075ec7a75310b2cec9cc668ba9724b114b170aa673ea482a7b4201353a"
+    },
+    {
+      "authoritative_status": "Non-authoritative hosted CI measurement tooling; no release or quality decision authority",
+      "callers": [
+        "tools/quality/tests/test_ci_timing.py",
+        "Manual CLI documented in docs/quality/ci-topology/baseline.md"
+      ],
+      "category": "A",
+      "ci_role": "Quality-scripts regression coverage; manual hosted baseline normalization",
+      "final_disposition": "Retain maintained Python CI/dev tooling; no authority transfer.",
+      "module": "tools/quality/ci_timing.py",
+      "purpose": "Normalize retained hosted run/job/step timing and approximate runner wall minutes by OS.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "0eb22dc0190f249a44c4873ad9cbd83041ed9def69a3029465f33506bf480887"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "Manual CLI documented in docs/quality/gh-133/README.md; no tracked automatic caller"
+      ],
+      "category": "B",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Retain Python ecosystem adapter; generic decisions must remain outside collector normalization.",
+      "module": "tools/quality/collect_typescript_contracts.py",
+      "notes": "",
+      "purpose": "Collect real task-3.3 contract runs in an isolated, disposable output directory.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "7bcc45f52f5a2d8fdebc6294523ed9101f33f10a9e3eaec8a87bcf31e75f82c0",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/tests/test_collector_runner.py",
+        "tools/quality/tests/test_typescript_reference.py",
+        "tools/quality/typescript_acceptance.py"
+      ],
+      "category": "C",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Migrate generic rules to Rust, then freeze this Python implementation as a non-authoritative compatibility oracle after task 6.2 acceptance; remove release-approval callers in task 7.1.",
+      "module": "tools/quality/collector_runner.py",
+      "notes": "Mixed transport/semantic boundary: keep process transport in Python; move shared envelope/project/integrity validation authority to Rust. Transport is not a policy evaluator.",
+      "purpose": "Collector transport and validation boundary; never a release evaluator.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "11a7a3d3a35a18f8bad987eaa01f36652599d471154254e49d98caaa1ac58d85"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        "tools/quality/function_risk.py",
+        "tools/quality/production_coverage.py",
+        "tools/quality/tests/test_complexity_analyzer.py",
+        "tools/quality/tests/test_function_risk.py",
+        "tools/quality/tests/test_quality_evidence.py",
+        "tools/quality/tests/test_risk_bundle.py"
+      ],
+      "category": "B",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python ecosystem adapter; generic decisions must remain outside collector normalization.",
+      "module": "tools/quality/complexity_analyzer.py",
+      "notes": "",
+      "purpose": "Deterministic development complexity analyzer for the frozen fixture subset.",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "b39907e62acfc4b4bec4d6db2b054053b2d7ffe702528bf60e8f1e30874b88ab"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml"
+      ],
+      "category": "A",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/contracts.py",
+      "notes": "",
+      "purpose": "Exercise the public CLI contract and compare normalized golden snapshots.",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "dff62bf5c07d2310a8f67ac1fed92d9820d38fcc936b794631dad39d718b938b"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        "tools/quality/measurement_contract.py"
+      ],
+      "category": "A",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/coverage.py",
+      "notes": "",
+      "purpose": "Generate and gate source-boundary coverage evidence.",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "0b88bd3b3165744ebe8b8a866c84c8135393eb01cba01bf43f558e0c75801f38"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        "tools/quality/ci_quality.py",
+        "tools/quality/critical_paths_collect.py",
+        "tools/quality/tests/test_critical_paths.py"
+      ],
+      "category": "A",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/critical_paths.py",
+      "notes": "",
+      "purpose": "Fail-closed, isolated test-to-source critical-path evidence (rule v2).",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "9a3e138dbd3e67203cd3bd3bb6a9add2e738f416b3c7023e6f309f02cc771523"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        "tools/quality/critical_paths.py"
+      ],
+      "category": "A",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/critical_paths_collect.py",
+      "notes": "",
+      "purpose": "Collect fresh LLVM profiles from one exact nextest identity per path.",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "8695ec07a5581831ad9030e52b9a8cea5e6ce9f96e7602777791a34911aa7e76"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/policy_engine.py"
+      ],
+      "category": "C",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Migrate generic rules to Rust, then freeze this Python implementation as a non-authoritative compatibility oracle after task 6.2 acceptance; remove release-approval callers in task 7.1.",
+      "module": "tools/quality/cross_component.py",
+      "notes": "",
+      "purpose": "Tool-independent contract bindings over already validated normalized evidence.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "f294232621d02a576c120bffac04b0bd12a7ce6ab3853d406e5aae5077a80287"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml",
+        "tools/quality/tests/test_docs_consistency.py"
+      ],
+      "category": "A",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/docs_consistency.py",
+      "notes": "",
+      "purpose": "Check Markdown links, embedded examples, and generated Schema sync.",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "2695dd0df1e3fc261ebaaf0f6970330142d939b11e3ed1a154c20cfab9c1ae46"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        "tools/quality/risk.py",
+        "tools/quality/rust_reference.py",
+        "tools/quality/source_measure.py",
+        "tools/quality/tests/test_function_risk.py",
+        "tools/quality/tests/test_risk_bundle.py"
+      ],
+      "category": "B",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python ecosystem adapter; generic decisions must remain outside collector normalization.",
+      "module": "tools/quality/function_risk.py",
+      "notes": "Rust LLVM/complexity joins and exact CRAP computation are ecosystem measurement semantics; retained even though required consumers use them.",
+      "purpose": "Versioned, source-location based joins of locked complexity and LLVM evidence.",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "474721231723fe5ca1ee3c50033a15319f59bbb152f755ce366d800e006c3abc"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/collector_runner.py",
+        "tools/quality/cross_component.py",
+        "tools/quality/fixtures/generic-core/replay.py",
+        "tools/quality/policy_engine.py",
+        "tools/quality/policy_ratchet.py",
+        "tools/quality/project_report.py",
+        "tools/quality/rust_native_policy.py",
+        "tools/quality/rust_reference.py",
+        "tools/quality/tests/test_collector_runner.py",
+        "tools/quality/tests/test_harness_evidence.py",
+        "tools/quality/tests/test_policy_engine.py",
+        "tools/quality/tests/test_policy_ratchet.py",
+        "tools/quality/tests/test_project_report.py",
+        "tools/quality/tests/test_rust_reference.py",
+        "tools/quality/tests/test_typescript_acceptance.py",
+        "tools/quality/tests/test_typescript_contracts.py",
+        "tools/quality/tests/test_typescript_policy.py",
+        "tools/quality/tests/test_typescript_reference.py",
+        "tools/quality/tests/test_typescript_semantics.py",
+        "tools/quality/typescript_acceptance.py",
+        "tools/quality/typescript_advisory.py",
+        "tools/quality/typescript_contracts.py",
+        "tools/quality/typescript_reference.py",
+        "tools/quality/typescript_semantics.py"
+      ],
+      "category": "C",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Migrate generic rules to Rust, then freeze this Python implementation as a non-authoritative compatibility oracle after task 6.2 acceptance; remove release-approval callers in task 7.1.",
+      "module": "tools/quality/harness_evidence.py",
+      "notes": "GH-220 native projection reuses frozen identity helpers only; module source and policy authority are unchanged.",
+      "purpose": "Standalone normalized evidence contracts; no release decision or collector.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "98a84b640bf5628e09bd96772cf1f3a7174e37f79bfa4cd6cc1abc2ed0fbac0e"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        "Manual CLI documented in tools/quality/README.md and docs/quality/measurement-contract.md; no tracked automatic caller"
+      ],
+      "category": "A",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/measurement_contract.py",
+      "notes": "",
+      "purpose": "Capture the reproducibility contract for quality measurements.",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "8d3b7b9afbd12bd5e9b55410c3205a692fdc568da56bb1d5c9c6368a937c0670"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/fixtures/generic-core/replay.py",
+        "tools/quality/project_report.py",
+        "tools/quality/rust_reference.py",
+        "tools/quality/tests/test_policy_engine.py",
+        "tools/quality/tests/test_policy_ratchet.py",
+        "tools/quality/tests/test_project_report.py",
+        "tools/quality/tests/test_rust_reference.py",
+        "tools/quality/tests/test_typescript_contracts.py",
+        "tools/quality/tests/test_typescript_policy.py",
+        "tools/quality/typescript_acceptance.py",
+        "tools/quality/typescript_contracts.py"
+      ],
+      "category": "C",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Migrate generic rules to Rust, then freeze this Python implementation as a non-authoritative compatibility oracle after task 6.2 acceptance; remove release-approval callers in task 7.1.",
+      "module": "tools/quality/policy_engine.py",
+      "notes": "",
+      "purpose": "Generic shadow policy evaluation over validated harness-evidence/v1 facts.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "0a18d1636e241e78a5a1d76133d2f61de80580676c2daf9e95bff944499176ee"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/policy_engine.py"
+      ],
+      "category": "C",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Migrate generic rules to Rust, then freeze this Python implementation as a non-authoritative compatibility oracle after task 6.2 acceptance; remove release-approval callers in task 7.1.",
+      "module": "tools/quality/policy_ratchet.py",
+      "notes": "",
+      "purpose": "Baseline identity and review metadata for the generic shadow policy engine.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "0bec0fcd9ab2bf6ebaf9977cc19ed9168e5f4444c8190907d32d00ac4c6769ba"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "Standalone manual CLI (__main__); no tracked automatic caller"
+      ],
+      "category": "A",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/post_remediation_benchmarks.py",
+      "notes": "",
+      "purpose": "Capture R-16 scheduler/wait scenario baselines and R-17 validation evidence.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "42189a915336d7b867dedc4f5c4262c4dd9b26d6a28dadb778e1fc46435d696d"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        "tools/quality/ci_quality.py",
+        "tools/quality/coverage.py",
+        "tools/quality/critical_paths.py",
+        "tools/quality/critical_paths_collect.py",
+        "tools/quality/function_risk.py",
+        "tools/quality/risk.py",
+        "tools/quality/rust_reference.py",
+        "tools/quality/source_measure.py",
+        "tools/quality/tests/test_production_coverage.py",
+        "tools/quality/tests/test_risk_bundle.py"
+      ],
+      "category": "A",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/production_coverage.py",
+      "notes": "Rust repository source inventory, thresholds and LLVM coverage interpretation; preserve existing required gate.",
+      "purpose": "Strict production-location coverage; CI adoption is OpenSpec task 8.1.",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "c928a5266a09120e16643bc02c0b02561d3cf333e69c50ce022bb4d2775e4be0"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/collector_runner.py",
+        "tools/quality/fixtures/generic-core/replay.py",
+        "tools/quality/harness_evidence.py",
+        "tools/quality/policy_engine.py",
+        "tools/quality/policy_ratchet.py",
+        "tools/quality/project_report.py",
+        "tools/quality/rust_native_policy.py",
+        "tools/quality/rust_reference.py",
+        "tools/quality/tests/test_policy_ratchet.py",
+        "tools/quality/tests/test_project_model.py",
+        "tools/quality/tests/test_typescript_policy.py",
+        "tools/quality/tests/test_typescript_reference.py",
+        "tools/quality/typescript_contracts.py",
+        "tools/quality/typescript_reference.py",
+        "tools/quality/typescript_semantics.py"
+      ],
+      "category": "C",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Migrate generic rules to Rust, then freeze this Python implementation as a non-authoritative compatibility oracle after task 6.2 acceptance; remove release-approval callers in task 7.1.",
+      "module": "tools/quality/project_model.py",
+      "notes": "GH-220 native projection reuses frozen identity helpers only; module source and policy authority are unchanged.",
+      "purpose": "Shadow project/subject contracts; no collector or release-policy authority.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "0c4eef77ef31ef511bd414e5b3002f0988ba16c044195ae6e81e6f379cc4059f"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/fixtures/generic-core/replay.py",
+        "tools/quality/tests/test_project_report.py",
+        "tools/quality/tests/test_typescript_contracts.py",
+        "tools/quality/typescript_contracts.py"
+      ],
+      "category": "C",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Migrate generic rules to Rust, then freeze this Python implementation as a non-authoritative compatibility oracle after task 6.2 acceptance; remove release-approval callers in task 7.1.",
+      "module": "tools/quality/project_report.py",
+      "notes": "",
+      "purpose": "Check opt-in project configuration and report generic shadow gates.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "94d1cd0dcfb53f972013e5ef9d3c62484c3e73bbd057f0677846a0d3e3be6e8a"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        "tools/quality/benchmarks.py",
+        "tools/quality/ci_quality.py",
+        "tools/quality/contracts.py",
+        "tools/quality/coverage.py",
+        "tools/quality/critical_paths.py",
+        "tools/quality/critical_paths_collect.py",
+        "tools/quality/docs_consistency.py",
+        "tools/quality/measurement_contract.py",
+        "tools/quality/post_remediation_benchmarks.py",
+        "tools/quality/production_coverage.py",
+        "tools/quality/risk.py",
+        "tools/quality/rust_equivalence.py",
+        "tools/quality/rust_reference.py",
+        "tools/quality/tests/test_ci_quality.py",
+        "tools/quality/tests/test_production_coverage.py",
+        "tools/quality/tests/test_quality_common.py",
+        "tools/quality/tests/test_risk_bundle.py",
+        "tools/quality/tests/test_rust_reference.py"
+      ],
+      "category": "A",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/quality_common.py",
+      "notes": "",
+      "purpose": "Shared helpers for the repository quality evidence commands.",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "1b908a7e791fc6df4a5f2d5112a0180c35a6e39a1e8f932a95672d24c78e4cf8"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        "tools/quality/complexity_analyzer.py",
+        "tools/quality/function_risk.py",
+        "tools/quality/harness_evidence.py",
+        "tools/quality/project_model.py",
+        "tools/quality/tests/test_complexity_analyzer.py",
+        "tools/quality/tests/test_quality_evidence.py"
+      ],
+      "category": "C",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Migrate generic rules to Rust, then freeze this Python implementation as a non-authoritative compatibility oracle after task 6.2 acceptance; remove release-approval callers in task 7.1.",
+      "module": "tools/quality/quality_evidence.py",
+      "notes": "Mixed legacy/schema helper: _schema_matches is used by generic validators. Move reusable generic validation authority to Rust; preserve legacy Rust measurement validation until separately replaced. No change to current required callers.",
+      "purpose": "Validate versioned quality evidence records (stdlib only).",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "cc38f80fb885915b0884e0d58e0b0f892da99d27e4b2d5a7d309ed2ffd500109"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        "tools/quality/tests/test_function_risk.py",
+        "tools/quality/tests/test_risk_bundle.py"
+      ],
+      "category": "A",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python CI/dev tooling; no authority transfer in this issue.",
+      "module": "tools/quality/risk.py",
+      "notes": "Rust-specific historical risk/debt policy remains the current required oracle. It is not policy_ratchet generic product semantics; preserve exact existing behavior.",
+      "purpose": "Build risk.json/risk.md from two retained, commit-bound measurement bundles.",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "535a380ba1dfc335153b2f6599d4d946b3a31401b44d368b917ee7b0dc6ebe0a"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/tests/test_rust_equivalence.py"
+      ],
+      "category": "D",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Retain through differential acceptance, then freeze as non-authoritative replay/reference tooling; retire only after replacement coverage and retained artifacts are reviewed.",
+      "module": "tools/quality/rust_equivalence.py",
+      "notes": "",
+      "purpose": "Replay the pinned Rust acceptance window and its adversarial fixtures.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "bb3ac19e54f6b44949f492e2d9b0a127f06bddc9be9052f0768c492ec4726498"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        ".github/workflows/ci.yml",
+        "tools/quality/rust_equivalence.py",
+        "tools/quality/tests/test_rust_reference.py",
+        "tools/quality/tests/test_typescript_policy.py"
+      ],
+      "category": "D",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Retain through differential acceptance, then freeze as non-authoritative replay/reference tooling; retire only after replacement coverage and retained artifacts are reviewed.",
+      "module": "tools/quality/rust_reference.py",
+      "notes": "Projection includes Rust-specific oracle comparisons; it does not confer generic release authority.",
+      "purpose": "Project retained Rust candidate evidence and compare policies in shadow mode.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "1ef135bb2d5d9e5e8973f6461031d0b96ca477b279ea083dc7eba5a223b80adc"
+    },
+    {
+      "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
+      "callers": [
+        "tools/quality/ci_quality.py",
+        "tools/quality/rust_reference.py",
+        "tools/quality/tests/test_source_measure.py"
+      ],
+      "category": "B",
+      "ci_role": "Required Rust quality/contract/docs path (directly or transitively); quality-scripts regression coverage",
+      "final_disposition": "Retain Python ecosystem adapter; generic decisions must remain outside collector normalization.",
+      "module": "tools/quality/source_measure.py",
+      "notes": "",
+      "purpose": "Version 2 AST inventory, distinguishing closure instrumentation and LLVM join.",
+      "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
+      "sha256": "ae9adec849d35fede7b056f74a2389a7986b3671cd9948d660f9d632d731486d"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/tests/test_typescript_acceptance.py",
+        "tools/quality/typescript_advisory.py"
+      ],
+      "category": "D",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Retain through differential acceptance, then freeze as non-authoritative replay/reference tooling; retire only after replacement coverage and retained artifacts are reviewed.",
+      "module": "tools/quality/typescript_acceptance.py",
+      "notes": "Mixed native fixture collection and replay; final role is bounded reference acceptance tooling.",
+      "purpose": "GH-134: collect and replay two real, locked frontend history pairs.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "73d3f5a6cfb65b162863074c23815a6044fde64bd578423316e68503bb180342",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        ".github/workflows/frontend-advisory.yml",
+        "tools/quality/tests/test_typescript_advisory.py"
+      ],
+      "category": "D",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Retain through differential acceptance, then freeze as non-authoritative replay/reference tooling; retire only after replacement coverage and retained artifacts are reviewed.",
+      "module": "tools/quality/typescript_advisory.py",
+      "notes": "",
+      "purpose": "Opt-in replay of the bounded frontend window; owns no required CI authority.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "2f1bb5b82b5b83717db499240c84028d6c9a9a77bdcd1ae5b4d6d0033c9ab3d5",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/collect_typescript_contracts.py",
+        "tools/quality/tests/test_typescript_contracts.py",
+        "tools/quality/typescript_advisory.py"
+      ],
+      "category": "B",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Retain Python ecosystem adapter; generic decisions must remain outside collector normalization.",
+      "module": "tools/quality/typescript_contracts.py",
+      "notes": "",
+      "purpose": "Development-only native contract adapter; tool parsing stays outside policy.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "be30cd166091ab263cf344620fdaaedd3cfaa7a4ff61c0f3cdd971606b3637e9",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/tests/test_typescript_reference.py",
+        "tools/quality/typescript_acceptance.py"
+      ],
+      "category": "B",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Retain Python ecosystem adapter; generic decisions must remain outside collector normalization.",
+      "module": "tools/quality/typescript_reference.py",
+      "notes": "",
+      "purpose": "Version 1 retained TypeScript/Angular collector; no policy decisions.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "347ec0c980e77d519a5b956af49762f6be9a3d15d6d03a8ad697ded1186b490b",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
+      "callers": [
+        "tools/quality/tests/test_typescript_acceptance.py",
+        "tools/quality/tests/test_typescript_reference.py",
+        "tools/quality/tests/test_typescript_semantics.py",
+        "tools/quality/typescript_acceptance.py",
+        "tools/quality/typescript_reference.py"
+      ],
+      "category": "B",
+      "ci_role": "Quality-scripts regression coverage; advisory/shadow or manual execution only",
+      "final_disposition": "Retain Python ecosystem adapter; generic decisions must remain outside collector normalization.",
+      "module": "tools/quality/typescript_semantics.py",
+      "notes": "",
+      "purpose": "TypeScript identity/measurement primitives; not a collector or policy engine.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "71ac267b84ca2c2cb24f88ec0d03fd05df84d63d61687f40d3eea0cd642647bc",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/rust_native.py",
+      "category": "B",
+      "purpose": "Opt-in bounded MIR/LLVM experiment; rejects incomplete owners and has no production authority.",
+      "callers": [
+        "tools/quality/tests/test_rust_native.py"
+      ],
+      "ci_role": "Quality-script regression only; not a required production collector.",
+      "release_impact": "Not packaged in release binary; no release approval authority.",
+      "authoritative_status": "Non-authoritative development experiment; GH-220 acceptance incomplete.",
+      "final_disposition": "Retain ecosystem-specific experiment pending complete production provenance and acceptance.",
+      "notes": "GH-220: experimental, not integrated with production debt or baseline.",
+      "sha256": "cafd5670a7d040f2beb7dbc5f5880825391bc19a6ccafece30e7bcd6b0ea5767",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/rust_native_replay.py",
+      "category": "B",
+      "purpose": "Pinned-source syntax replay with per-file hashes; cannot supply coverage evidence.",
+      "callers": [
+        "manual GH-220 replay"
+      ],
+      "ci_role": "Quality-script regression only; not a required production collector.",
+      "release_impact": "Not packaged in release binary; no release approval authority.",
+      "authoritative_status": "Non-authoritative development experiment; GH-220 acceptance incomplete.",
+      "final_disposition": "Retain ecosystem-specific experiment pending complete production provenance and acceptance.",
+      "notes": "GH-220: experimental, not integrated with production debt or baseline.",
+      "sha256": "a09d13ec1ae36919a9622e518d21c3fa37ac693f031b2a6bfc3ae9425d03bee9",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/rust_native_driver.py",
+      "category": "A",
+      "purpose": "Compile pinned Rust compiler provenance and independent MIR/LLVM counters; verify complete declared production ownership and retain raw facts.",
+      "callers": [
+        "tools/quality/rust_native_policy.py",
+        "tools/quality/tests/test_rust_native_driver.py",
+        "tools/quality/rust_native_classify.py",
+        "tools/quality/tests/test_rust_native_classify.py"
+      ],
+      "ci_role": "Opt-in development measurement and real native regression; no Arc-Admin gate switch.",
+      "release_impact": "Not packaged in release binary; cannot approve a release or accept a baseline.",
+      "authoritative_status": "Native measurement facts only; released Rust Core retains policy authority.",
+      "final_disposition": "Retain ecosystem measurement tooling outside Generic Core (ADR-0040/0044/0049).",
+      "sha256": "88657a0654e7d1c0376a1697c27d03b226ccf4efe212eb892b3369d8de2573ae",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/rust_native_policy.py",
+      "category": "A",
+      "purpose": "Project certified native facts and unchanged 80/80/30 plus debt/delta policy into the released language-neutral Rust evaluator.",
+      "callers": [
+        "tools/quality/tests/test_rust_native_driver.py"
+      ],
+      "ci_role": "Opt-in development measurement and real native regression; no Arc-Admin gate switch.",
+      "release_impact": "Not packaged in release binary; cannot approve a release or accept a baseline.",
+      "authoritative_status": "Native measurement facts only; released Rust Core retains policy authority.",
+      "final_disposition": "Retain ecosystem measurement tooling outside Generic Core (ADR-0040/0044/0049).",
+      "sha256": "72872de33986555d44c2ae99beecbf71a7e851352da37db60815ac9eab4b192b",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/rust_native_classify.py",
+      "category": "A",
+      "purpose": "Classify every declared Rust source from authenticated complete native production ownership, configuration and raw LLVM evidence.",
+      "callers": [
+        "tools/quality/tests/test_rust_native_classify.py",
+        "docs/quality/gh-221/reproduce.py",
+        "Manual CLI documented in tools/quality/rust-native-driver/README.md"
+      ],
+      "ci_role": "Opt-in development measurement and real native regression; no Arc-Admin gate switch.",
+      "release_impact": "Not packaged in release binary; cannot approve a release or accept a baseline.",
+      "authoritative_status": "Native measurement facts only; released Rust Core retains policy authority.",
+      "final_disposition": "Retain ecosystem measurement tooling outside Generic Core (ADR-0040/0044/0049).",
+      "sha256": "b83b1c799dea5e68b24e4b5aaff3db6947e12cda464e66532804285a9010b6f6",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/rust_collector_contract.py",
+      "category": "A",
+      "purpose": "Define measurement completion/errors and exact Rust collector delivery preflight and capture identity contracts.",
+      "callers": [
+        "tools/quality/tests/test_rust_collector_contract.py"
+      ],
+      "ci_role": "Quality-script contract regression only; no producer launch or native positive certification.",
+      "release_impact": "Not packaged in released Core; no release approval or baseline acceptance authority.",
+      "authoritative_status": "Delivery/transport preflight only; released Rust Core retains all generic policy decisions.",
+      "final_disposition": "Retain development delivery contract helper; frozen helpers used solely for schema/transport validation.",
+      "sha256": "4e5bf1a7fa874ebec1c900813c627db43d7e61d01721b2abee845b6bfd0757fb",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/build_rust_collector.py",
+      "category": "A",
+      "purpose": "Inventory and assemble a private Linux Rust collector runtime from exact local inputs.",
+      "callers": [
+        "docs/quality/gh-228/runtime.md",
+        "tools/quality/tests/test_rust_collector_runtime.py"
+      ],
+      "ci_role": "Build-input rejection regression; real bundle assembly recorded separately.",
+      "release_impact": "Build candidate only; no signature, publication or policy authority.",
+      "authoritative_status": "Packaging input validation only.",
+      "final_disposition": "Retain bounded local bundle builder; lifecycle and release supply chain require separate acceptance.",
+      "sha256": "755386c77e983de16e97e474fe7c99aa8147fa59fa7bd0ce4cbd53c794b1ad5f",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/rust_collector_entry.py",
+      "category": "B",
+      "purpose": "Private-runtime measurement certification and classification with typed completion/error separation.",
+      "callers": [
+        "tools/quality/rust-collector-runtime/harness-gate-rust-collector",
+        "tools/quality/tests/test_rust_collector_runtime.py"
+      ],
+      "ci_role": "Native tests require explicit private runtime; measure real fixtures and retain failures.",
+      "release_impact": "Independent runtime candidate; released Core retains all policy decisions.",
+      "authoritative_status": "Measurement integrity only; unknown Core/ABI combinations cannot sample.",
+      "final_disposition": "Retain measurement entry; trusted installed-host collect integration remains P6.",
+      "sha256": "321302db2b7fec51a15fd3dd770233d3fdf8b9c171b92249a467d652e7fe1548",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/rust_collector_project.py",
+      "category": "B",
+      "purpose": "Project authenticated native measurement facts into generic collector evidence using a digest-bound capture binding.",
+      "callers": [
+        "tools/quality/rust_collector_entry.py",
+        "tools/quality/tests/test_rust_collector_project.py",
+        "tools/quality/tests/test_rust_collector_runtime.py"
+      ],
+      "ci_role": "Transport regression and opt-in private-runtime projection through actual Core; no clean-host certification.",
+      "release_impact": "Private runtime candidate only; no policy, baseline acceptance or release authority.",
+      "authoritative_status": "Measurement integrity and typed projection only; Core authenticates requests and decides policy.",
+      "final_disposition": "Retain ecosystem measurement projection; GH-230 installed fixture integration does not certify native projects.",
+      "sha256": "de72ceb4d9a6d18a93198eab0ff6b45e03866b0e4c2f8c899bf035c539f1e1e0",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/rust_collector_delivery.py",
+      "category": "B",
+      "purpose": "Verify observed private runtime bytes and the host-pinned exact Core/protocol/ABI contract before native re-export.",
+      "callers": [
+        "tools/quality/rust_collector_entry.py",
+        "tools/quality/tests/rust_collector_clean_host.py",
+        "tools/quality/tests/test_rust_collector_delivery.py"
+      ],
+      "ci_role": "Delivery preflight and failure-before-execution regression coverage.",
+      "release_impact": "Collector measurement compatibility only; no policy, baseline acceptance or release authority.",
+      "authoritative_status": "Host authenticates distribution and requests; Core decides requiredness and final outcomes.",
+      "final_disposition": "Retain ecosystem measurement compatibility checks; GH-230 fixture evidence is separate from native project acceptance.",
+      "sha256": "c720bd954ea923a0c980df3917ee93c838dbb7c7d2bb4e0dd6989c5061aa6ae6",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/rust_native_config.py",
+      "category": "B",
+      "purpose": "Resolve the explicitly selected project CRAP binding, validate configuration through Core and retain policy input provenance.",
+      "callers": [
+        "tools/quality/rust_native_policy.py",
+        "tools/quality/rust-native-plugin/accept.py"
+      ],
+      "ci_role": "Mandatory four-host packaged native/Core configuration and integrity acceptance.",
+      "release_impact": "Packaged in the standalone native plugin; cannot approve a release or accept/reset a baseline.",
+      "authoritative_status": "Policy input resolution and validation only; the released Rust Core compares limits and owns every gate/debt/non-regression decision.",
+      "final_disposition": "Retain native adapter configuration glue under the external-toolchain delivery amendment; no unconfigured compatibility fallback.",
+      "sha256": "4e1c80301839111098ffa17fb27830aabdd253f3088e0541b0884b24fb24edef",
+      "plugin_owner": "musutrade/GateProbes"
+    },
+    {
+      "module": "tools/quality/core_isolation_check.py",
+      "category": "A",
+      "purpose": "Manual isolation acceptance: build and test core with the plugin implementation sources removed.",
+      "callers": [
+        "manual CLI use",
+        "docs/quality/core-without-plugins-acceptance.md"
+      ],
+      "ci_role": "Manual acceptance tooling only; not wired into any workflow and not part of the required aggregate.",
+      "release_impact": "Not packaged. Reads a full repository archive and never modifies the source repository.",
+      "authoritative_status": "Diagnostic only; no gate, threshold or release authority.",
+      "final_disposition": "Retain as the repeatable acceptance entry for the core-without-plugins gap; no generic release-approval path.",
+      "sha256": "eb5dad5520fd441c12a1f33d08dc62d16e0a11108459f9f50944f9f219db1452"
+    },
+    {
+      "module": "tools/quality/measurer_release.py",
+      "category": "A",
+      "purpose": "Verify a fixed independent Rust measurer release identity, signed provenance, archive and capability manifest before Core measurement.",
+      "callers": [
+        "tools/quality/ci_quality.py",
+        "tools/quality/source_measure.py",
+        "tools/quality/tests/test_rust_measure_release_pin.py",
+        "tools/quality/tests/test_source_measure.py"
+      ],
+      "ci_role": "Required Core risk collection and Core Python measurement-contract tests; failed trust or artifact validation blocks consumption.",
+      "release_impact": "Repository-only consumer; not packaged in the Core binary or collector. Cannot grant release approval or change thresholds/baseline/debt/ratchet.",
+      "authoritative_status": "Artifact preflight/trust verification only; measurements and all final generic decisions retain their existing owners.",
+      "final_disposition": "Retain Python CI/dev tooling for fixed artifact consumption under the existing Core required-path boundary.",
+      "sha256": "b5a860f9187f30ffe2f81840dc35d83096482f44d5a850aa304ebe6d83ec9725"
+    }
+  ],
+  "schema": "python-product-boundary/v1",
+  "scope": "Current Core Python module registration, including the Issue 11 release consumer; historical gh-146 and gh-152 inventories remain unchanged.",
+  "prior_inventory": {
+    "file": "docs/quality/gh-146/python-boundary.json",
+    "sha256": "3768e48cdf3b0297ef512d5abaf60d92ad75edb3cad4f53c2be392a04b078fed"
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "verification": "gh attestation verify; exact repository, workflow SAN, OIDC issuer, tag, signer and source SHA",
+  "verified": [
+    {
+      "certificate": {
+        "certificateIssuer": "CN=sigstore-intermediate,O=sigstore.dev",
+        "subjectAlternativeName": "https://github.com/musutrade/Harness-Gate/.github/workflows/release.yml@refs/tags/v0.4.8",
+        "issuer": "https://token.actions.githubusercontent.com",
+        "githubWorkflowTrigger": "push",
+        "githubWorkflowSHA": "938a34b27cda8c13a706ca22adcfda567453f1ab",
+        "githubWorkflowName": "Release",
+        "githubWorkflowRepository": "musutrade/Harness-Gate",
+        "githubWorkflowRef": "refs/tags/v0.4.8",
+        "buildSignerURI": "https://github.com/musutrade/Harness-Gate/.github/workflows/release.yml@refs/tags/v0.4.8",
+        "buildSignerDigest": "938a34b27cda8c13a706ca22adcfda567453f1ab",
+        "runnerEnvironment": "github-hosted",
+        "sourceRepositoryURI": "https://github.com/musutrade/Harness-Gate",
+        "sourceRepositoryDigest": "938a34b27cda8c13a706ca22adcfda567453f1ab",
+        "sourceRepositoryRef": "refs/tags/v0.4.8",
+        "sourceRepositoryIdentifier": "1346842829",
+        "sourceRepositoryOwnerURI": "https://github.com/musutrade",
+        "sourceRepositoryOwnerIdentifier": "317201575",
+        "buildConfigURI": "https://github.com/musutrade/Harness-Gate/.github/workflows/release.yml@refs/tags/v0.4.8",
+        "buildConfigDigest": "938a34b27cda8c13a706ca22adcfda567453f1ab",
+        "buildTrigger": "push",
+        "runInvocationURI": "https://github.com/musutrade/Harness-Gate/actions/runs/38185348415/attempts/1",
+        "sourceRepositoryVisibilityAtSigning": "public"
+      },
+      "statement": {
+        "_type": "https://in-toto.io/Statement/v1",
+        "subject": [
+          {
+            "name": "SHA256SUMS",
+            "digest": {
+              "sha256": "9b55b4ce3d7feb2794ef9d87579295e5d02b3b59b5c040c7dfcde752bb25be8c"
+            }
+          },
+          {
+            "name": "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz",
+            "digest": {
+              "sha256": "45f5bcfcc7a1b2e45f011fa449691f260699404ef9b55d71a4136ae98b9e9697"
+            }
+          },
+          {
+            "name": "harness-gate-http-json-contract-collector-0.1.0-rc.5.tgz.sbom.cdx.json",
+            "digest": {
+              "sha256": "af52d52a9a14c28af99c6784fee19b85f9823d7c5597084ff636c1f34291f867"
+            }
+          },
+          {
+            "name": "harness-gate-linux-amd64",
+            "digest": {
+              "sha256": "888fa1527eae37e3163aac2e1479e91ec03a0c8380b3c49da6e9266575597418"
+            }
+          },
+          {
+            "name": "harness-gate-macos-amd64",
+            "digest": {
+              "sha256": "46b6af24d20fadea0527a0f101daea4ecd765f7f3e6223ef027ff494310bab61"
+            }
+          },
+          {
+            "name": "harness-gate-macos-arm64",
+            "digest": {
+              "sha256": "9236792048eac3c497b5cfa9c457ac4ba6c6d339323e5861f8638dbd46a32e95"
+            }
+          },
+          {
+            "name": "harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz",
+            "digest": {
+              "sha256": "09645a8b53075d89172efde67250e4bea2967f02184d4f8a5bfdfb389da0eac1"
+            }
+          },
+          {
+            "name": "harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz.sbom.cdx.json",
+            "digest": {
+              "sha256": "225781fa935fc54478b6d251ac32b06d25cf68a39b52ce60d3faf36cd974dee5"
+            }
+          },
+          {
+            "name": "harness-gate-rust-source-risk-0.1.0-rc.7-linux-amd64.tar.gz",
+            "digest": {
+              "sha256": "ba7d510f4a1354b14acc5adee0b0910e9641589cb0280b8a1b6a3919fcf3e840"
+            }
+          },
+          {
+            "name": "harness-gate-rust-source-risk-0.1.0-rc.7-linux-amd64.tar.gz.sbom.cdx.json",
+            "digest": {
+              "sha256": "1d28461f5480c35388b8821d9a956c0158b808bf43f79e26c2f7e9d42739d8d7"
+            }
+          },
+          {
+            "name": "harness-gate-typescript-collector-0.1.0-rc.4.tgz",
+            "digest": {
+              "sha256": "afe0c12a40eba48fdfde671711fe0fc6835e17e7ff6dd2be474c126ace2a7fd5"
+            }
+          },
+          {
+            "name": "harness-gate-typescript-collector-0.1.0-rc.4.tgz.sbom.cdx.json",
+            "digest": {
+              "sha256": "9c4044b513fb5aa1a518ebcd6615cc873c0f44330ea164d3bd9df9de3f05fbea"
+            }
+          },
+          {
+            "name": "harness-gate-windows-amd64.exe",
+            "digest": {
+              "sha256": "b7a481ff27f479b292a9fd0bca19e2120af41d85624bb857b17031a9278cb077"
+            }
+          },
+          {
+            "name": "harness-gate.sbom.cdx.json",
+            "digest": {
+              "sha256": "dd0839ec1426e0b892a9dd18218aaacad5a73df329be1b34a308e39de77b6a40"
+            }
+          },
+          {
+            "name": "release-inventory.json",
+            "digest": {
+              "sha256": "c93e1f8d62bdfdbf0ce08247f34d3f9610d073453603ea741598cecdc899164d"
+            }
+          }
+        ],
+        "predicateType": "https://slsa.dev/provenance/v1",
+        "predicate": {
+          "buildDefinition": {
+            "buildType": "https://actions.github.io/buildtypes/workflow/v1",
+            "externalParameters": {
+              "workflow": {
+                "path": ".github/workflows/release.yml",
+                "ref": "refs/tags/v0.4.8",
+                "repository": "https://github.com/musutrade/Harness-Gate"
+              }
+            },
+            "internalParameters": {
+              "github": {
+                "event_name": "push",
+                "repository_id": "1346842829",
+                "repository_owner_id": "317201575",
+                "runner_environment": "github-hosted"
+              }
+            },
+            "resolvedDependencies": [
+              {
+                "digest": {
+                  "gitCommit": "938a34b27cda8c13a706ca22adcfda567453f1ab"
+                },
+                "uri": "git+https://github.com/musutrade/Harness-Gate@refs/tags/v0.4.8"
+              }
+            ]
+          },
+          "runDetails": {
+            "builder": {
+              "id": "https://github.com/musutrade/Harness-Gate/.github/workflows/release.yml@refs/tags/v0.4.8"
+            },
+            "metadata": {
+              "invocationId": "https://github.com/musutrade/Harness-Gate/actions/runs/38185348415/attempts/1"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -58,58 +58,9 @@ REQUIRED_ARTIFACTS = {'coverage.json', 'coverage.raw.json', 'coverage.lcov',
     f'{label}-{suffix}' for label in ('base', 'head') for suffix in (
         'source.tar', 'manifest.json', 'coverage.json', 'coverage.lcov',
         'coverage.cobertura.xml', 'risk.json')}
-MEASURER_PIN = ROOT / 'tools/quality/rust-measure-release.json'
-MEASURER_RELEASE_URL = 'https://github.com/musutrade/Harness-Gate/releases/download'
-
-
-def load_measurer_pin() -> dict:
-    """The analyzer is consumed as a pinned release artifact, never built here."""
-    pin = json.loads(MEASURER_PIN.read_text())
-    require(pin.get('schema') == 'rust-measure-release-pin/v1', 'unknown measurer pin schema')
-    for field in ('release', 'asset', 'sha256', 'version', 'executable'):
-        require(isinstance(pin.get(field), str) and pin[field], f'invalid measurer pin {field}')
-    require(re.fullmatch(r'[0-9a-f]{64}', pin['sha256']) is not None, 'invalid measurer pin sha256')
-    require(pin['asset'].startswith('harness-gate-rust-measure-' + pin['version'] + '-'),
-            'measurer pin asset/version mismatch')
-    return pin
-
-
-def verify_measurer_asset(path: Path, pin: dict) -> None:
-    require(sha256(path) == pin['sha256'], 'pinned measurer asset digest mismatch')
-
-
-def ensure_measurer(cache: Path) -> Path:
-    """Download, digest-verify, bound-check and extract the pinned measurer.
-
-    The release archive is the only source of the analyzer. Extraction accepts
-    regular files and directories strictly inside the single release root, so an
-    archive can never write outside its cache directory, and the declared
-    executable must exist with its executable bit set.
-    """
-    pin = load_measurer_pin()
-    cache.mkdir(parents=True, exist_ok=True)
-    archive = cache / pin['asset']
-    if not archive.is_file() or sha256(archive) != pin['sha256']:
-        subprocess.run(['curl', '--fail', '--show-error', '--location', '--proto', '=https',
-                        '--tlsv1.2', '--retry', '3', '--retry-all-errors', '--output', str(archive),
-                        f'{MEASURER_RELEASE_URL}/{pin["release"]}/{pin["asset"]}'], check=True)
-    verify_measurer_asset(archive, pin)
-    root = pin['asset'].removesuffix('.tar.gz')
-    executable = cache / root / pin['executable']
-    with tarfile.open(archive) as source:
-        members = source.getmembers()
-        require(bool(members), 'empty measurer release archive')
-        for member in members:
-            require(not member.name.startswith('/') and '..' not in Path(member.name).parts,
-                    f'unsafe measurer archive member: {member.name}')
-            require(member.isfile() or member.isdir(),
-                    f'unsupported measurer archive member: {member.name}')
-            require(member.name == root or member.name.startswith(root + '/'),
-                    f'measurer archive member outside the release root: {member.name}')
-        source.extractall(cache, filter='data')
-    require(executable.is_file(), 'pinned measurer executable missing from the release archive')
-    require(os.access(executable, os.X_OK), 'pinned measurer executable is not executable')
-    return executable
+# Keep the public helpers for existing Core consumers; one implementation owns
+# pin validation, download, trust verification and safe extraction.
+from measurer_release import (load_measurer_pin, verify_measurer_asset, ensure_measurer)
 
 
 def relocated_migration_sources(base: str, head: str) -> set[str]:
@@ -273,24 +224,12 @@ class Collector:
         self.command(name, [sys.executable, str(ROOT / 'tools/quality' / script), *map(str, args)], allowed)
 
     def measurer(self) -> Path:
-        """Download the pinned analyzer release artifact and verify its digest."""
+        """Consume the same verified release as the Core measurement tests."""
         pin = load_measurer_pin()
-        cache = self.directory / 'measurer'
-        cache.mkdir(exist_ok=True)
-        archive = cache / pin['asset']
-        url = f'{MEASURER_RELEASE_URL}/{pin["release"]}/{pin["asset"]}'
-        self.command('measurer-download', ['curl', '--fail', '--show-error', '--location',
-                                           '--proto', '=https', '--tlsv1.2',
-                                           '--output', str(archive), url])
-        verify_measurer_asset(archive, pin)
-        installed = cache / pin['asset'].removesuffix('.tar.gz')
-        with tarfile.open(archive) as source:
-            source.extractall(cache, filter='data')
-        binary = installed / pin['executable']
-        require(binary.is_file(), 'pinned measurer executable missing from archive')
-        self.report['measurer'] = {'release': pin['release'], 'asset': pin['asset'],
-                                   'sha256': pin['sha256'], 'version': pin['version'],
-                                   'rule': pin['rule']}
+        def command(name, argv):
+            self.command(name, argv)
+        binary = ensure_measurer(self.directory / 'measurer', command=command, pin=pin)
+        self.report['measurer'] = pin
         self.save()
         return binary
 

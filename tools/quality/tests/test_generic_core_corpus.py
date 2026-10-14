@@ -90,7 +90,7 @@ class FrozenCorpusTests(unittest.TestCase):
                 replay.replay(root)
 
     def test_inventory_covers_all_production_python_modules(self):
-        inventory = json.loads((ROOT / 'docs/quality/gh-146/python-boundary.json').read_text())
+        inventory = json.loads((ROOT / 'docs/quality/python-boundary.json').read_text())
         validate_python_boundary(ROOT, inventory)
 
 

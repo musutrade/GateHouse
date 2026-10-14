@@ -70,6 +70,35 @@ class CoreTestSelectionTests(unittest.TestCase):
     def save(self):
         self.manifest.write_text(json.dumps(self.receipt))
 
+    def test_reviewed_consumer_scope_keeps_original_plugin_acceptance(self):
+        receipt = run_core.read_receipt(run_core.ROOT)
+        run_core.verify_scope_review(run_core.ROOT, receipt)
+        receipt['acceptance'] = {**receipt['acceptance'], 'sha256': '0' * 64}
+        with self.assertRaisesRegex(ValueError, 'execution acceptance changed'):
+            run_core.verify_scope_review(run_core.ROOT, receipt)
+
+    def test_scope_audit_rejects_changed_core_consumer_dependency(self):
+        receipt = run_core.read_receipt(run_core.ROOT)
+        for field in ('prior_receipt', 'dependency_audit'):
+            relative = receipt['scope_review'][field]
+            path = self.root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes((run_core.ROOT / relative).read_bytes())
+        path = self.root / receipt['scope_review']['dependency_audit']
+        audit = json.loads(path.read_text())
+        root = audit['roots'][0]
+        audit['modules'][root]['imports'].append('measurer_release')
+        path.write_text(json.dumps(audit))
+        receipt['scope_review']['dependency_audit_sha256'] = hashlib.sha256(path.read_bytes()).hexdigest()
+        with self.assertRaisesRegex(ValueError, 'reaches changed Core consumer'):
+            run_core.verify_scope_review(self.root, receipt)
+
+    def test_scope_review_cannot_drop_another_shared_input(self):
+        receipt = run_core.read_receipt(run_core.ROOT)
+        del receipt['guarded_sources']['tools/quality/collector_runner.py']
+        with self.assertRaisesRegex(ValueError, 'unexpected plugin scope delta'):
+            run_core.verify_scope_review(run_core.ROOT, receipt)
+
     def test_new_core_tests_run_by_default(self):
         self.assertEqual(run_core.select(self.root), ['test_core'])
         (self.tests / 'test_new.py').write_text('new')

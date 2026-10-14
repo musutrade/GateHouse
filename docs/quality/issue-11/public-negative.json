@@ -1,0 +1,40 @@
+[
+  {
+    "case": "wrong-repository",
+    "exit_code": 1,
+    "result": "rejected",
+    "command": [
+      "gh",
+      "attestation",
+      "verify",
+      "/tmp/gatehouse-plugin-audit/rust-measure-v0.3.1/harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz",
+      "--repo",
+      "musutrade/Harness-Gate",
+      "--cert-identity",
+      "https://github.com/musutrade/GateProbes/.github/workflows/collector-release.yml@refs/tags/rust-measure-v0.3.1",
+      "--source-ref",
+      "refs/tags/rust-measure-v0.3.1",
+      "--source-digest",
+      "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928"
+    ]
+  },
+  {
+    "case": "wrong-tag",
+    "exit_code": 1,
+    "result": "rejected",
+    "command": [
+      "gh",
+      "attestation",
+      "verify",
+      "/tmp/gatehouse-plugin-audit/rust-measure-v0.3.1/harness-gate-rust-measure-0.3.1-linux-amd64.tar.gz",
+      "--repo",
+      "musutrade/GateProbes",
+      "--cert-identity",
+      "https://github.com/musutrade/GateProbes/.github/workflows/collector-release.yml@refs/tags/rust-measure-v0.3.2",
+      "--source-ref",
+      "refs/tags/rust-measure-v0.3.1",
+      "--source-digest",
+      "f9834a988e9e55ec99b7ebe81fb67a9ca16b2928"
+    ]
+  }
+]
