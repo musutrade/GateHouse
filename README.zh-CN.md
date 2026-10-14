@@ -124,11 +124,11 @@ harness-gate --version
 
 ### 可选 Rust 插件
 
-Core 单独安装不下载 Rust 分析工具链。当前安装器可独立安装 GateProbes
-native `0.1.0-rc.8`，匹配的 Rust/LLVM 和 Python 由用户提供。固定版本、历史
-安装器与信任边界见[独立插件指南](docs/quality/standalone-installation.md)，
-0.5.0 命令见[发布指南](docs/releases/0.5.0.zh-CN.md)。安装插件不自动采纳
-测量系列或基线，历史标签内的安装器继续保留原有 pin 与签名身份。
+Core 仅安装 Core。GateProbes 负责 native 插件的独立安装、升级与回滚，
+使用显式版本和经过摘要校验的固定提交安装器。当前源码安装器拒绝旧插件参数，
+并给出迁移诊断。可执行命令及两仓库信任边界见[独立插件指南](docs/quality/standalone-installation.md)。
+缺少插件依赖时仅诊断，Rust/LLVM、Python 和 Cosign 由用户自行提供。
+安装插件不采纳测量系列或基线，历史标签内的安装器保留原有 pin 与签名身份。
 
 ### 从源码安装
 

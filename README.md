@@ -138,11 +138,12 @@ source installation additionally requires `git` and Rust `cargo`.
 
 ### Optional Rust collection
 
-Core alone does not download a Rust analysis toolchain. The current installer
-can independently install GateProbes native `0.1.0-rc.8`; matching Rust/LLVM and
-Python are external collection dependencies. See the
-[standalone guide](docs/quality/standalone-installation.md) and
-[0.5.0 installer commands](docs/releases/0.5.0.zh-CN.md).
+Core installs only Core. GateProbes owns native plugin installation, upgrade and
+rollback through an explicit version and checksum-verified fixed installer.
+The current source installer rejects legacy plugin flags with migration guidance.
+See the [standalone guide](docs/quality/standalone-installation.md) for executable
+commands and the two repositories' trust boundaries. Missing plugin dependencies
+are diagnosed; Rust/LLVM, Python and Cosign are provided explicitly by the user.
 Installing a plugin does not adopt a measurement series or baseline.
 Historical tagged installers retain their original pins and identities.
 

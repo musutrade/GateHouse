@@ -22,82 +22,41 @@ bash /tmp/harness-gate-install.sh --version v0.4.8 --with-rust \
 Core alone uses `--version v0.4.8`; the historical plugin alone uses
 `--rust-only --rust-version 0.1.0-rc.7` with that same tagged installer.
 
-### Current GateHouse repository installer
+### Current independent installer
 
-From a reviewed GateHouse checkout, install the independently published
-GateProbes native RC8 explicitly:
+GateHouse installs Core only. Plugin flags now fail before downloads with migration
+guidance. GateProbes owns the sole active native install/upgrade/rollback entry.
+Download and checksum-verify its fixed source, then select the plugin explicitly:
 
-```bash
-bash install.sh --rust-only --rust-version 0.1.0-rc.8
-```
+~~~bash
+curl --fail --show-error --location --proto '=https' --tlsv1.2 \
+  -o /tmp/gateprobes-install-native.sh \
+  https://raw.githubusercontent.com/musutrade/GateProbes/1507805205944229950e0fe57d4fe1f17fc3e130/tools/install/install-native.sh
+printf '%s  %s\n' 317e7f98e3863d44d32640106091596e227be0795463dd81adcd26ef6797bce6 /tmp/gateprobes-install-native.sh | sha256sum --check
+bash /tmp/gateprobes-install-native.sh --version 0.1.0-rc.8 \
+  --install-dir "$HOME/.local/bin"
+~~~
 
-To also install the existing Core release, use
-`bash install.sh --version v0.4.8 --with-rust --rust-version 0.1.0-rc.8`.
-The current installer verifies Core 0.4.8 against Harness-Gate and native RC8
-against GateProbes. Core v0.4.9 onward routes to GateHouse; this does not announce
-a new Core release. There is no fallback to another repository or signer.
-In particular, use the historical tagged installer above for RC7.
+Provide a trusted Cosign on PATH first. On macOS use shasum -a 256 --check
+for the script digest. Missing dependencies are diagnosed; the plugin installer
+never provisions Rust, LLVM, Python or Cosign. Core and plugin are installed
+separately. --rust-root DIR becomes plugin --install-dir DIR/bin;
+HARNESS_GATE_RUST_VERSION becomes explicit --version; --cache-dir becomes
+an explicitly provisioned verifier on PATH. Historical --offline bundles use
+their historical tagged installer.
 
-These commands use Bash (Git Bash on Windows) and do not change the default Rust
-toolchain. Publication and platform acceptance are recorded in
-[release status](../release-status.md); installing RC8 does not automatically
-migrate a project's measurement series, baseline or Core consumption pin.
+See the [fixed plugin installer source](https://github.com/musutrade/GateProbes/blob/1507805205944229950e0fe57d4fe1f17fc3e130/tools/install/install-native.sh)
+and its [maintained installation, trust and rollback guide](https://github.com/musutrade/GateProbes/blob/main/docs/native-installation.md)
+([中文](https://github.com/musutrade/GateProbes/blob/main/docs/native-installation.zh-CN.md)).
+The script verifies both manifest and binary signatures against GateProbes'
+exact selected native workflow/tag and GitHub OIDC issuer, with no cross-identity
+fallback. RC8 is legacy mutable; its original signed manifest is additionally
+checksum-pinned. Installing a binary does not adopt a series or baseline.
 
-## Versions, platforms and destinations
-
-`--version` selects an exact Core `vX.Y.Z` tag. `--rust-version` accepts an exact
-plugin version without the tag prefix; for example, `0.1.0-rc.7` downloads from
-`rust-collector-v0.1.0-rc.7`. `HARNESS_GATE_RUST_VERSION` can set the same explicit
-version; the command-line option takes precedence. There is no latest-release
-lookup or fallback to another platform, engine or historical runtime bundle.
-
-| Host | Native release asset |
-| --- | --- |
-| Linux x86_64 | `harness-gate-rust-collector-linux-amd64` |
-| macOS Intel | `harness-gate-rust-collector-macos-amd64` |
-| macOS Apple Silicon | `harness-gate-rust-collector-macos-arm64` |
-| Windows x86_64 | `harness-gate-rust-collector-windows-amd64.exe` |
-
-RC7 and GateProbes RC8 passed release acceptance on these four hosts. This does not certify an
-arbitrary host ABI. Missing release assets fail installation.
-
-Both programs default to `~/.local/bin`. `--install-dir` changes that private
-absolute directory. The plugin is named `harness-gate-rust-collector` (with `.exe`
-on Windows). For an existing `--rust-root DIR` invocation, only the plugin binary
-is installed at `DIR/bin`; no runtime, environment selector or rollback state is
-created. Existing bundled installations are left in place. Configure the intended
-executable explicitly if an older launcher is also on PATH.
-
-## Verification and external tools
-
-The installer checks the signed `SHA256SUMS` and the executable's own signature.
-Certificates must name the exact selected tag and its release workflow:
-`release.yml` for Core, `native-collector-release.yml` for the plugin. Both use
-the GitHub Actions OIDC issuer. It provisions checksum-pinned cosign 3.1.3 if no
-verifier is on PATH; `--cache-dir` selects an existing pinned verifier cache.
-The plugin and its signatures are verified before a combined install replaces
-Core. Each executable is then replaced atomically with the existing private
-path and symlink checks. Installing the pair is not a two-file transaction:
-an installation-time filesystem failure can still require retrying one program.
-
-Installation needs neither Python nor a Rust toolchain. Collection requires
-Python 3.12+, the matching Rust 1.97.1 sysroot/compiler libraries and LLVM 22.1.6,
-as specified by the [native runtime contract](native-external-toolchain.md).
-Once those external dependencies are installed, check them with:
-
-```bash
-harness-gate-rust-collector doctor --sysroot /absolute/external/rust-1.97.1
-```
-
-A successful install verifies the executable, not the host's measurement
-capability or a project's quality result. Core configuration must authenticate the
-new executable digest and explicit tool paths. Existing evidence, series and
-baselines require the native contract's continuity checks; installation does not
-accept them or reset history.
-
-`--offline` archives from the historical bundled product are rejected with an
-explicit diagnostic. Use their immutable [historical installer and offline
-instructions](rust-collector-installation.md) to restore that product. The new
-installer does not unpack old archives, migrate installations or remove their
-resources. `--from-source` continues to build only Core from its exact tag;
-`--from-source --with-rust` installs the plugin as a signed release binary.
+Core's bridge execution exit condition is fulfilled: only diagnostic stubs
+remain. Historical Core installers stay unchanged, including their original
+repository, version and signer. No new Core or plugin release is announced.
+Protocol, measurements and Engineering Policy remain unchanged; Core owns
+requiredness, thresholds, baseline/debt/ratchet, final decisions and publication.
+See the [native external-toolchain contract](native-external-toolchain.md) before
+collecting measurements or changing project executable/tool pins.
