@@ -29,6 +29,12 @@
 
 ## 发布状态
 
+Postgres 外置已由正式0.5.0/0.1.1 产物组合验收，见[固定产物回执](docs/releases/postgres-service-0.1.1-acceptance.md)。
+
+**当前 Core 0.5.0 已在 GitHub 与 crates.io 发布并验证。** Postgres 检查和迁移由 GateProbes 承接；旧配置需先迁移。见[升级指南](docs/releases/0.5.0.zh-CN.md)与[公开交付回执](docs/releases/0.5.0-public-verification.md)。
+
+以下保留首个拆分发行版的历史记录。
+
 **Core 0.4.9 已在 GitHub 与 crates.io 发布。** 这是 GateHouse 拆分后的首个核心版本：生态
 预设外置，核心发行清单仅包含 Core 二进制与元数据，采集器由 GateProbes 独立
 交付。安装见[0.4.9 发布指南](docs/releases/0.4.9.zh-CN.md)，公开验证见
@@ -86,15 +92,15 @@ component、profile、命令、路径、parser 和 service 都来自 TOML。常�
 需要 Rust 1.88 或更新版本：
 
 ```bash
-cargo install harness-gate --version 0.4.9 --locked
+cargo install harness-gate --version 0.5.0 --locked
 ```
 
-[发布与安装验证](docs/releases/0.4.9-crate-public-verification.md)记录了
+[发布与安装验证](docs/releases/0.5.0-public-verification.md)记录了
 registry 摘要、原 tag 源码和全新 Linux 安装验证。
 
 ### 从 GitHub Release 安装（预编译二进制）
 
-从不可变的 [GitHub Release tag](https://github.com/musutrade/GateHouse/releases/tag/v0.4.9) 下载适合你平台的二进制文件：
+从不可变的 [GitHub Release tag](https://github.com/musutrade/GateHouse/releases/tag/v0.5.0) 下载适合你平台的二进制文件：
 
 - **Linux (x86_64)**: `harness-gate-linux-amd64`
 - **macOS (Intel)**: `harness-gate-macos-amd64`
@@ -107,8 +113,8 @@ registry 摘要、原 tag 源码和全新 Linux 安装验证。
 ```bash
 curl --fail --show-error --location --proto '=https' --tlsv1.2 \
   -o /tmp/harness-gate-install.sh \
-  https://raw.githubusercontent.com/musutrade/GateHouse/v0.4.9/install.sh
-bash /tmp/harness-gate-install.sh --version v0.4.9
+  https://raw.githubusercontent.com/musutrade/GateHouse/v0.5.0/install.sh
+bash /tmp/harness-gate-install.sh --version v0.5.0
 harness-gate --version
 ```
 
@@ -121,7 +127,7 @@ harness-gate --version
 Core 单独安装不下载 Rust 分析工具链。当前安装器可独立安装 GateProbes
 native `0.1.0-rc.8`，匹配的 Rust/LLVM 和 Python 由用户提供。固定版本、历史
 安装器与信任边界见[独立插件指南](docs/quality/standalone-installation.md)，
-0.4.9 命令见[发布指南](docs/releases/0.4.9.zh-CN.md)。安装插件不自动采纳
+0.5.0 命令见[发布指南](docs/releases/0.5.0.zh-CN.md)。安装插件不自动采纳
 测量系列或基线，历史标签内的安装器继续保留原有 pin 与签名身份。
 
 ### 从源码安装
@@ -173,12 +179,12 @@ sha256sum --check SHA256SUMS
 cosign verify-blob --signature harness-gate-linux-amd64.sig \
   --certificate harness-gate-linux-amd64.crt \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity 'https://github.com/musutrade/GateHouse/.github/workflows/release.yml@refs/tags/v0.4.9' \
+  --certificate-identity 'https://github.com/musutrade/GateHouse/.github/workflows/release.yml@refs/tags/v0.5.0' \
   harness-gate-linux-amd64
 cosign verify-blob --signature harness-gate.sbom.cdx.json.sig \
   --certificate harness-gate.sbom.cdx.json.crt \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity 'https://github.com/musutrade/GateHouse/.github/workflows/release.yml@refs/tags/v0.4.9' \
+  --certificate-identity 'https://github.com/musutrade/GateHouse/.github/workflows/release.yml@refs/tags/v0.5.0' \
   harness-gate.sbom.cdx.json
 ```
 
@@ -189,9 +195,9 @@ SBOM 记录源码提交、`Cargo.lock` 摘要和构建工具链。发布流程�
 
 ## 安装与快速开始
 
-### Core 0.4.9 与当前源码构建
+### Core 0.5.0 与当前源码构建
 
-Core 0.4.9 和当前源码构建使用外部生态预设目录。历史 Core 0.4.8 内置预设，
+Core 0.5.0 和当前源码构建使用外部生态预设目录。历史 Core 0.4.8 内置预设，
 使用该版本时省略 `--presets-dir`。
 
 从源码安装后，选择审阅过的 GateProbes checkout 中的 `presets/` 目录。
@@ -237,6 +243,8 @@ harness-gate --project-root /path/to/new-project verify --profile ci --all
 
 <a id="内置预设"></a>
 ## 项目预设
+
+Core 0.5.0 的 Postgres 预设必须先通过已安装的 GateProbes 插件生成绑定目录；冻结旧目录不能直接用于新 Core。见[迁移步骤](docs/quality-presets.md)。
 
 Core 仅内置 `generic`。下列三个生态预设由 GateProbes 维护，需通过
 `--presets-dir PATH` 或 `HARNESS_GATE_PRESETS_DIR` 指向审阅过的预设目录。

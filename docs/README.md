@@ -5,7 +5,9 @@ collectors and ecosystem presets; historical Harness-Gate releases retain their
 original identities. See [repository migration](gatehouse-migration.md) and
 [migration acceptance](gatehouse-migration-acceptance.md).
 
-**Core 0.4.9 is published on GitHub.** See [release status](release-status.md)
+**Current Core 0.5.0 is published and verified on GitHub and crates.io.** See its [public receipt](releases/0.5.0-public-verification.md) and [upgrade guide](releases/0.5.0.zh-CN.md).
+
+Historical **Core 0.4.9 is published on GitHub.** See [release status](release-status.md)
 and [public verification](releases/0.4.9-public-verification.md) for the separate
 GitHub, crates.io and runtime acceptance states.
 

@@ -31,6 +31,12 @@ and [migration acceptance](docs/gatehouse-migration-acceptance.md).
 
 ## Release status
 
+Postgres externalization is accepted with the published 0.5.0/0.1.1 pair; see the [fixed-artifact receipt](docs/releases/postgres-service-0.1.1-acceptance.md).
+
+**Current Core 0.5.0 is published and verified on GitHub and crates.io.** Postgres checks and migration belong to GateProbes; legacy configurations require migration. See the [upgrade guide](docs/releases/0.5.0.zh-CN.md) and [public delivery receipt](docs/releases/0.5.0-public-verification.md).
+
+The first split release history follows.
+
 **Core 0.4.9 is published on GitHub and crates.io.** It is the first split Core release from
 GateHouse: ecosystem presets are external and the Core release inventory
 contains only Core binaries and metadata. GateProbes delivers collectors
@@ -96,16 +102,16 @@ actual collector/series. New metric semantics require separate contract review.
 With Rust 1.88 or newer:
 
 ```bash
-cargo install harness-gate --version 0.4.9 --locked
+cargo install harness-gate --version 0.5.0 --locked
 ```
 
-[Publication and installation verification](docs/releases/0.4.9-crate-public-verification.md)
+[Publication and installation verification](docs/releases/0.5.0-public-verification.md)
 records the registry checksum, original tag source and fresh Linux smoke test.
 
 ### Install from GitHub Release (Pre-built Binaries)
 
 Download the binary for your platform from an immutable [GitHub Release
-tag](https://github.com/musutrade/GateHouse/releases/tag/v0.4.9):
+tag](https://github.com/musutrade/GateHouse/releases/tag/v0.5.0):
 
 - **Linux (x86_64)**: `harness-gate-linux-amd64`
 - **macOS (Intel)**: `harness-gate-macos-amd64`
@@ -119,8 +125,8 @@ the pinned source revision, then select the immutable Core release explicitly:
 ```bash
 curl --fail --show-error --location --proto '=https' --tlsv1.2 \
   -o /tmp/harness-gate-install.sh \
-  https://raw.githubusercontent.com/musutrade/GateHouse/v0.4.9/install.sh
-bash /tmp/harness-gate-install.sh --version v0.4.9
+  https://raw.githubusercontent.com/musutrade/GateHouse/v0.5.0/install.sh
+bash /tmp/harness-gate-install.sh --version v0.5.0
 harness-gate --version
 ```
 
@@ -136,7 +142,7 @@ Core alone does not download a Rust analysis toolchain. The current installer
 can independently install GateProbes native `0.1.0-rc.8`; matching Rust/LLVM and
 Python are external collection dependencies. See the
 [standalone guide](docs/quality/standalone-installation.md) and
-[0.4.9 installer commands](docs/releases/0.4.9.zh-CN.md).
+[0.5.0 installer commands](docs/releases/0.5.0.zh-CN.md).
 Installing a plugin does not adopt a measurement series or baseline.
 Historical tagged installers retain their original pins and identities.
 
@@ -149,7 +155,7 @@ sha256sum --check SHA256SUMS
 cosign verify-blob --signature harness-gate-linux-amd64.sig \
   --certificate harness-gate-linux-amd64.crt \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity 'https://github.com/musutrade/GateHouse/.github/workflows/release.yml@refs/tags/v0.4.9' \
+  --certificate-identity 'https://github.com/musutrade/GateHouse/.github/workflows/release.yml@refs/tags/v0.5.0' \
   harness-gate-linux-amd64
 ```
 
@@ -206,9 +212,9 @@ The stable machine failure registry is documented in
 
 ## Installation and Quick Start
 
-### Core 0.4.9 and current source builds
+### Core 0.5.0 and current source builds
 
-Core 0.4.9 and the current source build use an external ecosystem catalog.
+Core 0.5.0 and the current source build use an external ecosystem catalog.
 Historical Core 0.4.8 embeds its presets; with that version omit `--presets-dir`.
 
 After installing from source, select a reviewed GateProbes checkout's `presets/`
@@ -254,6 +260,8 @@ state. Until those inputs exist, quality verification fails closed. Follow the
 
 <a id="built-in-presets"></a>
 ## Project Presets
+
+For Core 0.5.0, generate the Postgres catalog with the installed GateProbes plugin before selecting it. The frozen legacy catalog requires migration; see [the preparation steps](docs/quality-presets.md).
 
 Core embeds only `generic`. The three ecosystem presets below are owned by
 GateProbes and require a reviewed checkout selected through `--presets-dir PATH`

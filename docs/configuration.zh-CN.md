@@ -497,7 +497,7 @@ executable = "/opt/gateprobes/gateprobes-postgres"
 sha256 = "<已安装程序的 64 位 SHA-256>"
 protocol = "gate-service-check/v1"
 plugin = "gateprobes-postgres"
-version = "0.1.0"
+version = "0.1.1"
 timeout_secs = 15
 pass_env = ["DATABASE_URL", "HARNESS_GATE_ALLOW_REMOTE_TEST_DATABASE", "PATH", "SYSTEMROOT"]
 ```
@@ -511,8 +511,8 @@ pass_env = ["DATABASE_URL", "HARNESS_GATE_ALLOW_REMOTE_TEST_DATABASE", "PATH", "
 外部 Postgres 健康检查要求 PATH 中存在 `pg_isready`。
 
 Core 保留 requiredness、通用执行、服务生命周期、租约、清理与最终阻断决策。插件升级需要
-显式重绑 version/摘要，无需重编译 Core。Core v0.4.9 不支持此候选协议；正式 Core 与插件
-包的认证仍待完成。旧 `external_value_policy`（包括 `none`）会给出迁移错误；单独删除字段
+显式重绑 version/摘要，无需重编译 Core。已发布的 Core v0.5.0 支持此协议，v0.4.9 不兼容。GateProbes 插件包
+验收使用独立验证的正式 Core。旧 `external_value_policy`（包括 `none`）会给出迁移错误；单独删除字段
 不能保持原有 Postgres 检查强度。
 
 一个步骤可以依赖多个服务：

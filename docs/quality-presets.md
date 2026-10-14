@@ -1,11 +1,11 @@
 # Quality presets and explicit migration
 
-This guide describes Core 0.4.9 and current GateHouse source builds. Historical Core 0.4.8
+This guide describes Core 0.5.0 and current GateHouse source builds. Historical Core 0.4.8
 still embeds the ecosystem presets and does not accept `--presets-dir`; use
 `harness-gate init --preset rust-api` with that release. See the
 [version-specific quick start](../README.md#installation-and-quick-start).
 
-`init --presets-dir /path/to/GateProbes/presets --preset rust-api`, `angular-only`, and `angular-rust-postgres` now write
+`init --presets-dir /path/to/GateProbes/presets --preset rust-api` and `angular-only` write
 coherent flow + quality configuration, policy/series files under
 `.harness-gate/packs/`, security configuration and `.harness-gate/QUALITY.md`.
 Full and CI participate in quality. Hook omits expensive collection with partial
@@ -117,3 +117,7 @@ This change adds no hosted collection job or duplicate collection owner. Require
 The [workflow closure record](quality/gh-187/validation.md) separates retained
 prerequisite hosted success from submitted-head acceptance. A green configuration
 check is not a quality PASS or a claim of hosted acceptance.
+
+## Postgres catalog preparation (Core 0.5.0)
+
+The frozen GateProbes Postgres seed retains the legacy policy. Verify and install `postgres-service`, then run its packaged `prepare-preset.py --binary /absolute/path/gateprobes-postgres --output /new/catalog`. Select that new directory for `init --preset angular-rust-postgres --presets-dir /new/catalog`. Generation preserves all execution steps, policy/collector packs and full/ci membership while binding the installed required check. It does not overwrite the old catalog or install dependencies. See the [plugin guide](https://github.com/musutrade/GateProbes/blob/main/plugins/postgres-service/README.md) and [Core configuration reference](configuration.md).
