@@ -35,17 +35,15 @@ validation, reference-equivalence and ordinary CI checks remain required.
 | Former ecosystem files under `tools/harness-gate/presets` | Init previously embedded them | Remove from production templates; GateProbes owns current versions |
 | Frozen preset copies | Rust config/collector/scope/preset tests; Python preset/arc-admin tests; native policy/config test helpers; workflow compiler acceptance; executable documentation checks | Keep as explicit test fixtures with byte provenance |
 | `rust-reference` and historical quality documents/archives | `test_rust_reference`, generic quality replay and historical equivalence | Keep Core-owned; no regenerated history or new measurement identity |
-| Native Python helpers, driver/plugin/runtime source and `rust-native` fixtures | Delegated test digest guards; retained runtime/delivery/contract tests; reviewed legacy reproduction | Keep compatibility source; native product maintenance and release belong to GateProbes |
-| `rust-measure` source | Retained experimental `test_rust_native` builds its historical analyzer on its supported compiler | Keep bounded legacy consumer; ordinary Core measurement uses the existing immutable release pin |
-| `rust-source-risk` source/tests | Exact-tree handoff guard and rollback of the transferred standalone step | Keep frozen rollback inputs; no ordinary Core build/test step |
-| TypeScript historical adapters and `typescript-angular` fixtures | Acceptance, advisory, contracts, semantics, reference and generic policy tests | Keep: the new original-source plugin is not an equivalent Angular/V8 historical adapter |
-| Migrated TypeScript/HTTP plugin trees | Reviewed source/release rollback and the explicit Core-only isolation exclusion inventory | Retain compatibility copies; independent GateProbes releases already own the active product |
+| Delegated native/TypeScript implementations and tests | Accepted GateProbes runs recorded in the unchanged handoff receipt | Removed from active Core source by issue #13; exact per-file restore source and destination evidence in the cleanup inventory |
+| Legacy bundled delivery machinery | Original local rejection/lifecycle tests, plus Core governance of the archived publication hold | Frozen byte-for-byte under `retired/legacy-collector`; 64 original methods still execute through the Core release suite |
+| Native / Angular measurement fixtures and helper inputs | Accepted handoff guards, historical replay, generic Core consumers | Retain as historical inputs; no product implementation or new certification claim |
 
 The review does not infer deletion safety from a file's language or directory.
-Core CI still runs all compatibility/reference modules without demonstrated
-replacement parity. The [test handoff](ci-plugin-test-handoff.md) records the
-bounded execution transfer. No archived evidence, immutable release, old signature,
-measurer pin, or paused bundled-runtime release chain is changed.
+The [source cleanup record](issue-13/README.md) supersedes the earlier compatibility
+source retention after issues #10–#12 accepted consumer transfer, the pinned
+GateProbes measurer and the retired publication entry. Historical evidence,
+immutable releases, signatures and original acceptance receipts remain unchanged.
 
 ## Rollback
 

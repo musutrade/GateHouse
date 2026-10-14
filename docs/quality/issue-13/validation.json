@@ -1,0 +1,76 @@
+{
+  "schema": "plugin-source-cleanup-validation/v1",
+  "base_commit": "da8e8a58a4ac5959dc0346b79bad4a4437b964cb",
+  "platform": "Linux amd64",
+  "removed_active_files": 132,
+  "frozen_original_files": 39,
+  "plugin_implementation_roots_absent": 24,
+  "delegated_test_copies_absent": 13,
+  "core_build": "pass",
+  "core_rust_tests": 497,
+  "core_python": {
+    "ordinary_suite_passed": 536,
+    "additional_new_cleanup_tests_passed": 4,
+    "failures": 0,
+    "skips": 0
+  },
+  "release_tests": {
+    "original_methods": 102,
+    "original_active_methods": 38,
+    "original_frozen_methods": 64,
+    "wrapper_tests": 1,
+    "new_integrity_tests": 5,
+    "original_method_set_preserved": true,
+    "failures": 0,
+    "skips": 0
+  },
+  "installer": "pass",
+  "core_crate_inventory": "pass; no plugin implementation or frozen snapshot entries",
+  "docs": "pass",
+  "rustfmt": "pass",
+  "openspec_strict": "pass",
+  "hosted_ci": "pending; not claimed as local acceptance",
+  "logs": {
+    "core_build": {
+      "local_path": "/tmp/issue13-cargo-build.log",
+      "sha256": "f8a8f5cc5c91a1154981eb1582fa3e06edece708ca13fee8290f354be18201f9"
+    },
+    "core_rust": {
+      "local_path": "/tmp/issue13-cargo-test.log",
+      "sha256": "1923dad8fc6408159b82dbceab908974eccdf46b95d70300631393546b096b8a"
+    },
+    "core_python": {
+      "local_path": "/tmp/issue13-core-tests.log",
+      "sha256": "415804d7a8277d584adfe59c0d7fece15eefd80aa5a0935b6803ed3127523e63"
+    },
+    "cleanup_guards": {
+      "local_path": "/tmp/issue13-cleanup-guards.log",
+      "sha256": "ba9d6f5ce6578f6cdfd2d09aa45b68a78e9dcc4d8d5013bbc0739cc932500fe1"
+    },
+    "release_before": {
+      "local_path": "/tmp/issue13-release-before.log",
+      "sha256": "ea70a928140c6a963be327f18be07c1311c7fb48a2cfe9ee5165f7dbb0753979"
+    },
+    "release_after": {
+      "local_path": "/tmp/issue13-release-after.log",
+      "sha256": "301ab1671bbde7c1074c76660ac618c46f8e07e0dd6cf8e04cc0c3f17fb8df42"
+    },
+    "frozen_guards": {
+      "local_path": "/tmp/issue13-frozen-guards.log",
+      "sha256": "3fe9a7377d0e81f1559522ac9b2824b183f8527b98806f86aedbd118a49055c3"
+    },
+    "installer": {
+      "local_path": "/tmp/issue13-install.log",
+      "sha256": "847d9222c32ceb8a9d4cb29c8bea8bb6fd63c91a820573919cfc3077c7f7fac8"
+    },
+    "crate_inventory": {
+      "local_path": "/tmp/issue13-crate-list.log",
+      "sha256": "d76babd89c05995b055984985d0d9cd60652a5a1c1caef2032611f9e35eed3bc"
+    },
+    "docs": {
+      "local_path": "/tmp/issue13-docs-3.json",
+      "sha256": "1ff2b286c72b6433c78477b4a02139ff5bbbf3e948e69115cb0430718f1e6b61"
+    }
+  },
+  "policy": "Engineering Policy unchanged; original receipts, schemas, measurement series and baseline/debt evidence remain unchanged."
+}

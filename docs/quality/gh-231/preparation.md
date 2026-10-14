@@ -176,7 +176,7 @@ The receipt here has `blocked-not-publication-approval` status. The following
 operator-owned prerequisites must be supplied before a usable
 `rust-collector-publication-approval/v1` packet can be reviewed:
 
-1. Review and install [the production workflow template](../../../tools/release/rust-collector-release.production.yml)
+1. Review and install [the production workflow template](https://github.com/musutrade/GateHouse/blob/da8e8a58a4ac5959dc0346b79bad4a4437b964cb/tools/release/rust-collector-release.production.yml)
    at the exact identity path. Provision `rust-collector-release` with nonempty
    required reviewers, `prevent_self_review: true`, `can_admins_bypass: false`,
    and protected-main deployment restrictions. Supply actual reviewer IDs;
