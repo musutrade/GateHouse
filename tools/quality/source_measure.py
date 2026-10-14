@@ -44,6 +44,9 @@ SOURCE_FILES = sorted({f"preset/{name}.rs" for name in ("catalog", "composition"
     # Reviewed 2026-10-12: the Postgres recipe moved out of the unmeasured
     # service/postgres.rs into the measured recipes series.
     {f"recipes/{name}.rs" for name in ("mod", "postgres")} |
+    # Issue #23: certify Git scope detection with the existing AST/LLVM join.
+    # Both base and head use this inventory; no retained report is rewritten.
+    {"scope/detection.rs"} |
     {f"config/quality/{name}.rs" for name in ("mod", "model", "policy", "validation", "compiler", "collectors", "baseline", "baseline/git")} |
     {f"../quality-core/{name}.rs" for name in (
     "comparison", "cross_component", "evidence", "json", "mod", "model",

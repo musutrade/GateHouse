@@ -78,6 +78,8 @@ class RiskScopeTests(unittest.TestCase):
                 ('tools/harness-gate/src/project/discovery.rs', True),
                 ('tools/harness-gate/src/project/mod.rs', True),
                 ('tools/harness-gate/src/utils/redaction.rs', True),
+                ('tools/harness-gate/src/scope/detection.rs', True),
+                ('tools/harness-gate/src/scope/unknown.rs', False),
                 ('tools/harness-gate/src/utils/unknown.rs', False),
                 ('tools/harness-gate/src/process/unknown.rs', False),
                 ('tools/harness-gate/src/process/tests/unknown.rs', False),

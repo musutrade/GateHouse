@@ -8,6 +8,8 @@ use std::collections::BTreeSet;
 /// Select changed paths for a mode, de-duplicate them, then classify them
 /// using the project scope rules. Git command selection belongs here; decoding
 /// Git's NUL-delimited output is delegated to [`crate::utils::git`].
+/// Disable rename folding in every diff so both the removed source and added
+/// destination participate in scope, independent of the user's Git settings.
 pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeResult, ScopeError> {
     if matches!(mode, ScopeMode::All) {
         return Ok(ScopeResult::all(project));
@@ -18,13 +20,16 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
     let mode_label = match mode {
         ScopeMode::WorkingTree => {
             paths.extend(
-                git::null_terminated_paths(&project.root, ["diff", "--name-only", "-z"])
-                    .map_err(ScopeError::git)?,
+                git::null_terminated_paths(
+                    &project.root,
+                    ["diff", "--no-renames", "--name-only", "-z"],
+                )
+                .map_err(ScopeError::git)?,
             );
             paths.extend(
                 git::null_terminated_paths(
                     &project.root,
-                    ["diff", "--cached", "--name-only", "-z"],
+                    ["diff", "--cached", "--no-renames", "--name-only", "-z"],
                 )
                 .map_err(ScopeError::git)?,
             );
@@ -41,7 +46,7 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
             paths.extend(
                 git::null_terminated_paths(
                     &project.root,
-                    ["diff", "--cached", "--name-only", "-z"],
+                    ["diff", "--cached", "--no-renames", "--name-only", "-z"],
                 )
                 .map_err(ScopeError::git)?,
             );
@@ -60,7 +65,7 @@ pub fn detect(project: &Project, mode: &ScopeMode) -> std::result::Result<ScopeR
             paths.extend(
                 git::null_terminated_paths(
                     &project.root,
-                    ["diff", "--name-only", "-z", range.as_str()],
+                    ["diff", "--no-renames", "--name-only", "-z", range.as_str()],
                 )
                 .map_err(ScopeError::git)?,
             );

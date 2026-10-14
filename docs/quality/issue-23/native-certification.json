@@ -1,0 +1,93 @@
+{
+  "schema": "scope-native-certification/v1",
+  "commit": "d83e564bfcbbcbf004fe34b3b0d8cf270ac7061a",
+  "series": {
+    "analyzer": "harness-gate-rust-measure/0.3.1",
+    "rule": "mccabe-rust-3/1",
+    "instrumentation": "closure-black-box/1",
+    "mapping": "insertions-utf8/1",
+    "selection": "gh315-review-low/1",
+    "configuration": "compiler-target-production/4"
+  },
+  "configuration": {
+    "target": "x86_64-unknown-linux-gnu",
+    "cfg": [
+      "debug_assertions",
+      "panic=\"unwind\"",
+      "target_abi=\"\"",
+      "target_arch=\"x86_64\"",
+      "target_endian=\"little\"",
+      "target_env=\"gnu\"",
+      "target_family=\"unix\"",
+      "target_feature=\"fxsr\"",
+      "target_feature=\"sse\"",
+      "target_feature=\"sse2\"",
+      "target_has_atomic=\"16\"",
+      "target_has_atomic=\"32\"",
+      "target_has_atomic=\"64\"",
+      "target_has_atomic=\"8\"",
+      "target_has_atomic=\"ptr\"",
+      "target_has_atomic_primitive_alignment=\"16\"",
+      "target_has_atomic_primitive_alignment=\"32\"",
+      "target_has_atomic_primitive_alignment=\"64\"",
+      "target_has_atomic_primitive_alignment=\"8\"",
+      "target_has_atomic_primitive_alignment=\"ptr\"",
+      "target_os=\"linux\"",
+      "target_pointer_width=\"64\"",
+      "target_vendor=\"unknown\"",
+      "unix"
+    ]
+  },
+  "source_sha256": "9470e516be5424a6dc8048cb63d0b59a7cd4b81c3e2c5610f0e2c8ad03bc14df",
+  "artifacts_sha256": {
+    "scope-manifest.json": "26795063b449366110847f6a32f45f43d072feaa8b86b4ee4bf61d51d150a6b6",
+    "scope-coverage.json": "226b999f592852729b32ea3b5af01ee7ad1184225af3c16112aeb63ccbb3074c",
+    "scope-risk.json": "902740f82d80ecc1fedbabc67f97a0f8699e43049053d80b6c0fec634944c951",
+    "scope-coverage.log": "57bd3517b8862e54c0d900814cd09dcd935a300e52a103ce2d70717d0130ef7f"
+  },
+  "functions": [
+    {
+      "name": "detect",
+      "kind": "function",
+      "cc": 16,
+      "lines": {
+        "covered": 63,
+        "count": 65,
+        "percent": 96.92307692307692
+      },
+      "regions": {
+        "covered": 96,
+        "count": 104,
+        "percent": 92.3076923076923
+      },
+      "crap_exact": [
+        4396048,
+        274625
+      ],
+      "passed": true
+    },
+    {
+      "name": "ensure_git_worktree",
+      "kind": "function",
+      "cc": 4,
+      "lines": {
+        "covered": 7,
+        "count": 7,
+        "percent": 100.0
+      },
+      "regions": {
+        "covered": 11,
+        "count": 12,
+        "percent": 91.66666666666667
+      },
+      "crap_exact": [
+        4,
+        1
+      ],
+      "passed": true
+    }
+  ],
+  "native_platform": "Linux x86_64",
+  "focused_tests": 11,
+  "full_ci_required": true
+}
