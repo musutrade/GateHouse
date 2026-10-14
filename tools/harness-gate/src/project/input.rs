@@ -242,7 +242,7 @@ fn reject_plan_config_filters(root: &Path, name: &str) -> Result<()> {
         if fields.len() != 10 {
             bail!("malformed Git attribute response");
         }
-        for entry in fields[..9].chunks_exact(3) {
+        for entry in fields[..9].as_chunks::<3>().0 {
             if !matches!(entry[2], b"unspecified" | b"unset") {
                 bail!("staged configuration {name:?} has a checkout filter/encoding/ident transformation; a read-only plan cannot determine its output");
             }

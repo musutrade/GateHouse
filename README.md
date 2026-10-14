@@ -300,6 +300,7 @@ Presets are starting points, not runtime branches. After initialization is compl
 | `harness-gate secrets [--staged] [--json]`                   | Scan tracked file contents for high-confidence credential patterns; report filenames only |
 | `harness-gate audit [--json]`                                | Execute regex architecture rules and generate audit report |
 | `harness-gate verify`                                        | Execute default profile based on workspace changes |
+| `harness-gate verify --plan [--json]` | [Explain selection, dependencies and inputs without executing](docs/verification-plan.md) |
 | `harness-gate verify --profile ci --all`                     | Produce one project decision for all configured components |
 | `harness-gate hook`                                          | Execute hook profile on a private staged snapshot |
 | `harness-gate step <id>`                                     | Run a single step after passing secrets/audit |
@@ -700,5 +701,3 @@ Generated baselines remain review-only candidates; adoption policy is
 [ADR-0039](docs/adr/0039-required-risk-and-traceability-gates.md).
 
 Full regression data is fetched explicitly and cached by digest; ordinary source builds need no evidence download. See [test data](test-data/README.md).
-
-Preview selection before executing commands with [verify --plan](docs/verification-plan.md). Add --json for the versioned explanation interface; planning never reports verification PASS.
