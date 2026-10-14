@@ -15,10 +15,17 @@ installation passed version/digest checks and generic verification with complete
 evidence. All three real GateProbes ecosystem presets initialized and passed
 configuration validation. This is not additional measurement certification.
 
-**crates.io publication: blocked.** GateHouse did not provide
-`CARGO_REGISTRY_TOKEN`; Cargo rejected the empty `--token` argument. The GitHub
-release is complete; the latest registry version remains 0.4.8. Once the token
-is configured, retry only the failed crate job against the same immutable tag.
+**crates.io publication and fresh Linux installation: pass (2026-10-14).**
+After the publishing credential was configured and the protected `release`
+environment approved, only the failed crate job was retried in
+[attempt 2](https://github.com/musutrade/GateHouse/actions/runs/38389039570/attempts/2).
+The public `harness-gate 0.4.9` crate matches its registry checksum, original tag
+commit and 134 production source files. A fresh locked registry installation,
+version check, generic init/config and `verify --all` pass with complete evidence.
+The [crate receipt](releases/0.4.9-crate-public-verification.md) records the
+exact checksum, package normalization and Linux scope. The original missing-token
+failure remains in attempt 1 and the dated original public receipt; no tag,
+GitHub asset, signature, baseline or measurement identity was changed.
 
 The accepted performance baseline and quality/debt semantics are retained. See
 [the public receipt](releases/0.4.9-public-verification.md) and
