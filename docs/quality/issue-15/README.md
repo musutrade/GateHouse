@@ -2,7 +2,8 @@
 
 Reconciled on 2026-10-14 against GateHouse main
 `93a330186c9b80a95c5b2c89244d03105cdbeb89` and GateProbes main
-`3a58d3df302f6e08857f4ce829e073ecc97d087a`.
+`3a58d3df302f6e08857f4ce829e073ecc97d087a`, supplemented by the native
+protection fix merged as `9571cffe6cb6641012dab0353cc704910d9f61ed`.
 Engineering Policy semantics are unchanged: collectors measure; Rust Core retains
 final decisions, requiredness, thresholds, measurement series, baseline/debt/ratchet
 and release authority. No baseline is adopted or historical evidence rewritten.
@@ -17,7 +18,7 @@ and release authority. No baseline is adopted or historical evidence rewritten.
 | Physical Core source cleanup / GateHouse #13 | Closed; 24 implementation roots and 13 delegated test copies removed | [132-file inventory and rollback](../issue-13/README.md); 39 legacy files frozen for 64 original Core protection tests; [merged-main CI](https://github.com/musutrade/GateHouse/actions/runs/38501723197) passed |
 | Independent release delivery / GateHouse #14 | Closed; Core 0.4.9 GitHub and crates.io delivery completed | [Original signed public receipt](../../releases/0.4.9-public-verification.md), [crate archive/source and fresh install](../../releases/0.4.9-crate-public-verification.md); PR #21 merged future credential preflight; original failure retained |
 | Current Core/plugin compatibility / GateProbes #16 | Closed; all five current plugins accepted against downloaded Core 0.4.9 | [Accepted run](https://github.com/musutrade/GateProbes/actions/runs/38406597322) and [scope record](../ci-plugin-test-handoff.md): native Linux/Windows/macOS Intel/macOS ARM; four other plugins Linux; native classification remains Linux-only |
-| Native RC asset protection / GateProbes #17 | Open; RC8 is published, prerelease and mutable | [Release API](https://api.github.com/repos/musutrade/GateProbes/releases/tags/rust-collector-v0.1.0-rc.8); tag update/deletion rules do not lock assets; [future safeguards PR #19](https://github.com/musutrade/GateProbes/pull/19) is open |
+| Native RC asset protection / GateProbes #17 | Closed by documented legacy limitation and mandatory future protection; RC8 remains published, prerelease and mutable | [Merged safeguards PR #19](https://github.com/musutrade/GateProbes/pull/19), [machine receipt](https://github.com/musutrade/GateProbes/blob/9571cffe6cb6641012dab0353cc704910d9f61ed/docs/quality/issue-17/rc8-public-verification.json); tag update/deletion rules do not lock existing RC8 assets |
 
 The original four-package [publication acceptance](../independent-plugin-release-acceptance.md)
 is a dated Core 0.4.8 receipt. The later Core 0.4.9 matrix supplements it; neither
@@ -41,9 +42,9 @@ independent plugin releases have their own immutable asset protection.
 
 [GitHub's documented setting](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes)
 only applies to future releases. GateProbes currently has it enabled. [GateProbes PR #19](https://github.com/musutrade/GateProbes/pull/19) supplies fresh
-30-file/ten-subject verification and future safeguards. The remaining
-#17 change must verify actual postpublication `draft`, `prerelease`, `immutable`,
-exact asset bytes, signing identity and source, and retain a machine receipt.
+30-file/ten-subject verification and merged future safeguards. The publication
+job now verifies actual postpublication `draft`, `prerelease`, `immutable`,
+exact asset bytes, signing identity and source, and retains a machine receipt.
 The settings API requires Administration:read; settings inspection uses the
 operator's existing authentication, while ordinary publication verification uses
 its normal Actions token without a new administrative credential. Legacy RC8 must be reported as `legacy-mutable`,
@@ -52,8 +53,14 @@ bypass, but signatures/digest verification remain necessary for asset consumptio
 
 ## Closure condition
 
-Six of seven child issues are closed. Issue #15 remains open until GateProbes #17
-has merged safeguards and reviewable historical-state evidence. The documentation
-reconciliation here does not substitute for that remaining implementation.
+All seven child issues are closed. GateProbes #17 closed when its safeguards
+merged after the exact candidate `dd1d8143814bc419f87a019a8fbfea6271a77989`
+passed [ordinary CI 38511920703](https://github.com/musutrade/GateProbes/actions/runs/38511920703)
+and [four-platform native CI 38511920712](https://github.com/musutrade/GateProbes/actions/runs/38511920712).
+The historical machine receipt records `integrity_status=pass` and
+`protection_status=legacy-mutable`; normal verification rejects RC8's mutable
+state. No tag-triggered publication was performed for this fix. This record
+completes Issue #15's remaining OpenSpec, ownership, retained-material and scope
+reconciliation; closing the umbrella does not claim RC8 was retroactively locked.
 Full plugin matrices are not rerun inside ordinary Core CI; dated accepted hosted
 runs and bounded compatibility receipts retain the existing cost model.

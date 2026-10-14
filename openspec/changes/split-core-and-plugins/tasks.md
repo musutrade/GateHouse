@@ -322,6 +322,9 @@ remaining plugins, and the release/signing identity switch last.
 > note; those original notes and failure receipts remain historical evidence.
 > The [final scope reconciliation](../../../docs/quality/issue-15/README.md)
 > distinguishes source cleanup, ordinary CI, independent releases, supported
-> platforms and RC8's still-mutable legacy assets. GateProbes #17 stays open
-> until its future-publication safeguards are merged; 6.4 does not certify those
-> separate native asset protections or promote an RC to stable.
+> platforms and RC8's still-mutable legacy assets. GateProbes #17 closed after
+> PR #19 merged as `9571cffe6cb6641012dab0353cc704910d9f61ed`, with passing
+> exact-candidate ordinary and four-platform native CI and fresh public integrity
+> verification. Legacy RC8 remains mutable; mandatory future protection is now
+> checked against actual published state. This does not retroactively lock RC8
+> or promote an RC to stable.

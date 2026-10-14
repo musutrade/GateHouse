@@ -110,7 +110,7 @@ with explicit old-identity rollback. Original release acceptance is unchanged.
 
 Native RC8 remains published, prerelease and mutable at the asset layer. Its
 protected tag and verified exact signatures do not imply immutable assets.
-GateProbes [PR #19](https://github.com/musutrade/GateProbes/pull/19) records the
+Merged GateProbes [PR #19](https://github.com/musutrade/GateProbes/pull/19) records the
 legacy limitation and enforces actual future-publication protection with a
 machine receipt. It does not modify RC8 or promote it to stable. The
-[Issue 15 reconciliation](issue-15/README.md) records the remaining closure condition.
+[Issue 15 reconciliation](issue-15/README.md) records the accepted closure evidence.
