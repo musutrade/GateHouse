@@ -378,7 +378,7 @@ with the actual verified installation):
     sha256 = "<64-character installed artifact SHA-256>"
     protocol = "gate-service-check/v1"
     plugin = "gateprobes-postgres"
-    version = "0.1.0"
+    version = "0.1.1"
     timeout_secs = 15
     pass_env = ["DATABASE_URL", "HARNESS_GATE_ALLOW_REMOTE_TEST_DATABASE", "PATH", "SYSTEMROOT"]
 
@@ -396,8 +396,8 @@ the explicit recipe above; external Postgres health requires `pg_isready` on PAT
 
 Core retains requiredness, process execution, service lifecycle, leases, cleanup
 and the final blocking decision. Plugin upgrades require explicit digest/version
-rebinding and do not rebuild Core. Core v0.4.9 does not support this candidate
-contract; released-Core/package certification is pending. Old
+rebinding and do not rebuild Core. Released Core v0.5.0 supports this contract; v0.4.9 is incompatible.
+GateProbes package acceptance uses the independently verified released Core. Old
 `external_value_policy` configurations are rejected with a migration diagnostic,
 including `none`; removing the field alone does not preserve Postgres assurance.
 Service injection names must be unique within a step and cannot collide with

@@ -37,6 +37,8 @@ capability. Application-specific tests stay with the application.
 
 ## Version and installation
 
+Current Core **0.5.0** is published on GitHub and crates.io with [verified installation](docs/releases/0.5.0-public-verification.md). Postgres configurations require the explicit GateProbes migration described in the [release guide](docs/releases/0.5.0.zh-CN.md). Earlier delivery history follows.
+
 Core **0.4.9** is published on GitHub as the first split Core release from
 GateHouse. See [release status](docs/release-status.md) and
 [public verification](docs/releases/0.4.9-public-verification.md) for registry and

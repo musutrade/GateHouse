@@ -1,5 +1,13 @@
 # Published releases and acceptance
 
+## Postgres externalization delivered, 2026-10-14
+
+GateHouse #24 is accepted with published Core 0.5.0 and GateProbes Postgres 0.1.1. Independent public inventory/signature/provenance verification, 47 real service/doctor/verify contract records and all three installed presets pass. See the [final fixed-pair receipt](releases/postgres-service-0.1.1-acceptance.md). Historical tags, failed publication 0.1.0 and original consumer evidence remain unchanged.
+
+## Core 0.5.0 public delivery, 2026-10-14
+
+[Immutable v0.5.0](https://github.com/musutrade/GateHouse/releases/tag/v0.5.0), crates.io and fresh Linux binary/registry installation pass. All 21 assets, seven exact-tag signature/provenance subjects and source bindings were independently verified. Exact-main CI includes all three performance jobs; raw risk has zero failures and critical paths are 14/14. See [the public receipt](releases/0.5.0-public-verification.md) and [migration guide](releases/0.5.0.zh-CN.md). Postgres checks and legacy migration now belong to GateProbes; old configurations require explicit migration. Quality policy, accepted baselines and historical releases are unchanged.
+
 ## Core 0.4.9 public delivery, 2026-10-13
 
 **GitHub release and public verification: pass.** The first split Core release

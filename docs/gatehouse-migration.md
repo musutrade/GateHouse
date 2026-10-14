@@ -63,6 +63,6 @@ GateProbes owns Postgres URL isolation, external health, managed recipes,
 ecosystem templates and legacy database migration. Core owns generic required
 service-check execution and blocking; see the [contract and consumer inventory](quality/postgres-externalization.md).
 The earlier source migration and signing receipts remain historical evidence.
-This candidate requires a future compatible Core release; v0.4.9 remains immutable
-and incompatible with `service_checks`. Existing engineering-policy invariants
+The independently verified [Core v0.5.0](releases/0.5.0-public-verification.md)
+supports `service_checks`; v0.4.9 remains immutable and incompatible. Existing engineering-policy invariants
 and release authority are unchanged.
