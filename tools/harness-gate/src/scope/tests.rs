@@ -166,3 +166,60 @@ fn unmatched_scope_can_fail_closed() {
     let error = detect(&project, &ScopeMode::WorkingTree).expect_err("unmatched path must fail");
     assert!(error.to_string().contains("unmatched changed file"));
 }
+
+#[test]
+fn all_policy_falls_back_only_for_unmatched_changes() {
+    let workspace = TestWorkspace::new("scope-all-fallback");
+    crate::preset::init_from(
+        &workspace.root,
+        "rust-api",
+        false,
+        Some(&std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/preset-compat")),
+    )
+    .expect("initialize fixture");
+    workspace.init_git();
+    std::fs::create_dir_all(workspace.root.join("src")).expect("create source directory");
+    std::fs::write(workspace.root.join("src/main.rs"), "fn main() {}\n").expect("write source");
+    for args in [
+        vec!["add", "."],
+        vec![
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "--quiet",
+            "-m",
+            "initial",
+        ],
+    ] {
+        let output = std::process::Command::new("git")
+            .args(args)
+            .current_dir(&workspace.root)
+            .output()
+            .expect("commit fixture");
+        assert!(output.status.success(), "{output:?}");
+    }
+    let mut project =
+        Project::discover(Some(workspace.root.clone()), None).expect("discover fixture");
+    project.config.scope.unmatched = crate::config::UnmatchedScope::All;
+    let mut unrelated = project.config.steps[0].clone();
+    unrelated.id = "unrelated.test".into();
+    unrelated.component = "unrelated".into();
+    project.config.steps.push(unrelated);
+    let clean = detect(&project, &ScopeMode::WorkingTree).expect("clean scope");
+    assert!(clean.changed_files.is_empty());
+    assert!(clean.components.is_empty());
+
+    std::fs::write(
+        workspace.root.join("src/main.rs"),
+        "fn main() { println!(\"changed\"); }\n",
+    )
+    .expect("modify source");
+    let matched = detect(&project, &ScopeMode::WorkingTree).expect("matched scope");
+    assert_eq!(matched.components, BTreeSet::from(["app".into()]));
+    assert!(matched.unmatched_files.is_empty());
+
+    std::fs::write(workspace.root.join("unmatched.txt"), "change\n").expect("write unmatched");
+    let mixed = detect(&project, &ScopeMode::WorkingTree).expect("fallback scope");
+    assert_eq!(mixed.components, project.config.components());
+    assert_eq!(mixed.unmatched_files, vec!["unmatched.txt"]);
+}
