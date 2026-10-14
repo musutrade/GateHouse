@@ -136,7 +136,7 @@ When reducing the repository, keep the build/CI-critical subset with core.
 | `tools/quality/schema/collector-protocol.schema.json` | Core protocol schema in the plugin dir | Move up into core 🟦 |
 | `tools/release/`: `release_policy.py`, `release_inventory.py`, `generate-sbom.py`, `production_installer.py`, `build_user_installer.py`, `publish_user_installer.py` | Core release vs plugin release share one tree | Split by target 🟨 |
 | `.github/workflows/`: `ci.yml`, `release.yml`, `quality-baseline-refresh.yml`, `frontend-advisory.yml`, `arc-admin-cost-trial.yml` | Single-repo CI split per target | 🟨 |
-| `install.sh` | Core installer embeds Rust collector version/workflow/cache logic | Keep core install entry compatible; split plugin install segment 🟨; re-check signing identity |
+| `install.sh` | Core-only installation; plugin parameters are diagnostic stubs | GateProbes owns native install/upgrade/rollback; see [migration](docs/quality/standalone-installation.md) |
 | `docs/**`, `openspec/**` | Docs/changes cover both sides | Split per repo 🟨 |
 | `.claude/`, `.harness-gate/`, `WORKFLOW.lifecycle.md*`, `WORKFLOW.md` | Repo process artifacts | keep / migrate / drop 🟨 |
 
@@ -166,3 +166,5 @@ require a host restart.
 ## 8. Scope of this round
 
 Evaluation only. No code change and no Issue creation in this round.
+
+Issue #28 supersedes the installer evaluation row: the active Core plugin execution bridge is retired, while historical tagged installers retain their original identities. GateProbes owns the sole editable plugin installation implementation.

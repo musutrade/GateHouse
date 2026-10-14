@@ -5,10 +5,8 @@ set -Eeuo pipefail
 umask 022
 
 REPO="musutrade/Harness-Gate"
-COLLECTOR_REPO="musutrade/GateProbes"
 BINARY_NAME="harness-gate"
 RELEASE_BASE_URL="https://github.com/${REPO}/releases/download"
-COLLECTOR_RELEASE_BASE_URL="https://github.com/${COLLECTOR_REPO}/releases/download"
 VERSION="${HARNESS_GATE_VERSION:-}"
 INSTALL_DIR="${INSTALL_DIR:-${HOME}/.local/bin}"
 OS=""
@@ -18,31 +16,22 @@ INSTALL_NAME="$BINARY_NAME"
 ATOMIC_TEMPORARY=""
 INSTALL_TEMPORARY_ROOT=""
 RELEASE_WORKFLOW="release.yml"
-RUST_VERSION="${HARNESS_GATE_RUST_VERSION:-0.1.0-rc.8}"
-RUST_INSTALL_DIR=""
-VERIFIER_CACHE_DIR="${HOME}/.cache/harness-gate/collector"
+VERIFIER_CACHE_DIR="${HOME}/.cache/harness-gate/verifier"
 STAGED_BINARY=""
-RUST_STAGED_BINARY=""
 
 usage() {
     cat <<'EOF'
 Usage: install.sh --version vX.Y.Z [--install-dir DIR]
        install.sh --version vX.Y.Z --from-source [--install-dir DIR]
-       install.sh --version vX.Y.Z --with-rust [--rust-version X.Y.Z] [--install-dir DIR]
-       install.sh --rust-only [--rust-version X.Y.Z] [--install-dir DIR]
 
-The Core version is required unless --rust-only is selected. Every download is
+The Core version is required. Every download is
 bound to an immutable release tag. Core versions through v0.4.8 retain the
 Harness-Gate repository and signer; v0.4.9 and later use GateHouse.
 The installer verifies SHA256 and the Sigstore keyless certificate before it
 changes the destination directory.
-The optional Rust collector is a standalone binary published from the
-GateProbes repository and verified against that repository's release workflow
-identity. It defaults to 0.1.0-rc.8; --rust-version selects another exact
-version from the same repository. Rust 1.97.1, matching LLVM tools and
-Python 3.12+ remain external dependencies.
---rust-root DIR installs only the collector executable in DIR/bin.
---cache-dir DIR selects an existing checksum-pinned verifier cache.
+Plugin installation is owned by GateProbes. --with-rust, --rust-only,
+--rust-version, --rust-root and --cache-dir now fail with migration guidance.
+See https://github.com/musutrade/GateProbes/blob/main/docs/native-installation.md
 Legacy bundled-runtime --offline archives require their historical installer.
 EOF
 }
@@ -175,9 +164,7 @@ verify_signature() {
         || die "cosign is required for Sigstore verification (see https://docs.sigstore.dev/cosign/system_config/installation/)"
 
     # The release workflow's OIDC identity is bound to this exact immutable tag.
-    # Core releases verify the Harness-Gate workflow; the Rust collector verifies
-    # the explicitly provisioned GateProbes workflow. The expected signer is a
-    # script-owned constant passed by the caller; it is never read from the
+    # The expected signer is a script-owned constant passed by the caller; it is never read from the
     # calling environment, so an exported lookalike variable cannot change it.
     cosign verify-blob \
         --signature "$dist/${filename}.sig" \
@@ -212,26 +199,6 @@ ensure_cosign() {
     [[ "${actual%% *}" == "$digest" ]] || die "signature verifier checksum mismatch"
     chmod 755 "$path"
     export PATH="$1/verifier:$PATH"
-}
-
-prepare_rust() {
-    local temporary="$1"
-    local VERSION="rust-collector-v${RUST_VERSION}"
-    local RELEASE_WORKFLOW="native-collector-release.yml"
-    local RELEASE_BASE_URL="$COLLECTOR_RELEASE_BASE_URL"
-    local SIGNER_REPO="$COLLECTOR_REPO"
-    local BINARY_NAME="harness-gate-rust-collector"
-    prepare_binary "$temporary"
-    RUST_STAGED_BINARY="$STAGED_BINARY"
-}
-
-install_rust() {
-    local VERSION="rust-collector-v${RUST_VERSION}"
-    local BINARY_NAME="harness-gate-rust-collector"
-    local INSTALL_NAME="$BINARY_NAME"
-    local INSTALL_DIR="${RUST_INSTALL_DIR:-$INSTALL_DIR}"
-    [[ "$OS" != windows ]] || INSTALL_NAME="${INSTALL_NAME}.exe"
-    atomic_install "$RUST_STAGED_BINARY"
 }
 
 validate_install_dir() {
@@ -368,23 +335,12 @@ install_from_source() {
 
 main() {
     local from_source=0
-    local with_rust=0 rust_only=0 rust_options=0
-    # Core signer follows the explicit version cutover; prepare_rust
-    # shadows this with the explicitly provisioned GateProbes repository.
+    # Core signer follows the explicit historical version cutover.
     local SIGNER_REPO="$REPO"
     while (($# > 0)); do
         case "$1" in
-            --with-rust) with_rust=1; shift ;;
-            --rust-only) rust_only=1; with_rust=1; shift ;;
-            --rust-root|--cache-dir|--rust-version)
-                (($# >= 2)) && [[ -n "$2" ]] || die "$1 requires a value"
-                rust_options=1
-                case "$1" in
-                    --rust-root) RUST_INSTALL_DIR="${2%/}/bin" ;;
-                    --cache-dir) VERIFIER_CACHE_DIR="$2" ;;
-                    --rust-version) RUST_VERSION="$2" ;;
-                esac
-                shift 2 ;;
+            --with-rust|--rust-only|--rust-root|--cache-dir|--rust-version)
+                die "plugin installation moved to GateProbes: use tools/install/install-native.sh --version <EXACT_PLUGIN_VERSION> --install-dir <DIR>; migrate --rust-root DIR to --install-dir DIR/bin; Core and plugin are installed separately. See https://github.com/musutrade/GateProbes/blob/main/docs/native-installation.md" ;;
             --offline)
                 die "legacy bundled-runtime offline archives require their historical installer; this installer only installs standalone release binaries" ;;
             --version)
@@ -412,15 +368,10 @@ main() {
         esac
     done
 
-    if (( !rust_only )); then
-        [[ -n "$VERSION" ]] || { usage >&2; die "--version is required"; }
-        validate_version
-        select_core_repository
-        SIGNER_REPO="$REPO"
-    fi
-    ((with_rust || !rust_options)) || die "Rust options require --with-rust or --rust-only"
-    ((!rust_only || !from_source)) || die "--from-source applies to Core, not --rust-only"
-    if ((with_rust)); then validate_version "v$RUST_VERSION"; fi
+    [[ -n "$VERSION" ]] || { usage >&2; die "--version is required"; }
+    validate_version
+    select_core_repository
+    SIGNER_REPO="$REPO"
     INSTALL_TEMPORARY_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/harness-gate-install.XXXXXXXX")" \
         || die "cannot create temporary installation directory"
     local temporary_root="$INSTALL_TEMPORARY_ROOT"
@@ -429,18 +380,13 @@ main() {
     trap 'abort_on_signal 130' INT
     trap 'abort_on_signal 143' TERM
     detect_platform
-    if ((with_rust || !from_source)); then ensure_cosign "$temporary_root"; fi
-    # Verify the optional plugin before replacing either installed program.
-    if ((with_rust)); then prepare_rust "$temporary_root/rust"; fi
-    if ((!rust_only)); then
-        if ((from_source)); then
-            install_from_source "$temporary_root"
-        else
-            prepare_binary "$temporary_root/core"
-            atomic_install "$STAGED_BINARY"
-        fi
+    if ((from_source)); then
+        install_from_source "$temporary_root"
+    else
+        ensure_cosign "$temporary_root"
+        prepare_binary "$temporary_root/core"
+        atomic_install "$STAGED_BINARY"
     fi
-    if ((with_rust)); then install_rust; fi
 }
 
 main "$@"
