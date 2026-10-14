@@ -8,8 +8,14 @@ const BASELINE: &str =
     include_str!("../../../docs/dogfood/arc-admin/sources/.arc-flow/flow.toml.txt");
 
 fn generic_source() -> String {
+    let executable = toml::Value::String(
+        std::env::temp_dir()
+            .join("uninstalled-required-check")
+            .to_string_lossy()
+            .into_owned(),
+    );
     let source = BASELINE.replace("external_value_policy = \"isolated-postgres\"", "");
-    format!("{source}\n[[service_checks.test-postgres]]\nexecutable = \"/uninstalled/required-check\"\nsha256 = \"{}\"\nprotocol = \"gate-service-check/v1\"\nplugin = \"fixture\"\nversion = \"1\"\ntimeout_secs = 15\npass_env = [\"PATH\", \"DATABASE_URL\"]\n", "0".repeat(64))
+    format!("{source}\n[[service_checks.test-postgres]]\nexecutable = {executable}\nsha256 = \"{}\"\nprotocol = \"gate-service-check/v1\"\nplugin = \"fixture\"\nversion = \"1\"\ntimeout_secs = 15\npass_env = [\"PATH\", \"DATABASE_URL\"]\n", "0".repeat(64))
 }
 
 fn fixture() -> TestContext {
@@ -110,6 +116,18 @@ fn arc_import_refuses_runtime_migration_and_existing_outputs() {
 fn arc_import_rejects_loss_unknown_fields_and_broken_blockers_before_writing() {
     let baseline = generic_source();
     let cases = [
+        (
+            baseline.replacen("kind = \"docker\"", "kind = \"unknown\"", 1),
+            "service kind",
+        ),
+        (
+            {
+                let mut source: toml::Value = toml::from_str(&baseline).unwrap();
+                source["steps"][0].as_table_mut().unwrap().remove("program");
+                toml::to_string(&source).unwrap()
+            },
+            "missing required field program",
+        ),
         (
             baseline.replacen(
                 "plugin = \"fixture\"",
@@ -218,6 +236,22 @@ fn arc_import_rejects_loss_unknown_fields_and_broken_blockers_before_writing() {
         assert!(!ctx.file_exists(".harness-gate/flow.import.json"));
         assert_eq!(ctx.read_file(".arc-flow/flow.toml"), source);
     }
+}
+
+#[test]
+fn environment_service_import_preserves_required_checks_without_reading_the_host() {
+    let ctx = fixture();
+    let mut source: toml::Value = toml::from_str(&generic_source()).unwrap();
+    source["services"]["test-postgres"] = toml::from_str::<toml::Value>(
+        "kind = 'environment'\nsource_env = 'OFFLINE_IMPORT_SERVICE_VALUE'\ninject_env = 'TEST_DATABASE_URL'\n",
+    )
+    .unwrap();
+    ctx.write_file(".arc-flow/flow.toml", &toml::to_string(&source).unwrap());
+    assert_success(&import(&ctx));
+    let imported: toml::Value = toml::from_str(&ctx.read_file(".harness-gate/flow.toml")).unwrap();
+    assert_eq!(imported["services"], source["services"]);
+    assert_eq!(imported["service_checks"], source["service_checks"]);
+    assert_eq!(imported["policy"], source["policy"]);
 }
 
 #[test]

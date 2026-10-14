@@ -38,6 +38,75 @@ fn repository_configuration_is_valid() {
 }
 
 #[test]
+fn direct_validation_rejects_invalid_identity_paths_aliases_and_required_checks() {
+    type Mutation = fn(&mut FlowConfig);
+    let valid = repository_config();
+    valid.validate().unwrap();
+    let cases: &[(&str, Mutation)] = &[
+        ("version", |c| c.version = 1),
+        ("project name", |c| c.project.name.clear()),
+        ("default profile", |c| {
+            c.project.default_profile = "invalid profile".into()
+        }),
+        ("hook profile", |c| {
+            c.project.hook_profile = "invalid profile".into()
+        }),
+        ("report path", |c| c.paths.reports = "../outside".into()),
+        ("audit path", |c| c.paths.audit_config = "../outside".into()),
+        ("secrets path", |c| {
+            c.paths.secrets_config = "../outside".into()
+        }),
+        ("reserved alias", |c| {
+            c.paths.aliases.insert(
+                "root".into(),
+                PathAlias {
+                    path: "src".into(),
+                    env: None,
+                },
+            );
+        }),
+        ("invalid alias", |c| {
+            c.paths.aliases.insert(
+                "invalid alias".into(),
+                PathAlias {
+                    path: "src".into(),
+                    env: None,
+                },
+            );
+        }),
+        ("alias path", |c| {
+            c.paths.aliases.insert(
+                "extra".into(),
+                PathAlias {
+                    path: "../outside".into(),
+                    env: None,
+                },
+            );
+        }),
+        ("alias environment", |c| {
+            c.paths.aliases.insert(
+                "extra".into(),
+                PathAlias {
+                    path: "src".into(),
+                    env: Some("INVALID-NAME".into()),
+                },
+            );
+        }),
+        ("missing service", |c| {
+            c.service_checks.insert("missing".into(), Vec::new());
+        }),
+    ];
+    for (label, mutate) in cases {
+        let mut invalid = valid.clone();
+        mutate(&mut invalid);
+        assert!(
+            invalid.validate().is_err(),
+            "{label} must fail direct validation"
+        );
+    }
+}
+
+#[test]
 fn execution_policy_defaults_to_serial_and_four_workers_when_enabled() {
     let config = repository_config();
     assert!(!config.execution.parallel);

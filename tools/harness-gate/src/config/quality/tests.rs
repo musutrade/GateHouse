@@ -32,8 +32,14 @@ fn arc_admin_quality_validates_with_imported_flow_and_rejects_binding_loss() {
     let source = fs::read_to_string(fixture.join("import/flow.toml")).unwrap();
     assert!(FlowConfig::from_source(&source).is_err());
     let source = source.replace("external_value_policy = \"isolated-postgres\"", "");
+    let executable = toml::Value::String(
+        std::env::current_exe()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned(),
+    );
     let source = format!(
-        "{source}\n[[service_checks.test-postgres]]\nexecutable = \"/installed/check\"\nsha256 = \"{}\"\nprotocol = \"gate-service-check/v1\"\nplugin = \"fixture\"\nversion = \"1\"\ntimeout_secs = 15\n",
+        "{source}\n[[service_checks.test-postgres]]\nexecutable = {executable}\nsha256 = \"{}\"\nprotocol = \"gate-service-check/v1\"\nplugin = \"fixture\"\nversion = \"1\"\ntimeout_secs = 15\n",
         "0".repeat(64)
     );
     let flow = FlowConfig::from_source(&source).unwrap();

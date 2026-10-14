@@ -116,8 +116,12 @@ printf '%s' '{"protocol":"gate-service-check/v1","plugin":"fixture","version":"1
 
 #[test]
 fn invalid_check_contract_fails_before_execution() {
+    let executable = std::env::current_exe()
+        .unwrap()
+        .to_string_lossy()
+        .into_owned();
     let mut check = ServiceCheck {
-        executable: "/uninstalled/check".into(),
+        executable: executable.clone(),
         sha256: "0".repeat(64),
         protocol: PROTOCOL.into(),
         plugin: "fixture".into(),
@@ -134,7 +138,7 @@ fn invalid_check_contract_fails_before_execution() {
     check.protocol = PROTOCOL.into();
     check.executable = "check".into();
     assert!(validate_check(&check).is_err());
-    check.executable = "/check".into();
+    check.executable = executable;
     check.sha256 = "0".into();
     assert!(validate_check(&check).is_err());
 }
