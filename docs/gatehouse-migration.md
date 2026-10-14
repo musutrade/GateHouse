@@ -55,3 +55,14 @@ uses a reviewed GateHouse revert or the recorded legacy revision; no old Git
 history is force-pushed into the lean repository.
 
 Actual clone, build and compatibility results: [migration acceptance](gatehouse-migration-acceptance.md).
+
+
+## Postgres ownership correction (2026-10-14)
+
+GateProbes owns Postgres URL isolation, external health, managed recipes,
+ecosystem templates and legacy database migration. Core owns generic required
+service-check execution and blocking; see the [contract and consumer inventory](quality/postgres-externalization.md).
+The earlier source migration and signing receipts remain historical evidence.
+This candidate requires a future compatible Core release; v0.4.9 remains immutable
+and incompatible with `service_checks`. Existing engineering-policy invariants
+and release authority are unchanged.

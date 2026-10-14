@@ -393,7 +393,6 @@ fn docker_service_uses_a_valid_external_value_without_docker() {
             image_env: None,
             external_env: Some(name.into()),
             inject_env: "TEST_DATABASE_URL".into(),
-            external_value_policy: crate::config::ExternalValuePolicy::IsolatedPostgres,
             startup_timeout_secs: 1,
             timeout_env: None,
             container_port: 5432,
@@ -414,6 +413,7 @@ fn docker_service_uses_a_valid_external_value_without_docker() {
 }
 
 #[test]
+#[cfg(unix)]
 fn docker_service_rejects_an_invalid_external_value_before_any_runtime() {
     let (_workspace, mut project) = project();
     let name = "HARNESS_GATE_DOCKER_INVALID_EXTERNAL_FIXTURE";
@@ -426,7 +426,6 @@ fn docker_service_rejects_an_invalid_external_value_before_any_runtime() {
             image_env: None,
             external_env: Some(name.into()),
             inject_env: "TEST_DATABASE_URL".into(),
-            external_value_policy: crate::config::ExternalValuePolicy::IsolatedPostgres,
             startup_timeout_secs: 1,
             timeout_env: None,
             container_port: 5432,
@@ -435,11 +434,12 @@ fn docker_service_rejects_an_invalid_external_value_before_any_runtime() {
             connection: "postgres://unused".into(),
         },
     );
+    crate::recipes::tests::install_fixture(&mut project, "database", false);
     let mut manager = ServiceManager::new(&project);
     let error = manager
         .environment("database")
         .expect_err("a production-like database name must fail closed");
-    assert!(error.to_string().contains("must end with"), "{error:?}");
+    assert!(error.to_string().contains("reported failure"), "{error:?}");
     std::env::remove_var(name);
 }
 
@@ -456,7 +456,6 @@ fn exclusive_external_service_is_not_reused_after_its_last_lease() {
             image_env: None,
             external_env: Some(name.into()),
             inject_env: "TEST_DATABASE_URL".into(),
-            external_value_policy: crate::config::ExternalValuePolicy::IsolatedPostgres,
             startup_timeout_secs: 1,
             timeout_env: None,
             container_port: 5432,
@@ -498,7 +497,6 @@ fn podman_runtime_uses_external_service_without_starting_a_container() {
             image_env: None,
             external_env: Some(name.into()),
             inject_env: "TEST_DATABASE_URL".into(),
-            external_value_policy: crate::config::ExternalValuePolicy::IsolatedPostgres,
             startup_timeout_secs: 1,
             timeout_env: None,
             container_port: 5432,
@@ -529,7 +527,6 @@ fn managed_service_lease_excludes_concurrent_users() {
             image_env: None,
             external_env: Some(name.into()),
             inject_env: "EXCLUSIVE_URL".into(),
-            external_value_policy: crate::config::ExternalValuePolicy::IsolatedPostgres,
             startup_timeout_secs: 1,
             timeout_env: None,
             container_port: 5432,

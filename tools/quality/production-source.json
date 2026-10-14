@@ -162,7 +162,6 @@
       "blocking": true,
       "files": [
         "src/recipes/mod.rs",
-        "src/recipes/postgres.rs",
         "src/service/commands.rs",
         "src/service/docker.rs",
         "src/service/inspection.rs",
@@ -313,6 +312,11 @@
       "path": "src/config/quality/collectors/tests/dogfood_acceptance.rs",
       "kind": "test",
       "reason": "Linux-only controlled dogfood fixtures reached through collectors/tests.rs under cfg(all(test, unix)); no production measurement or application logic."
+    },
+    {
+      "path": "src/recipes/tests.rs",
+      "kind": "test",
+      "reason": "Generic service-check contract regression tests compiled only under cfg(test)."
     }
   ],
   "external_exclusions": [
@@ -350,7 +354,7 @@
     {
       "path": "src/config/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "7f2d4a7b5d8e0d6fd74f178d3d7fb778968639071305e2b275f206e0c5269786"
+      "sha256": "36b6703c0a3f7e5c8f20c45ad09566158a79e9fc004045b6e50d652010c63cbf"
     },
     {
       "path": "src/doctor/mod.rs",
@@ -370,7 +374,7 @@
     {
       "path": "src/process/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "feca5b47192877daa1564a7c56e135d168de28390de3601ebd5f886e2d6ee880"
+      "sha256": "8e952a7fb7f4e77ff7d38c93f4a0be84e98fcf48dc271cee52c9b0ed7068f579"
     },
     {
       "path": "src/scope/mod.rs",

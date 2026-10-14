@@ -10,7 +10,7 @@ mod tests;
 
 use crate::config::ServiceConfig;
 use crate::project::Project;
-use crate::recipes::validate_external_value;
+use crate::recipes::run_checks;
 use anyhow::{bail, Context, Result};
 use docker::{start_docker, DockerStartOptions};
 use runtime::ContainerRuntime;
@@ -565,6 +565,7 @@ impl RunningService {
                 if value.trim().is_empty() {
                     bail!("service {id:?} requires non-empty {source_env}");
                 }
+                run_checks(project, id, Some(&value), Duration::from_secs(300))?;
                 Ok(Self {
                     runtime: crate::config::ContainerRuntimeKind::Docker,
                     inject_env,
@@ -580,7 +581,6 @@ impl RunningService {
                 image,
                 external_env,
                 inject_env,
-                external_value_policy,
                 startup_timeout_secs,
                 container_port,
                 environment,
@@ -593,7 +593,12 @@ impl RunningService {
                     .and_then(|name| std::env::var(name).ok().map(|value| (name, value)))
                     .filter(|(_, value)| !value.trim().is_empty())
                 {
-                    validate_external_value(external_value_policy, &value)?;
+                    run_checks(
+                        project,
+                        id,
+                        Some(&value),
+                        Duration::from_secs(startup_timeout_secs),
+                    )?;
                     return Ok(Self {
                         runtime,
                         inject_env,
@@ -604,6 +609,7 @@ impl RunningService {
                         lease: None,
                     });
                 }
+                run_checks(project, id, None, Duration::from_secs(startup_timeout_secs))?;
                 let deadline = Instant::now() + Duration::from_secs(startup_timeout_secs);
                 runtime
                     .check_available(project, remaining(deadline)?)
@@ -641,23 +647,24 @@ pub fn check_available(project: &Project, id: &str, timeout: Duration) -> Result
             if value.trim().is_empty() {
                 bail!("{source_env} is empty");
             }
+            run_checks(project, id, Some(&value), timeout)?;
             Ok(format!("{source_env} is configured"))
         }
         ServiceConfig::Docker {
             runtime,
             image,
             external_env,
-            external_value_policy,
             ..
         } => {
             if let Some(name) = external_env {
                 if let Ok(value) = std::env::var(name) {
                     if !value.trim().is_empty() {
-                        validate_external_value(*external_value_policy, &value)?;
+                        run_checks(project, id, Some(&value), timeout)?;
                         return Ok(format!("{name} is configured"));
                     }
                 }
             }
+            run_checks(project, id, None, timeout)?;
             let deadline = Instant::now() + timeout;
             runtime
                 .check_available(project, remaining(deadline)?)

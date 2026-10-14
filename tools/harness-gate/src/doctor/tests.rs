@@ -42,6 +42,7 @@ fn doctor_project(name: &str) -> (TestWorkspace, crate::project::Project) {
 }
 
 #[test]
+#[cfg(unix)]
 fn doctor_service_check_keeps_recipe_validation_on_both_outcomes() {
     let (_root, mut project) = doctor_project("doctor-service-recipe");
     let name = "HARNESS_GATE_DOCTOR_SERVICE_RECIPE_FIXTURE";
@@ -53,7 +54,6 @@ fn doctor_service_check_keeps_recipe_validation_on_both_outcomes() {
             image_env: None,
             external_env: Some(name.into()),
             inject_env: "TEST_DATABASE_URL".into(),
-            external_value_policy: crate::config::ExternalValuePolicy::IsolatedPostgres,
             startup_timeout_secs: 1,
             timeout_env: None,
             container_port: 5432,
@@ -73,14 +73,16 @@ fn doctor_service_check_keeps_recipe_validation_on_both_outcomes() {
         },
     }];
 
-    std::env::set_var(name, "postgres://test:test@127.0.0.1:5432/quality");
+    crate::recipes::tests::install_fixture(&mut project, "database", false);
+    std::env::set_var(name, "opaque-invalid");
     let report = super::run(&project).expect("doctor run");
     assert_eq!(
         report.failures, 1,
         "an invalid recipe value must fail the doctor service check"
     );
 
-    std::env::set_var(name, "postgres://test:test@127.0.0.1:5432/quality_test");
+    crate::recipes::tests::install_fixture(&mut project, "database", true);
+    std::env::set_var(name, "opaque-valid");
     let report = super::run(&project).expect("doctor run");
     assert_eq!(
         report.failures, 0,

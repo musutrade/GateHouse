@@ -81,7 +81,9 @@ verify policy/profile boundaries and initialize/cross-check every public preset.
 ## Enablement and migration
 
 Existing flow-only repositories retain their current verification semantics.
-`config migrate` converts execution schema v1 to v2 and does not add quality.
+`config migrate` rejects legacy v1 database recipes with GateProbes migration help.
+`gateprobes-postgres migrate` creates the new execution flow and does not add or
+replace quality configuration.
 `init --force` explicitly replaces generated files; it is not a migration helper.
 `generic` neither creates nor deletes quality configuration.
 

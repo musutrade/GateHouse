@@ -65,6 +65,23 @@ pub(crate) fn capture_with_limits(
     capture_command(program, args, cwd, timeout, true, limits)
 }
 
+pub(crate) fn capture_environment(
+    program: &str,
+    cwd: &Path,
+    timeout: Duration,
+    environment: &std::collections::BTreeMap<String, String>,
+) -> Result<CapturedOutput> {
+    capture_command_environment(
+        program,
+        &[],
+        cwd,
+        timeout,
+        true,
+        CaptureLimits::default(),
+        Some(environment),
+    )
+}
+
 fn capture_command(
     program: &str,
     args: &[String],
@@ -73,12 +90,27 @@ fn capture_command(
     observe_cancel: bool,
     limits: CaptureLimits,
 ) -> Result<CapturedOutput> {
+    capture_command_environment(program, args, cwd, timeout, observe_cancel, limits, None)
+}
+
+fn capture_command_environment(
+    program: &str,
+    args: &[String],
+    cwd: &Path,
+    timeout: Duration,
+    observe_cancel: bool,
+    limits: CaptureLimits,
+    environment: Option<&std::collections::BTreeMap<String, String>>,
+) -> Result<CapturedOutput> {
     let mut command = Command::new(program);
     command
         .args(args)
         .current_dir(cwd)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    if let Some(environment) = environment {
+        command.env_clear().envs(environment).stdin(Stdio::null());
+    }
     isolate_process_tree(&mut command);
     let mut child = command
         .spawn()

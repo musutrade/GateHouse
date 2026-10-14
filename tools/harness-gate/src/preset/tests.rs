@@ -3,7 +3,7 @@ use super::catalog;
 use super::filesystem::resolve_inside;
 use super::filesystem::{atomic_write, atomic_write_batch};
 use super::initialize::{init, init_from, project_id};
-use crate::config::{ExternalValuePolicy, FlowConfig, ServiceConfig};
+use crate::config::{FlowConfig, ServiceConfig};
 use crate::test_support::TestWorkspace;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -22,6 +22,11 @@ fn external() -> PathBuf {
 fn generic_and_frozen_external_presets_are_valid() {
     for name in PRESETS {
         let preset = catalog::find(name, Some(&external())).unwrap();
+        if *name == "angular-rust-postgres" {
+            assert!(FlowConfig::from_source(&preset.flow).is_err());
+            assert!(init_from(&TestWorkspace::new(name), name, false, Some(&external())).is_err());
+            continue;
+        }
         FlowConfig::from_source(&preset.flow)
             .unwrap_or_else(|error| panic!("preset {name} is invalid: {error:#}"));
     }
@@ -154,6 +159,10 @@ fn generated_reference_presets_cross_validate_quality_and_profile_boundaries() {
     for name in PRESETS {
         let preset = catalog::find(name, Some(&external())).unwrap();
         let root = TestWorkspace::new(name);
+        if *name == "angular-rust-postgres" {
+            assert!(init_from(&root, name, false, Some(&external())).is_err());
+            continue;
+        }
         init_from(&root, name, false, Some(&external())).unwrap();
         let project = crate::project::Project::discover(Some(root.root.clone()), None).unwrap();
         let quality = QualityConfig::load_optional(&root, &project.config).unwrap();
@@ -199,15 +208,10 @@ fn generated_reference_presets_cross_validate_quality_and_profile_boundaries() {
                 ["backend", "frontend"]
             );
             assert_eq!(quality.relationships.len(), 1);
-            match project
-                .config
-                .services
-                .get(crate::recipes::postgres::LEGACY_SERVICE_ID)
-            {
+            match project.config.services.get("test-postgres") {
                 Some(ServiceConfig::Docker {
                     external_env,
                     inject_env,
-                    external_value_policy,
                     container_port,
                     healthcheck,
                     connection,
@@ -215,10 +219,7 @@ fn generated_reference_presets_cross_validate_quality_and_profile_boundaries() {
                 }) => {
                     assert_eq!(external_env.as_deref(), Some("TEST_DATABASE_URL"));
                     assert_eq!(inject_env, "TEST_DATABASE_URL");
-                    assert_eq!(
-                        *external_value_policy,
-                        ExternalValuePolicy::IsolatedPostgres
-                    );
+
                     assert_eq!(*container_port, 5432);
                     assert_eq!(healthcheck.first().map(String::as_str), Some("pg_isready"));
                     assert!(connection.starts_with("postgres://"), "{connection}");
