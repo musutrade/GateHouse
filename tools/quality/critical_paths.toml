@@ -436,5 +436,5 @@ end = 526
 sha256 = "ef9c57a911469fdcc8b31501f1c2175ff2999ee746c46848d49953438c81652d"
 [[paths.probes]]
 line = 50
-column = 5
+column = 19
 text = "let project = Project::discover_for_plan(root, config)?;"

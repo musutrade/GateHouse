@@ -63,3 +63,12 @@ as if it belonged to the new selection. Historical reports, retained baselines,
 thresholds, original debt/ratchet rules and product collector series are unchanged.
 Selection rollback restores the old source_measure selection and inventory
 together; never compare a report from one selection with the other.
+
+The latest hosted full collection passed legacy/production coverage and the
+fresh same-selection base/head risk comparison. Its only matrix failure was
+the new probe's column: column 5 pointed at the let keyword, which has no LLVM
+region. The retained native export shows the reviewed discover_for_plan call
+at line 50, columns 19–45, executed five times. The probe is corrected to column
+19 with the same source body, test/assertions and 95% matrix policy. Direct
+rechecking against retained raw coverage yields count=5; a new complete hosted
+collection remains required for the new commit identity.
