@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import re
+import os
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -55,6 +57,38 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertIsNotNone(download_block)
         assert download_block is not None
         self.assertNotIn("release-policy", download_block.group("block"))
+
+    def test_credentials_are_checked_before_any_publication(self) -> None:
+        publish, crate = self.source.split("\n  publish:\n", 1)[1].split(
+            "\n  publish-crate:\n", 1)
+        for block, next_step in ((publish, "name: Download release assets"),
+                                 (crate, "name: Install Rust")):
+            with self.subTest(next_step=next_step):
+                self.assertIn("environment: release", block)
+                self.assertLess(block.index("run: bash tools/release/check-registry-credentials.sh"),
+                                block.index(next_step))
+                self.assertIn("CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}", block)
+        self.assertIn("needs: [policy, build, quality]", publish)
+        self.assertIn("needs: publish", crate)
+        self.assertNotIn("--token", crate)
+        self.assertIn("--package harness-gate --locked", crate)
+
+    def test_credential_check_rejects_missing_and_blank_without_disclosure(self) -> None:
+        script = WORKFLOW.parents[2] / "tools/release/check-registry-credentials.sh"
+        for token in (None, "", " \t\n", "fixture-secret-$()`;value"):
+            with self.subTest(token_present=bool(token)):
+                env = {key: value for key, value in os.environ.items()
+                       if key != "CARGO_REGISTRY_TOKEN"}
+                if token is not None:
+                    env["CARGO_REGISTRY_TOKEN"] = token
+                result = subprocess.run(["bash", "-x", str(script)], env=env,
+                                        capture_output=True, text=True, check=False)
+                self.assertEqual(result.returncode, 0 if token and token.strip() else 1)
+                if result.returncode:
+                    self.assertIn("CARGO_REGISTRY_TOKEN is missing or blank", result.stderr)
+                else:
+                    self.assertNotIn(token, result.stdout + result.stderr)
+                    self.assertNotIn("::error::", result.stderr)
 
 
 if __name__ == "__main__":

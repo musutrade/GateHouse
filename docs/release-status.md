@@ -27,6 +27,13 @@ exact checksum, package normalization and Linux scope. The original missing-toke
 failure remains in attempt 1 and the dated original public receipt; no tag,
 GitHub asset, signature, baseline or measurement identity was changed.
 
+For future tags, the protected `release` job checks that `CARGO_REGISTRY_TOKEN`
+is present and nonblank before staging or publishing GitHub assets. The crate
+job repeats this check and passes the credential to Cargo through its environment,
+without embedding it in shell commands. This is a presence check; Cargo still
+enforces registry permissions. Release approvals and quality gates remain required.
+The original `v0.4.9` workflow remains unchanged in its immutable tag.
+
 The accepted performance baseline and quality/debt semantics are retained. See
 [the public receipt](releases/0.4.9-public-verification.md) and
 [installation guide](releases/0.4.9.zh-CN.md). Historical assets remain unchanged.
