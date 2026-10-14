@@ -72,3 +72,8 @@ at line 50, columns 19–45, executed five times. The probe is corrected to colu
 19 with the same source body, test/assertions and 95% matrix policy. Direct
 rechecking against retained raw coverage yields count=5; a new complete hosted
 collection remains required for the new commit identity.
+
+Staged policy lookups also normalize legal ./ path components through the
+existing Git index-path encoder. The same quality preview fixture verifies
+working-tree and staged handling of ./-prefixed policy paths without reading
+or consuming its deliberately invalid signed-request bodies.

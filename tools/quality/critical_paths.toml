@@ -433,7 +433,7 @@ path = "tests/verify_plan_test.rs"
 symbol = "staged_plan_uses_indexed_configuration_without_filters_objects_reports_or_tokens"
 start = 437
 end = 526
-sha256 = "ef9c57a911469fdcc8b31501f1c2175ff2999ee746c46848d49953438c81652d"
+sha256 = "5cbccb4c215ba407db4a5b1a56103bf834e57d84e0e465ca87d9d8d4ccc8deaa"
 [[paths.probes]]
 line = 50
 column = 19

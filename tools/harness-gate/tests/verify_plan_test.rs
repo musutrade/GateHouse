@@ -536,6 +536,7 @@ fn quality_inputs_are_explained_without_consuming_signed_requests_or_baselines()
         .replace("src/lib.rs", "a/old name\nfile.txt");
     // Use a portable ordinary subject path; signed request bodies are deliberately invalid.
     let quality = quality.replace("a/old name\nfile.txt", "a/subject.rs");
+    let quality = quality.replace(".harness-gate/policy.json", "./.harness-gate/policy.json");
     fs::write(root.join("a/subject.rs"), "// subject\n").unwrap();
     fs::write(root.join(".harness-gate/quality.toml"), format!(
         "{quality}\n[profiles.full.workflow]\nstate = \".harness-gate/state.json\"\ntrusted_keys = \".harness-gate/keys.json\"\nbaseline_request = \".harness-gate/baseline.json\"\n[profiles.hook.workflow]\nstate = \".harness-gate/hook-state.json\"\ntrusted_keys = \".harness-gate/keys.json\"\n")).unwrap();

@@ -217,8 +217,9 @@ fn hydrate_index_config(
     entries: &std::collections::BTreeMap<String, String>,
     name: &str,
 ) -> Result<()> {
+    let index_name = git::index_path(Path::new(name))?;
     let id = entries
-        .get(name)
+        .get(&index_name)
         .with_context(|| format!("required staged configuration {name:?} is missing"))?;
     let destination =
         super::resolve_repo_path(snapshot, Path::new(name), "staged configuration", true)?;
