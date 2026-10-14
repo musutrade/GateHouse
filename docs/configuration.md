@@ -12,6 +12,10 @@ For generated quality defaults, composable packs and flow-only adoption, see
 For compatible Arc-Flow v2 execution declarations, `harness-gate config import --execution-only`
 generates configuration and a deterministic parity/UX report. See
 [Arc-Admin import and runtime limitations](dogfood/arc-admin/import/README.md).
+Legacy external service policies must first be migrated by GateProbes. The
+offline importer preserves explicit generic `service_checks` and their required
+artifact bindings without executing them; it refuses legacy policies with
+migration help and publishes no partial configuration.
 
 For optional `.harness-gate/quality.toml` v1, collector authority and flow/quality
 cross-validation, see the [quality configuration reference](quality-configuration.md).

@@ -8,6 +8,10 @@
 
 本文档说明 `.harness-gate/flow.toml` 和审计规则文件的完整配置模型。首次接入请先阅读上一级的 [操作手册](../README.md)，再按需查阅本参考。
 
+`config import --execution-only` 离线保留兼容的 Arc-Flow v2 执行声明。旧外部服务策略须先由
+GateProbes 迁移；导入器保留通用 `service_checks` 的 required 程序绑定而不执行它们。
+未迁移策略会得到迁移指引，且不会发布部分配置或导入报告。
+
 ## 1. 文件与加载顺序
 
 默认项目配置是仓库内的 `.harness-gate/flow.toml`。`harness-gate` 从当前目录向父目录查找该文件，也可以显式指定：

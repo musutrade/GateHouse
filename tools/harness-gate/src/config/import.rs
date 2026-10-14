@@ -22,7 +22,15 @@ pub(crate) fn import_execution(source: &str) -> Result<ExecutionImport> {
     check_keys(
         &original,
         &[
-            "version", "project", "paths", "policy", "doctor", "services", "parsers", "scope",
+            "version",
+            "project",
+            "paths",
+            "policy",
+            "doctor",
+            "services",
+            "service_checks",
+            "parsers",
+            "scope",
             "steps",
         ],
         "$",
@@ -32,6 +40,9 @@ pub(crate) fn import_execution(source: &str) -> Result<ExecutionImport> {
     }
     if let Some(services) = original.get("services").and_then(Value::as_table) {
         for (id, service) in services {
+            if service.get("external_value_policy").is_some() {
+                bail!("legacy external service policy requires GateProbes: run gateprobes-postgres migrate --input <PATH> --output <NEW_PATH> --project <NAME>, then import the migrated execution configuration; retain the original source");
+            }
             let allowed: &[&str] = match service.get("kind").and_then(Value::as_str) {
                 Some("docker") => &[
                     "kind",
@@ -39,7 +50,6 @@ pub(crate) fn import_execution(source: &str) -> Result<ExecutionImport> {
                     "image_env",
                     "external_env",
                     "inject_env",
-                    "external_value_policy",
                     "startup_timeout_secs",
                     "timeout_env",
                     "container_port",
@@ -162,7 +172,7 @@ pub(crate) fn import_execution(source: &str) -> Result<ExecutionImport> {
         "runtime_blockers": RUNTIME_BLOCKERS,
         "source_sha256": format!("{:x}", Sha256::digest(source.as_bytes())),
         "output_sha256": format!("{:x}", Sha256::digest(output.as_bytes())),
-        "preserved_sections": ["project", "paths", "policy", "doctor", "services", "parsers", "scope", "steps"],
+        "preserved_sections": ["project", "paths", "policy", "doctor", "services", "service_checks", "parsers", "scope", "steps"],
         "steps": step_inventory,
         "transformations": {
             "materialized_arc_flow_secrets_default": materialized_secrets_default,
@@ -215,7 +225,10 @@ fn preserve_fields(source: &Value, target: &Value, path: &str) -> Result<()> {
             }
         }
         (Value::Array(source), Value::Array(target)) if source.len() == target.len() => {
-            if path.ends_with(".profiles") || path.ends_with(".components") {
+            if path.ends_with(".profiles")
+                || path.ends_with(".components")
+                || path.ends_with(".pass_env")
+            {
                 let mut left: Vec<_> = source.iter().map(Value::to_string).collect();
                 let mut right: Vec<_> = target.iter().map(Value::to_string).collect();
                 left.sort();

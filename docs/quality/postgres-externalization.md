@@ -38,6 +38,7 @@ The plugin cannot waive a required Core check.
 | `service/mod.rs`, doctor service checks | Same generic service-check preparation; no URL or database-name rules |
 | `config/loader.rs` | Reject old `external_value_policy` with actionable migration help |
 | `config/migration.rs` | Reject v1 recipe migration; GateProbes owns conversion |
+| `config/import.rs` | Reject legacy policies with migration help; offline preservation of generic required checks and execution gates |
 | Config/preset/doctor/service/CI adoption tests | Explicit required external check fixtures or expected legacy rejection |
 | `fixtures/preset-compat`, v1 fixture, ADRs, dogfood/evidence | Frozen historical bytes retained; no product fallback |
 | Executable docs consistency | Asserts legacy rejection/help/no publication and unchanged migration source |
