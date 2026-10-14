@@ -412,7 +412,8 @@ class EligibilityTests(unittest.TestCase):
         self.assertNotIn('runs-on: [self-hosted', source)
 
     def test_default_rehearsal_and_explicit_publication_remain_protected(self):
-        source = (RELEASE.parents[1] / assets.WORKFLOW).read_text()
+        self.assertFalse((RELEASE.parents[1] / assets.WORKFLOW).exists())
+        source = (RELEASE.parents[1] / 'retired/workflows/rust-collector-release.yml').read_text()
         self.assertIn('needs: protection', source)
         self.assertIn('policy.protected_environment(client.get_json(', source)
         self.assertIn('environment: rust-collector-release', source)

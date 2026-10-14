@@ -81,11 +81,16 @@ class ReleaseOwnershipTests(unittest.TestCase):
             self.assertFalse((ROOT / row["was"]).exists(), row["was"])
 
     def test_paused_production_chain_stays_separate_and_unprovisioned(self):
-        paused = self.manifest["workflows"][".github/workflows/rust-collector-release.yml"]
-        self.assertEqual(paused["disposition"], "paused-not-migrated")
+        paused = self.manifest["retired_workflows"]["retired/workflows/rust-collector-release.yml"]
+        self.assertEqual(paused["disposition"], "retired-restorable")
+        self.assertEqual(paused["publication_state"], "paused-not-migrated")
         self.assertEqual(paused["owner"], "gatehouse")
         self.assertEqual(paused["revival_owner"], "gateprobes")
-        source = (ROOT / ".github/workflows/rust-collector-release.yml").read_text()
+        archive = ROOT / "retired/workflows/rust-collector-release.yml"
+        self.assertFalse((ROOT / paused["was"]).exists())
+        self.assertTrue((ROOT / paused["retirement_record"]).is_file())
+        self.assertEqual(hashlib.sha256(archive.read_bytes()).hexdigest(), paused["sha256"])
+        source = archive.read_text()
         self.assertIn("Legacy collector signing/publication is suspended", source)
         self.assertIn("github.repository == 'musutrade/Harness-Gate'", source)
 

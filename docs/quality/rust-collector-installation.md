@@ -167,14 +167,18 @@ all accepted coverage/CRAP rules and capability states remain unchanged.
 
 ## Publication and historical evidence
 
-The existing `.github/workflows/rust-collector-release.yml` is active. Its
-separate operations cover rehearsal, private signing, original RC publication
-and compressed installer publication. The dedicated `rust-collector-release`
-environment requires the pinned owner's manual approval, allows self-review
-under the explicitly accepted single-maintainer v2 policy, disables admin bypass,
-and permits only main. Core publication keeps its separate `release` environment.
-Exact-source main CI, approved packet digests and immutable version rules remain.
-Stable collector promotion still waits for separately accepted GH-215 integration.
+The legacy workflow was retired from Core's active workflow directory on
+2026-10-14 and is preserved unchanged at
+[`retired/workflows/rust-collector-release.yml`](../../retired/workflows/rust-collector-release.yml).
+Its historical operations cover rehearsal, private signing, original RC
+publication and compressed installer publication. Signing and publication remain
+suspended by the migration hold. The historical protected-environment, exact-source
+main CI, approved packet digest and immutable version requirements remain in the
+archive; this retirement provisions no credentials, runner or environment.
+Core publication keeps its separate `release` environment. The
+[retirement and rollback record](legacy-collector-retirement.md) assigns any future
+revival to GateProbes after an explicit product decision and measurement migration
+review. The independently published native RC8 chain is a separate product.
 
 Historical [GH-229 fixture validation](gh-229/validation.md),
 [GH-231 preparation](gh-231/preparation.md) and

@@ -87,7 +87,7 @@ semantics, gate names, branch protection or release authority.
 > regression tests. The exemption does not establish function-level continuity
 > across the move: the new recipe files are measured as new functions, and no
 > old-to-new comparison is claimed.
-- [ ] 4.3 [P1][L] Handle the Rust complex release chain separately; acceptance: the Rust collector release chain is owned by GateProbes with an explicit, documented process.
+- [x] 4.3 [P1][L] Handle the Rust complex release chain separately; acceptance: the Rust collector release chain is owned by GateProbes with an explicit, documented process.
 
 > **4.3 disposition recorded (2026-10-12):** the legacy six-asset RSA/Sigstore
 > production chain is a paused bundled-runtime product, not the RC8 native
@@ -97,6 +97,20 @@ semantics, gate names, branch protection or release authority.
 > revival, which requires a product decision and a reviewed measurement
 > migration. Workflow ownership and disposition are recorded and enforced in
 > `docs/quality/release-ownership.json` and `test_release_ownership.py`.
+
+> **4.3 retired-product disposition complete (2026-10-14, GateHouse #12):**
+> the legacy entry is removed from `.github/workflows/` and preserved byte-for-byte
+> at `retired/workflows/rust-collector-release.yml`, with restore source
+> `189fc31c4f12167b0737eff369d64aba700ab5a0` and its SHA-256 recorded in ownership.
+> [Retirement and rollback](../../../docs/quality/legacy-collector-retirement.md)
+> records the retained script/test consumers and GateProbes ownership of any
+> future revival. Restoring bytes must preserve the repository/ref restrictions,
+> rejecting migration hold and approval protections; restoration alone never
+> authorizes publication. The protection tests continue to execute against the
+> archived workflow. This closes the paused-product disposition, not a migration
+> or publication of that product; the native RC8 chain remains separate.
+> Engineering Policy semantics are unchanged. Historical source, tags,
+> signatures and failure records remain intact. Broader source cleanup is #13.
 - [x] 4.4 [P1][M] Remove compatibility paths only after both repositories are proven green; acceptance: removal is a separate reviewed change and rollback remains possible until then.
 - [x] 4.5 [P1][M] Run final strict OpenSpec validation and update related records; acceptance: the change validates and no claim implies new ecosystem certification or new measurement semantics.
 

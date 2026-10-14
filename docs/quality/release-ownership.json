@@ -78,12 +78,6 @@
       "disposition": "core-retained",
       "note": "Core release chain; keeps the Harness-Gate Sigstore identity."
     },
-    ".github/workflows/rust-collector-release.yml": {
-      "owner": "gatehouse",
-      "disposition": "paused-not-migrated",
-      "note": "Legacy bundled-runtime RSA/Sigstore six-asset production chain. Its own hold step suspends signing/publication and requires a reviewed measurement migration; this is not the RC8 native plugin chain. GateProbes owns any future revival, but no RSA key, runner group, environment or publication is provisioned, and migration is not planned while paused.",
-      "revival_owner": "gateprobes"
-    },
     ".github/workflows/rust-generic-shadow.yml": {
       "owner": "gatehouse",
       "disposition": "core-retained",
@@ -107,6 +101,17 @@
       "was": ".github/workflows/rust-measure-native.yml",
       "restore_commit": "4ec65a7666511cb80c89d7d369a56ec71cb878df",
       "note": "Built the plugin analyzer from core source on Windows/macOS. Core acceptance now uses the pinned Linux amd64 measurer release; cross-platform analyzer builds belong to GateProbes. Inactive: no pull request or main push triggers it. Restore by moving the file back after reverting this record."
+    },
+    "retired/workflows/rust-collector-release.yml": {
+      "owner": "gatehouse",
+      "disposition": "retired-restorable",
+      "note": "Retired from active Core workflows on 2026-10-14; archived bytes are unchanged. Legacy six-asset RSA/Sigstore bundled product remains paused, separate from GateProbes native RC8. Restore only the exact archived bytes from restore_commit, preserving repository/ref restrictions, migration hold, protected environment and approval requirements. Restoring a file does not authorize signing or publication. Any future revival belongs to GateProbes and requires an explicit product decision and reviewed measurement migration; no new credentials, runner or environment are provisioned by this retirement.",
+      "revival_owner": "gateprobes",
+      "was": ".github/workflows/rust-collector-release.yml",
+      "restore_commit": "189fc31c4f12167b0737eff369d64aba700ab5a0",
+      "sha256": "76e2b92297d5e22e3a656e2cf9acdc838f89dabc6094e7a9e3eaa986d3f00d15",
+      "publication_state": "paused-not-migrated",
+      "retirement_record": "docs/quality/legacy-collector-retirement.md"
     }
   }
 }

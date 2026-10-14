@@ -44,7 +44,7 @@ Core versions starting at v0.4.9 use the GateHouse `release.yml` identity under
 the explicit installer version cutover; historical tags are not copied or
 re-signed. A new download URL still
 never changes a trusted identity by itself. The protected production chain
-keeps its separate RSA/Sigstore trust and remains tasks 4.3.
+keeps its separate RSA/Sigstore trust and is retired under task 4.3.
 
 ## Four independent package releases
 
@@ -67,7 +67,7 @@ production chain are separate products and are recorded separately.
 | Workflow | Owner | Disposition |
 | --- | --- | --- |
 | `native-collector-release.yml` | GateHouse | Retired from active workflows on 2026-10-12: archived at `retired/workflows/`, restore commit `6aaa2342`; current main no longer triggers it. Tag creation is not prohibited, and a tag pointing at a historical commit still runs that commit's workflow. Historical releases, signatures and tags are retained. |
-| `rust-collector-release.yml` | GateHouse | Paused legacy bundled-runtime RSA/Sigstore six-asset chain; not migrated, not provisioned, and not the RC8 native chain. |
+| `rust-collector-release.yml` | GateHouse | Retired from active workflows on 2026-10-14, byte-preserved at `retired/workflows/`; restore commit `189fc31c`. Legacy bundled-runtime RSA/Sigstore six-asset chain remains paused, not migrated, and separate from RC8. GateProbes owns any future revival. |
 | `rust-measure-native.yml` | GateHouse | Retired from active workflows on 2026-10-12: archived at `retired/workflows/`, restore commit `4ec65a76`. It built the plugin analyzer from core source; core acceptance now uses the pinned Linux amd64 measurer release and cross-platform analyzer builds belong to GateProbes. |
 
 The paused production chain is not a prerequisite for the RC8 native delivery
@@ -76,6 +76,10 @@ publication; any revival requires a reviewed measurement migration and an
 explicit product decision. No RSA key, self-hosted runner group, environment
 approval or publication path is provisioned while it stays paused. GateProbes
 owns the scripts and any future revival.
+
+The [legacy retirement record](legacy-collector-retirement.md) lists the exact
+source digest, retained script/test consumers and rollback constraints. Restoring
+the archived file preserves its migration hold and does not authorize publication.
 
 ## Enforcement
 
