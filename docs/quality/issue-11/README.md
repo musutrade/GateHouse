@@ -97,9 +97,12 @@ inventories and registering the helper as existing repository CI/dev tooling.
 The module-coverage regression reads the current inventory; no test is removed
 or weakened and the frozen oracle retains its original hashes.
 
-Hosted Core risk, coverage and Required Quality Aggregate acceptance is pending;
-local tests do not substitute for that condition. The issue must remain open
-until the exact candidate passes its applicable hosted gates.
+The earlier hosted acceptance requirement is now satisfied. The exact merged
+revision `189fc31c4f12167b0737eff369d64aba700ab5a0` passed
+[main CI 38495521539](https://github.com/musutrade/GateHouse/actions/runs/38495521539),
+including Core risk, coverage and Required Quality Aggregate. PR #17 merged
+and Issue #11 closed. The original failed candidate and local evidence remain
+unchanged; this status update does not replace them.
 
 ## Explicit rollback
 

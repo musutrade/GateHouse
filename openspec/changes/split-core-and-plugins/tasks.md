@@ -236,7 +236,7 @@ remaining plugins, and the release/signing identity switch last.
 - [x] 6.1 Transfer only plugin tests with demonstrated GateProbes parity out of ordinary Core CI; retain all unmigrated compatibility/reference tests and preserve required Core checks. The first bounded handoff is recorded in `docs/quality/ci-plugin-test-handoff.md`.
 - [x] 6.2 Publish the four remaining plugins independently from GateProbes with packaging, clean-install, signed inventory and provenance acceptance; then remove their build/publication dependency from Core release.
 - [x] 6.3 Externalize ecosystem presets through the plain file loader, then review source/fixture cleanup against actual consumers and preserved rollback materials.
-- [ ] 6.4 Complete repository naming and legacy install compatibility with explicit signing-identity acceptance; retain the `harness-gate` command and crate names.
+- [x] 6.4 Complete repository naming and legacy install compatibility with explicit signing-identity acceptance; retain the `harness-gate` command and crate names.
 
 > **6.4 deferred by user decision (2026-10-13):** the motivation for GateHouse
 > was repository size and unrelated historical material. The selected approach
@@ -307,3 +307,24 @@ remaining plugins, and the release/signing identity switch last.
 > remain. [The cleanup inventory](../../../docs/quality/issue-13/README.md)
 > records original hashes, owners, consumers, destinations and exact rollback.
 > Engineering Policy semantics and the original acceptance receipts are unchanged.
+
+> **6.4 actual publication acceptance (GateHouse #15, 2026-10-14):** Core
+> `v0.4.9` was published from GateHouse source
+> `4d5b15a24c91a17b4823ec1626048cdfb20834da`; the
+> [dated public receipt](../../../docs/releases/0.4.9-public-verification.md)
+> verifies 21 public files and seven exact-tag signature/provenance subjects,
+> followed by a fresh Linux installation and generic decision verification.
+> The unchanged command/crate names and historical v0.4.8 install remain covered
+> by migration acceptance. Protected release attempt 2 completed crates.io,
+> with the [archive/source and clean-install receipt](../../../docs/releases/0.4.9-crate-public-verification.md).
+> PR #21 adds missing/blank credential checks before future asset publication.
+> This closes the signing condition left pending in the earlier dated migration
+> note; those original notes and failure receipts remain historical evidence.
+> The [final scope reconciliation](../../../docs/quality/issue-15/README.md)
+> distinguishes source cleanup, ordinary CI, independent releases, supported
+> platforms and RC8's still-mutable legacy assets. GateProbes #17 closed after
+> PR #19 merged as `9571cffe6cb6641012dab0353cc704910d9f61ed`, with passing
+> exact-candidate ordinary and four-platform native CI and fresh public integrity
+> verification. Legacy RC8 remains mutable; mandatory future protection is now
+> checked against actual published state. This does not retroactively lock RC8
+> or promote an RC to stable.

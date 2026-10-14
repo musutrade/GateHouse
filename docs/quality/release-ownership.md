@@ -91,3 +91,26 @@ GateHouse source it was copied from, and that every workflow under
 `.github/workflows/` has exactly one recorded owner and an allowed
 disposition. `tools/release/tests` follows the scripts it covers and is not
 classified here.
+
+## Current reconciliation — 2026-10-14
+
+The initial path assignments above retain their historical handoff meaning.
+Current Core active paths and frozen legacy ownership are recorded in
+`release-ownership.json` and the [physical cleanup inventory](issue-13/README.md).
+Transferred collector implementation is absent from active Core tools; the
+remaining legacy delivery bytes are frozen under `retired/legacy-collector` for
+original Core protection tests. GateProbes owns product maintenance and any
+future bundled-product revival. Shared governance sources remain Core-owned.
+
+Core 0.4.9 has actual GateHouse signing/provenance and Linux install acceptance,
+followed by completed crates.io delivery; see the
+[public receipt](../releases/0.4.9-public-verification.md). The active measurer
+consumer now uses the separately verified [GateProbes pin](issue-11/README.md),
+with explicit old-identity rollback. Original release acceptance is unchanged.
+
+Native RC8 remains published, prerelease and mutable at the asset layer. Its
+protected tag and verified exact signatures do not imply immutable assets.
+Merged GateProbes [PR #19](https://github.com/musutrade/GateProbes/pull/19) records the
+legacy limitation and enforces actual future-publication protection with a
+machine receipt. It does not modify RC8 or promote it to stable. The
+[Issue 15 reconciliation](issue-15/README.md) records the accepted closure evidence.

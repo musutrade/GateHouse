@@ -51,8 +51,11 @@ frozen original tests. The wrapper verifies the exact method inventory; missing
 files cannot become skips. Original handoff, producer parity, Core policy inputs,
 schemas and accepted measurer series/digests are not refreshed by this cleanup.
 
-Local verification and hosted acceptance are recorded in `validation.json` once
-completed. The local release baseline is 102 passing methods; after migration,
+Local verification is preserved in `validation.json`. Its original pending
+hosted status records the pre-merge observation. Subsequent merged revision
+`eb91e9fa28510994ffabceb06c4c7a2119a35fff` passed
+[main CI 38501723197](https://github.com/musutrade/GateHouse/actions/runs/38501723197),
+including the unchanged required aggregate; PR #19 merged and Issue #13 closed. The local release baseline is 102 passing methods; after migration,
 all original 102 methods must still execute (38 active plus 64 frozen), with new
 integrity regressions counted separately. No complete plugin matrix is added to
 Core; the frozen Linux test scope preserves its original synthetic coverage.
