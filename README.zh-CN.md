@@ -13,6 +13,9 @@
 
 它统一负责 changed paths、secret scan、architecture audit、环境体检、外部命令编排、测试结果计数、超时与中断处理，以及临时服务生命周期。Git hook 只保留启动器，流程判断不依赖 Shell 脚本。
 
+
+普通命令结果复用需要显式启用；输入绑定、Unix 宿主信任、命中解释与安全清理见[确定性步骤本地缓存](docs/step-cache.md)。
+
 ## 仓库与发行边界
 
 | 名称 | 职责 |

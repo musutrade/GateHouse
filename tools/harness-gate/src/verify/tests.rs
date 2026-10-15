@@ -217,6 +217,7 @@ fn failed_external_node_blocks_only_its_descendants() {
         gate_type: None,
         runner: None,
         input: crate::config::StepInput::Snapshot,
+        cache: None,
     });
 
     let report = run(&project, ScopeResult::all(&project), "full", false)
@@ -695,4 +696,58 @@ fn serial_shared_service_steps_execute_once_in_declaration_order() {
             "first\nsecond\n"
         );
     }
+}
+
+#[test]
+fn poisoned_service_manager_blocks_execution_with_setup_failure() {
+    let (_workspace, mut project) = generic_project("poisoned-service-manager");
+    project.config.services.insert(
+        "fixture-service".into(),
+        ServiceConfig::Environment {
+            source_env: "PATH".into(),
+            inject_env: "FIXTURE_SERVICE_PATH".into(),
+        },
+    );
+    project.config.steps[0].services = vec!["fixture-service".into()];
+    let services = std::sync::Mutex::new(ServiceManager::new(&project));
+    let poisoned = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let _guard = services.lock().unwrap();
+        panic!("fixture service-manager owner failed");
+    }));
+    assert!(poisoned.is_err());
+    let result =
+        super::steps::run_configured_step(&project, &project.config.steps[0], &services).unwrap();
+    assert!(!result.passed);
+    assert_eq!(result.failure_code, Some(FailureCode::ServiceSetupFailure));
+    assert!(result.detail.unwrap().contains("poisoned"));
+    assert!(result.log.is_empty(), "command was not dispatched");
+}
+
+#[cfg(unix)]
+#[test]
+fn command_log_allocation_rejects_escapes_and_creates_only_confined_directories() {
+    use std::os::unix::fs::symlink;
+    let (_workspace, mut project) = generic_project("command-log-boundary");
+    project.prepare().unwrap();
+    let outside = TestWorkspace::new("outside-command-logs");
+    assert!(super::steps::log(&project, "../escape.log").is_err());
+    let reports = project.reports.clone();
+    project.reports = outside.root.clone();
+    assert!(super::steps::log(&project, "check.log").is_err());
+    project.reports = reports;
+    let logs = project.reports.join("logs");
+    fs::remove_dir(&logs).unwrap(); // Empty directory owned by this fresh fixture.
+    let path = super::steps::log(&project, "check.log").unwrap();
+    assert_eq!(path, logs.join("check.log"));
+    assert!(logs.is_dir());
+    fs::remove_dir(&logs).unwrap();
+    symlink(&outside.root, &logs).unwrap();
+    assert!(super::steps::log(&project, "check.log").is_err());
+    fs::remove_file(&logs).unwrap(); // Only the fixture's link; its target is retained.
+    fs::create_dir(&logs).unwrap();
+    let protected = outside.root.join("protected.log");
+    fs::write(&protected, "untouched").unwrap();
+    symlink(&protected, logs.join("check.log")).unwrap();
+    assert!(super::steps::log(&project, "check.log").is_err());
+    assert_eq!(fs::read_to_string(protected).unwrap(), "untouched");
 }

@@ -20,6 +20,14 @@ pub(super) fn run_configured_step<'a>(
     step: &StepConfig,
     services: &'a Mutex<ServiceManager<'a>>,
 ) -> Result<TaskResult> {
+    super::cache::run(project, step, || run_uncached_step(project, step, services))
+}
+
+fn run_uncached_step<'a>(
+    project: &'a Project,
+    step: &StepConfig,
+    services: &'a Mutex<ServiceManager<'a>>,
+) -> Result<TaskResult> {
     let mut service_leases = Vec::<ServiceLease>::new();
     for service in &step.services {
         let lease = match lock_services(services) {
@@ -47,6 +55,7 @@ pub(super) fn run_configured_step<'a>(
                     waived: false,
                     waiver: None,
                     runner: None,
+                    cache: None,
                 });
             }
         };
@@ -75,6 +84,7 @@ pub(super) fn run_configured_step<'a>(
                     waived: false,
                     waiver: None,
                     runner: None,
+                    cache: None,
                 });
             }
         };
@@ -221,13 +231,31 @@ fn configured_task(
         .iter()
         .map(|argument| project.expand_for_input(argument, step.input))
         .collect::<Vec<_>>();
-    let mut task = Task::new(&step.label, &step.program, &cwd, log(project, &step.log)?)
-        .timeout(step.timeout_secs);
+    let program = step
+        .cache
+        .as_ref()
+        .and_then(|cache| cache.toolchain.first())
+        .unwrap_or(&step.program);
+    let mut task =
+        Task::new(&step.label, program, &cwd, log(project, &step.log)?).timeout(step.timeout_secs);
+    task = configure_cache_environment(task, step);
     task = match &step.runner {
         Some(runner) => configure_runner(project, step, runner, task, &args)?,
         None => task.args(args),
     };
     Ok(inject_task_environment(task, step, service_leases))
+}
+
+fn configure_cache_environment(mut task: Task, step: &StepConfig) -> Task {
+    if let Some(cache) = &step.cache {
+        task = task.clear_environment();
+        for name in &cache.environment {
+            if let Some(value) = std::env::var_os(name) {
+                task = task.env(name, value);
+            }
+        }
+    }
+    task
 }
 
 fn configure_runner(
@@ -396,7 +424,13 @@ fn runner_inputs(
 }
 
 fn execute(task: Task, parser: Option<&ParserConfig>) -> Result<TaskResult> {
-    let mut result = task.run()?;
+    evaluate_result(task.run()?, parser)
+}
+
+pub(super) fn evaluate_result(
+    mut result: TaskResult,
+    parser: Option<&ParserConfig>,
+) -> Result<TaskResult> {
     if result.passed {
         if let Some(parser) = parser {
             let content = match fs::read_to_string(&result.log) {
@@ -511,7 +545,7 @@ fn print_result_inline(result: &TaskResult) {
     }
 }
 
-fn log(project: &Project, name: &str) -> Result<std::path::PathBuf> {
+pub(super) fn log(project: &Project, name: &str) -> Result<std::path::PathBuf> {
     if !safe_log_name(name) {
         bail!("step log must be a single .log filename: {name:?}");
     }

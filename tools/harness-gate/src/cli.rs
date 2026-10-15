@@ -33,12 +33,21 @@ pub(crate) struct Cli {
     #[arg(long, global = true, value_name = "PATH")]
     pub(crate) replay_state_dir: Option<PathBuf>,
 
+    /// Enable local step reuse in an exclusively host-owned directory outside the project.
+    #[arg(long, global = true, value_name = "PATH")]
+    pub(crate) step_cache_dir: Option<PathBuf>,
+
     #[command(subcommand)]
     pub(crate) command: Commands,
 }
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
+    /// Clear authenticated local step-cache entries; retain unknown or modified files.
+    CacheClear {
+        #[arg(long)]
+        json: bool,
+    },
     /// Validate an explicit plugin lock and prepared offline artifacts without a project.
     Plugins {
         #[arg(long, value_name = "PATH")]

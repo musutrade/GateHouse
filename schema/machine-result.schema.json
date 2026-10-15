@@ -119,7 +119,22 @@
         "detail": {"type": ["string", "null"]},
         "failure_code": {"anyOf": [{"$ref": "#/definitions/failure_code"}, {"type": "null"}]},
         "waived": {"type": "boolean"},
-        "waiver": {"anyOf": [{"$ref": "#/definitions/waiver"}, {"type": "null"}]},
+        "step_cache": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "status", "reason", "key", "source_invocation", "lookup_ms", "saved_execution_ms", "store_ms"],
+      "properties": {
+        "schema_version": {"const": "step-cache/v1"},
+        "status": {"enum": ["HIT", "MISS", "BYPASS"]},
+        "reason": {"enum": ["CACHE_HOST_DISABLED", "CACHE_PLATFORM_UNSUPPORTED", "CACHE_DECLARATION_UNBOUND", "CACHE_INPUT_UNBOUND", "CACHE_HOST_UNTRUSTED", "CACHE_ENTRY_ABSENT", "CACHE_ENTRY_UNTRUSTED", "CACHE_OUTPUT_MISSING_OR_CHANGED", "CACHE_REVALIDATION_FAILED", "CACHE_INPUTS_AND_OUTPUTS_VERIFIED", "CACHE_STORE_REJECTED"]},
+        "key": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "source_invocation": {"type": ["string", "null"]},
+        "lookup_ms": {"type": "integer", "minimum": 0},
+        "saved_execution_ms": {"type": "integer", "minimum": 0},
+        "store_ms": {"type": "integer", "minimum": 0}
+      }
+    },
+    "waiver": {"anyOf": [{"$ref": "#/definitions/waiver"}, {"type": "null"}]},
+        "cache": {"$ref": "#/definitions/step_cache"},
         "runner": {"anyOf": [{"$ref": "#/definitions/runner"}, {"type": "null"}]},
         "attempts": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/attempt"}},
         "retry_count": {"type": "integer", "minimum": 0},

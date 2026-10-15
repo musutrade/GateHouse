@@ -29,16 +29,16 @@ pub(crate) fn collector_policy(
 }
 
 #[derive(Debug)]
-pub(super) struct Ledger {
-    pub(super) path: PathBuf,
-    directory: File,
+pub(crate) struct Ledger {
+    pub(crate) path: PathBuf,
+    pub(crate) directory: File,
     // Windows handles deny delete sharing, pinning every path component.
     #[cfg(windows)]
     _ancestors: Vec<File>,
 }
 
 impl Ledger {
-    pub(super) fn open(path: &Path) -> Result<Self, AdapterError> {
+    pub(crate) fn open(path: &Path) -> Result<Self, AdapterError> {
         let path = if path.is_absolute() {
             path.to_path_buf()
         } else {
@@ -75,7 +75,7 @@ impl Ledger {
         Ok(())
     }
 
-    pub(super) fn validate(&self) -> Result<(), AdapterError> {
+    pub(crate) fn validate(&self) -> Result<(), AdapterError> {
         let current = platform::open(&self.path).map_err(failure)?;
         platform::same_directory(&self.directory, &current.directory).map_err(failure)?;
         self.check_writable()

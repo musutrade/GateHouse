@@ -440,6 +440,26 @@ pub struct StepConfig {
     /// explicit compatibility capability for commands that must inspect Git.
     #[serde(default)]
     pub input: StepInput,
+    /// Explicit assertion that this command is deterministic and has no external effects.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache: Option<StepCacheConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct StepCacheConfig {
+    #[schemars(range(min = 1, max = 1))]
+    pub version: u32,
+    pub deterministic: bool,
+    pub side_effect_free: bool,
+    /// Additional repository-relative files, including ignored/generated inputs.
+    pub inputs: Vec<String>,
+    /// Existing output files are verified on a hit; missing files cause execution.
+    pub outputs: Vec<String>,
+    /// Absolute files: first pins the bare program, followed by its runtime/toolchain/plugin inputs.
+    pub toolchain: Vec<String>,
+    /// Only these inherited variables are visible to the command.
+    pub environment: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]

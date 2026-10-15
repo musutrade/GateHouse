@@ -13,6 +13,9 @@
 
 It handles changed paths, secret scanning, architecture auditing, environment validation, external command orchestration, test result counting, timeout and interrupt handling, and temporary service lifecycle. Git hooks only keep launchers, and flow decisions do not depend on Shell scripts.
 
+
+Local command reuse is explicitly opt-in; see the [deterministic step cache](docs/step-cache.md) for input binding, Unix host trust, explanations and safe clearing.
+
 ## Repository and release boundaries
 
 | Name | Responsibility |

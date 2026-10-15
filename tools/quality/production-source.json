@@ -205,7 +205,10 @@
         "src/verify/report.rs",
         "src/verify/scheduler.rs",
         "src/verify/steps.rs",
-        "src/verify/waiver.rs"
+        "src/verify/waiver.rs",
+        "src/verify/cache/mod.rs",
+        "src/verify/cache/identity.rs",
+        "src/verify/cache/store.rs"
       ]
     },
     "quality-core": {
@@ -321,6 +324,11 @@
       "path": "src/recipes/tests.rs",
       "kind": "test",
       "reason": "Generic service-check contract regression tests compiled only under cfg(test)."
+    },
+    {
+      "path": "src/verify/cache/tests.rs",
+      "kind": "test",
+      "reason": "Unix-only step cache regressions compiled under cfg(all(test, unix))."
     }
   ],
   "external_exclusions": [
@@ -358,7 +366,7 @@
     {
       "path": "src/config/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "65e0e180852d2c2697d96693655d2a05e21bac254772545e21c38bb04ccc91e7"
+      "sha256": "6fd939e65de01011b3ed5fa82379acd7138b3ad24ac6650299a797d24f4d94e0"
     },
     {
       "path": "src/doctor/mod.rs",
@@ -378,7 +386,7 @@
     {
       "path": "src/process/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "945c20f25fb780a30fa6d0c06b7e283d59882f23a07d968458a3613f6c46fff4"
+      "sha256": "2f865a13af004e1897e75d6fc2dfa1e344af8bea2cf8ab182583ab2183af407c"
     },
     {
       "path": "src/scope/mod.rs",

@@ -516,7 +516,7 @@ fn both() {
         self.assertEqual(SERIES, {
             'analyzer': 'harness-gate-rust-measure/0.3.1', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
-            'selection': 'gh31-component-impact/1', 'configuration': 'compiler-target-production/4',
+            'selection': 'gh32-step-cache/1', 'configuration': 'compiler-target-production/4',
         })
         path = 'utils/redaction.rs'
         self.assertIn(path, SOURCE_FILES)
@@ -757,7 +757,7 @@ fn main() {
         self.assertEqual(SERIES, {
             'analyzer': 'harness-gate-rust-measure/0.3.1', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
-            'selection': 'gh31-component-impact/1', 'configuration': 'compiler-target-production/4',
+            'selection': 'gh32-step-cache/1', 'configuration': 'compiler-target-production/4',
         })
         for label, source in self.process_command_sources().items():
             for target in ('x86_64-unknown-linux-gnu', 'aarch64-apple-darwin', 'x86_64-pc-windows-msvc'):
@@ -1986,6 +1986,15 @@ fn main() {
                 (evidence / "native-result.json").write_text(json.dumps(report, indent=2) + "\n")
                 hashes = {path.name: digest(path.read_bytes()) for path in sorted(evidence.iterdir())}
                 (evidence / "sha256.json").write_text(json.dumps(hashes, indent=2) + "\n")
+
+
+class StepCacheRiskSelectionTests(unittest.TestCase):
+    def test_cache_sources_are_additive_and_require_same_selection_recollection(self):
+        required = {"verify/cache/mod.rs", "verify/cache/identity.rs", "verify/cache/store.rs",
+                    "process/task.rs", "verify/scheduler.rs"}
+        self.assertTrue(required <= set(SOURCE_FILES))
+        self.assertEqual(SERIES['selection'], 'gh32-step-cache/1')
+        self.assertTrue(set(HOTSPOTS) <= set(SOURCE_FILES))
 
 
 if __name__ == "__main__":

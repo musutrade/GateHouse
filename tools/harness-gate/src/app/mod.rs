@@ -20,6 +20,19 @@ pub(crate) fn run() -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
+        Commands::CacheClear { json } => {
+            let path = cli
+                .step_cache_dir
+                .as_deref()
+                .context("cache-clear requires --step-cache-dir")?;
+            let report = crate::verify::cache::clear(path)?;
+            if *json {
+                println!("{}", report);
+            } else {
+                println!("Step cache: {}", report);
+            }
+            Ok(report["retained"] == 0)
+        }
         Commands::Plugins { lock, json } => run_plugin_check(lock, *json, &cli.plugins),
         Commands::Quality { action } => {
             quality::run(action, cli.replay_state_dir.as_deref()).map_err(Into::into)
@@ -115,6 +128,7 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             cli.command,
             cli.replay_state_dir,
             cli.plugins,
+            cli.step_cache_dir,
         ),
     }
 }
@@ -326,6 +340,7 @@ fn run_project(
     command: Commands,
     replay_state_dir: Option<std::path::PathBuf>,
     plugins: crate::plugins::HostOptions,
+    step_cache_dir: Option<std::path::PathBuf>,
 ) -> Result<bool, CliError> {
     let is_config_check = matches!(
         &command,
@@ -343,6 +358,7 @@ fn run_project(
     };
     project.replay_state_dir = replay_state_dir;
     project.plugins = plugins;
+    project.step_cache_dir = step_cache_dir;
     if !is_config_check {
         project.prepare()?;
     }

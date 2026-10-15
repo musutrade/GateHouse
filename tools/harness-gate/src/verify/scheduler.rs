@@ -420,6 +420,7 @@ fn failed_task_result(
         waived: false,
         waiver: None,
         runner: None,
+        cache: None,
     }
 }
 
@@ -463,6 +464,7 @@ fn run_secret_scan(
         waived: false,
         waiver: None,
         runner: None,
+        cache: None,
     })
 }
 
@@ -505,6 +507,7 @@ fn run_architecture_audit(
         waived: false,
         waiver: None,
         runner: None,
+        cache: None,
     })
 }
 
@@ -538,6 +541,7 @@ fn run_external_step<'a>(
             waived: false,
             waiver: None,
             runner: None,
+            cache: None,
         }),
     )
 }
@@ -607,6 +611,7 @@ fn skipped<'a>(node: &PlanNode<'a>, reason: &str) -> ScheduledResult {
             waived: false,
             waiver: None,
             runner: None,
+            cache: None,
         },
     }
 }

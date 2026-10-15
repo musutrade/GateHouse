@@ -1099,6 +1099,61 @@
       },
       "additionalProperties": false
     },
+    "StepCacheConfig": {
+      "type": "object",
+      "required": [
+        "deterministic",
+        "environment",
+        "inputs",
+        "outputs",
+        "side_effect_free",
+        "toolchain",
+        "version"
+      ],
+      "properties": {
+        "deterministic": {
+          "type": "boolean"
+        },
+        "environment": {
+          "description": "Only these inherited variables are visible to the command.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "inputs": {
+          "description": "Additional repository-relative files, including ignored/generated inputs.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outputs": {
+          "description": "Existing output files are verified on a hit; missing files cause execution.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "side_effect_free": {
+          "type": "boolean"
+        },
+        "toolchain": {
+          "description": "Absolute files: first pins the bare program, followed by its runtime/toolchain/plugin inputs.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "version": {
+          "type": "integer",
+          "format": "uint32",
+          "maximum": 1.0,
+          "minimum": 1.0
+        }
+      },
+      "additionalProperties": false
+    },
     "StepConfig": {
       "type": "object",
       "required": [
@@ -1112,6 +1167,17 @@
           "items": {
             "type": "string"
           }
+        },
+        "cache": {
+          "description": "Explicit assertion that this command is deterministic and has no external effects.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/StepCacheConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "component": {
           "default": "",

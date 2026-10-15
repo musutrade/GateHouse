@@ -5,6 +5,11 @@ All notable changes to Harness-Gate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased — Issue #32
+
+- Add opt-in `step-cache/v1` local reuse for declared deterministic external steps on Unix hosts, with private authenticated storage, complete input identity, output/parser revalidation, bounded retention and safe `cache-clear`.
+- Add optional machine-readable cache explanations and the read-only plan reason; current Core decisions, quality evidence and legacy execution remain authoritative.
+
 ## [Unreleased]
 
 ### Added

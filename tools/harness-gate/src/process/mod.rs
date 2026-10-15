@@ -19,4 +19,6 @@ pub(crate) use isolation::{
     allocate as allocate_isolation, ISOLATION_IDS_ENV, ISOLATION_MODE_ENV, ISOLATION_ROOT_ENV,
 };
 pub use signal::{cancelled, install_signal_handlers};
-pub use task::{ParserEvidence, RunnerExecution, Task, TaskAttempt, TaskResult, WaiverEvidence};
+pub use task::{
+    CacheEvidence, ParserEvidence, RunnerExecution, Task, TaskAttempt, TaskResult, WaiverEvidence,
+};
