@@ -93,9 +93,12 @@ pub(super) fn observe_exit(child: &Child) -> std::io::Result<bool> {
 
 #[cfg(unix)]
 pub(super) fn observe_pid(pid: i32) -> std::io::Result<bool> {
-    // SAFETY: info is initialized storage, and P_PID identifies the exclusively
-    // owned direct child. WNOWAIT observes without releasing its PID identity.
+    // SAFETY: libc siginfo_t consists of C integer/pointer fields and storage
+    // whose all-zero representation is valid, including the no-event PID.
     let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
+    // SAFETY: info is aligned writable storage for one siginfo_t and lives
+    // through the call. P_PID identifies the exclusively owned direct child;
+    // WNOWAIT observes without releasing its PID identity.
     let result = unsafe {
         libc::waitid(
             libc::P_PID,
@@ -107,7 +110,9 @@ pub(super) fn observe_pid(pid: i32) -> std::io::Result<bool> {
     if result == -1 {
         Err(std::io::Error::last_os_error())
     } else {
-        // SAFETY: waitid initialized the siginfo_t discriminant and union.
+        // SAFETY: a reported child event supplies si_pid. With WNOHANG and no
+        // event, the PID is zero (including when info is left unchanged).
+        // The initialized storage therefore remains valid in either case.
         Ok(unsafe { info.si_pid() } != 0)
     }
 }

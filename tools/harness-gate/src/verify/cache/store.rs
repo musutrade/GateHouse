@@ -31,6 +31,8 @@ pub(super) struct Store {
 struct Lock(File);
 impl Drop for Lock {
     fn drop(&mut self) {
+        // SAFETY: this guard still owns the live File descriptor. Unlocking
+        // does not consume it; File closes it after this destructor returns.
         unsafe {
             libc::flock(self.0.as_raw_fd(), libc::LOCK_UN);
         }
@@ -211,6 +213,8 @@ impl Store {
         let from = CString::new(temporary)?;
         let to = CString::new(name)?;
         let fd = self.ledger.directory.as_raw_fd();
+        // SAFETY: the directory descriptor stays open and both CStrings
+        // remain NUL-terminated and live throughout the synchronous call.
         ensure!(
             unsafe { libc::renameat(fd, from.as_ptr(), fd, to.as_ptr()) } == 0,
             "cache publication failed"
@@ -265,6 +269,8 @@ impl Store {
         // Verify the signed ownership record immediately before unlinking this one file.
         self.read(name)?;
         let name = CString::new(name)?;
+        // SAFETY: the directory descriptor and NUL-terminated name remain
+        // valid for the call; flags 0 requests removal of a non-directory.
         ensure!(
             unsafe { libc::unlinkat(self.ledger.directory.as_raw_fd(), name.as_ptr(), 0) } == 0,
             "cache unlink failed"
@@ -322,6 +328,8 @@ fn signed_bytes(record: &Record) -> Result<Vec<u8>> {
 fn lock(ledger: &crate::process::replay::Ledger) -> Result<Lock> {
     ledger.validate()?;
     let file = open_file(ledger, "step-cache-v1.lock", libc::O_RDWR | libc::O_CREAT)?;
+    // SAFETY: file owns this live descriptor throughout the call and, on
+    // success, is moved into Lock without duplicating ownership.
     ensure!(
         unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
         "cache busy; execute normally"
@@ -330,6 +338,8 @@ fn lock(ledger: &crate::process::replay::Ledger) -> Result<Lock> {
 }
 fn open_file(ledger: &crate::process::replay::Ledger, name: &str, flags: i32) -> Result<File> {
     let name = CString::new(name)?;
+    // SAFETY: the directory descriptor and NUL-terminated name stay live.
+    // The mode argument is supplied even when flags includes O_CREAT.
     let fd = unsafe {
         libc::openat(
             ledger.directory.as_raw_fd(),
@@ -341,8 +351,11 @@ fn open_file(ledger: &crate::process::replay::Ledger, name: &str, flags: i32) ->
     if fd < 0 {
         return Err(std::io::Error::last_os_error().into());
     }
+    // SAFETY: successful openat returned a new owned descriptor; ownership
+    // is transferred once to File, including on subsequent validation errors.
     let file = unsafe { File::from_raw_fd(fd) };
     let metadata = file.metadata()?;
+    // SAFETY: geteuid has no arguments, borrowed storage or ownership effects.
     ensure!(
         metadata.is_file()
             && metadata.uid() == unsafe { libc::geteuid() }
