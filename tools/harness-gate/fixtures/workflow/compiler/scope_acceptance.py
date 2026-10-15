@@ -97,7 +97,10 @@ def main():
             if expected_status:
                 assert 'error[QUALITY_BLOCKED]' in result.stderr, result.stderr
                 assert 'harness-gate explain QUALITY_BLOCKED' in result.stderr, result.stderr
-                assert str(report_path) in result.stderr, result.stderr
+                # Terminal diagnostics escape control characters (escape_debug),
+                # which doubles backslashes on Windows paths. Keep the exact
+                # published-path check in its rendered form on every platform.
+                assert str(report_path).replace('\\', '\\\\') in result.stderr, result.stderr
                 assert {gate['subject'] for gate in gates} == {subject['id'] for subject in direct['project']['subjects']}
                 assert {gate['state'] for gate in gates} == {'pass', 'fail'}
                 failing = next(gate for gate in gates if gate['state'] == 'fail')
