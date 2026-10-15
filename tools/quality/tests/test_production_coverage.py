@@ -69,6 +69,7 @@ class ProductionCoverageTests(unittest.TestCase):
     def test_checked_in_inventory_covers_every_source_once(self):
         inventory, owners, excluded = load_inventory(INVENTORY, CRATE)
         self.assertEqual(owners["src/service/lease.rs"], "service-core")
+        self.assertEqual(owners["src/service/lease/container.rs"], "service-core")
         self.assertEqual(owners["src/service/docker.rs"], "service-core")
         self.assertEqual(owners["src/service/commands.rs"], "service-core")
         self.assertEqual(owners["src/service/inspection.rs"], "service-core")
