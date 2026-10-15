@@ -62,3 +62,8 @@ index 条目会明确报错。配置文件若在 index 或工作区属性中使�
 需要 Git 的预览要求 Git 支持 --no-lazy-fetch。部分克隆缺失对象时明确报错，不调用远程 helper、不获取或写入 Git 对象；普通执行命令保留原有 Git 行为。预览也跳过可选的 HEAD 对象探测，因为它不生成执行用的源码身份。
 
 Core 自测源码选择扩展为 gh29-verify-plan/1，base/head 按同一扩展集合重新测量；旧报告保留，阈值和债务棘轮不变，详见[测量迁移记录](quality/issue-29/README.md)。这不改变产品插件的测量系列。
+
+组件影响图 v1 为每个组件增加 `impact_chain`（确定性的最短来源链）、
+`impact_sources`（原始改动路径和规则索引）以及 `depends_on_components`
+（完整声明的依赖关系）。间接选中原因是 `COMPONENT_IMPACT`。参见
+[组件影响配置](configuration.zh-CN.md#可声明的组件影响传播可选)。

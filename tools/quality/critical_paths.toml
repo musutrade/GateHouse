@@ -171,9 +171,9 @@ assertions = ["assert!(!report.passed);", "step.label == \"secret scan\" && !ste
 [paths.source]
 path = "src/verify/mod.rs"
 symbol = "run_selected"
-start = 202
-end = 362
-sha256 = "d54d8201ce37ce0b7f01bf38c488c83bff8f3d2ad38e1e2634e5aa96f142bed5"
+start = 205
+end = 365
+sha256 = "4612c49c5d26f1e238c76c449f2b3ba1ada286f02c9cea8c5b68d8330dde8d77"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
@@ -183,7 +183,7 @@ end = 574
 sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
 
 [[paths.probes]]
-line = 344
+line = 347
 column = 5
 text = "publish_report(&report, &invocation_project, project, &mut progress)?;"
 
@@ -459,7 +459,7 @@ path = "tests/verify_plan_test.rs"
 symbol = "staged_plan_uses_indexed_configuration_without_filters_objects_reports_or_tokens"
 start = 437
 end = 526
-sha256 = "5cbccb4c215ba407db4a5b1a56103bf834e57d84e0e465ca87d9d8d4ccc8deaa"
+sha256 = "49383024445f90d9423c51722da354d195bcd915cc386cd09f3682a331c7a049"
 
 [[paths.probes]]
 line = 52
@@ -496,3 +496,34 @@ sha256 = "c7098b24a1309a1f9e1017102bc73fbef2c29ca0e2badb246d1049fb2dced157"
 line = 321
 column = 5
 text = "key.verify_strict(&payload, &signature)?;"
+
+[[paths]]
+id = "scope.component_impact"
+module = "config"
+test = "config::impact::tests::thousand_component_chain_selects_consumers_without_recursive_or_path_explosion"
+platforms = ["linux", "macos", "windows"]
+platform_note = "Generic in-memory component graph; no platform-specific subprocesses or language discovery."
+observable = "A shared root selects all 1000 transitive consumers; a leaf change selects only itself."
+rule = "critical-path-source-v2"
+owner = "GateHouse maintainers"
+review_date = "2026-10-15"
+binary = "harness-gate"
+assertions = ["assert_eq!(selected.len(), 1000);", "assert_eq!(leaf.len(), 1);"]
+[paths.source]
+path = "src/config/impact.rs"
+symbol = "expand_impact"
+start = 83
+end = 85
+sha256 = "e7308765c42215f1c32cc11d1adc0acf2cc7556b03b23de6d717985c7e5391af"
+
+[paths.test_source]
+path = "src/config/impact.rs"
+symbol = "thousand_component_chain_selects_consumers_without_recursive_or_path_explosion"
+start = 255
+end = 272
+sha256 = "e7308765c42215f1c32cc11d1adc0acf2cc7556b03b23de6d717985c7e5391af"
+
+[[paths.probes]]
+line = 84
+column = 9
+text = "components.extend(self.impact_parents(components).into_keys());"

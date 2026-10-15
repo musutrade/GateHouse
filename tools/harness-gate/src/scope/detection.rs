@@ -19,6 +19,10 @@ pub(crate) fn detect_with_access(
     mode: &ScopeMode,
     readonly: bool,
 ) -> std::result::Result<ScopeResult, ScopeError> {
+    project
+        .config
+        .validate_impact_inputs(&project.execution_root)
+        .map_err(ScopeError::configuration)?;
     if matches!(mode, ScopeMode::All) {
         return Ok(ScopeResult::all(project));
     }

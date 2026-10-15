@@ -121,6 +121,38 @@
         "architecture-audit"
       ]
     },
+    "ComponentImpact": {
+      "type": "object",
+      "required": [
+        "dependencies",
+        "version"
+      ],
+      "properties": {
+        "dependencies": {
+          "description": "Consumer -> dependencies. Every workflow component must appear, including components with no dependencies (an empty array).",
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "inputs": {
+          "description": "Optional text inputs used to produce the reviewed graph, pinned by SHA-256.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    },
     "ContainerRuntimeKind": {
       "description": "Supported container runtimes for managed services.",
       "type": "string",
@@ -843,6 +875,17 @@
         "rules"
       ],
       "properties": {
+        "impact": {
+          "description": "Reviewed, repository-owned component dependencies; never execution order.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ComponentImpact"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "rules": {
           "type": "array",
           "items": {

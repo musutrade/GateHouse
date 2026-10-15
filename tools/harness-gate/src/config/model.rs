@@ -363,7 +363,22 @@ pub enum ParserConfig {
 pub struct ScopeConfig {
     #[serde(default)]
     pub unmatched: UnmatchedScope,
+    /// Reviewed, repository-owned component dependencies; never execution order.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub impact: Option<ComponentImpact>,
     pub rules: Vec<ScopeRule>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ComponentImpact {
+    pub version: u32,
+    /// Optional text inputs used to produce the reviewed graph, pinned by SHA-256.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub inputs: BTreeMap<String, String>,
+    /// Consumer -> dependencies. Every workflow component must appear,
+    /// including components with no dependencies (an empty array).
+    pub dependencies: BTreeMap<String, Vec<String>>,
 }
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, JsonSchema)]

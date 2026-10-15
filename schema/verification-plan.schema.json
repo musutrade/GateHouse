@@ -279,7 +279,45 @@
                 "required": [
                   "id",
                   "rules"
-                ]
+                ],
+                "properties": {
+                  "impact_chain": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "impact_sources": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "path",
+                        "rule",
+                        "component"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        },
+                        "rule": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "component": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "depends_on_components": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
               }
             ]
           }

@@ -1,4 +1,5 @@
 mod diagnostic;
+mod impact;
 pub(crate) mod import;
 mod loader;
 mod migration;
@@ -14,8 +15,8 @@ mod tests;
 pub(crate) use diagnostic::{report_for_error, ConfigDiagnostics, MINIMAL_CONFIG_SNIPPET};
 #[cfg(test)]
 pub(crate) use diagnostic::{ConfigDiagnostic, DiagnosticSeverity};
-pub(crate) use loader::read_config_source;
 pub use loader::schema_json;
+pub(crate) use loader::{read_config_source, MAX_CONFIG_BYTES};
 pub use migration::migrate_v1;
 pub(crate) use model::{
     BuiltinGateType, ContainerRuntimeKind, DoctorCheck, DoctorCheckKind, FlowConfig, ParserConfig,

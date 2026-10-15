@@ -35,6 +35,9 @@ pub(crate) fn select_scope(
     if components.is_empty() {
         return Ok(crate::scope::detect_with_access(project, mode, readonly)?);
     }
+    project
+        .config
+        .validate_impact_inputs(&project.execution_root)?;
     let known = project.config.components();
     for component in components {
         if !known.contains(component) {

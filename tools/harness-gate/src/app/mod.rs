@@ -291,6 +291,9 @@ fn check_config_json(
     plugins: &crate::plugins::HostOptions,
 ) -> Result<bool, CliError> {
     match Project::discover(root, config).and_then(|project| {
+        project
+            .config
+            .validate_impact_inputs(&project.execution_root)?;
         crate::plugins::check(&project.execution_root, plugins)?;
         crate::config::quality::QualityConfig::load_optional(
             &project.execution_root,

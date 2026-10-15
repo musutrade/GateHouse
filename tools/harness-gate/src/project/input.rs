@@ -77,6 +77,33 @@ impl InvocationInput {
         });
         let entries = inspect_index_entries(&snapshot_root, &index.stdout)?;
         hydrate_index_config(root, &snapshot_root, &entries, &git::index_path(config)?)?;
+        let flow: toml::Value = toml::from_str(&fs::read_to_string(snapshot_root.join(config))?)?;
+        if let Some(inputs) = flow
+            .get("scope")
+            .and_then(|v| v.get("impact"))
+            .and_then(|v| v.get("inputs"))
+            .and_then(toml::Value::as_table)
+        {
+            anyhow::ensure!(inputs.len() <= 64, "scope.impact exceeds 64 input pins");
+            for name in inputs.keys() {
+                // Inspect the size before allocating a graph-input blob.
+                let index_name = git::index_path(Path::new(name))?;
+                let id = entries
+                    .get(&index_name)
+                    .with_context(|| format!("required staged impact input {name:?} is missing"))?;
+                let size = git::capture_readonly(root, ["cat-file", "-s", id])?;
+                anyhow::ensure!(
+                    size.status.success(),
+                    "cannot inspect staged impact input {name:?}"
+                );
+                let bytes: u64 = String::from_utf8(size.stdout)?.trim().parse()?;
+                anyhow::ensure!(
+                    bytes <= crate::config::MAX_CONFIG_BYTES,
+                    "staged impact input {name:?} exceeds the 4 MiB configuration limit"
+                );
+                hydrate_index_config(root, &snapshot_root, &entries, name)?;
+            }
+        }
         if entries.contains_key(crate::plugins::LOCK_PATH) {
             hydrate_index_config(root, &snapshot_root, &entries, crate::plugins::LOCK_PATH)?;
         }

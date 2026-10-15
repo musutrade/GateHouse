@@ -65,7 +65,8 @@
         "src/config/validation/mod.rs",
         "src/config/validation/primitives.rs",
         "src/config/validation/steps.rs",
-        "src/plugins.rs"
+        "src/plugins.rs",
+        "src/config/impact.rs"
       ]
     },
     "doctor": {

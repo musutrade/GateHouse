@@ -489,6 +489,41 @@ components. ignore drops unmatched paths from component selection. Explicit
 Rules map Git paths to component IDs and the selected set is recorded in the
 machine result.
 
+### Explicit component impact (optional)
+
+```toml
+[scope.impact]
+version = 1
+[scope.impact.dependencies]
+shared = []
+api = ["shared"]
+web = ["api"]
+unrelated = []
+```
+
+Every key must be an existing workflow component; declare every component, even
+with no dependencies. `api = ["shared"]` means api consumes shared. A shared
+change selects shared, api and web; a web change selects only web. Profiles still
+filter each component's steps. Step `depends_on` remains execution prerequisites.
+Explicit `--components` stays exact; `--all` and unmatched policies keep their
+existing behavior. Rename/delete paths participate without reading removed files.
+
+For generated declarations, add `[scope.impact.inputs]` with repository-relative
+text paths as quoted keys and exact lowercase SHA-256 digests as values. Pin every
+manifest/lockfile that can change the graph. Missing or stale pins block selection;
+staged mode checks indexed bytes, including read-only previews. Core does not run
+providers or trust plugin graph responses. Authors must review static declarations
+and the completeness of pins; undeclared imports cannot be inferred.
+
+Unknown versions, incomplete inventories, duplicate edges, cycles and unsafe
+inputs fail closed. Limits are 1024 components, 8192 edges, 64 input pins and
+4 MiB per input. `verify --plan` explains indirect selections with COMPONENT_IMPACT,
+`impact_chain`, original `impact_sources` path/rule pairs and full
+`depends_on_components` declarations. Existing configurations need no migration.
+Older binaries reject the new field. To roll back, remove the impact section and
+use `--all` or restore equivalent reviewed glob coverage before downgrading.
+See the [design and cost model](../openspec/changes/component-impact-propagation/design.md).
+
 ## 12. Steps and built-in gates
 
     [[steps]]

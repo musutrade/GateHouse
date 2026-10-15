@@ -585,3 +585,232 @@ fn quality_inputs_are_explained_without_consuming_signed_requests_or_baselines()
     }
     assert_eq!(snapshot(root), before);
 }
+
+const IMPACT: &str = r#"
+[scope.impact]
+version = 1
+[scope.impact.dependencies]
+a = []
+b = ["a"]
+support = ["b"]
+unrelated = []
+"#;
+
+fn component<'a>(value: &'a Value, id: &str) -> &'a Value {
+    value["plan"]["components"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|v| v["id"] == id)
+        .unwrap()
+}
+
+#[test]
+fn component_impact_explains_transitive_consumers_and_matches_execution() {
+    for mode in ["working", "staged", "base"] {
+        for change in ["edit", "rename", "delete", "clean"] {
+            let dir = fixture("fail");
+            let root = dir.path();
+            fs::write(
+                root.join(".harness-gate/flow.toml"),
+                format!("{FLOW}{IMPACT}"),
+            )
+            .unwrap();
+            git(root, &["add", "."]);
+            git(root, &["commit", "--quiet", "-m", "review impact graph"]);
+            match change {
+                "edit" => fs::write(root.join("a/old name\nfile.txt"), "changed\n").unwrap(),
+                "rename" => git(root, &["mv", "a/old name\nfile.txt", "b/new.txt"]),
+                "delete" => fs::remove_file(root.join("a/old name\nfile.txt")).unwrap(),
+                _ => {}
+            }
+            let mut options = vec!["--profile", "hook"];
+            match mode {
+                "staged" => {
+                    git(root, &["add", "."]);
+                    options.push("--staged");
+                }
+                "base" => {
+                    git(root, &["add", "."]);
+                    git(
+                        root,
+                        &["commit", "--quiet", "--allow-empty", "-m", "candidate"],
+                    );
+                    options.extend(["--base", "HEAD^"]);
+                }
+                _ => {}
+            }
+            let before = snapshot(root);
+            let value = plan(root, &options);
+            assert_eq!(snapshot(root), before);
+            assert_eq!(value, plan(root, &options));
+            let affected = change != "clean";
+            assert_eq!(
+                node(&value, "b.test")["selected"],
+                affected,
+                "{mode}/{change}"
+            );
+            assert_eq!(node(&value, "unrelated")["selected"], false);
+            assert_eq!(node(&value, "a.full-only")["selected"], false);
+            if affected {
+                assert_eq!(
+                    value["plan"]["scope"]["components"],
+                    json!(["a", "b", "support"])
+                );
+                assert_eq!(
+                    component(&value, "support")["reasons"][0]["code"],
+                    "COMPONENT_IMPACT"
+                );
+                let expected_chain = if change == "rename" {
+                    json!(["b", "support"])
+                } else {
+                    json!(["a", "b", "support"])
+                };
+                assert_eq!(component(&value, "support")["impact_chain"], expected_chain);
+                assert!(!component(&value, "support")["impact_sources"]
+                    .as_array()
+                    .unwrap()
+                    .is_empty());
+            }
+            let mut args = vec!["verify"];
+            args.extend(&options);
+            checked(gate(root, &args));
+            let report: Value = serde_json::from_slice(
+                &fs::read(root.join(".harness-gate/reports/test_result.json")).unwrap(),
+            )
+            .unwrap();
+            let expected: std::collections::BTreeSet<_> = value["plan"]["execution_order"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_str().unwrap())
+                .collect();
+            let actual: std::collections::BTreeSet<_> = report["steps"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v["step_id"].as_str().unwrap())
+                .collect();
+            assert_eq!(actual, expected);
+        }
+    }
+}
+
+#[test]
+fn impact_preserves_explicit_components_all_and_step_dependency_direction() {
+    let dir = fixture("all");
+    let root = dir.path();
+    fs::write(
+        root.join(".harness-gate/flow.toml"),
+        format!("{FLOW}{IMPACT}"),
+    )
+    .unwrap();
+    let explicit = plan(root, &["--components", "a", "--profile", "hook"]);
+    assert_eq!(explicit["plan"]["scope"]["components"], json!(["a"]));
+    assert_eq!(node(&explicit, "setup")["selected"], true);
+    assert_eq!(node(&explicit, "b.test")["selected"], false);
+    assert_eq!(component(&explicit, "a")["impact_chain"], json!([]));
+    assert_eq!(node(&plan(root, &["--all"]), "unrelated")["selected"], true);
+    git(root, &["add", "."]);
+    git(root, &["commit", "--quiet", "-m", "graph"]);
+    fs::write(root.join("b/new.txt"), "b changed\n").unwrap();
+    let reverse = plan(root, &[]);
+    assert_eq!(
+        reverse["plan"]["scope"]["components"],
+        json!(["b", "support"])
+    );
+    assert_eq!(node(&reverse, "a.test")["selected"], false);
+    fs::write(root.join("outside.txt"), "unmatched\n").unwrap();
+    // FLOW still uses unmatched=fail; an impact graph must not hide this failure.
+    assert!(!gate(root, &["verify", "--plan", "--json"]).status.success());
+}
+
+#[test]
+fn invalid_impact_graphs_fail_before_dispatch_with_diagnostics() {
+    let cases = [
+        IMPACT.replace("version = 1", "version = 2"),
+        IMPACT.replace("support = [\"b\"]", ""),
+        IMPACT.replace("unrelated = []", "stale = []"),
+        IMPACT.replace("a = []", "a = [\"support\"]"),
+        IMPACT.replace("a = []", "a = [\"a\"]"),
+        IMPACT.replace("b = [\"a\"]", "b = [\"missing\"]"),
+        IMPACT.replace("b = [\"a\"]", "b = [\"a\", \"a\"]"),
+        IMPACT.replace("version = 1", "version = 1\nprovider = 'untrusted-command'"),
+        format!(
+            "{IMPACT}\n[scope.impact.inputs]\n'../escape' = '{}'\n",
+            "0".repeat(64)
+        ),
+        format!("{IMPACT}\n[scope.impact.inputs]\n'probe.sh' = 'invalid-digest'\n"),
+    ];
+    for graph in cases {
+        let dir = fixture("fail");
+        let root = dir.path();
+        fs::write(
+            root.join(".harness-gate/flow.toml"),
+            format!("{FLOW}{graph}"),
+        )
+        .unwrap();
+        let before = snapshot(root);
+        let output = gate(root, &["verify", "--plan", "--all", "--json"]);
+        assert!(!output.status.success(), "{graph}");
+        let value: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(value["status"], "invalid");
+        assert!(value["plan"].is_null() && value["verification_result"].is_null());
+        assert!(!value["diagnostics"].as_array().unwrap().is_empty());
+        assert_eq!(snapshot(root), before);
+        assert!(!gate(root, &["verify", "--all"]).status.success());
+        assert!(!root.join(".harness-gate/reports/invocations").exists());
+    }
+}
+
+#[test]
+fn pinned_impact_inputs_reject_stale_missing_and_filtered_data_and_use_index() {
+    use sha2::{Digest, Sha256};
+    let dir = fixture("fail");
+    let root = dir.path();
+    let digest = format!(
+        "{:x}",
+        Sha256::digest(fs::read(root.join("probe.sh")).unwrap())
+    );
+    let source = format!("{FLOW}{IMPACT}\n[scope.impact.inputs]\n'probe.sh' = '{digest}'\n");
+    fs::write(root.join(".harness-gate/flow.toml"), &source).unwrap();
+    git(root, &["add", "."]);
+    git(root, &["commit", "--quiet", "-m", "pinned graph"]);
+    fs::write(root.join("a/old name\nfile.txt"), "changed\n").unwrap();
+    git(root, &["add", "a"]);
+    let expected = plan(root, &["--staged"]);
+    fs::write(root.join("probe.sh"), "stale\n").unwrap();
+    let before = snapshot(root);
+    assert_eq!(expected, plan(root, &["--staged"]));
+    let output = gate(root, &["verify", "--plan", "--json"]);
+    assert!(!output.status.success());
+    assert!(String::from_utf8(output.stdout)
+        .unwrap()
+        .contains("is stale"));
+    assert_eq!(snapshot(root), before);
+    let scoped = checked(gate(root, &["scope", "--staged", "--json"]));
+    let scoped: Value = serde_json::from_slice(&scoped.stdout).unwrap();
+    assert_eq!(
+        scoped["components"],
+        expected["plan"]["scope"]["components"]
+    );
+    assert!(!gate(root, &["config", "check", "--format", "json"])
+        .status
+        .success());
+    git(root, &["add", "probe.sh"]);
+    assert!(!gate(root, &["verify", "--plan", "--staged", "--json"])
+        .status
+        .success());
+    fs::remove_file(root.join("probe.sh")).unwrap();
+    assert!(!gate(root, &["verify", "--plan", "--all", "--json"])
+        .status
+        .success());
+    fs::write(root.join("probe.sh"), "echo actual-step\nexit 0\n").unwrap();
+    fs::write(root.join(".gitattributes"), "probe.sh ident\n").unwrap();
+    git(root, &["add", "."]);
+    let output = gate(root, &["verify", "--plan", "--staged", "--json"]);
+    assert!(!output.status.success());
+    assert!(String::from_utf8(output.stdout)
+        .unwrap()
+        .contains("checkout filter"));
+}

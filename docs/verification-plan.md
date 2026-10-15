@@ -49,7 +49,7 @@ zero-based configuration indices. Reasons are versioned codes:
 | --- | --- |
 | Paths | PATH_RULE_MATCH, UNMATCHED_ALL, UNMATCHED_IGNORED |
 | Rules | RULE_MATCHED, RULE_NOT_MATCHED |
-| Components | EXPLICIT_COMPONENT, ALL_COMPONENTS, UNMATCHED_FALLBACK_ALL, SCOPE_RULE_COMPONENT, COMPONENT_NOT_AFFECTED |
+| Components | EXPLICIT_COMPONENT, ALL_COMPONENTS, UNMATCHED_FALLBACK_ALL, SCOPE_RULE_COMPONENT, COMPONENT_IMPACT, COMPONENT_NOT_AFFECTED |
 | Profiles | PROFILE_REQUESTED, PROFILE_DEFAULT, PROFILE_NOT_SELECTED |
 | Steps | MANDATORY_BUILTIN_GATE, COMPONENT_AND_PROFILE, DEPENDENCY_REQUIRED, COMPONENT_NOT_SELECTED, PROFILE_NOT_INCLUDED |
 | Services | SERVICE_REQUIRED, SERVICE_NOT_REQUIRED |
@@ -102,3 +102,8 @@ evidence and baselines must not be reset during rollback.
 Git-backed previews require Git with --no-lazy-fetch support. Missing partial-clone objects fail with diagnostics instead of launching remote helpers, fetching data or writing Git objects. Existing execution commands retain their normal Git behavior. Preview also omits the optional HEAD object probe because it does not produce an execution source identity.
 
 Core self-measurement selection expands to gh29-verify-plan/1, with fresh base/head collection under the same expanded inventory; see the [measurement migration](quality/issue-29/README.md). Historical reports, thresholds and debt/ratchet rules are preserved.
+
+Component impact version 1 adds `impact_chain` (a deterministic shortest witness),
+`impact_sources` (original changed paths and rule indices), and
+`depends_on_components` (the full declared adjacency) to component explanations.
+See [component impact configuration](configuration.md#explicit-component-impact-optional).
