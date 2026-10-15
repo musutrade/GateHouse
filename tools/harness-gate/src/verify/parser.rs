@@ -552,3 +552,7 @@ mod tests {
         assert_eq!(merge_shards(&results, 2).unwrap(), vec!["a", "b"]);
     }
 }
+
+#[cfg(test)]
+#[path = "parser_fuzz.rs"]
+mod bounded_fuzz;
