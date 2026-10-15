@@ -56,9 +56,33 @@ fn discovery_is_project_independent_and_selectors_are_exclusive() {
     );
     let human = run(&["explain", "--list"]);
     assert!(human.status.success());
-    assert!(String::from_utf8(human.stdout)
-        .unwrap()
-        .contains("QUALITY_BLOCKED:"));
+    let expected_human: String = entries
+        .iter()
+        .map(|entry| {
+            format!(
+                "{}: {}\n",
+                entry["code"].as_str().unwrap(),
+                entry["title"].as_str().unwrap()
+            )
+        })
+        .collect();
+    assert_eq!(String::from_utf8(human.stdout).unwrap(), expected_human);
+    let human_empty = run(&["explain", "--search", "nonexistent-xyz"]);
+    assert!(human_empty.status.success());
+    assert!(human_empty.stderr.is_empty());
+    assert_eq!(human_empty.stdout, b"No matching error codes.\n");
+    let missing_config = run(&[
+        "--project-root",
+        "missing-project",
+        "--config",
+        "missing.toml",
+        "explain",
+        "--list",
+        "--json",
+    ]);
+    assert!(missing_config.status.success());
+    assert!(missing_config.stderr.is_empty());
+    assert_eq!(missing_config.stdout, listed.stdout);
     for args in [
         vec!["explain"],
         vec!["explain", "--search", " "],
