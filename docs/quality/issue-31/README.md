@@ -50,3 +50,12 @@ substitute. No baseline is reset and no historical evidence is overwritten.
 
 Migration and conservative rollback are described in the
 [design](../../../openspec/changes/component-impact-propagation/design.md).
+
+The first hosted run (38668338577) passed three-platform functional tests, risk
+and critical-path collection, but rejected the stale declaration-only digest for
+src/config/mod.rs. Review confirms the file adds only a module declaration and a
+constant re-export; executable impact.rs remains in the blocking config boundary.
+The corrected declaration digest preserves all mappings and thresholds. Rechecking
+that run's unchanged-source LLVM/LCOV exports against the corrected inventory
+passes production coverage (90.97% lines, 88.35% regions); fresh hosted validation
+is still required for the repair commit. The failed run is retained as evidence.
