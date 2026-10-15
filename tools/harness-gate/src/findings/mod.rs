@@ -195,6 +195,7 @@ fn normalize(bundle: Bundle, core_bytes: &[u8]) -> Result<Report> {
         );
         // Redact recursively without changing JSON types, keys, or structure.
         redact_value(&mut source.document);
+        validate_identifier(&source.measurement_id)?;
         let findings = match source.format.as_str() {
             "native/1" => native(&source.document, index)?,
             "sarif/2.1.0" => sarif::import(&source.document, index)?,
@@ -245,6 +246,8 @@ fn native(document: &Value, source: usize) -> Result<Vec<Finding>> {
     );
     let tool = nonempty(document, "tool")?;
     let version = nonempty(document, "tool_version")?;
+    validate_identifier(&tool)?;
+    validate_identifier(&version)?;
     let values = document["findings"]
         .as_array()
         .context("missing native findings array")?;
@@ -265,25 +268,16 @@ fn native(document: &Value, source: usize) -> Result<Vec<Finding>> {
             let anchor = if stable {
                 anchor
             } else {
-                serde_json::to_string(&locations)?
+                format!("location:{}", digest(&serde_json::to_vec(&locations)?))
             };
             let severity = nonempty(value, "severity")?;
             ensure!(
                 matches!(severity.as_str(), "error" | "warning" | "note" | "none"),
                 "unknown finding severity"
             );
-            ensure!(
-                [
-                    namespace.as_str(),
-                    rule.as_str(),
-                    anchor.as_str(),
-                    tool.as_str(),
-                    version.as_str()
-                ]
-                .iter()
-                .all(|s| !s.contains("[REDACTED]")),
-                "credential-bearing identity metadata cannot establish stable identity"
-            );
+            for field in [&namespace, &rule, &anchor] {
+                validate_identifier(field)?;
+            }
             Ok(Finding {
                 id: identity(&namespace, &rule, &anchor),
                 stable,
@@ -363,6 +357,7 @@ fn source_findings(source: &Source, index: usize) -> Result<Vec<Finding>> {
         source.complete && !source.measurement_id.trim().is_empty(),
         "incomplete historical source"
     );
+    validate_identifier(&source.measurement_id)?;
     let mut redacted = source.document.clone();
     redact_value(&mut redacted);
     ensure!(

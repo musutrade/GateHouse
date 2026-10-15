@@ -98,6 +98,11 @@ pub(super) fn hex(value: &str, length: usize) -> bool {
 }
 
 pub(super) fn validate_context(context: &Context) -> Result<()> {
+    ensure!(
+        context.repository.len() <= 256,
+        "repository identity exceeds 256 bytes"
+    );
+    validate_identifier(&context.series)?;
     let parts: Vec<_> = context.repository.split('/').collect();
     ensure!(
         parts.len() == 2
@@ -113,7 +118,7 @@ pub(super) fn validate_context(context: &Context) -> Result<()> {
         "commit/tree must be exact lowercase Git SHA-1 identities"
     );
     ensure!(
-        !context.series.trim().is_empty(),
+        !context.series.trim().is_empty() && context.series.len() <= 1024,
         "missing measurement series"
     );
     Ok(())
@@ -134,6 +139,18 @@ pub(super) fn validate_location(location: &Location) -> Result<()> {
     ensure!(
         location.line > 0 && location.end_line >= location.line,
         "invalid location line range"
+    );
+    Ok(())
+}
+
+pub(super) fn validate_identifier(value: &str) -> Result<()> {
+    ensure!(
+        !value.trim().is_empty()
+            && value.len() <= 1024
+            && !value.chars().any(char::is_control)
+            && !value.contains("[REDACTED]")
+            && crate::utils::redaction::redact_text(value) == value,
+        "identity metadata must be non-secret text of 1..1024 bytes without controls"
     );
     Ok(())
 }

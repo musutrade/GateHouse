@@ -14,7 +14,8 @@ pub(super) fn import(document: &Value, source: usize) -> Result<Vec<Finding>> {
             .as_str()
             .or_else(|| driver["version"].as_str())
             .context("missing SARIF tool version")?;
-        ensure!(!version.is_empty(), "empty SARIF tool version");
+        validate_identifier(&tool)?;
+        validate_identifier(version)?;
         if let Some(invocations) = run.get("invocations") {
             let invocations = invocations
                 .as_array()
@@ -131,20 +132,11 @@ fn result_finding(
     let anchor = if stable {
         anchor.to_string()
     } else {
-        serde_json::to_string(&locations)?
+        format!("location:{}", digest(&serde_json::to_vec(&locations)?))
     };
-    ensure!(
-        [
-            namespace.as_str(),
-            rule.as_str(),
-            anchor.as_str(),
-            tool,
-            version
-        ]
-        .iter()
-        .all(|s| !s.contains("[REDACTED]")),
-        "credential-bearing identity metadata cannot establish stable identity"
-    );
+    for field in [namespace.as_str(), rule.as_str(), anchor.as_str()] {
+        validate_identifier(field)?;
+    }
     Ok(Finding {
         id: identity(&namespace, &rule, &anchor),
         stable,

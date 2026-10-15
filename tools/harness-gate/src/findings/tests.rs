@@ -414,3 +414,63 @@ fn historical_snapshots_do_not_copy_the_full_result_set_per_finding() {
     );
     load(&bytes).unwrap();
 }
+
+#[test]
+fn large_source_metadata_is_retained_once_and_not_amplified_by_history() {
+    let mut input = bundle();
+    input.sources[0].document["metadata"] = json!("x".repeat(500_000));
+    let finding = input.sources[0].document["findings"][0].clone();
+    input.sources[0].document["findings"] = Value::Array(
+        (0..100)
+            .map(|i| {
+                let mut value = finding.clone();
+                value["anchor"] = json!(format!("symbol-{i}"));
+                value
+            })
+            .collect(),
+    );
+    let report = normalize(input, &core()).unwrap();
+    let bytes = serde_json::to_vec(&report).unwrap();
+    assert!(
+        bytes.len() < 1_000_000,
+        "amplified metadata: {} bytes",
+        bytes.len()
+    );
+    assert_eq!(
+        report.sources[0].document["metadata"]
+            .as_str()
+            .unwrap()
+            .len(),
+        500_000
+    );
+    assert!(report.history[0]
+        .evidence
+        .document
+        .get("metadata")
+        .is_none());
+    assert_eq!(
+        report.history[0].evidence.document["original_format"],
+        "native/1"
+    );
+    load(&bytes).unwrap();
+}
+
+#[test]
+fn repeated_identity_metadata_is_bounded_before_result_expansion() {
+    for field in ["tool", "tool_version"] {
+        let mut input = bundle();
+        input.sources[0].document[field] = json!("x".repeat(1025));
+        assert!(normalize(input, &core()).is_err(), "{field}");
+    }
+    let mut input = bundle();
+    input.sources[0].measurement_id = "x".repeat(1025);
+    assert!(normalize(input, &core()).is_err());
+    for field in ["anchor", "namespace", "rule"] {
+        let mut input = bundle();
+        input.sources[0].document["findings"][0][field] = json!("x".repeat(1025));
+        assert!(normalize(input, &core()).is_err(), "{field}");
+    }
+    let mut source = sarif::export(&normalized());
+    source["runs"][0]["tool"]["driver"]["name"] = json!("x".repeat(1025));
+    assert!(sarif::import(&source, 0).is_err());
+}

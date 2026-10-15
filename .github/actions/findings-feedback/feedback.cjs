@@ -15,13 +15,14 @@ function safe(value, token = '') {
     .replace(/\b(?:gh[pousr]_[a-zA-Z0-9_]+|github_pat_[a-zA-Z0-9_]+)\b/g, '[REDACTED]')
     .replace(/\b[a-z][a-z0-9+.-]*:\/\/[^\s/@]+:[^\s/@]+@[^\s]+/gi, '[REDACTED]').slice(0, 2000);
 }
-function annotations(report, token) {
+function annotations(report, token, limit) {
   const output = new Map();
   const rank = {notice: 0, warning: 1, failure: 2};
   for (const finding of report.findings) {
     requireThat(isHex(finding.id, 64), 'invalid finding identity');
     requireThat(['error', 'warning', 'note', 'none'].includes(finding.severity), 'unknown severity');
     requireThat(typeof finding.message === 'string' && Array.isArray(finding.locations) && finding.locations.length > 0, 'incomplete finding');
+    const message = safe(finding.message, token);
     for (const location of finding.locations) {
       const {path, line, end_line: endLine} = location;
       requireThat(typeof path === 'string' && path.length > 0 && path.length <= 4096 && !/[\\:%?#\x00-\x1f\x7f]/.test(path) && path.split('/').every(p => p && p !== '.' && p !== '..'), 'unsafe annotation path');
@@ -30,8 +31,9 @@ function annotations(report, token) {
       const key = JSON.stringify([finding.id, path, line, endLine]);
       const item = {path, start_line: line, end_line: endLine,
         annotation_level: {error: 'failure', warning: 'warning', note: 'notice'}[finding.severity],
-        title: `Finding ${finding.id.slice(0, 12)}`, message: safe(finding.message, token)};
+        title: `Finding ${finding.id.slice(0, 12)}`, message};
       if (!output.has(key) || rank[item.annotation_level] > rank[output.get(key).annotation_level]) output.set(key, item);
+      requireThat(output.size <= limit, 'annotation limit exceeded; nothing published; retain complete local report');
     }
   }
   return [...output.values()];
@@ -47,7 +49,7 @@ async function deliver(options) {
   requireThat(['PASS', 'FAIL'].includes(report.core_status) && Array.isArray(report.findings) && report.findings.length <= 10000, 'invalid completed Core report');
   requireThat(Number.isInteger(maxAnnotations) && maxAnnotations >= 1 && maxAnnotations <= 1000, 'annotation limit must be 1..1000');
   requireThat(Number.isSafeInteger(pr) && pr > 0, 'explicit PR number required');
-  const items = annotations(report, token);
+  const items = annotations(report, token, maxAnnotations);
   requireThat(items.length <= maxAnnotations, 'annotation limit exceeded; nothing published; retain complete local report');
   if (!publish) return {published: false, count: items.length, core_status: report.core_status};
   requireThat((isHex(options.expectedPrevious, 64) && report.previous_sha256 === options.expectedPrevious && !options.initializeHistory) || (options.initializeHistory === true && !options.expectedPrevious && report.previous_sha256 === null), 'trusted previous history pin required; initial enrollment must be explicit');

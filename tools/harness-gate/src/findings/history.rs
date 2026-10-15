@@ -173,46 +173,27 @@ fn source_tools(source: &Source) -> serde_json::Value {
     }
 }
 
-// Store only this observation and its source/run metadata. Copying a complete
-// N-result document into every history record would use quadratic space.
+// A compact canonical projection plus the original redacted observation.
+// Complete source/run metadata remains in the pinned original report chain;
+// copying it per finding could amplify one large property into unbounded memory.
 fn snapshot(source: &Source, finding: &Finding) -> Source {
-    fn without(value: &serde_json::Value, key: &str) -> serde_json::Value {
-        serde_json::Value::Object(
-            value
-                .as_object()
-                .expect("validated source object")
-                .iter()
-                .filter(|(name, _)| name.as_str() != key)
-                .map(|(name, value)| (name.clone(), value.clone()))
-                .collect(),
-        )
-    }
     let result = source
         .document
         .pointer(&finding.pointer)
         .expect("validated result pointer")
         .clone();
-    let document = if source.format == "native/1" {
-        let mut document = without(&source.document, "findings");
-        document["findings"] = serde_json::json!([result]);
-        document
-    } else {
-        let run_index: usize = finding
-            .pointer
-            .split('/')
-            .nth(2)
-            .expect("SARIF pointer")
-            .parse()
-            .expect("SARIF run index");
-        let mut run = without(&source.document["runs"][run_index], "results");
-        run["results"] = serde_json::json!([result]);
-        let mut document = without(&source.document, "runs");
-        document["runs"] = serde_json::json!([run]);
-        document
-    };
+    let anchor = finding.stable.then_some(&finding.anchor);
+    let document = serde_json::json!({
+        "schema_version": "native/1", "tool": finding.tool, "tool_version": finding.tool_version,
+        "original_format": source.format, "original_pointer": finding.pointer,
+        "original_result": result,
+        "findings": [{"namespace": finding.namespace, "rule": finding.rule, "anchor": anchor,
+            "severity": finding.severity, "message": finding.message, "locations": finding.locations,
+            "fixes": finding.fixes}]
+    });
     Source {
         document,
-        format: source.format.clone(),
+        format: "native/1".into(),
         measurement_id: source.measurement_id.clone(),
         complete: source.complete,
     }

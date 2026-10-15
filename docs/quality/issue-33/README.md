@@ -15,11 +15,13 @@ Local validation during implementation:
 - The complete workspace nextest run passed **566/566 tests, zero skipped**.
   Subsequent focused tests cover the final history snapshot, URI and redaction
   refinements; the final hosted run must validate the complete candidate again.
-- Twelve finding unit regressions cover malformed/incomplete documents, provenance,
+- Fourteen finding unit regressions cover malformed/incomplete documents, provenance,
   native/SARIF import/export, URI decoding, path confinement, duplicate identities,
   cross-tool canonical mapping, moved lines/files, resolution/reopening, pinned
   history and immutable outputs. A 500-finding fixture bounds history serialization
-  and prevents copying the complete result set into every record.
+  and prevents copying the complete result set into every record. A large-metadata
+  fixture also proves source metadata is retained once; identifier bounds prevent
+  large shared tool/measurement fields from expanding into every observation.
 - A real CLI integration runs `verify --staged`, then normalize/compare/export
   and both schema generators. It checks retained Core report bytes, source tree
   binding, independently pinned parents, exclusive output creation, schema sync,

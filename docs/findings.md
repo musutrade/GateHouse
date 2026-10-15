@@ -93,7 +93,9 @@ severity fail explicitly; normalize them in a trusted upstream adapter rather
 than guessing. Additional locations are preserved and can receive annotations.
 
 Limits are 16 MiB per input/output, 100 source documents, and 10,000 findings or
-history identities. Paths are literal repository-relative paths; traversal,
+history identities. Repeated tool/version/measurement/rule/anchor metadata is
+limited to 1024 bytes without controls; repository identity is at most 256 bytes
+and series at most 1024 bytes. Paths are literal repository-relative paths; traversal,
 absolute paths, backslashes, URI syntax, literal percent signs and control characters
 are rejected. SARIF URI escapes are decoded exactly once and then validated;
 encoded separators and traversal are rejected. Export escapes spaces and UTF-8 bytes. Lines are positive inclusive ranges.
@@ -126,7 +128,11 @@ from an untrusted artifact's own declaration. Comparison requires the same
 repository, series, ordered source formats and tool/version coverage, including
 empty result sets. Missing/incomplete tools cannot resolve an issue. It keeps
 new/persistent/resolved/reopened entries, original first-seen and last-seen commit,
-redacted per-observation source snapshots, and the exact parent file digest. Resolution
+compact per-observation snapshots (canonical fields and original redacted result),
+and the exact parent file digest. Complete source/run metadata remains in the
+pinned original report chain; it is not duplicated per historical identity.
+Snapshots use a native/1 projection with the original format, pointer and redacted
+result alongside the canonical finding fields. Resolution
 does not delete an issue; reappearance reopens it. All output paths use exclusive
 creation, so existing reports and checkpoints cannot be overwritten.
 
