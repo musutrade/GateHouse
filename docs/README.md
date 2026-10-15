@@ -35,3 +35,5 @@ was true when recorded; use the current guides below for installation and use.
 Core installation, collector installation, native measurement certification and
 project policy adoption are separate milestones. A preset or an installed plugin
 does not create a trusted baseline or prove the project's quality gates pass.
+
+容器运行时插件化的待验证设计见 [Core 边界与迁移提案](runtime-plugin-boundary.md)。
