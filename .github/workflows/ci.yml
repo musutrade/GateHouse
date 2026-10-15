@@ -371,11 +371,21 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.sha }}
           RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          CI_PARALLEL_RISK: '1'
         run: |
           BASE_SHA="$(python3 tools/maintenance/migration_baseline.py --base "$BASE_SHA" --head "$HEAD_SHA" --fetch)"
           python3 tools/quality/ci_quality.py collect \
             --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
             --output target/quality/candidate
+
+      - name: Sample cgroup memory peak
+        if: ${{ always() }}
+        run: |
+          cat /proc/self/cgroup || true
+          for path in /sys/fs/cgroup/memory.peak \
+                      /sys/fs/cgroup/memory/memory.max_usage_in_bytes; do
+            if [ -r "$path" ]; then echo "MEMORY_PEAK $path $(cat "$path")"; fi
+          done
 
       - name: Seal immutable quality evidence
         id: seal
