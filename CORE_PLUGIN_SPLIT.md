@@ -168,3 +168,15 @@ require a host restart.
 Evaluation only. No code change and no Issue creation in this round.
 
 Issue #28 supersedes the installer evaluation row: the active Core plugin execution bridge is retired, while historical tagged installers retain their original identities. GateProbes owns the sole editable plugin installation implementation.
+
+## 9. Follow-up reconciliation (2026-10-15)
+
+This evaluation's earlier path/status rows are historical. The
+[Issue 34 reconciliation](docs/quality/issue-34/README.md) records current
+ownership and all eleven delivered follow-ups. Postgres is externally delivered
+through a signed public Core/plugin pair; Cargo invocation rules live in
+GateProbes runner data; Core plugin installation is retired. Generic execution,
+protocol/trust validation and final decisions remain Core responsibilities.
+GitHub PR feedback is an explicit optional action outside the Rust engine.
+The original acceptance evidence, frozen references, measurement definitions,
+required gates, baseline/debt/ratchet and release authority are unchanged.

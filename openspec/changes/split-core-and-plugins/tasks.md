@@ -344,3 +344,16 @@ remaining plugins, and the release/signing identity switch last.
 > thresholds, baseline/debt/ratchet, measurement series, final decisions and
 > release authority are unchanged. See the
 > [current contract and consumer inventory](../../../docs/quality/postgres-externalization.md).
+
+> **4.2 final delivery reconciliation (GateHouse #34, 2026-10-15):** the
+> pending-publication statement in the dated correction above is superseded by
+> the independently verified Core `v0.5.0` / GateProbes
+> `postgres-service-v0.1.1` [public acceptance](../../../docs/releases/postgres-service-0.1.1-acceptance.md).
+> GateHouse PR #38 closed #24 after signed publication and 47 live Linux
+> service/doctor/verify records, including required failures and preset parity.
+> Cargo runner data and plugin installation were subsequently handed off under
+> #27/#28; the Core installer execution bridge is retired. The
+> [Issue 34 reconciliation](../../../docs/quality/issue-34/README.md) records
+> all eleven child deliveries, merged cross-repository handoffs and remaining
+> first-stage limits. Original receipts and failures remain unchanged; no
+> Engineering Policy, measurement, supported-platform or authority delta.

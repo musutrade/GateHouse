@@ -99,3 +99,16 @@ Deleted recipe measurement is supported as an absent source on head;
 The coordinator must collect exact base/head inputs under the existing measurement
 series. Critical-path source bindings are refreshed using the same function,
 probe text, applicability and assertions; that refresh is not execution evidence.
+
+## Final public delivery supplement — 2026-10-15
+
+The candidate-era pending-release statements above are retained as history.
+Core `v0.5.0` and GateProbes `postgres-service-v0.1.1` have now been independently
+signed, published and verified. The [final public receipt](../releases/postgres-service-0.1.1-acceptance.md)
+records exact source/run/asset identities, signatures and provenance, fresh Core
+binary/crates.io installation, 47 live Linux service/doctor/verify records and all
+three installed presets with preserved execution/quality gates. GateHouse PR #38
+closed #24. The original 0.1.0 failed publication and immutable tags remain intact.
+This closes the compatible-public-pair condition; it does not certify another
+platform or change requiredness, thresholds, baseline/debt/ratchet or authority.
+The [umbrella reconciliation](issue-34/README.md) records the wider follow-up.

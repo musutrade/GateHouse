@@ -114,3 +114,21 @@ Merged GateProbes [PR #19](https://github.com/musutrade/GateProbes/pull/19) reco
 legacy limitation and enforces actual future-publication protection with a
 machine receipt. It does not modify RC8 or promote it to stable. The
 [Issue 15 reconciliation](issue-15/README.md) records the accepted closure evidence.
+
+## Follow-up ownership correction — 2026-10-15
+
+The installer description under "Plugin release identity" above is historical.
+Under #28, active `install.sh` installs **only Core**; legacy plugin flags fail
+before downloading and point to the full-commit, checksum-verified GateProbes
+installer. The compatibility execution bridge is retired, and GateProbes owns
+the sole editable native installation implementation, version/asset/signing
+selection, upgrade and rollback. Historical tagged Core installers keep their
+original behavior and identities. The [Issue 28 receipt](issue-28/README.md)
+records real public RC8 verification and distinguishes fixture rollback from
+published-version/runtime certification.
+
+Postgres now also has independently signed public delivery with compatible Core
+0.5.0; see the [public receipt](../releases/postgres-service-0.1.1-acceptance.md).
+The [Issue 34 reconciliation](issue-34/README.md) records subsequent source-only
+features, cross-repository handoffs and scope limits. Shared governance ownership,
+frozen legacy bytes, required gates and release authority remain unchanged.
