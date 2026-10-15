@@ -1,0 +1,82 @@
+{
+  "task": "GateHouse/ci-post-merge-verification-20261015",
+  "epoch": 1,
+  "baseline_commit": "33d780541e083499a643efcbcb1348836ab39a0b",
+  "scope": "hosted GitHub runner paired observation; single pair, measurement branches PR #72 (sequential) and PR #73 (parallel, CI_PARALLEL_RISK=1)",
+  "status": "completed",
+  "workflow_identical_except": "CI_PARALLEL_RISK env on the quality-coverage collection step; both measurement branches carried the same cgroup readout step",
+  "runs": {
+    "sequential": {
+      "pr": 72,
+      "run_id": 38743571562,
+      "conclusion": "success",
+      "risk_seconds": 398.99,
+      "quality_job_seconds": 761,
+      "pr_to_aggregate_seconds": 781,
+      "base_coverage_seconds": 188.48,
+      "head_coverage_seconds": 157.86,
+      "legacy_seconds": 232.82,
+      "matrix_seconds": 88.85
+    },
+    "parallel": {
+      "pr": 73,
+      "run_id": 38743613940,
+      "conclusion": "success",
+      "risk_seconds": 320.4,
+      "quality_job_seconds": 627,
+      "pr_to_aggregate_seconds": 648,
+      "base_coverage_seconds": 288.63,
+      "head_coverage_seconds": 287.31,
+      "legacy_seconds": 197.72,
+      "matrix_seconds": 82.2
+    }
+  },
+  "deltas": {
+    "risk_stage_seconds": -78.6,
+    "risk_stage_percent": -19.7,
+    "quality_job_seconds": -134,
+    "pr_to_aggregate_seconds": -133,
+    "per_command_inflation": {
+      "base_coverage": 1.53,
+      "head_coverage": 1.82,
+      "note": "concurrent cargo runs slow each other, but wall max(288.6,287.3) stays well below the sequential sum 346.3"
+    }
+  },
+  "correctness_and_resources": {
+    "all_required_checks_passed": true,
+    "tests": "576 passed each side, zero skipped, risk.json accepted",
+    "oom": false,
+    "hosted_rss": "not captured: cgroup memory files unavailable in the runner namespace; the parallel quality job completed on the 16GB ubuntu-latest runner without OOM"
+  },
+  "variance": [
+    "single paired observation; runs executed concurrently in the same window",
+    "legacy differed 232.8 vs 197.7 seconds between the pair despite identical code, so job-level deltas include this noise",
+    "the risk-stage delta exceeds observed noise",
+    "sequential quality job wall was reproducible across PR #71 (759 s) and PR #72 (761 s)"
+  ],
+  "post_merge_baseline_gain": {
+    "description": "PR #71 pre-merge run (base on old tests) versus PR #72 post-merge run (base on optimized tests)",
+    "base_coverage_before_seconds": 260.13,
+    "base_coverage_after_seconds": 188.48,
+    "gain_seconds": 71.65
+  },
+  "push_integration": {
+    "run_id": 38743433546,
+    "conclusion": "success",
+    "quality_seconds": 797,
+    "push_critical_path": "Quality Performance Baseline (macos-latest) 2095 seconds",
+    "note": "push-owned jobs all green; quality is not the push critical path"
+  },
+  "local_slow_test_profile": {
+    "suite_seconds": 96.461,
+    "tests": 576,
+    "top_slow_tests": [
+      ["rename_scope_test::unmatched_policy_controls_scope_and_actual_verify_steps_in_every_mode", 77.142],
+      ["policy_tests::frozen_policy_and_reference_acceptance_match_python", 68.165],
+      ["replay::retained_corpora_and_consolidated_negative_matrix", 67.115],
+      ["quality_cli_test::shipped_cli_matches_both_corpora_and_negative_matrix_without_python_runtime", 57.797]
+    ],
+    "note": "plain debug local profile; identifies post-optimization hotspots, not CI wall-time decomposition"
+  },
+  "decision": "Hosted evidence supports enabling CI_PARALLEL_RISK=1 in .github/workflows/ci.yml; recommend monitoring the next 1-2 PR runs for stability before treating the gain as established."
+}

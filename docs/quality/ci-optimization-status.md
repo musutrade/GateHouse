@@ -1,6 +1,6 @@
 # CI 并行 Risk 实施状态
 
-2026-10-15：实验功能默认关闭，第一组本地完整 Risk 对照已完成，暂不默认启用。
+2026-10-15：本地第一组对照完成后曾保持默认关闭；同日完成 GitHub runner 配对实测（见文末"GitHub runner 配对实测"小节），随后在 `.github/workflows/ci.yml` 的质量收集步骤显式启用 `CI_PARALLEL_RISK: '1'`。
 
 已修正默认开关、清理后的环境传递、独立构建目录、命令记录同步，以及失败后等待在途任务并跳过比较的行为。串行和并行共用逐提交收集及完整性检查。
 
@@ -28,7 +28,7 @@ CI_PARALLEL_RISK=1 python3 tools/quality/ci_quality.py collect \
 
 `BASE_SHA`、`HEAD_SHA` 必须为已存在的完整提交 SHA，head 必须对应当前 checkout，编译输入须与提交一致。入口会执行所有四个阶段；专门调用 `Collector.risk()` 的本地诊断只测量 Risk 阶段，不能冒充完整 CI 候选通过。
 
-后续是否推广仍需目标 GitHub runner 上的重复测量，当前不默认启用。
+当时结论：后续是否推广仍需目标 GitHub runner 上的重复测量，当时不默认启用；该条件已由下文的 hosted 配对实测满足。
 
 
 ## 本地实测结果
@@ -48,6 +48,25 @@ CI_PARALLEL_RISK=1 python3 tools/quality/ci_quality.py collect \
 
 最终 `risk.json` 相同，所有 selected failures 均为空。原始计数不完全一致：base/head 分别有 99/91 个函数记录不同。head 的覆盖率摘要、复杂度、CRAP 和通过状态相同；base 的非选定函数 `preset/initialize.rs::project_id` 区域覆盖为 30/32 与 29/32。该差异也出现在串行 base/head 之间，而两提交的 Rust 源码无变化，不能仅凭这一对实验归因于并行。原始差异完整保留，未按“等价”删除。
 
-结论：代码修复与第一组诊断完成，保留默认关闭，不修改 CI workflow。没有证据支持原先节省约 240 秒的预估，也不把本机单组结果外推为 GitHub CI 收益。没有启动额外重复测量、提交或推送。
+当时结论：代码修复与第一组诊断完成，保留默认关闭，不修改 CI workflow。没有证据支持原先节省约 240 秒的预估，也不把本机单组结果外推为 GitHub CI 收益。当时没有启动额外重复测量、提交或推送。
 
 [结构化结果](ci-parallel-risk-local-result.json) 保留指标、差异摘要及证据摘要哈希。原始日志和报告位于本地 `/mnt/dev-ssd/gatehouse-ci-parallel-20261015-r3/`；测量脚本及审查证据位于 `~/.local/state/herdr-issue-flow/musutrade-GateHouse/ci-parallel-risk-20261015/`。
+
+## GitHub runner 配对实测与启用
+
+PR #71 合并（`33d780541e083499a643efcbcb1348836ab39a0b`）后，在同一窗口、同一代码基线上用两个测量分支做了配对观测：PR #72 串行（未设开关），PR #73 并行（`CI_PARALLEL_RISK=1`）。两个 workflow 除该环境变量外完全相同，均含相同的 cgroup 读数步骤。
+
+| 指标 | 串行（PR #72） | 并行（PR #73） |
+| --- | ---: | ---: |
+| Risk 阶段 | 398.99 秒 | 320.4 秒 |
+| base / head coverage 命令 | 188.48 / 157.86 秒 | 288.63 / 287.31 秒 |
+| Quality job 墙钟 | 761 秒 | 627 秒 |
+| run 创建→aggregate 完成 | 781 秒 | 648 秒 |
+
+- Risk 阶段减少 **78.6 秒（-19.7%）**；Quality job 减少 134 秒。
+- 并发使单条 coverage 命令膨胀约 1.53×/1.82×，但并行墙钟 `max(288.6, 287.3)` 仍显著低于串行和 346.3 秒。
+- 两个 run 的 576 项测试与 Required Quality Aggregate 均通过；**无 OOM**。hosted RSS 未采集成功（runner 命名空间下 cgroup 内存文件不可读），资源证据以"无 OOM、全部检查通过"为准。
+- 噪声说明：单配对观测，且 legacy（232.8 与 197.7 秒）存在与开关无关的波动；Risk 阶段差值超过该波动。串行基线本身可复现（PR #71 为 759 秒、PR #72 为 761 秒）。
+- 合并后基线收益：base 侧测试优化使 base-coverage 从 260.13 秒降至 188.48 秒（-71.65 秒），与并行开关相互独立。
+
+据此在 `.github/workflows/ci.yml` 的质量收集步骤显式设置 `CI_PARALLEL_RISK: '1'`。建议对随后的 1-2 个 PR run 观察稳定性，再将该收益视为已确立。结构化证据见 [hosted 结果](ci-parallel-risk-hosted-result.json)。
