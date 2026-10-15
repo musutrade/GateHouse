@@ -17,7 +17,7 @@ impl Fixture {
         let host = TestWorkspace::new("cache-host");
         crate::preset::init(&repository.root, "generic", false).unwrap();
         fs::write(repository.root.join("source.txt"), "source-v1\n").unwrap();
-        fs::write(repository.root.join("toolchain.txt"), "tools-v1\n").unwrap();
+        fs::write(host.root.join("toolchain.txt"), "tools-v1\n").unwrap();
         fs::write(
             repository.root.join(".gitignore"),
             ".harness-gate/reports/\nproduct.txt\nignored-input\n",
@@ -46,7 +46,7 @@ impl Fixture {
             serde_json::from_value(serde_json::json!({
                 "version":1, "deterministic":true, "side_effect_free":true,
                 "inputs":[], "outputs":[], "environment":[],
-                "toolchain":[fs::canonicalize("/bin/cat").unwrap(), repository.root.canonicalize().unwrap().join("toolchain.txt")]
+                "toolchain":[fs::canonicalize("/bin/cat").unwrap(), host.root.canonicalize().unwrap().join("toolchain.txt")]
             }))
             .unwrap(),
         );
@@ -129,7 +129,15 @@ fn actual_working_bytes_configuration_profile_and_tools_invalidate() {
             3 => fixture.project.config.steps[0]
                 .args
                 .push("source.txt".into()),
-            _ => fs::write(fixture.project.root.join("toolchain.txt"), "tools-v2").unwrap(),
+            _ => fs::write(
+                &fixture.project.config.steps[0]
+                    .cache
+                    .as_ref()
+                    .unwrap()
+                    .toolchain[1],
+                "tools-v2",
+            )
+            .unwrap(),
         }
         let result = fixture.call();
         assert_eq!(result.cache.unwrap().status, "MISS");

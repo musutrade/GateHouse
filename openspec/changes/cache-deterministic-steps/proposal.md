@@ -1,6 +1,7 @@
 # Issue #32: opt-in local deterministic command evidence
 
-Status: implementation under validation, 2026-10-15.
+Status: implemented; required implementation CI passed, 2026-10-15.
+See [acceptance evidence](../../../docs/quality/issue-32/README.md) for the exact commit and limits.
 
 Repeated verify can reuse retained collector evidence but previously always ran
 ordinary external steps. Add a versioned declaration and a separate host opt-in

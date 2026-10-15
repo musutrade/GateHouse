@@ -9,6 +9,6 @@
 - [x] Read-only #29 preview reason and machine-readable runtime explanations.
 - [x] Migration, limitations and rollback documented.
 - [x] Local regression, schema/docs/quality contracts and measured positive/negative costs recorded.
-- [ ] Fresh same-selection base/head required quality gates and hosted checks passed.
+- [x] Fresh same-selection base/head required quality gates and hosted checks passed for the implementation; final-commit CI remains required before review.
 
 No unchecked quality requirement is a release approval.

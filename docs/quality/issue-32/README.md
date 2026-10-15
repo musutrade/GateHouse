@@ -10,7 +10,7 @@ After decomposing process waiting/output validation, the binary suite passed all
 the real CLI integration test covering configuration, read-only preview, a cold
 miss, a hit, current mandatory gates, host disable and authenticated clearing.
 The latest Clippy run with all targets/features and warnings denied passed.
-Fresh required same-selection collection and hosted checks remain pending.
+The initial publication did not claim hosted approval; implementation results are recorded below.
 
 The risk inventory is explicitly expanded to gh32-step-cache/1. Both commits
 must be freshly collected with that identical selection and the existing pinned
@@ -47,7 +47,7 @@ checks and fresh report sealing are included in every end-to-end timing.
 
 Version 1 is appropriate only when project measurements justify its complete
 input-scan cost. It stays disabled by default. This experiment adds no required
-CI benchmark work. Fresh required quality and hosted validation remain pending.
+CI benchmark work. Hosted results are recorded separately below; these timings confer no release approval.
 
 This document does not claim that staged root relocation, remote sharing,
 Windows cache storage or output restoration has been certified.
@@ -62,7 +62,7 @@ benchmark needed category-A Python tooling registration, and macOS fixtures
 needed canonical temporary paths rather than /var aliases. The directory
 no-follow/ownership checks were retained. A Linux run using a deliberately
 symlinked TMPDIR passed all 20 cache unit regressions and the real CLI test after
-canonicalizing only the fixture paths; real macOS confirmation remains required.
+canonicalizing only the fixture paths; the subsequent hosted run below provides real macOS confirmation.
 
 Fresh same-selection risk comparison also rejected three newly changed/extracted
 functions for inadequate coverage:
@@ -80,5 +80,33 @@ confined directories while rejecting invalid names, outside report roots and
 linked directory/file escapes without changing protected targets. Each focused
 regression passed locally. The implementation, required 80% line/region floors,
 CRAP limit, inventory selection and historical baselines remain unchanged.
-A new complete hosted collection must validate the new commit; the failed run
-and raw artifacts are retained rather than reclassified as a success.
+A new complete hosted collection was required; its results are below. The failed
+run and raw artifacts are retained rather than reclassified as a success.
+
+## Implementation acceptance
+
+[The second hosted run](https://github.com/musutrade/GateHouse/actions/runs/38677572819)
+passed Required Quality Aggregate and every required child job, including real
+Linux, macOS and Windows tests. Linux nextest ran **559 tests, all passed with zero
+skips**. The fresh legacy/production coverage, risk and mandatory critical-path
+stages all passed. The optional generic shadow has no release authority.
+
+The tested feature commit is `4d5a435a8f4a4d1e3fff3a29991b8219e874cdc4`;
+CI's actual merge snapshot is `1ddf2394c416233e1dea5749cdc8a25019e5c93d` against
+`0b4b3ee132235b00f4b3dc2525ab0967519e6901`. Both sides used
+`gh32-step-cache/1` and the existing pinned analyzer/definitions. The sealed
+`ci-artifact.json` SHA-256 is `9681ee37621280aa8100dd290c02a64b0b83b8d219ea5c491301c6a06f2affd8`.
+
+| Repaired function | Line coverage | Region coverage | CRAP (rounded) |
+| --- | ---: | ---: | ---: |
+| process/task.rs::wait_for_exit | 100.00% | 91.23% | 14.000000 |
+| verify/steps.rs::run_uncached_step | 93.64% | 88.57% | 17.074476 |
+| verify/steps.rs::log | 97.62% | 87.50% | 14.002646 |
+
+The final fixture refinement places toolchain data outside the repository. Its
+mutation test therefore proves explicit toolchain binding independently of the
+implicit source scan; all 20 cache regressions passed again locally. That test
+and this acceptance record undergo the normal final-commit CI before review.
+These updates do not change production execution, policy, thresholds, baseline
+history or the measurement selection. No prior report is adopted as evidence for
+a different commit.
