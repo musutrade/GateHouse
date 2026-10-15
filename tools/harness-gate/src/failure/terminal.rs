@@ -31,18 +31,11 @@ pub(crate) fn render(
 }
 
 fn safe_text(text: &str) -> String {
-    let mut result = String::new();
-    for character in crate::utils::redaction::redact_text(text).chars().take(1024) {
-        // Escape control and non-printable characters for terminal safety, but
-        // keep backslash literal: it is a path separator on Windows and must
-        // not be doubled in user-facing diagnostics.
-        if character == '\\' {
-            result.push(character);
-        } else {
-            result.extend(character.escape_debug());
-        }
-    }
-    result
+    crate::utils::redaction::redact_text(text)
+        .chars()
+        .take(1024)
+        .flat_map(|character| character.escape_debug())
+        .collect()
 }
 
 #[cfg(test)]
@@ -70,14 +63,5 @@ mod tests {
         assert!(!rendered.contains("synthetic-secret") && !rendered.contains('\u{1b}'));
         assert!(rendered.contains("[REDACTED]") && rendered.contains("\\n"));
         assert!(safe_text(&"x".repeat(2000)).len() <= 1024);
-        // Windows path separators stay literal; control characters stay escaped.
-        let windows = render(
-            FailureCode::StepFailed,
-            "step",
-            None,
-            Some(r"C:\logs\step.log"),
-        );
-        assert!(windows.contains(r"C:\logs\step.log"), "{windows}");
-        assert!(safe_text("a\u{1b}b\\c").contains("\\u{1b}"));
     }
 }
