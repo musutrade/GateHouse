@@ -177,7 +177,12 @@ fn run_secrets(project: &Project, staged: bool, json: bool) -> Result<bool, CliE
     } else {
         eprintln!(
             "{}",
-            ui::error(format!("Secret scan failed in {} file(s):", findings.len()))
+            crate::failure::render_terminal(
+                crate::failure::FailureCode::SecretScanFailure,
+                "secret scan",
+                Some(&format!("Blocking findings in {} file(s)", findings.len())),
+                Some("secret_scan.json"),
+            )
         );
         for file in &findings {
             eprintln!("  {file}");
@@ -205,12 +210,23 @@ fn run_audit(project: &Project, json: bool) -> Result<bool, CliError> {
         println!(
             "{}",
             if outcome.total_violations == 0 {
-                ui::pass(summary)
+                ui::pass(&summary)
             } else {
-                ui::failure(summary)
+                ui::failure(&summary)
             }
         );
         println!("Report: {}", outcome.report_file.display());
+        if outcome.total_violations != 0 {
+            eprintln!(
+                "{}",
+                crate::failure::render_terminal(
+                    crate::failure::FailureCode::ArchitectureAuditFailure,
+                    "architecture audit",
+                    Some(&summary),
+                    Some(&outcome.report_file.to_string_lossy()),
+                )
+            );
+        }
     }
     Ok(outcome.total_violations == 0)
 }

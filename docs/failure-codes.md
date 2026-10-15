@@ -602,3 +602,10 @@ Add an explicit dependency between the affected steps or define separate service
 **HGCFG-TEMPLATE-PATH — Report template path cannot be safely resolved.**
 
 Inspect the diagnostic path and related locations. Keep readable templates within their configured root and separate from report output; correct missing files or escaping symlinks.
+
+Standalone `secrets` and `audit` commands also print the corresponding failure code
+and an `explain` command when their human-readable gate result fails. Their
+`--json` output remains machine-readable without this additional diagnostic.
+`quality evaluate` prints `QUALITY_BLOCKED` on stderr only after successfully
+publishing a non-passing report. These messages do not change policy decisions,
+report formats, required checks, thresholds, or exit status.
