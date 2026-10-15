@@ -61,7 +61,10 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
         }
         Commands::Config { action } => run_config(project, action),
         Commands::Step { id } => Ok(crate::verify::run_step(project, &id)?.passed),
-        Commands::Init { .. } | Commands::Presets | Commands::Schema { .. } => {
+        Commands::Init { .. }
+        | Commands::Presets
+        | Commands::Schema { .. }
+        | Commands::Plugins { .. } => {
             unreachable!("handled before project discovery")
         }
     }
@@ -239,6 +242,7 @@ fn run_hook(project: &Project) -> Result<bool, CliError> {
 }
 
 fn run_config(project: &Project, action: ConfigAction) -> Result<bool, CliError> {
+    crate::plugins::check(&project.execution_root, &project.plugins)?;
     let quality_config = crate::config::quality::QualityConfig::load_optional(
         &project.execution_root,
         &project.config,

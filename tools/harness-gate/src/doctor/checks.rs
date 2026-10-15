@@ -10,6 +10,11 @@ use std::time::{Duration, Instant};
 
 pub fn run(project: &Project) -> Result<super::DoctorReport> {
     let mut report = DoctorReport::new(project);
+    match crate::plugins::check(&project.execution_root, &project.plugins) {
+        Ok(Some(_)) => report.record_pass("plugins", "Locked plugin identities, compatibility, signatures, files and dependencies verified offline"),
+        Ok(None) => {},
+        Err(error) => report.record_failure(true, "plugins", format!("{error:#}")),
+    }
     for check in &project.config.doctor.checks {
         match run_check(project, check) {
             Ok(detail) => report.record_pass(&check.label, detail),

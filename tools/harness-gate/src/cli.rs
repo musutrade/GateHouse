@@ -12,6 +12,8 @@ use std::path::PathBuf;
     after_help = "Project workflow:\n  harness-gate init --preset rust-api --presets-dir /path/to/GateProbes/presets\n  harness-gate config check\n  harness-gate verify --profile ci --all\n\nReference presets generate flow + quality configuration. Provision trusted collector\nstate, signed requests and keys before verify; see generated QUALITY.md.\nEcosystem identity is configuration/pack data; collectors measure, Rust decides.\nAdvanced interfaces: quality evaluate and adapter run (explicit trusted inputs)."
 )]
 pub(crate) struct Cli {
+    #[command(flatten)]
+    pub(crate) plugins: crate::plugins::HostOptions,
     /// Directory containing a reviewed external catalog.json and preset files.
     #[arg(long, global = true, value_name = "PATH")]
     pub presets_dir: Option<PathBuf>,
@@ -37,6 +39,13 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
+    /// Validate an explicit plugin lock and prepared offline artifacts without a project.
+    Plugins {
+        #[arg(long, value_name = "PATH")]
+        lock: PathBuf,
+        #[arg(long)]
+        json: bool,
+    },
     /// Advanced evidence evaluation and integration; use verify for project decisions.
     Quality {
         #[command(subcommand)]
@@ -145,6 +154,9 @@ pub(crate) enum Commands {
     },
     /// Initialize flow and reference quality packs; provision trusted inputs before verify.
     Init {
+        /// Select a locked data-only plugin as the preset catalog.
+        #[arg(long, conflicts_with = "presets_dir")]
+        plugin: Option<String>,
         #[arg(long, default_value = "generic")]
         preset: String,
         /// Replace existing .harness-gate configuration files.

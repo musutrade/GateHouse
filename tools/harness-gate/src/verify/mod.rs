@@ -207,6 +207,8 @@ fn run_selected(
     only_step: Option<&str>,
     request_id: Option<&str>,
 ) -> std::result::Result<VerificationReport, VerifyError> {
+    crate::plugins::check(&project.execution_root, &project.plugins)
+        .map_err(VerifyError::execution)?;
     if project
         .config
         .execution

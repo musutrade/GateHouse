@@ -11,8 +11,9 @@ pub(super) fn run(
     components: &[String],
     profile: Option<&str>,
     json_output: bool,
+    plugins: &crate::plugins::HostOptions,
 ) -> Result<bool, CliError> {
-    let result = inspect(root, config, &mode, components, profile);
+    let result = inspect(root, config, &mode, components, profile, plugins);
     let valid = result.is_ok();
     let envelope = match result {
         Ok(plan) => json!({
@@ -46,6 +47,7 @@ fn inspect(
     mode: &ScopeMode,
     components: &[String],
     profile: Option<&str>,
+    plugins: &crate::plugins::HostOptions,
 ) -> Result<serde_json::Value> {
     let project = Project::discover_for_plan(root, config)?;
     let project = if matches!(mode, ScopeMode::Staged) {
@@ -53,6 +55,7 @@ fn inspect(
     } else {
         project
     };
+    crate::plugins::check(&project.execution_root, plugins)?;
     let scope = crate::verify::select_scope(&project, mode, components, true)?;
     let explicit_profile = profile.is_some();
     let profile = profile.unwrap_or(&project.config.project.default_profile);

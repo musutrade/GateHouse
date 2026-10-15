@@ -19,6 +19,7 @@ pub struct Project {
     pub root: PathBuf,
     /// Trusted CLI override; never selected by repository configuration.
     pub(crate) replay_state_dir: Option<PathBuf>,
+    pub(crate) plugins: crate::plugins::HostOptions,
     /// Immutable source root used by gates and ordinary external steps.
     pub execution_root: PathBuf,
     pub(crate) invocation_input: InvocationInput,

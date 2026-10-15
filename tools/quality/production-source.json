@@ -64,7 +64,8 @@
         "src/config/scope.rs",
         "src/config/validation/mod.rs",
         "src/config/validation/primitives.rs",
-        "src/config/validation/steps.rs"
+        "src/config/validation/steps.rs",
+        "src/plugins.rs"
       ]
     },
     "doctor": {
@@ -371,7 +372,7 @@
     {
       "path": "src/preset/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "201efe88059130f28cc3961ae72e78af0be9365636a4462b228907a5ba2a61ef"
+      "sha256": "b1196624770d3968a875dca47dd814d95e0635deb13fb9a7725b2689f4dc10f3"
     },
     {
       "path": "src/process/mod.rs",
