@@ -98,53 +98,54 @@ fn resolve_path(root: &Path, input: PathBuf) -> Result<PathBuf> {
     Ok(normalize_prefix(&path))
 }
 
+#[cfg(windows)]
 fn normalize_prefix(path: &Path) -> PathBuf {
-    #[cfg(windows)]
-    {
-        use std::path::{Component, Prefix};
-        let mut components = path.components();
-        let prefix = match components.next() {
-            Some(Component::Prefix(prefix)) => prefix.kind(),
-            _ => return path.to_path_buf(),
-        };
-        let mut normalized = match prefix {
-            Prefix::Disk(drive) | Prefix::VerbatimDisk(drive) => {
-                PathBuf::from(format!(r"\\?\{}:", char::from(drive.to_ascii_uppercase())))
-            }
-            Prefix::UNC(server, share) | Prefix::VerbatimUNC(server, share) => {
-                let mut prefix = std::ffi::OsString::from(r"\\?\UNC\");
-                prefix.push(server);
-                prefix.push(r"\");
-                prefix.push(share);
-                PathBuf::from(prefix)
-            }
-            _ => return path.to_path_buf(),
-        };
-        // Append the untouched suffix as OS text: PathBuf::push on a verbatim
-        // Windows path would normalize away parent traversal before validation.
-        if matches!(prefix, Prefix::Disk(_) | Prefix::UNC(_, _)) {
-            use std::os::windows::ffi::{OsStrExt, OsStringExt};
-            let suffix = components
-                .as_path()
-                .as_os_str()
-                .encode_wide()
-                .map(|unit| {
-                    if unit == u16::from(b'/') {
-                        u16::from(b'\\')
-                    } else {
-                        unit
-                    }
-                })
-                .collect::<Vec<_>>();
-            normalized
-                .as_mut_os_string()
-                .push(std::ffi::OsString::from_wide(&suffix));
-        } else {
-            normalized.as_mut_os_string().push(components.as_path());
+    use std::path::{Component, Prefix};
+    let mut components = path.components();
+    let prefix = match components.next() {
+        Some(Component::Prefix(prefix)) => prefix.kind(),
+        _ => return path.to_path_buf(),
+    };
+    let mut normalized = match prefix {
+        Prefix::Disk(drive) | Prefix::VerbatimDisk(drive) => {
+            PathBuf::from(format!(r"\\?\{}:", char::from(drive.to_ascii_uppercase())))
         }
-        return normalized;
+        Prefix::UNC(server, share) | Prefix::VerbatimUNC(server, share) => {
+            let mut prefix = std::ffi::OsString::from(r"\\?\UNC\");
+            prefix.push(server);
+            prefix.push(r"\");
+            prefix.push(share);
+            PathBuf::from(prefix)
+        }
+        _ => return path.to_path_buf(),
+    };
+    // Append the untouched suffix as OS text: PathBuf::push on a verbatim
+    // Windows path would normalize away parent traversal before validation.
+    if matches!(prefix, Prefix::Disk(_) | Prefix::UNC(_, _)) {
+        use std::os::windows::ffi::{OsStrExt, OsStringExt};
+        let suffix = components
+            .as_path()
+            .as_os_str()
+            .encode_wide()
+            .map(|unit| {
+                if unit == u16::from(b'/') {
+                    u16::from(b'\\')
+                } else {
+                    unit
+                }
+            })
+            .collect::<Vec<_>>();
+        normalized
+            .as_mut_os_string()
+            .push(std::ffi::OsString::from_wide(&suffix));
+    } else {
+        normalized.as_mut_os_string().push(components.as_path());
     }
-    #[cfg(not(windows))]
+    normalized
+}
+
+#[cfg(not(windows))]
+fn normalize_prefix(path: &Path) -> PathBuf {
     path.to_path_buf()
 }
 
