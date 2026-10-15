@@ -91,6 +91,7 @@ impl Ledger {
             use std::os::unix::fs::MetadataExt;
             // A same-uid untrusted child must be isolated by the host's sandbox;
             // mode bits cannot distinguish processes with the same identity.
+            // SAFETY: geteuid takes no arguments and returns a scalar UID.
             if metadata.uid() != unsafe { libc::geteuid() } || metadata.mode() & 0o022 != 0 {
                 return Err(failure(
                     "ledger must be host-owned and not writable by group or others",
@@ -153,6 +154,8 @@ mod platform {
         if fd < 0 {
             Err(io::Error::last_os_error())
         } else {
+            // SAFETY: successful openat returned a new owned descriptor,
+            // transferred exactly once to File for eventual closure.
             Ok(unsafe { File::from_raw_fd(fd) })
         }
     }
@@ -179,6 +182,8 @@ mod platform {
                 {
                     // Only the leaf may be provisioned automatically; its parent
                     // must already belong to the host's control plane.
+                    // SAFETY: directory stays open and name is a live
+                    // NUL-terminated CString; mkdirat retains neither.
                     let result =
                         unsafe { libc::mkdirat(directory.as_raw_fd(), name.as_ptr(), 0o700) };
                     if result != 0
@@ -201,6 +206,7 @@ mod platform {
     fn trusted_parent(directory: &File, root_owner: u32, path: &Path) -> io::Result<()> {
         let metadata = directory.metadata()?;
         let owner = metadata.uid();
+        // SAFETY: geteuid takes no arguments and returns a scalar UID.
         let current = unsafe { libc::geteuid() };
         let mode = metadata.mode() & 0o7777;
         let shared = mode & 0o022 != 0;
@@ -237,6 +243,8 @@ mod platform {
 
     pub(super) fn create_marker(ledger: &Ledger, name: &str) -> io::Result<File> {
         let name = CString::new(name)?;
+        // SAFETY: the directory and NUL-terminated name live through the call;
+        // O_CREAT receives a mode argument and O_EXCL creates a new file.
         let fd = unsafe {
             libc::openat(
                 ledger.directory.as_raw_fd(),
@@ -248,6 +256,8 @@ mod platform {
         if fd < 0 {
             Err(io::Error::last_os_error())
         } else {
+            // SAFETY: successful openat returned a new owned descriptor,
+            // transferred exactly once to File for eventual closure.
             Ok(unsafe { File::from_raw_fd(fd) })
         }
     }

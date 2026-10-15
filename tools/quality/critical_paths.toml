@@ -264,9 +264,9 @@ assertions = ["assert!(matches!(error, VerifyError::Report { .. }));"]
 [paths.source]
 path = "src/verify/report.rs"
 symbol = "write_report_file"
-start = 1225
-end = 1235
-sha256 = "b55d7dfc15ab8c7f2b88caf9a7741393e33f0be3e1198b554868485b1c058b30"
+start = 1231
+end = 1241
+sha256 = "594218d4129647470223145d5878957904f5cdd6e3aafa91d79d629585e7deb8"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
@@ -276,7 +276,7 @@ end = 614
 sha256 = "4e62387920a8c4648cbf0f07aaa9947d1ea7f51ba80c1bf565c23ee42facd0b4"
 
 [[paths.probes]]
-line = 1226
+line = 1232
 column = 5
 text = "report_target(project, relative)?;"
 
@@ -295,19 +295,19 @@ assertions = ["assert!(verify_manifest(&invocation_project).is_err());"]
 [paths.source]
 path = "src/verify/report.rs"
 symbol = "verify_manifest_without_result"
-start = 1804
-end = 1891
-sha256 = "b55d7dfc15ab8c7f2b88caf9a7741393e33f0be3e1198b554868485b1c058b30"
+start = 1810
+end = 1897
+sha256 = "594218d4129647470223145d5878957904f5cdd6e3aafa91d79d629585e7deb8"
 
 [paths.test_source]
 path = "src/verify/report.rs"
 symbol = "manifest_records_digests_and_detects_tampering"
-start = 3420
-end = 3473
-sha256 = "b55d7dfc15ab8c7f2b88caf9a7741393e33f0be3e1198b554868485b1c058b30"
+start = 3329
+end = 3382
+sha256 = "594218d4129647470223145d5878957904f5cdd6e3aafa91d79d629585e7deb8"
 
 [[paths.probes]]
-line = 1887
+line = 1893
 column = 13
 text = "bail!(\"artifact digest or size changed: {}\", artifact.path);"
 
@@ -328,7 +328,7 @@ path = "src/verify/parser.rs"
 symbol = "count_json_results"
 start = 302
 end = 332
-sha256 = "75ae046db0b72a7c2d984283c5145e5e8a6e323412745046065de75ed3c2dc9b"
+sha256 = "fd28873545a856af2f5d0ca424ffbfeb392f11dc919a8b23f759f037cfc6e67e"
 
 [paths.test_source]
 path = "tests/critical_paths_test.rs"
@@ -359,14 +359,14 @@ path = "src/service/lease.rs"
 symbol = "verify_runtime_record"
 start = 977
 end = 1009
-sha256 = "04c5204dc3498627136cda26ca3c05b12ae3d61350b55e3d7f5260af4f066184"
+sha256 = "4498e20b7710da9377e83af61378f1b74f0baaf707d82de7a7a4415b7d811d3b"
 
 [paths.test_source]
 path = "src/service/lease.rs"
 symbol = "fake_docker_and_podman_cleanup_requires_fresh_complete_ownership"
-start = 1925
-end = 2012
-sha256 = "04c5204dc3498627136cda26ca3c05b12ae3d61350b55e3d7f5260af4f066184"
+start = 1938
+end = 2025
+sha256 = "4498e20b7710da9377e83af61378f1b74f0baaf707d82de7a7a4415b7d811d3b"
 
 [[paths.probes]]
 line = 1001
@@ -419,9 +419,9 @@ assertions = [".map(|t| usize::from(t.join().unwrap()))", ".sum::<usize>()"]
 [paths.source]
 path = "src/process/replay.rs"
 symbol = "claim"
-start = 103
-end = 128
-sha256 = "db82cdbe717cccc1cd72917b0c42b277135de57bb408601cacd34b8e0982fe38"
+start = 104
+end = 129
+sha256 = "fbcc49ec16603a0c43ff92f069b7579cf7821cae16d4e77fa4f480da5b068a47"
 
 [paths.test_source]
 path = "src/process/adapter.rs"
@@ -431,7 +431,7 @@ end = 2127
 sha256 = "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0"
 
 [[paths.probes]]
-line = 126
+line = 127
 column = 9
 text = "platform::sync_directory(&self.directory).map_err(failure)?;"
 

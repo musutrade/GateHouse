@@ -1063,8 +1063,13 @@ fn process_start_identity_checked(pid: u32) -> Option<String> {
 
 #[cfg(target_os = "macos")]
 fn process_start_identity_checked(pid: u32) -> Option<String> {
+    // SAFETY: libc's C-layout proc_bsdinfo contains only integer fields and
+    // fixed byte arrays, for which an all-zero representation is valid.
     let mut info = unsafe { std::mem::zeroed::<libc::proc_bsdinfo>() };
     let expected_size = std::mem::size_of::<libc::proc_bsdinfo>() as libc::c_int;
+    // SAFETY: info is aligned, writable storage for exactly expected_size
+    // bytes and lives through this synchronous call. PROC_PIDTBSDINFO selects
+    // this struct layout; fields are used only after a full-size response.
     let observed = unsafe {
         libc::proc_pidinfo(
             pid as libc::c_int,
@@ -1091,6 +1096,8 @@ fn process_start_identity_checked(pid: u32) -> Option<String> {
     if pid == 0 {
         return None;
     }
+    // SAFETY: the API takes only scalar arguments. A non-null result is an
+    // owned process handle with the query rights required by GetProcessTimes.
     let handle = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid) };
     if handle.is_null() {
         return None;
@@ -1111,8 +1118,12 @@ fn process_start_identity_checked(pid: u32) -> Option<String> {
         dwLowDateTime: 0,
         dwHighDateTime: 0,
     };
+    // SAFETY: handle is live and owned here; the four distinct FILETIME
+    // values are aligned writable outputs valid for the entire call.
     let available =
         unsafe { GetProcessTimes(handle, &mut creation, &mut exit, &mut kernel, &mut user) != 0 };
+    // SAFETY: this is the sole close of the non-null OpenProcess handle,
+    // after its last use, on both success and failure of the query.
     unsafe {
         CloseHandle(handle);
     }
@@ -1135,6 +1146,8 @@ fn process_alive(pid: u32) -> Option<bool> {
     }
     // kill(pid, 0) checks existence without sending a signal. EPERM means the
     // process exists but is not inspectable by the current user.
+    // SAFETY: kill takes scalar arguments and no borrowed storage; signal 0
+    // performs an existence/permission check without delivering a signal.
     let result = unsafe { libc::kill(pid as libc::pid_t, 0) };
     if result == 0 {
         Some(true)
