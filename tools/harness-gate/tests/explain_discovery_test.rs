@@ -27,6 +27,21 @@ fn discovery_is_project_independent_and_selectors_are_exclusive() {
             *entry
         );
     }
+    let detailed: Vec<_> = entries
+        .iter()
+        .filter(|entry| entry.get("details").is_some())
+        .collect();
+    assert_eq!(detailed.len(), 5);
+    for entry in detailed {
+        let details = entry["details"].as_str().unwrap();
+        for heading in ["## Why this fails", "## Diagnose and repair", "## Example"] {
+            assert!(details.contains(heading));
+        }
+        let human = run(&["explain", entry["code"].as_str().unwrap()]);
+        assert!(human.status.success());
+        assert!(human.stderr.is_empty());
+        assert!(String::from_utf8(human.stdout).unwrap().contains(details));
+    }
     for query in ["coverage", "COVERAGE", "E1401", "HGCFG"] {
         let result = run(&["explain", "--search", query, "--json"]);
         assert!(result.status.success());

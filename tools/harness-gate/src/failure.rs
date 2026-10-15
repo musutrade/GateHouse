@@ -65,6 +65,8 @@ pub(crate) struct Explanation {
     title: &'static str,
     help: &'static str,
     documentation: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    details: Option<&'static str>,
 }
 
 const EXPLANATIONS: &[(&str, &str, &str)] = &[
@@ -147,12 +149,26 @@ const CONFIG_EXPLANATIONS: &[(&str, &str, &str)] = &[
     ("HGCFG-TEMPLATE-PATH", "Report template path cannot be safely resolved", "Inspect the diagnostic path and related locations. Keep readable templates within their configured root and separate from report output; correct missing files or escaping symlinks."),
 ];
 
+fn detailed_explanation(code: &str) -> Option<&'static str> {
+    match code {
+        "QUALITY_BLOCKED" => Some(include_str!("../docs/errors/QUALITY_BLOCKED.md")),
+        "RESULT_PARSE_FAILURE" => Some(include_str!("../docs/errors/RESULT_PARSE_FAILURE.md")),
+        "STEP_TIMEOUT" => Some(include_str!("../docs/errors/STEP_TIMEOUT.md")),
+        "HGCFG-TOML-PARSE" => Some(include_str!("../docs/errors/HGCFG-TOML-PARSE.md")),
+        "HGCFG-UNKNOWN-REFERENCE" => {
+            Some(include_str!("../docs/errors/HGCFG-UNKNOWN-REFERENCE.md"))
+        }
+        _ => None,
+    }
+}
+
 pub(crate) fn explain(code: &str, json: bool) -> anyhow::Result<bool> {
     let (_, title, help) = EXPLANATIONS.iter().chain(CLI_EXPLANATIONS.iter()).chain(CONFIG_EXPLANATIONS.iter())
         .find(|entry| entry.0 == code)
         .ok_or_else(|| anyhow::anyhow!("unknown machine failure code or CLI error code or configuration diagnostic code; see docs/failure-codes.md for supported codes"))?;
     let explanation = Explanation {
         code: code.to_owned(),
+        details: detailed_explanation(code),
         title,
         help,
         documentation: format!(
@@ -167,6 +183,9 @@ pub(crate) fn explain(code: &str, json: bool) -> anyhow::Result<bool> {
             "{}: {}\n\nNext steps: {}\n\nSee: {}",
             explanation.code, explanation.title, explanation.help, explanation.documentation
         );
+        if let Some(details) = explanation.details {
+            println!("\n{details}");
+        }
     }
     Ok(true)
 }
@@ -189,6 +208,7 @@ pub(crate) fn discover(search: Option<&str>, json: bool) -> anyhow::Result<bool>
         })
         .map(|(code, title, help)| Explanation {
             code: (*code).to_owned(),
+            details: detailed_explanation(code),
             title,
             help,
             documentation: format!(

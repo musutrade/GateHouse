@@ -79,6 +79,16 @@ is an array of the same explanation objects used for individual lookup. No
 matches is a successful empty array (or a human-readable message). These modes
 never load project configuration or write files.
 
+Detailed explanations are embedded in the binary for the following codes, so
+lookup also works offline. Human lookup prints the details; JSON adds an optional
+`details` Markdown string. Codes without this field retain their short guidance.
+
+- [QUALITY_BLOCKED](../tools/harness-gate/docs/errors/QUALITY_BLOCKED.md)
+- [RESULT_PARSE_FAILURE](../tools/harness-gate/docs/errors/RESULT_PARSE_FAILURE.md)
+- [STEP_TIMEOUT](../tools/harness-gate/docs/errors/STEP_TIMEOUT.md)
+- [HGCFG-TOML-PARSE](../tools/harness-gate/docs/errors/HGCFG-TOML-PARSE.md)
+- [HGCFG-UNKNOWN-REFERENCE](../tools/harness-gate/docs/errors/HGCFG-UNKNOWN-REFERENCE.md)
+
 ## webhook-destination-denied
 
 **WEBHOOK_DESTINATION_DENIED — URL host or resolved address is outside the egress policy.**
