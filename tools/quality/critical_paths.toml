@@ -56,7 +56,7 @@ path = "tests/failure_paths_test.rs"
 symbol = "verification_cleanup_cancel_and_report_precedence_retains_resource_evidence"
 start = 580
 end = 817
-sha256 = "b9a868b7dcceee4586e7258bb17e7048499d951771a3fb28bad0769f31b9b942"
+sha256 = "34193c1c0d8eeb745ff06d3dc1e1df7256b885253c056dc6d99a82e64e5a506b"
 
 [[paths.probes]]
 line = 372
@@ -171,9 +171,9 @@ assertions = ["assert!(!report.passed);", "step.label == \"secret scan\" && !ste
 [paths.source]
 path = "src/verify/mod.rs"
 symbol = "run_selected"
-start = 206
-end = 368
-sha256 = "03797ae2743d524361e2988fdbb9b85d8465210189030c96c0057a7a3382a84e"
+start = 207
+end = 369
+sha256 = "27ace0f19971b1f236ee0010a45a9bbb3406789e15bd23b3b4109d33828dfa49"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
@@ -183,7 +183,7 @@ end = 575
 sha256 = "4e62387920a8c4648cbf0f07aaa9947d1ea7f51ba80c1bf565c23ee42facd0b4"
 
 [[paths.probes]]
-line = 350
+line = 351
 column = 5
 text = "publish_report(&report, &invocation_project, project, &mut progress)?;"
 
