@@ -862,7 +862,26 @@ fn extracted_cli_handlers_preserve_text_json_and_hook_snapshot_contracts() {
     fs::write(root.path().join("credential.txt"), "GH94_SENTINEL").unwrap();
     let rejected = command(root.path()).args(["secrets"]).output().unwrap();
     assert!(!rejected.status.success());
-    assert!(String::from_utf8_lossy(&rejected.stderr).contains("credential.txt"));
+    let stderr = String::from_utf8_lossy(&rejected.stderr);
+    assert!(stderr.contains("credential.txt"));
+    assert!(stderr.contains("error[SECRET_SCAN_FAILURE]"));
+    assert!(stderr.contains("harness-gate explain SECRET_SCAN_FAILURE"));
+    let secret_report_path = root.path().join(".harness-gate/reports/secret_scan.json");
+    assert!(secret_report_path.is_file());
+    assert!(stderr.contains(secret_report_path.to_str().unwrap()));
+    assert!(!stderr.contains("GH94_SENTINEL"));
+    let json_rejected = command(root.path())
+        .args(["secrets", "--json"])
+        .output()
+        .unwrap();
+    assert!(!json_rejected.status.success());
+    assert!(json_rejected.stderr.is_empty());
+    let secret_report: Value = serde_json::from_slice(&json_rejected.stdout).unwrap();
+    assert_eq!(secret_report["passed"], false);
+    assert!(secret_report["findings"]
+        .as_array()
+        .unwrap()
+        .contains(&Value::String("credential.txt".into())));
     fs::remove_file(root.path().join("credential.txt")).unwrap();
     // The rule itself contains the sentinel, so restore it before snapshotting.
     fs::write(root.path().join(".harness-gate/secrets.toml"), config).unwrap();
@@ -1084,4 +1103,114 @@ fn configuration_failure_help_preserves_json_diagnostics() {
         }
     }
     assert_eq!(fs::read_dir(root.path()).unwrap().count(), 0);
+}
+
+#[test]
+fn runtime_failure_terminal_context_matches_sealed_report() {
+    for (color, service_failure) in [("never", false), ("always", false), ("never", true)] {
+        let root = fixture();
+        fs::write(
+            root.path().join("probe.sh"),
+            "echo expected-failure\nexit 7\n",
+        )
+        .unwrap();
+        if service_failure {
+            let flow = FLOW.replace("timeout_secs = 20", "timeout_secs = 20\nservices = ['fixture']")
+                + "\n[services.fixture]\nkind = 'environment'\nsource_env = 'GH93_SERVICE_ENV'\ninject_env = 'PROBE_SERVICE'\n";
+            fs::write(root.path().join(".harness-gate/flow.toml"), flow).unwrap();
+        }
+        let output = command(root.path())
+            .args(["--color", color, "verify", "--all"])
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let json = report(root.path());
+        assert_eq!(json["passed"], false);
+        assert_sealed_evidence(&json);
+        let step = json["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|step| step["step_id"] == "probe")
+            .unwrap();
+        let code = if service_failure {
+            "SERVICE_LEASE_FAILURE"
+        } else {
+            "STEP_FAILED"
+        };
+        assert_eq!(step["failure_code"], code);
+        assert!(stderr.contains(&format!("error[{code}]")), "{stderr}");
+        assert!(stderr.contains("= context: probe"), "{stderr}");
+        assert!(
+            stderr.contains(&format!("harness-gate explain {code}")),
+            "{stderr}"
+        );
+        assert_eq!(stderr.contains('\u{1b}'), color == "always");
+        assert_eq!(step["passed"], false);
+        assert!(step.get("terminal_diagnostics").is_none());
+    }
+}
+
+#[test]
+fn successful_verification_does_not_emit_failure_diagnostics() {
+    let root = fixture();
+    let output = success(
+        command(root.path())
+            .args(["--color", "never", "verify", "--all"])
+            .output()
+            .unwrap(),
+    );
+    assert!(!String::from_utf8_lossy(&output.stderr).contains("error["));
+    assert_eq!(report(root.path())["passed"], true);
+}
+
+#[test]
+fn standalone_audit_diagnostics_preserve_machine_output_and_publication_failure() {
+    let root = fixture();
+    let config_path = root.path().join(".harness-gate/audit.toml");
+    let mut config = fs::read_to_string(&config_path).unwrap();
+    config.push_str(
+        r#"
+[[hard_rules]]
+name = "diagnostic fixture"
+severity = "error"
+paths = ["src"]
+extensions = ["rs"]
+patterns = ["forbidden_call"]
+allowlist = []
+exclude_patterns = []
+"#,
+    );
+    fs::write(config_path, config).unwrap();
+    fs::create_dir_all(root.path().join("src")).unwrap();
+    let source = root.path().join("src/sample.rs");
+    fs::write(&source, "fn sample() { forbidden_call(); }\n").unwrap();
+    let failed = command(root.path()).args(["audit"]).output().unwrap();
+    assert!(!failed.status.success());
+    let stderr = String::from_utf8_lossy(&failed.stderr);
+    assert!(
+        stderr.contains("error[ARCHITECTURE_AUDIT_FAILURE]"),
+        "{stderr}"
+    );
+    assert!(stderr.contains("harness-gate explain ARCHITECTURE_AUDIT_FAILURE"));
+    let machine = command(root.path())
+        .args(["audit", "--json"])
+        .output()
+        .unwrap();
+    assert!(!machine.status.success());
+    assert!(machine.stderr.is_empty());
+    let _: Value = serde_json::from_slice(&machine.stdout).unwrap();
+    fs::write(&source, "fn sample() {}\n").unwrap();
+    let passed = success(command(root.path()).args(["audit"]).output().unwrap());
+    assert!(passed.stderr.is_empty());
+    fs::write(&source, "fn sample() { forbidden_call(); }\n").unwrap();
+    let report = root
+        .path()
+        .join(".harness-gate/reports/review_context.json");
+    fs::remove_file(&report).unwrap();
+    fs::create_dir(&report).unwrap();
+    let failed = command(root.path()).args(["audit"]).output().unwrap();
+    assert!(!failed.status.success());
+    assert!(!String::from_utf8_lossy(&failed.stderr).contains("error[ARCHITECTURE_AUDIT_FAILURE]"));
 }
