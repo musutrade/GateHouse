@@ -92,7 +92,8 @@
     "failure": {
       "blocking": false,
       "files": [
-        "src/failure.rs"
+        "src/failure.rs",
+        "src/failure/terminal.rs"
       ]
     },
     "lib": {
@@ -205,6 +206,7 @@
       "files": [
         "src/verify/inspection.rs",
         "src/verify/mod.rs",
+        "src/verify/terminal.rs",
         "src/verify/parser.rs",
         "src/verify/plan.rs",
         "src/verify/quality.rs",

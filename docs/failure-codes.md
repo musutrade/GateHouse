@@ -5,6 +5,15 @@ The registry is closed in the current schema: a new producer must add a code
 and update this table before it can publish a machine result. Human detail text
 is explanatory only and is never used for retry or status decisions.
 
+After verification publishes its reports, failed steps and blocked quality results
+also produce contextual diagnostics on stderr. These name the existing failure
+code, affected step or quality profile, recorded reason when available, log/report
+path, and `harness-gate explain CODE`. Metadata is redacted, bounded, and escaped
+for terminal control characters; the renderer does not read log or source contents.
+Successful and waived steps, and quality omitted by a completed execution-only
+profile, do not become terminal failures. Color follows `--color` and `NO_COLOR`.
+Persisted report schemas, retry classification and blocking decisions are unchanged.
+
 | Code | Meaning | Retry class |
 | --- | --- | --- |
 | `WEBHOOK_DESTINATION_DENIED` | URL host or resolved address is outside the egress policy | `exit` |
