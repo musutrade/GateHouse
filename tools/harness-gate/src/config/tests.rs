@@ -885,6 +885,80 @@ fn human_diagnostic_location_has_one_closing_parenthesis() {
 }
 
 #[test]
+fn terminal_diagnostics_escape_paths_and_preserve_related_locations() {
+    use super::diagnostic::{RelatedDiagnostic, SourceLocation};
+    let mut diagnostics = ConfigDiagnostics::empty().with_source("flow\n\u{1b}[2J.toml");
+    diagnostics.push(ConfigDiagnostic {
+        id: "HGCFG-DUPLICATE-LOG".into(),
+        severity: DiagnosticSeverity::Error,
+        path: "steps[1].log".into(),
+        message: "two steps share a log".into(),
+        help: "choose a unique log filename".into(),
+        retry_class: None,
+        location: Some(SourceLocation {
+            line: 12,
+            column: 1,
+        }),
+        related: vec![RelatedDiagnostic {
+            path: "steps[0].log".into(),
+            relation: "first log".into(),
+            location: Some(SourceLocation { line: 6, column: 1 }),
+        }],
+    });
+    let text = diagnostics.render_terminal();
+    assert!(text.contains("flow\\n\\u{1b}[2J.toml:12:1"), "{text}");
+    assert!(text.contains("first log: steps[0].log (flow\\n\\u{1b}[2J.toml:6:1)"));
+    assert!(!text.contains("flow\n"));
+    assert!(!text.contains("\u{1b}[2J"));
+}
+
+#[test]
+fn terminal_diagnostics_bound_text_and_support_missing_locations() {
+    let diagnostics = ConfigDiagnostics::single(
+        "HGCFG-CHECK",
+        "$",
+        "x".repeat(20_000),
+        "inspect configuration",
+    );
+    let text = diagnostics.render_terminal();
+    assert!(text.contains("  --> <configuration>"));
+    assert!(!text.contains(&"x".repeat(1025)));
+    assert!(text.contains("explain: harness-gate explain HGCFG-CHECK"));
+    // Presentation bounds do not truncate the machine contract.
+    assert_eq!(diagnostics.report().diagnostics[0].message.len(), 20_000);
+}
+
+#[test]
+fn terminal_diagnostics_redact_metadata_without_mutating_the_report() {
+    use super::diagnostic::RelatedDiagnostic;
+    let mut diagnostics = ConfigDiagnostics::empty().with_source("password=synthetic-source");
+    diagnostics.push(ConfigDiagnostic {
+        id: "HGCFG-CHECK".into(),
+        severity: DiagnosticSeverity::Error,
+        path: "token=synthetic-path".into(),
+        message: "password=synthetic-message\ncontext\u{1b}[2J".into(),
+        help: "secret=synthetic-help\rcontext".into(),
+        retry_class: None,
+        location: None,
+        related: vec![RelatedDiagnostic {
+            path: "token=synthetic-related-path".into(),
+            relation: "password=synthetic-relation\tcontext".into(),
+            location: None,
+        }],
+    });
+    let before = serde_json::to_vec(&diagnostics.report()).unwrap();
+    let legacy = diagnostics.to_string();
+    let text = diagnostics.render_terminal();
+    assert!(!text.contains("synthetic-"), "{text}");
+    assert!(text.contains("[REDACTED]"));
+    assert!(text.contains("\\ncontext\\u{1b}[2J"));
+    assert!(text.contains("\\rcontext") && text.contains("\\tcontext"));
+    assert!(!text.contains("\u{1b}[2J") && !text.contains('\r') && !text.contains('\t'));
+    assert_eq!(serde_json::to_vec(&diagnostics.report()).unwrap(), before);
+    assert_eq!(diagnostics.to_string(), legacy);
+}
+
+#[test]
 fn diagnostics_truncate_at_the_documented_maximum() {
     let mut diagnostics = ConfigDiagnostics::empty();
     for index in 0..51 {

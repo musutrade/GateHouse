@@ -379,7 +379,7 @@ fn print_human_config_error(error: &anyhow::Error) {
             "{}",
             crate::ui::error("ERROR [E1000]: configuration check failed")
         );
-        eprintln!("{}", diagnostics);
+        eprintln!("{}", diagnostics.render_terminal());
     } else {
         eprintln!(
             "{}",

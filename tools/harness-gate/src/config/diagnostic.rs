@@ -229,6 +229,64 @@ impl ConfigDiagnostics {
             .collect::<Vec<_>>()
             .join("\n")
     }
+
+    /// Terminal presentation uses only diagnostic metadata, never config values.
+    /// Keep Display and the JSON report independent of terminal color settings.
+    pub fn render_terminal(&self) -> String {
+        self.diagnostics
+            .iter()
+            .map(|diagnostic| render_terminal_diagnostic(diagnostic, self.source.as_deref()))
+            .collect::<Vec<_>>()
+            .join("\n\n")
+    }
+}
+
+fn terminal_text(text: &str) -> String {
+    crate::utils::redaction::redact_text(text)
+        .chars()
+        .take(1024)
+        .flat_map(|character| {
+            if character.is_control() {
+                character.escape_default().collect::<Vec<_>>()
+            } else {
+                vec![character]
+            }
+        })
+        .collect()
+}
+
+fn terminal_location(source: Option<&Path>, location: Option<&SourceLocation>) -> String {
+    let source = source
+        .map(|path| terminal_text(&path.to_string_lossy()))
+        .unwrap_or_else(|| "<configuration>".into());
+    match location {
+        Some(location) => format!("{source}:{}:{}", location.line, location.column),
+        None => source,
+    }
+}
+
+fn render_terminal_diagnostic(diagnostic: &ConfigDiagnostic, source: Option<&Path>) -> String {
+    let code = terminal_text(&diagnostic.id);
+    let mut rendered = format!(
+        "{}: {}\n  --> {}\n   |\n   = field: {}",
+        crate::ui::error(format!("error[{code}]")),
+        terminal_text(&diagnostic.message),
+        terminal_location(source, diagnostic.location.as_ref()),
+        terminal_text(&diagnostic.path),
+    );
+    for related in &diagnostic.related {
+        rendered.push_str(&format!(
+            "\n   = {}: {} ({})",
+            terminal_text(&related.relation),
+            terminal_text(&related.path),
+            terminal_location(source, related.location.as_ref()),
+        ));
+    }
+    rendered.push_str(&format!(
+        "\n   = help: {}\n   = explain: harness-gate explain {code}",
+        terminal_text(&diagnostic.help),
+    ));
+    rendered
 }
 
 pub fn report_for_error(error: &anyhow::Error) -> ConfigCheckReport {
