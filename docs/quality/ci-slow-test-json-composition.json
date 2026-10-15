@@ -1,0 +1,228 @@
+{
+  "task": "GateHouse/slow-test-optimization-plan-20261015",
+  "epoch": 1,
+  "measurements": {
+    "policy": {
+      "file_bytes": 142714517,
+      "compact_bytes": 137027929,
+      "case_count": 826,
+      "field_value_bytes": {
+        "oracle": 56672449,
+        "oracle.value": 56644256,
+        "args": 38302257,
+        "project_report": 35803668,
+        "args.0": 21246952,
+        "project_report.policy_result": 20699318,
+        "args.1": 16793864,
+        "project_report.gates": 14421957,
+        "kwargs": 6135518,
+        "kwargs.project": 2883384,
+        "kwargs.base_records": 2857516,
+        "project_report.indexes": 394648,
+        "kwargs.base_context": 296455,
+        "args.2": 258379,
+        "project_report.components": 226582,
+        "name": 65390,
+        "project_report.aggregate": 41686,
+        "kwargs.artifact_root": 25066,
+        "kwargs.source_root": 24772,
+        "kwargs.expected": 23008,
+        "kind": 8292,
+        "kwargs.mappings": 7011,
+        "kwargs.exceptions": 3668,
+        "project_report.schema": 3537,
+        "oracle.reason": 3495,
+        "oracle.accepted": 3394,
+        "project_report.project": 2578,
+        "oracle.reason_class": 1602,
+        "kwargs.now": 1269,
+        "project_report.mode": 1048,
+        "kwargs.selection": 498,
+        "args.3": 184
+      },
+      "kind_bytes": {
+        "evaluate": 74609696,
+        "report": 59589669,
+        "aggregate": 2419927,
+        "compare": 73098,
+        "validate_policy": 214009,
+        "_select": 91338,
+        "decision": 22335,
+        "review_exceptions": 7030
+      },
+      "largest_cases": [
+        [
+          12911487,
+          "rust-1-head-risk"
+        ],
+        [
+          12911487,
+          "rust-1-base-risk"
+        ],
+        [
+          12883723,
+          "rust-0-head-risk"
+        ],
+        [
+          12883723,
+          "rust-0-base-risk"
+        ],
+        [
+          11880548,
+          "rust-1-head-risk/report"
+        ],
+        [
+          11880548,
+          "rust-1-base-risk/report"
+        ],
+        [
+          11854488,
+          "rust-0-head-risk/report"
+        ],
+        [
+          11854488,
+          "rust-0-base-risk/report"
+        ]
+      ],
+      "exact_top_level_value_redundant_bytes": 4573908,
+      "largest_repeated_values": [
+        {
+          "copies": 5,
+          "bytes_each": 342383
+        },
+        {
+          "copies": 8,
+          "bytes_each": 139024
+        },
+        {
+          "copies": 15,
+          "bytes_each": 16980
+        },
+        {
+          "copies": 12,
+          "bytes_each": 16983
+        },
+        {
+          "copies": 2,
+          "bytes_each": 165837
+        },
+        {
+          "copies": 44,
+          "bytes_each": 2410
+        },
+        {
+          "copies": 43,
+          "bytes_each": 2404
+        },
+        {
+          "copies": 14,
+          "bytes_each": 6759
+        }
+      ]
+    },
+    "differential": {
+      "file_bytes": 104209188,
+      "compact_bytes": 65223368,
+      "case_count": 33,
+      "field_value_bytes": {
+        "expected_output": 50812271,
+        "expected_output.project_report": 32172345,
+        "expected_output.policy_result": 18635632,
+        "head": 12084217,
+        "head.records": 9639481,
+        "head.project": 2430003,
+        "base": 2167634,
+        "base.records": 2078917,
+        "policy": 154732,
+        "policy.rules": 153445,
+        "base.project": 82020,
+        "head.expected": 5340,
+        "head.artifact_root": 3624,
+        "head.source_root": 3558,
+        "base.expected": 2340,
+        "expected_output.validation": 2312,
+        "base.artifact_root": 1691,
+        "base.source_root": 1661,
+        "id": 786,
+        "now": 726,
+        "schema": 726,
+        "policy.schema": 627,
+        "expected_output.evaluation_error": 377,
+        "selection": 22,
+        "exceptions": 4,
+        "exceptions.0": 2,
+        "selection.changed_subject": 2
+      },
+      "kind_bytes": {
+        "case": 65223278
+      },
+      "largest_cases": [
+        [
+          12911550,
+          "rust-1-head-risk"
+        ],
+        [
+          12911550,
+          "rust-1-base-risk"
+        ],
+        [
+          12883786,
+          "rust-0-head-risk"
+        ],
+        [
+          12883786,
+          "rust-0-base-risk"
+        ],
+        [
+          1255952,
+          "contract-breaking"
+        ],
+        [
+          945651,
+          "contract-compatible"
+        ],
+        [
+          914728,
+          "rust-required-unsupported"
+        ],
+        [
+          829876,
+          "rust-1-production"
+        ]
+      ],
+      "exact_top_level_value_redundant_bytes": 136327,
+      "largest_repeated_values": [
+        {
+          "copies": 10,
+          "bytes_each": 13437
+        },
+        {
+          "copies": 4,
+          "bytes_each": 2285
+        },
+        {
+          "copies": 13,
+          "bytes_each": 428
+        },
+        {
+          "copies": 3,
+          "bytes_each": 1487
+        },
+        {
+          "copies": 2,
+          "bytes_each": 429
+        }
+      ]
+    }
+  },
+  "evidence": {
+    "json-composition.json": {
+      "path": "/mnt/dev-ssd/gatehouse-slow-tests-20261015/json-composition.json",
+      "sha256": "b3429afb1f6b3a1912162cc35f277811acea8d3e5c2648a82ba864b7d3a5dcca"
+    },
+    "json-redundancy.json": {
+      "path": "/mnt/dev-ssd/gatehouse-slow-tests-20261015/json-redundancy.json",
+      "sha256": "6cdda11c4c3ee3914808a982f32fb0f7148307ba85f042581ff5fadc5f63ac7c"
+    }
+  }
+}

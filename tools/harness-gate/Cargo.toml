@@ -63,6 +63,11 @@ windows-sys = { version = "0.61.2", features = [
 # and target/debug 511 MB -> 425 MB.
 debug = 1
 
+# Keep SHA-256 verification in tests, but avoid its unoptimized compression loop.
+# Version-pinned to the current lockfile; remeasure when updating this dependency.
+[profile.test.package."sha2:0.10.9"]
+opt-level = 3
+
 [profile.release]
 strip = true          # Remove debug symbols for smaller binary
 lto = true            # Link-time optimization for better performance

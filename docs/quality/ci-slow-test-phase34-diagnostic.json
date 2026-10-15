@@ -1,0 +1,241 @@
+{
+  "task": "GateHouse/slow-test-optimization-20261015",
+  "status": "diagnostic_complete",
+  "dedup_decision": "Do not adopt now: saves about 1.78s parsing/reconstruction, costs about 0.99s encoding in prototype, adds protocol complexity; no end-to-end speedup claim.",
+  "dedup_medians": {
+    "baseline": 4.354671509,
+    "packed": 2.572702585
+  },
+  "dedup_verified": {
+    "bytes": 33539611,
+    "cases": 33,
+    "mode": "verify",
+    "parse_seconds": 2.225898944,
+    "reconstruction_seconds": 0.663052798,
+    "verified": true
+  },
+  "function_profiles": {
+    "policy": [
+      {
+        "calls_including_recursion": 1283049,
+        "function": "json::domain",
+        "outer_calls": 35553,
+        "outer_inclusive_seconds": 0.6814720930000048
+      },
+      {
+        "calls_including_recursion": 1544,
+        "function": "json::decode",
+        "outer_calls": 1544,
+        "outer_inclusive_seconds": 1.6993822399999974
+      },
+      {
+        "calls_including_recursion": 12068,
+        "function": "json::canonical",
+        "outer_calls": 12068,
+        "outer_inclusive_seconds": 0.3977530209999984
+      },
+      {
+        "calls_including_recursion": 1,
+        "function": "json::parse",
+        "outer_calls": 1,
+        "outer_inclusive_seconds": 9.377150493
+      },
+      {
+        "calls_including_recursion": 179,
+        "function": "evidence::validate_batch",
+        "outer_calls": 179,
+        "outer_inclusive_seconds": 47.517379873000074
+      },
+      {
+        "calls_including_recursion": 1949,
+        "function": "evidence::record",
+        "outer_calls": 1949,
+        "outer_inclusive_seconds": 45.17807082299996
+      },
+      {
+        "calls_including_recursion": 940,
+        "function": "evidence::validate_series_transport",
+        "outer_calls": 940,
+        "outer_inclusive_seconds": 0.734819028
+      },
+      {
+        "calls_including_recursion": 4976,
+        "function": "evidence::file",
+        "outer_calls": 4976,
+        "outer_inclusive_seconds": 41.21539885700001
+      },
+      {
+        "calls_including_recursion": 443,
+        "function": "project::validate_project",
+        "outer_calls": 443,
+        "outer_inclusive_seconds": 2.9087749390000024
+      },
+      {
+        "calls_including_recursion": 176814,
+        "function": "project::metadata",
+        "outer_calls": 6057,
+        "outer_inclusive_seconds": 0.2453932050000017
+      },
+      {
+        "calls_including_recursion": 29541,
+        "function": "schema::shape",
+        "outer_calls": 29541,
+        "outer_inclusive_seconds": 4.770709063000046
+      },
+      {
+        "calls_including_recursion": 147,
+        "function": "policy::evaluate",
+        "outer_calls": 147,
+        "outer_inclusive_seconds": 50.29657211999997
+      },
+      {
+        "calls_including_recursion": 180,
+        "function": "policy::validate_policy",
+        "outer_calls": 180,
+        "outer_inclusive_seconds": 1.405756463
+      },
+      {
+        "calls_including_recursion": 500,
+        "function": "policy::select",
+        "outer_calls": 500,
+        "outer_inclusive_seconds": 0.037074945999999956
+      },
+      {
+        "calls_including_recursion": 159,
+        "function": "ratchet::baseline",
+        "outer_calls": 159,
+        "outer_inclusive_seconds": 0.25293797800000006
+      },
+      {
+        "calls_including_recursion": 55,
+        "function": "ratchet::validate_base",
+        "outer_calls": 55,
+        "outer_inclusive_seconds": 5.092684966
+      },
+      {
+        "calls_including_recursion": 264,
+        "function": "project_report::report",
+        "outer_calls": 264,
+        "outer_inclusive_seconds": 1.8886089230000003
+      },
+      {
+        "calls_including_recursion": 957,
+        "function": "replay::compare",
+        "outer_calls": 957,
+        "outer_inclusive_seconds": 0.4816232449999999
+      }
+    ],
+    "differential": [
+      {
+        "calls_including_recursion": 1165846,
+        "function": "json::domain",
+        "outer_calls": 32764,
+        "outer_inclusive_seconds": 0.6924098360000014
+      },
+      {
+        "calls_including_recursion": 243,
+        "function": "json::decode",
+        "outer_calls": 243,
+        "outer_inclusive_seconds": 2.0521982570000015
+      },
+      {
+        "calls_including_recursion": 12085,
+        "function": "json::canonical",
+        "outer_calls": 12085,
+        "outer_inclusive_seconds": 0.31300766399999763
+      },
+      {
+        "calls_including_recursion": 1,
+        "function": "json::parse",
+        "outer_calls": 1,
+        "outer_inclusive_seconds": 4.2805542469999995
+      },
+      {
+        "calls_including_recursion": 70,
+        "function": "evidence::validate_batch",
+        "outer_calls": 70,
+        "outer_inclusive_seconds": 86.35110174499998
+      },
+      {
+        "calls_including_recursion": 2637,
+        "function": "evidence::record",
+        "outer_calls": 2637,
+        "outer_inclusive_seconds": 83.08731172499974
+      },
+      {
+        "calls_including_recursion": 83,
+        "function": "evidence::validate_series_transport",
+        "outer_calls": 83,
+        "outer_inclusive_seconds": 0.07427880900000003
+      },
+      {
+        "calls_including_recursion": 7064,
+        "function": "evidence::file",
+        "outer_calls": 7064,
+        "outer_inclusive_seconds": 78.69485225499999
+      },
+      {
+        "calls_including_recursion": 121,
+        "function": "project::validate_project",
+        "outer_calls": 121,
+        "outer_inclusive_seconds": 2.82942336
+      },
+      {
+        "calls_including_recursion": 143249,
+        "function": "project::metadata",
+        "outer_calls": 6131,
+        "outer_inclusive_seconds": 0.29822880999999996
+      },
+      {
+        "calls_including_recursion": 26810,
+        "function": "schema::shape",
+        "outer_calls": 26810,
+        "outer_inclusive_seconds": 4.721176179000031
+      },
+      {
+        "calls_including_recursion": 33,
+        "function": "policy::evaluate",
+        "outer_calls": 33,
+        "outer_inclusive_seconds": 47.02794001599998
+      },
+      {
+        "calls_including_recursion": 33,
+        "function": "policy::validate_policy",
+        "outer_calls": 33,
+        "outer_inclusive_seconds": 0.9676763000000002
+      },
+      {
+        "calls_including_recursion": 228,
+        "function": "policy::select",
+        "outer_calls": 228,
+        "outer_inclusive_seconds": 0.025499214999999992
+      },
+      {
+        "calls_including_recursion": 7,
+        "function": "ratchet::baseline",
+        "outer_calls": 7,
+        "outer_inclusive_seconds": 0.016341646
+      },
+      {
+        "calls_including_recursion": 9,
+        "function": "ratchet::validate_base",
+        "outer_calls": 9,
+        "outer_inclusive_seconds": 4.198217915
+      },
+      {
+        "calls_including_recursion": 30,
+        "function": "project_report::report",
+        "outer_calls": 30,
+        "outer_inclusive_seconds": 0.8562321849999999
+      },
+      {
+        "calls_including_recursion": 33,
+        "function": "replay::compare",
+        "outer_calls": 33,
+        "outer_inclusive_seconds": 0.24215515600000004
+      }
+    ]
+  },
+  "next": "separate file reads from digest CPU before selecting optimization",
+  "profile_caveat": "Timers count recursion but record elapsed time only for outermost calls of each function. Different functions overlap; do not sum inclusive timings. Instrumentation overhead and module-driver context differ from exact libtest performance runs."
+}

@@ -1,0 +1,175 @@
+{
+  "task": "GateHouse/slow-test-diagnosis-20261015",
+  "epoch": 1,
+  "status": "diagnosis_complete",
+  "evidence": {
+    "result.json": {
+      "path": "/mnt/dev-ssd/gatehouse-slow-tests-20261015/result.json",
+      "sha256": "7c0148ceea402bb01fe781bee9016260191a2d956a8927f0a7b07b062a72aa98"
+    },
+    "rust-phase-result.json": {
+      "path": "/mnt/dev-ssd/gatehouse-slow-tests-20261015/rust-phase-result.json",
+      "sha256": "90d46d5f05996faf0e7ca9f95d59a2d41971f13179fe696f260214a614da1dbc"
+    },
+    "policy-rust-phases.json": {
+      "path": "/mnt/dev-ssd/gatehouse-slow-tests-20261015/policy-rust-phases.json",
+      "sha256": "8266cbef8998183a8387944523d4ac77a00dc5963d63c632da6fb7bacda34969"
+    },
+    "differential-rust-phases.json": {
+      "path": "/mnt/dev-ssd/gatehouse-slow-tests-20261015/differential-rust-phases.json",
+      "sha256": "5eed5fef21262fb672d5845b18e6fd53bbc3fcb58dfcdcce82a97f11b2a56864"
+    },
+    "rust-phases.rs": {
+      "path": "/mnt/dev-ssd/gatehouse-slow-tests-20261015/rust-phases.rs",
+      "sha256": "174ce66cd1c02d79b03f08ef6e0adc8f04fb6f7c34359cbe87b43c5f5867d49c"
+    },
+    "policy-cprofile/timing.json": {
+      "path": "/mnt/dev-ssd/gatehouse-slow-tests-20261015/policy-cprofile/timing.json",
+      "sha256": "7c90cc7e1783e7c0cfe3fd9cd5f3f9d747bde4a67544294af66539306db6d100"
+    }
+  },
+  "exact_tests": {
+    "task": "GateHouse/slow-test-diagnosis-20261015",
+    "epoch": 1,
+    "status": "completed",
+    "binary": "/mnt/dev-ssd/gatehouse-ci-parallel-20261015-r3/parallel/build/head/llvm-cov-target/x86_64-unknown-linux-gnu/debug/deps/harness_gate-ee1107511ad6abe2",
+    "binary_sha256": "1c97be95139f9e2ed12f2def70748b59a8ae7c414421b4e78c54262967de3dfb",
+    "source_snapshot": "/mnt/dev-ssd/gatehouse-ci-parallel-20261015-r3/parallel/snapshots/head",
+    "source_head": "2a552a17b894dfa9282fc102d09a1b3c50a5d90a",
+    "conditions": "existing instrumented debug test binary; isolated exact tests, one at a time; warm cache; timing proxy adds small startup overhead; diagnostic only",
+    "tests": {
+      "policy": {
+        "argv": [
+          "/mnt/dev-ssd/gatehouse-ci-parallel-20261015-r3/parallel/build/head/llvm-cov-target/x86_64-unknown-linux-gnu/debug/deps/harness_gate-ee1107511ad6abe2",
+          "--exact",
+          "quality::policy_tests::frozen_policy_and_reference_acceptance_match_python",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 118.08938722300809,
+        "tree_cpu_seconds": 118.052358,
+        "python_invocations": [
+          {
+            "argv": [
+              "/mnt/dev-ssd/gatehouse-ci-parallel-20261015-r3/parallel/snapshots/head/tools/harness-gate/quality-core/tests/policy_reference.py",
+              "/mnt/dev-ssd/gatehouse-ci-parallel-20261015-r3/parallel/snapshots/head/tools/quality",
+              "/mnt/dev-ssd/dev-tmp/.tmpjCA9Zf"
+            ],
+            "exit_code": 0,
+            "wall_seconds": 26.44357205601409,
+            "cpu_seconds": 26.420279,
+            "maxrss_kib": 478988,
+            "input_files": [
+              {
+                "path": "/mnt/dev-ssd/dev-tmp/.tmpjCA9Zf/cases.json",
+                "bytes": 142686741
+              }
+            ]
+          }
+        ],
+        "python_wall_seconds": 26.44357205601409,
+        "python_cpu_seconds": 26.420279,
+        "outside_python_wall_seconds": 91.645815166994,
+        "outside_python_cpu_seconds": 91.632079
+      },
+      "differential": {
+        "argv": [
+          "/mnt/dev-ssd/gatehouse-ci-parallel-20261015-r3/parallel/build/head/llvm-cov-target/x86_64-unknown-linux-gnu/debug/deps/harness_gate-ee1107511ad6abe2",
+          "--exact",
+          "quality::replay::acceptance::retained_corpora_and_consolidated_negative_matrix",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 137.04238716099644,
+        "tree_cpu_seconds": 137.01227,
+        "python_invocations": [
+          {
+            "argv": [
+              "/mnt/dev-ssd/gatehouse-ci-parallel-20261015-r3/parallel/snapshots/head/tools/harness-gate/../quality/fixtures/generic-core/differential.py",
+              "--prepare",
+              "/mnt/dev-ssd/dev-tmp/.tmpFM0osf",
+              "--output",
+              "/mnt/dev-ssd/dev-tmp/.tmpFM0osf/input.json"
+            ],
+            "exit_code": 0,
+            "wall_seconds": 21.99297707696678,
+            "cpu_seconds": 21.975623,
+            "maxrss_kib": 429624,
+            "input_files": [
+              {
+                "path": "/mnt/dev-ssd/dev-tmp/.tmpFM0osf/input.json",
+                "bytes": 104205828
+              }
+            ]
+          }
+        ],
+        "python_wall_seconds": 21.99297707696678,
+        "python_cpu_seconds": 21.975623,
+        "outside_python_wall_seconds": 115.04941008402966,
+        "outside_python_cpu_seconds": 115.036647
+      }
+    },
+    "python_profiles": {
+      "policy": {
+        "exit_code": 0,
+        "timing": "/mnt/dev-ssd/gatehouse-slow-tests-20261015/policy-cprofile/timing.json"
+      }
+    }
+  },
+  "rust_phases": {
+    "policy": {
+      "diagnostic_only": true,
+      "note": "Plain serde parse is an extra diagnostic; do not add to production parse. Policy helper bytes extracted from measured snapshot; comparator uses public replay comparison, not exact test's private helper.",
+      "phases": [
+        {
+          "bytes": 142714517,
+          "phase": "read_input",
+          "seconds": 0.075153769
+        },
+        {
+          "phase": "diagnostic_plain_serde_parse",
+          "seconds": 5.106804543
+        },
+        {
+          "phase": "production_parse_including_duplicate_check",
+          "seconds": 33.933783798
+        },
+        {
+          "case_count": 826,
+          "compare_seconds": 0.4735128210000008,
+          "phase": "policy_case_loop",
+          "report_seconds": 0.9452118349999994,
+          "run_seconds": 51.12694372299998,
+          "seconds": 53.813570432
+        }
+      ]
+    },
+    "differential": {
+      "diagnostic_only": true,
+      "note": "Plain serde parse is an extra diagnostic; do not add to production parse. Policy helper bytes extracted from measured snapshot; comparator uses public replay comparison, not exact test's private helper.",
+      "phases": [
+        {
+          "bytes": 104209188,
+          "phase": "read_input",
+          "seconds": 0.056578481
+        },
+        {
+          "phase": "diagnostic_plain_serde_parse",
+          "seconds": 2.923159065
+        },
+        {
+          "phase": "production_parse_including_duplicate_check",
+          "seconds": 23.215188786
+        },
+        {
+          "case_count": 33,
+          "phase": "rust_replay_evaluation_and_comparison",
+          "seconds": 89.638977117
+        }
+      ]
+    }
+  },
+  "scope": "Diagnostic only; no product optimization or hosted CI performance claim."
+}
