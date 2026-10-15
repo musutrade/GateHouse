@@ -91,6 +91,19 @@ fn rule_explanations(project: &Project, scope: &ScopeResult) -> Vec<Value> {
 }
 
 fn component_explanations(project: &Project, scope: &ScopeResult) -> Vec<Value> {
+    let direct = scope
+        .changed_files
+        .iter()
+        .flat_map(|path| project.scope_rules.matching_rules(path))
+        .flat_map(|index| project.config.scope.rules[index].components.iter().cloned())
+        .collect::<BTreeSet<_>>();
+    let fallback = !scope.unmatched_files.is_empty()
+        && matches!(project.config.scope.unmatched, UnmatchedScope::All);
+    let parents = if scope.mode == "all" || scope.mode == "components" || fallback {
+        Default::default()
+    } else {
+        project.config.impact_parents(&direct)
+    };
     project.config.components().into_iter().map(|id| {
         let selected = scope.components.contains(&id);
         let rules = project.config.scope.rules.iter().enumerate()
@@ -105,10 +118,27 @@ fn component_explanations(project: &Project, scope: &ScopeResult) -> Vec<Value> 
         } else if !scope.unmatched_files.is_empty()
             && matches!(project.config.scope.unmatched, UnmatchedScope::All) {
             reason("UNMATCHED_FALLBACK_ALL", "At least one unmatched path requires all components.")
+        } else if parents.contains_key(&id) {
+            reason("COMPONENT_IMPACT", "A changed dependency affects this consumer through the listed component chain.")
         } else {
             reason("SCOPE_RULE_COMPONENT", "A changed path matched a rule for this component.")
         };
-        json!({"id": id, "selected": selected, "rules": rules, "reasons": [explanation]})
+        let mut chain = vec![id.clone()];
+        while let Some(parent) = parents.get(chain.last().expect("nonempty witness")) {
+            chain.push(parent.clone());
+        }
+        chain.reverse();
+        let origin = &chain[0];
+        let sources = scope.changed_files.iter().flat_map(|path| {
+            project.scope_rules.matching_rules(path).into_iter()
+                .filter(|index| project.config.scope.rules[*index].components.contains(origin))
+                .map(move |index| json!({"path": path, "rule": index, "component": origin}))
+        }).collect::<Vec<_>>();
+        let dependencies = project.config.scope.impact.as_ref()
+            .and_then(|graph| graph.dependencies.get(&id)).cloned().unwrap_or_default();
+        json!({"id": id, "selected": selected, "rules": rules, "reasons": [explanation],
+            "impact_chain": if selected && !sources.is_empty() && scope.mode != "components" && scope.mode != "all" && !fallback { chain } else { Vec::new() },
+            "impact_sources": sources, "depends_on_components": dependencies})
     }).collect()
 }
 

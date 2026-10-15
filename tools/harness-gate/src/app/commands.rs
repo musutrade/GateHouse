@@ -125,6 +125,13 @@ fn run_scope(
     json: bool,
     benchmark_repeat: usize,
 ) -> Result<bool, CliError> {
+    let staged;
+    let project = if matches!(mode, ScopeMode::Staged) {
+        staged = project.staged_plan_snapshot()?;
+        &staged
+    } else {
+        project
+    };
     if benchmark_repeat > 0 {
         let benchmark = crate::scope::benchmark(project, &mode, benchmark_repeat)?;
         println!(
@@ -242,6 +249,9 @@ fn run_hook(project: &Project) -> Result<bool, CliError> {
 }
 
 fn run_config(project: &Project, action: ConfigAction) -> Result<bool, CliError> {
+    project
+        .config
+        .validate_impact_inputs(&project.execution_root)?;
     crate::plugins::check(&project.execution_root, &project.plugins)?;
     let quality_config = crate::config::quality::QualityConfig::load_optional(
         &project.execution_root,

@@ -258,7 +258,7 @@ fn both() {
             compare(base, head)
 
     def test_plan_sources_preserve_instrumentation_across_supported_target_configurations(self):
-        paths = ('app/plan.rs', 'verify/inspection.rs', 'config/scope.rs', 'utils/git.rs', 'scope/mod.rs', 'plugins.rs', 'project/input.rs')
+        paths = ('app/plan.rs', 'verify/inspection.rs', 'config/scope.rs', 'utils/git.rs', 'scope/mod.rs', 'plugins.rs', 'project/input.rs', 'config/impact.rs')
         for path in paths:
             self.assertIn(path, SOURCE_FILES)
             source = (ROOT / 'tools/harness-gate/src' / path).read_text(encoding='utf-8')
@@ -516,7 +516,7 @@ fn both() {
         self.assertEqual(SERIES, {
             'analyzer': 'harness-gate-rust-measure/0.3.1', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
-            'selection': 'gh30-plugin-lock/1', 'configuration': 'compiler-target-production/4',
+            'selection': 'gh31-component-impact/1', 'configuration': 'compiler-target-production/4',
         })
         path = 'utils/redaction.rs'
         self.assertIn(path, SOURCE_FILES)
@@ -757,7 +757,7 @@ fn main() {
         self.assertEqual(SERIES, {
             'analyzer': 'harness-gate-rust-measure/0.3.1', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
-            'selection': 'gh30-plugin-lock/1', 'configuration': 'compiler-target-production/4',
+            'selection': 'gh31-component-impact/1', 'configuration': 'compiler-target-production/4',
         })
         for label, source in self.process_command_sources().items():
             for target in ('x86_64-unknown-linux-gnu', 'aarch64-apple-darwin', 'x86_64-pc-windows-msvc'):

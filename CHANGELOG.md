@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Optional version-1 component impact graphs select transitive consumers of
+  changed shared components, with pinned graph inputs and full source-chain
+  explanations in verification plans. Profiles and step prerequisites retain
+  their existing behavior; invalid or stale graph data blocks selection.
+
 ### Fixed
 
 - Remove the unrelated ambient `rustc` probe from generic verification metadata.

@@ -257,6 +257,18 @@ impl FlowConfig {
             }
         }
         self.collect_step_diagnostics(source_map, diagnostics);
+        if let Err(error) = self.validate_impact() {
+            diagnostics.push(ConfigDiagnostic {
+                id: "HGCFG-IMPACT".into(),
+                severity: DiagnosticSeverity::Error,
+                path: "scope.impact".into(),
+                message: crate::utils::redaction::redact_text(&error.to_string()),
+                help: "review the complete version-1 component graph; use [] for components without dependencies".into(),
+                retry_class: None,
+                location: source_map.location("scope.impact"),
+                related: Vec::new(),
+            });
+        }
         collect_report_template_diagnostics(self, source_map, diagnostics);
         collect_execution_diagnostics(self, source_map, diagnostics);
         collect_result(
@@ -639,6 +651,7 @@ impl FlowConfig {
     }
 
     fn validate_scope(&self) -> Result<()> {
+        self.validate_impact()?;
         if self.scope.rules.is_empty() {
             bail!("scope.rules must not be empty");
         }
@@ -693,6 +706,10 @@ impl FlowConfig {
         }
         Ok(())
     }
+}
+
+pub(super) fn validate_impact_input_path(path: &str) -> Result<()> {
+    primitives::validate_repo_path("scope.impact.inputs", path)
 }
 
 fn validate_service_entry(id: &str, service: &ServiceConfig) -> Result<()> {

@@ -628,6 +628,36 @@ components = ["api", "web", "workflow"]
 
 建议把共享契约、工作流配置和 CI 文件映射到所有受影响组件，避免只验证单端。
 
+### 可声明的组件影响传播（可选）
+
+```toml
+[scope.impact]
+version = 1
+[scope.impact.dependencies]
+shared = []
+api = ["shared"]
+web = ["api"]
+unrelated = []
+```
+
+必须列出所有工作流组件，无依赖时填写 `[]`。`api = ["shared"]` 表示 api
+消费 shared；shared 改动会选择 shared、api、web，web 改动只选择 web。
+随后按当前 profile 选择步骤；步骤 `depends_on` 继续负责执行前置条件。
+显式 `--components` 保持精确覆盖，`--all` 和 unmatched 策略不变。
+rename 的新旧两端和 delete 路径均参与传播，无需读取已删除文件。
+
+生成图可添加 `[scope.impact.inputs]`：键为带引号的仓库相对文本路径，值为
+精确内容的小写 SHA-256。生成方应固定全部会改变图的 manifest/lockfile；
+缺失、过期、不安全或超限的输入阻止选测，暂存模式校验索引内容。Core 不执行图提供方，
+也不接收未经认证的插件运行时图；静态声明和输入清单的完整性由项目审查负责。
+
+未知版本、遗漏/陈旧组件、重复边和循环均拒绝。上限为 1024 组件、8192 边、
+64 个文本输入及每输入 4 MiB。`verify --plan` 通过 `COMPONENT_IMPACT`、
+`impact_chain`、原始路径/规则 `impact_sources` 以及完整
+`depends_on_components` 解释传播。旧配置无需迁移；旧二进制遇到新字段会拒绝。
+回滚时移除 impact，并使用 `--all` 或恢复经审查的等价 glob 覆盖，再降级。
+参见[设计与成本模型](../openspec/changes/component-impact-propagation/design.md)。
+
 ## 12. `[[steps]]`
 
 ```toml

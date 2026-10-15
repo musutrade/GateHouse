@@ -20,6 +20,7 @@ impl CompiledScopeRules {
             .collect()
     }
     pub(crate) fn compile(config: &FlowConfig) -> Result<Self> {
+        config.validate_impact()?;
         let matchers = config
             .scope
             .rules
@@ -48,6 +49,7 @@ impl CompiledScopeRules {
                 unmatched.push(path.clone());
             }
         }
+        config.expand_impact(&mut components);
         (components, unmatched)
     }
 }
