@@ -355,21 +355,21 @@ binary = "harness-gate"
 test = "service::lease::tests::fake_docker_and_podman_cleanup_requires_fresh_complete_ownership"
 assertions = ["assert_failed_without_remove(&project, &path, &fake, \"runtime object identity changed\");", "assert_failed_without_remove(&project, &path, &fake, \"ownership label\");"]
 [paths.source]
-path = "src/service/lease.rs"
+path = "src/service/lease/container.rs"
 symbol = "verify_runtime_record"
-start = 977
-end = 1009
-sha256 = "04c5204dc3498627136cda26ca3c05b12ae3d61350b55e3d7f5260af4f066184"
+start = 89
+end = 121
+sha256 = "936f430219d0a35922b9bfd0c631e491a59dc3be37b96107c37cac33e5346289"
 
 [paths.test_source]
 path = "src/service/lease.rs"
 symbol = "fake_docker_and_podman_cleanup_requires_fresh_complete_ownership"
-start = 1925
-end = 2012
-sha256 = "04c5204dc3498627136cda26ca3c05b12ae3d61350b55e3d7f5260af4f066184"
+start = 1820
+end = 1907
+sha256 = "c303243933a956eb1febd7a550165ae21e13b148741485a3168eebe3612a8651"
 
 [[paths.probes]]
-line = 1001
+line = 113
 column = 9
 text = "bail!(\"runtime object identity changed since the lease was recorded\");"
 

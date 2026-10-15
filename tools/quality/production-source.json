@@ -173,6 +173,7 @@
         "src/service/docker.rs",
         "src/service/inspection.rs",
         "src/service/lease.rs",
+        "src/service/lease/container.rs",
         "src/service/mod.rs",
         "src/service/report_directory.rs"
       ]
