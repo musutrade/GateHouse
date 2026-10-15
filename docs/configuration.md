@@ -85,6 +85,50 @@ JSON diagnostics contain stable HGCFG-* IDs, field paths, a reason, and a
 remediation hint. Interpolated secrets, connection strings, and template
 contents are not emitted.
 
+### Read-only repair suggestions
+
+Run `harness-gate --project-root /path/to/project config suggest` to inspect
+workflow repair suggestions, or add `--format json` for the
+`configuration-suggestions/v1` envelope. Without `--project-root`, this command
+uses the current directory. `--config` selects an existing file inside that root.
+It neither edits files nor executes workflow steps or creates reports.
+
+This is workflow-only analysis, **not** the full `config check`: required audit
+and secret files, plugins and the separate quality plane still need their normal
+validation. Exit status is zero when workflow validation succeeds and one when
+workflow diagnostics remain. The JSON `scope` makes that limitation explicit.
+
+Suggestions distinguish manual repairs from `maybe_incorrect` candidate edits.
+Parser and step-reference guidance uses declared identifiers; missing required
+steps are never repaired by deleting the requirement. Duplicate identifiers and
+environment names require coordinated reference changes. Invalid or duplicate
+external log names may receive a candidate replacement, but consumers of that
+filename must be reviewed. Built-in gate logs do not receive edits. If this step
+or another external step has an environment-dependent log name, a collision
+cannot be ruled out from the original text, so no log edit is proposed.
+
+Candidate ranges are UTF-8 byte offsets in the **original** TOML, bound by the
+plan's `source_sha256`; they are not positions in environment-expanded text.
+Only the proposed replacement is included, not the original value. No candidate
+is automatically applied. Revalidate intended repairs with `config check` before
+running the workflow. Thresholds, requiredness and policy authority are unchanged.
+
+### Interactive candidate application
+
+Add `--apply` to `config suggest` in a terminal to preview candidate replacement
+values and explicitly confirm with `y` or `yes`. Empty input declines. This mode
+requires terminal input and stderr, and does not accept `--format json`.
+It applies only generated log-name candidates; manual suggestions remain manual.
+The complete candidate must pass workflow validation before confirmation and
+again before publication. Full project validation still requires `config check`.
+
+Application checks the original file contents again before replacing the file,
+rejects symbolic links within the project path, and preserves file permissions.
+A sibling `.FILENAME.repair.lock` prevents concurrent cooperating repair commands;
+it is removed on normal exit. Inspect an abandoned lock before removing it.
+Do not edit the configuration concurrently: the lock does not coordinate external
+editors, and content checks are not a filesystem compare-and-swap operation.
+
 ## 2. Editor schema association
 
 schema/flow.schema.json is the local schema for .harness-gate/flow.toml.

@@ -7,6 +7,7 @@ mod model;
 mod path;
 pub(crate) mod quality;
 mod scope;
+pub(crate) mod suggestions;
 mod validation;
 
 #[cfg(test)]

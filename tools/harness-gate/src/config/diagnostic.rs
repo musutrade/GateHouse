@@ -241,7 +241,7 @@ impl ConfigDiagnostics {
     }
 }
 
-fn terminal_text(text: &str) -> String {
+pub(super) fn terminal_text(text: &str) -> String {
     crate::utils::redaction::redact_text(text)
         .chars()
         .take(1024)
