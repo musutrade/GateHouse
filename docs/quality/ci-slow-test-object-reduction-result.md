@@ -36,3 +36,9 @@ Three interleaved runs per variant: Policy median 48.9408 → 48.7371 seconds, a
 Full suite: 576 passed, zero skipped, 90.711 seconds in one run. No additional full-suite speedup is claimed from this single timing. The runtime production binary is identical to the preceding validated candidate; no new production coverage/Risk export is claimed. Final live source hashes match the measured candidate. All authorized local implementation and checks are complete; nothing has been committed or published.
 
 Final evidence: /mnt/dev-ssd/gatehouse-slow-test-optimization-20261015/single-capture-r2/measurement-result.json. Original equivalence evidence: ../single-capture/equivalence-result.json. Prior rejected-proposal discussion above records the historical decision before the user's subsequent implementation instruction.
+
+## PR #71 compatibility handoff repair
+
+The first hosted CI run rejected the modified compatibility-owned `fixtures/generic-core/differential.py` through the existing pinned plugin handoff. Local targeted tests had not exercised `run_core.py --list`. The locked file is restored byte-for-byte, without changing receipts or weakening guards. Compact temporary encoding now lives in Core-owned `tools/quality/differential_transport.py`, which imports the original corpus preparation and preserves canonical persisted reports. The Rust acceptance test invokes this new entry point. Full Core test selection and physical source-cleanup checks are included in repair validation.
+
+The repair's complete Core suite ran 561 tests and exposed one additional inventory error: the new parallel helper and compact transport needed entries in `python-boundary.json`. Both are now registered with callers and non-authoritative roles; all other tests passed. The corrected inventory and related boundary/transport checks passed in a focused 9-test rerun. The affected Rust acceptance passed all 33 cases and 12 negative categories. No pinned receipt was rewritten.

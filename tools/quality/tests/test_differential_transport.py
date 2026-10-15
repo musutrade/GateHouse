@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'fixtures/generic-core'))
-import differential
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import differential_transport as differential
 import replay
 
 

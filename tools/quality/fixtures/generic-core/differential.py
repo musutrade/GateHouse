@@ -9,12 +9,6 @@ import tempfile
 import replay
 
 
-def transport_bytes(value):
-    """Compact temporary Rust input; persisted oracle/report bytes stay canonical."""
-    return (json.dumps(value, sort_keys=True, separators=(',', ':'),
-                       ensure_ascii=False, allow_nan=False) + '\n').encode('utf-8')
-
-
 def prepare(work):
     manifest, blobs = replay.load_corpus()
     cases = []
@@ -49,12 +43,12 @@ def main():
         parser.error('specify exactly one of --prepare and --rust-replay')
     args.output.parent.mkdir(parents=True, exist_ok=True)
     if args.prepare:
-        args.output.write_bytes(transport_bytes(prepare(args.prepare.resolve())))
+        args.output.write_bytes(replay.canonical(prepare(args.prepare.resolve())))
         return 0
     with tempfile.TemporaryDirectory() as directory:
         work = Path(directory)
         input_path = work / 'input.json'
-        input_path.write_bytes(transport_bytes(prepare(work)))
+        input_path.write_bytes(replay.canonical(prepare(work)))
         completed = subprocess.run([str(args.rust_replay.resolve()), str(input_path), str(args.output)])
         if completed.returncode not in (0, 1):
             return completed.returncode
