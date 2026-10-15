@@ -1,0 +1,265 @@
+{
+  "source_commit": "4620e211d11d15644eaaa2030ce99d7aed118190",
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+  "logical_cpus": 8,
+  "tool_versions": {
+    "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1",
+    "llvm_cov": "cargo-llvm-cov 0.9.0",
+    "nextest": "cargo-nextest 0.9.143 (60fa45f63 2026-08-04)\nrelease: 0.9.143\ncommit-hash: 60fa45f638ffc3f35e74afa65737f45fcd32db2a\ncommit-date: 2026-08-04\nhost: x86_64-unknown-linux-gnu"
+  },
+  "note": "Warm shared compilation target, fresh coverage profiles per invocation. Two alternating pairs only, fewer than five comparable samples per backend. Concurrent host activity is uncontrolled; not a hosted cold CI speedup estimate. Warm-up libtest-0 excluded.",
+  "runs": [
+    {
+      "runner": "nextest",
+      "command": [
+        "python3",
+        "tools/quality/coverage.py",
+        "--test-runner",
+        "nextest",
+        "--output",
+        "/home/gem/GateHouse/target/issue61-experiment/paired-1-nextest/coverage.json"
+      ],
+      "started_at": "2026-10-15T06:43:55.808457+00:00",
+      "seconds": 241.28290031995857,
+      "exit_code": 0,
+      "files": {
+        "coverage.cobertura.xml": "f220f110313d2d69a3d610f8d6d03f80929fe34dda3c1c8bdb7d9cf4b390f677",
+        "coverage.json": "4307fd9493d8f700767c517cb91c469ad3a2db9b3c0f34d5347cf57e002d32de",
+        "coverage.lcov": "3c0df29f61f6a5c6ad6ebe58d2d7464c12f110210ff4b03eae310d441d304b8d",
+        "coverage.md": "25a6c74220c3d1fe4738add49c31886fc370a04a45f18fcf98bd68fc8c0922f3",
+        "coverage.raw.json": "93f53e7c48820d77ab48e0538cd4196b9fd9d238b068035200733cf21e71a84b",
+        "production.json": "13c1de4c5fe58360737fc6a44ad5d35d1c0c22cdf163f627fceb879786516a11",
+        "production.md": "ca88e2025bfd1b512a36ff77840ad50154c0f8a7662dae09c61f1f486df9cba8",
+        "run.log": "8787771dad64b4239338b186dfe25b1f9f81511d9d361fd7f6b9c6eb20ddbd1d"
+      }
+    },
+    {
+      "runner": "cargo",
+      "command": [
+        "python3",
+        "tools/quality/coverage.py",
+        "--test-runner",
+        "cargo",
+        "--output",
+        "/home/gem/GateHouse/target/issue61-experiment/paired-2-cargo/coverage.json"
+      ],
+      "started_at": "2026-10-15T06:47:57.130462+00:00",
+      "seconds": 473.7571538889897,
+      "exit_code": 0,
+      "files": {
+        "coverage.cobertura.xml": "967ee8fce3256e9fdf1ca297c0c9d56cb3d8097aba86235ccc5cd0f42fe02ff5",
+        "coverage.json": "9de2e7e89959ddb4e120b37f6e3ed5de91312951ce7b7d1146a4509bcd2bb253",
+        "coverage.lcov": "fb77a8f0a7bdd5a7a41e6470023d18fcc26477075e61dae7071c683fe0a6d7de",
+        "coverage.md": "0780215d145840938d74ad60fa007a762354e57149ba8bd671d39e6ae575cb28",
+        "coverage.raw.json": "c2e554925c9cb6229ea8fa5d1faca06c77ac11c9b54b107e18ba9af80cd90181",
+        "production.json": "7da85f439171431f482334de125115956d858c5add43db0fbfc2fa2fdca4d44b",
+        "production.md": "ca88e2025bfd1b512a36ff77840ad50154c0f8a7662dae09c61f1f486df9cba8",
+        "run.log": "61cbaad0e77301cb7450299e673a05d513b231abdbda676fe9591da439f21359"
+      }
+    },
+    {
+      "runner": "cargo",
+      "command": [
+        "python3",
+        "tools/quality/coverage.py",
+        "--test-runner",
+        "cargo",
+        "--output",
+        "/home/gem/GateHouse/target/issue61-experiment/paired-3-cargo/coverage.json"
+      ],
+      "started_at": "2026-10-15T06:55:50.937286+00:00",
+      "seconds": 465.30594666599063,
+      "exit_code": 0,
+      "files": {
+        "coverage.cobertura.xml": "1953d7f12a9914bb9ef70eb53216d5cf066f06cec09396e267f87ccd5610ebf9",
+        "coverage.json": "7cbe49ce21452f6b7c328f96d4454edb4d87dcf99e5eb4627891057ae6560ab0",
+        "coverage.lcov": "45dc86ee8dd2518ae7a008d1de2ad5434a6cd9d2cce6999f8f53f619d6edaf6e",
+        "coverage.md": "0695d43ae4c29eb995ede96f68528d42c05d8241679607ff63219a44072caae2",
+        "coverage.raw.json": "cc3d01a440e2f9cf2ef1577edfa5b155cbb3912c94de6a816b179ee195bf2770",
+        "production.json": "7a95fdf3bac2bddd67f0d123a96c983ec5abdc91547cfe55b059c88754a8c02b",
+        "production.md": "84b36cd2d309699d771c4925334727396d1c26c7ea784f4e8b231684d673a61b",
+        "run.log": "2cac2227eb1d0fc2a3e48bfd3ea1d3d48a6d574439768713da5a98d8287eb347"
+      }
+    },
+    {
+      "runner": "nextest",
+      "command": [
+        "python3",
+        "tools/quality/coverage.py",
+        "--test-runner",
+        "nextest",
+        "--output",
+        "/home/gem/GateHouse/target/issue61-experiment/paired-4-nextest/coverage.json"
+      ],
+      "started_at": "2026-10-15T07:03:36.291625+00:00",
+      "seconds": 211.8062634569942,
+      "exit_code": 0,
+      "files": {
+        "coverage.cobertura.xml": "8616c0c209f7b2a2726cbbf195020d1eba911997eb30e5094ee3df3549f3a538",
+        "coverage.json": "042ecac6d2f1e5274035385f49dba89742523defc02a0ceabb1125f5f56e8ae3",
+        "coverage.lcov": "c9fd3f4581638c4786961dac817de0777c7c354d116bdfbeda6e067ccae93368",
+        "coverage.md": "25a6c74220c3d1fe4738add49c31886fc370a04a45f18fcf98bd68fc8c0922f3",
+        "coverage.raw.json": "e534f38b57c829e71b61d622fdc71d2c1a27ca2ecf1dc7fbdef83f77daeb270a",
+        "production.json": "8fde74eeb74ad6cd6b12f50915cf40522c89c3b236df2155e9c8d21910ca2560",
+        "production.md": "ca88e2025bfd1b512a36ff77840ad50154c0f8a7662dae09c61f1f486df9cba8",
+        "run.log": "708653e8489d1caaa7ec819410c6465939f392537c19507246da46cbe2b1117e"
+      }
+    }
+  ],
+  "production_comparison": [
+    {
+      "directory": "/home/gem/GateHouse/target/issue61-experiment/paired-1-nextest",
+      "aggregate": {
+        "functions": {
+          "count": 1860,
+          "covered": 1551,
+          "percent": 83.38709677419355
+        },
+        "lines": {
+          "count": 18657,
+          "covered": 17112,
+          "percent": 91.71892587232674
+        },
+        "regions": {
+          "count": 30709,
+          "covered": 27262,
+          "percent": 88.77527760591357
+        },
+        "status": "pass"
+      },
+      "file_differences": {}
+    },
+    {
+      "directory": "/home/gem/GateHouse/target/issue61-experiment/paired-2-cargo",
+      "aggregate": {
+        "functions": {
+          "count": 1860,
+          "covered": 1551,
+          "percent": 83.38709677419355
+        },
+        "lines": {
+          "count": 18657,
+          "covered": 17112,
+          "percent": 91.71892587232674
+        },
+        "regions": {
+          "count": 30709,
+          "covered": 27262,
+          "percent": 88.77527760591357
+        },
+        "status": "pass"
+      },
+      "file_differences": {}
+    },
+    {
+      "directory": "/home/gem/GateHouse/target/issue61-experiment/paired-3-cargo",
+      "aggregate": {
+        "functions": {
+          "count": 1860,
+          "covered": 1551,
+          "percent": 83.38709677419355
+        },
+        "lines": {
+          "count": 18657,
+          "covered": 17113,
+          "percent": 91.72428579085597
+        },
+        "regions": {
+          "count": 30709,
+          "covered": 27263,
+          "percent": 88.77853398026637
+        },
+        "status": "pass"
+      },
+      "file_differences": {
+        "src/process/replay.rs": {
+          "reference": {
+            "functions": {
+              "count": 18,
+              "covered": 18,
+              "percent": 100.0
+            },
+            "lines": {
+              "count": 177,
+              "covered": 167,
+              "percent": 94.35028248587571
+            },
+            "regions": {
+              "count": 317,
+              "covered": 285,
+              "percent": 89.90536277602524
+            }
+          },
+          "observed": {
+            "functions": {
+              "count": 18,
+              "covered": 18,
+              "percent": 100.0
+            },
+            "lines": {
+              "count": 177,
+              "covered": 168,
+              "percent": 94.91525423728814
+            },
+            "regions": {
+              "count": 317,
+              "covered": 286,
+              "percent": 90.22082018927445
+            }
+          }
+        }
+      }
+    },
+    {
+      "directory": "/home/gem/GateHouse/target/issue61-experiment/paired-4-nextest",
+      "aggregate": {
+        "functions": {
+          "count": 1860,
+          "covered": 1551,
+          "percent": 83.38709677419355
+        },
+        "lines": {
+          "count": 18657,
+          "covered": 17112,
+          "percent": 91.71892587232674
+        },
+        "regions": {
+          "count": 30709,
+          "covered": 27262,
+          "percent": 88.77527760591357
+        },
+        "status": "pass"
+      },
+      "file_differences": {}
+    }
+  ],
+  "archive": {
+    "path": "/home/gem/.local/state/herdr-issue-flow/musutrade-GateHouse/issue-61/local-runners-20261015.zip",
+    "sha256": "7ee6cb8326b323f77ca4e8b317623a483c89fd4804c4289e9b81040e7813b102",
+    "bytes": 6930565
+  },
+  "distributions": {
+    "cargo": {
+      "count": 2,
+      "min": 465.30594666599063,
+      "median": 469.53155027749017,
+      "max": 473.7571538889897
+    },
+    "nextest": {
+      "count": 2,
+      "min": 211.8062634569942,
+      "median": 226.5445818884764,
+      "max": 241.28290031995857
+    }
+  },
+  "local_median_change_percent": -51.75093521306715,
+  "measured_inputs": {
+    "tools/harness-gate": "1b770dd9c826ca5c0e218aabdb7fba9384ff6e65",
+    "schema": "1999d27dfeb502d8cd9804f981d0a1732785c1b1",
+    "tools/quality/fixtures": "985da5c85d8b73121d4d8f9b62e8303e5c7355cc",
+    "test-data/manifest.json": "de8aeaeecf34ea49df5e7488e87a153493f653a5",
+    ".config/nextest.toml": "4bb76fee076ddc750597674c0bcdf4cbe211251d"
+  },
+  "coverage_script_sha256": "adb6366b8af8931c478f2f51ac8a02773be2c307db5a2a141578adab51be17a2",
+  "benchmark_driver_sha256": "f5b5a80b120337673d2ef45eb3c2193f8848deaa8d71bac6b95b7ac94aadaaa0"
+}

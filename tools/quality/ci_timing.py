@@ -56,15 +56,16 @@ def normalize_job(job):
 
 
 def normalize_run(run, contract):
-    if (run['event'], run['status'], run['conclusion']) != ('pull_request', 'completed', 'success'):
-        raise ValueError('baseline requires successful completed PR runs')
+    if (run['event'] not in ('pull_request', 'push') or
+            (run['status'], run['conclusion']) != ('completed', 'success')):
+        raise ValueError('baseline requires successful completed PR or push runs')
     if run['collection_identity']['RUN_ID'] != f"{run['id']}-{run['run_attempt']}":
         raise ValueError('mixed collection attempt identity')
     if any(j['run_attempt'] != run['run_attempt'] for j in run['jobs']):
         raise ValueError('mixed job attempts')
     jobs = [normalize_job(job) for job in run['jobs']]
     required_names = [name for job in contract['jobs'].values()
-                      if 'pull_request' in job['required_events'] for name in job['check_names']]
+                      if run['event'] in job['required_events'] for name in job['check_names']]
     by_name = {j['name']: j for j in jobs}
     if len(by_name) != len(jobs):
         raise ValueError('duplicate hosted job names')
@@ -81,7 +82,8 @@ def normalize_run(run, contract):
                                'artifact', 'cleanup')}
     return {'run_id': run['id'], 'attempt': run['run_attempt'], 'url': run['html_url'],
             'event': run['event'], 'workflow_blob_sha': run['workflow_blob_sha'],
-            'pr_head_sha': run['head_sha'], 'collection_identity': run['collection_identity'],
+            ('pr_head_sha' if run['event'] == 'pull_request' else 'head_sha'): run['head_sha'],
+            'collection_identity': run['collection_identity'],
             'workflow_wall_seconds': seconds(run['run_started_at'],
                                              max(j['completed_at'] for j in active)),
             'api_lifecycle_seconds': seconds(run['created_at'], run['updated_at']),
@@ -95,8 +97,12 @@ def normalize_run(run, contract):
 
 def normalize(source, contract):
     runs = [normalize_run(run, contract) for run in source['runs']]
+    if not runs or len({run['event'] for run in runs}) != 1:
+        raise ValueError('normalize PR and push cohorts separately; at least one run is required')
     paths = [run['critical_path_seconds'] for run in runs]
-    return {'schema_version': 1, 'normalization': 'ci_timing.py v1; see baseline.md',
+    version = ('ci_timing.py v1; see baseline.md' if runs[0]['event'] == 'pull_request'
+               else 'ci_timing.py v2 (push); see issue-61/README.md')
+    return {'schema_version': 1, 'normalization': version,
             'critical_path_seconds': {'median': statistics.median(paths),
                                       'min': min(paths), 'max': max(paths)}, 'runs': runs}
 

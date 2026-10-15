@@ -13,6 +13,21 @@ from quality_common import ROOT, sha256
 
 
 class SnapshotTests(unittest.TestCase):
+    def test_legacy_schedules_fresh_tests_and_production_only_projects_their_exports(self):
+        collector = object.__new__(gate.Collector)
+        collector.directory = Path('/fresh-candidate')
+        with patch.object(collector, 'python') as command:
+            collector.legacy()
+            collector.production()
+        self.assertEqual(command.call_args_list[0].args,
+                         ('legacy', 'coverage.py', '--test-runner', 'nextest',
+                          '--output', collector.directory / 'coverage.json'))
+        self.assertEqual(command.call_args_list[1].args,
+                         ('production', 'coverage.py', '--production', '--raw',
+                          collector.directory / 'coverage.raw.json', '--lcov',
+                          collector.directory / 'coverage.lcov', '--output',
+                          collector.directory / 'production.json'))
+
     def test_documentation_fixtures_follow_measured_commit(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
