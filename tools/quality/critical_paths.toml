@@ -328,7 +328,7 @@ path = "src/verify/parser.rs"
 symbol = "count_json_results"
 start = 302
 end = 332
-sha256 = "75ae046db0b72a7c2d984283c5145e5e8a6e323412745046065de75ed3c2dc9b"
+sha256 = "fd28873545a856af2f5d0ca424ffbfeb392f11dc919a8b23f759f037cfc6e67e"
 
 [paths.test_source]
 path = "tests/critical_paths_test.rs"
@@ -359,14 +359,14 @@ path = "src/service/lease.rs"
 symbol = "verify_runtime_record"
 start = 976
 end = 1008
-sha256 = "5bd48ad410133713f527abf5d1fffb28bb731d71204381bb26053d7edee54463"
+sha256 = "f125fc2427701576c5cb8ec4b722fb2c0a50c3202d9f2138e0e7469c9f6f17e5"
 
 [paths.test_source]
 path = "src/service/lease.rs"
 symbol = "fake_docker_and_podman_cleanup_requires_fresh_complete_ownership"
-start = 1816
-end = 1903
-sha256 = "5bd48ad410133713f527abf5d1fffb28bb731d71204381bb26053d7edee54463"
+start = 1829
+end = 1916
+sha256 = "f125fc2427701576c5cb8ec4b722fb2c0a50c3202d9f2138e0e7469c9f6f17e5"
 
 [[paths.probes]]
 line = 1000
@@ -419,9 +419,9 @@ assertions = [".map(|t| usize::from(t.join().unwrap()))", ".sum::<usize>()"]
 [paths.source]
 path = "src/process/replay.rs"
 symbol = "claim"
-start = 103
-end = 128
-sha256 = "db82cdbe717cccc1cd72917b0c42b277135de57bb408601cacd34b8e0982fe38"
+start = 104
+end = 129
+sha256 = "fbcc49ec16603a0c43ff92f069b7579cf7821cae16d4e77fa4f480da5b068a47"
 
 [paths.test_source]
 path = "src/process/adapter.rs"
@@ -431,7 +431,7 @@ end = 2127
 sha256 = "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0"
 
 [[paths.probes]]
-line = 126
+line = 127
 column = 9
 text = "platform::sync_directory(&self.directory).map_err(failure)?;"
 

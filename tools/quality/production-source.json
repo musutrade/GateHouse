@@ -339,6 +339,11 @@
       "path": "src/findings/tests.rs",
       "kind": "test",
       "reason": "Diagnostic finding regression tests compiled only under cfg(test)."
+    },
+    {
+      "path": "src/verify/parser_fuzz.rs",
+      "kind": "test",
+      "reason": "Bounded mutation harness included only by the cfg(test) parser module; no production implementation."
     }
   ],
   "external_exclusions": [
