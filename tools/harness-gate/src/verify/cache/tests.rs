@@ -32,7 +32,7 @@ impl Fixture {
         }
         let mut project = Project::discover(Some(repository.root.clone()), None).unwrap();
         project.prepare().unwrap();
-        project.step_cache_dir = Some(host.root.join("cache"));
+        project.step_cache_dir = Some(host.root.canonicalize().unwrap().join("cache"));
         project.cache_profile = Some("full".into());
         project.config.steps.truncate(1);
         let step = &mut project.config.steps[0];
@@ -46,7 +46,7 @@ impl Fixture {
             serde_json::from_value(serde_json::json!({
                 "version":1, "deterministic":true, "side_effect_free":true,
                 "inputs":[], "outputs":[], "environment":[],
-                "toolchain":[fs::canonicalize("/bin/cat").unwrap(), repository.root.join("toolchain.txt")]
+                "toolchain":[fs::canonicalize("/bin/cat").unwrap(), repository.root.canonicalize().unwrap().join("toolchain.txt")]
             }))
             .unwrap(),
         );

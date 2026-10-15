@@ -393,7 +393,7 @@ mod tests {
     #[test]
     fn expiry_capacity_and_authenticated_clear_are_bounded() {
         let host = TestWorkspace::new("cache-capacity");
-        let store = Store::open(&host.root.join("cache")).unwrap();
+        let store = Store::open(&host.root.canonicalize().unwrap().join("cache")).unwrap();
         for i in 0..MAX_ENTRIES {
             let key = format!("{i:064x}");
             let mut record = record(&key);
@@ -423,7 +423,7 @@ mod tests {
     fn wrong_key_links_partial_files_and_unknown_ownership_are_preserved() {
         use std::os::unix::fs::{symlink, PermissionsExt};
         let host = TestWorkspace::new("cache-integrity");
-        let root = host.root.join("cache");
+        let root = host.root.canonicalize().unwrap().join("cache");
         let store = Store::open(&root).unwrap();
         let name = put(&store, record(&format!("{:064x}", 1)));
         let outside = host.root.join("outside");
@@ -451,7 +451,7 @@ mod tests {
             Store::open(&host.root).is_err(),
             "never adopt a populated host directory"
         );
-        let other = Store::open(&host.root.join("other-cache")).unwrap();
+        let other = Store::open(&host.root.canonicalize().unwrap().join("other-cache")).unwrap();
         let key = format!("{:064x}", 10);
         let record = record(&key);
         let name = put(&store, record);
@@ -471,7 +471,7 @@ mod tests {
     fn lock_contention_and_host_permissions_fail_to_normal_execution() {
         use std::os::unix::fs::PermissionsExt;
         let host = TestWorkspace::new("cache-lock");
-        let path = host.root.join("cache");
+        let path = host.root.canonicalize().unwrap().join("cache");
         let store = Store::open(&path).unwrap();
         let _lock = lock(&store.ledger).unwrap();
         assert!(Store::open(&path).is_err());

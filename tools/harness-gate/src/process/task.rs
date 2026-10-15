@@ -462,6 +462,37 @@ mod tests {
         assert_eq!(wait_backoff(4), Duration::from_millis(80));
         assert_eq!(wait_backoff(u32::MAX), Duration::from_millis(80));
     }
+
+    #[cfg(unix)]
+    #[test]
+    fn reader_overflow_stops_a_live_process_and_is_retained_after_exit() {
+        use std::sync::atomic::AtomicBool;
+        for stdout in [true, false] {
+            for finished in [true, false] {
+                let mut command = std::process::Command::new("/bin/sh");
+                command.args(["-c", if finished { "true" } else { "sleep 10" }]);
+                super::isolate_process_tree(&mut command);
+                let mut child = command.spawn().unwrap();
+                if finished {
+                    assert!(child.wait().unwrap().success());
+                }
+                let stdout_overflow = AtomicBool::new(stdout);
+                let stderr_overflow = AtomicBool::new(!stdout);
+                let (status, timed_out, cancelled, limited) = super::wait_for_exit(
+                    &mut child,
+                    &stdout_overflow,
+                    &stderr_overflow,
+                    Duration::from_secs(30),
+                    std::time::Instant::now(),
+                )
+                .unwrap();
+                assert_eq!(limited, Some(if stdout { "stdout" } else { "stderr" }));
+                assert!(!timed_out && !cancelled);
+                assert_eq!(status.success(), finished);
+                assert!(child.try_wait().unwrap().is_some(), "child must be reaped");
+            }
+        }
+    }
 }
 
 /// Versioned cache explanation; never a project verification decision.

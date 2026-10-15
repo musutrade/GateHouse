@@ -29,6 +29,7 @@ pub(crate) use model::{
 pub use path::resolve_config_path;
 #[cfg(unix)]
 pub(crate) use validation::steps::validate_cache_path;
+#[cfg(unix)]
 pub(crate) use validation::steps::validate_step_cache;
 
 pub(crate) use scope::CompiledScopeRules;

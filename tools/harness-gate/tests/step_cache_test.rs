@@ -41,9 +41,10 @@ fn read_report(root: &Path) -> Value {
 fn declared_cache_survives_real_config_cli_report_plan_and_clear_boundaries() {
     let temporary = tempfile::tempdir().unwrap();
     fs::set_permissions(temporary.path(), fs::Permissions::from_mode(0o700)).unwrap();
-    let project = temporary.path().join("project");
+    let root = temporary.path().canonicalize().unwrap();
+    let project = root.join("project");
     fs::create_dir(&project).unwrap();
-    let cache = temporary.path().join("host-cache");
+    let cache = root.join("host-cache");
     let cache_name = cache.to_str().unwrap();
     successful(cli(&project, &["init", "--preset", "generic"]));
     let program = fs::canonicalize("/bin/cat").unwrap();

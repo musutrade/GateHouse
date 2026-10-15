@@ -840,6 +840,19 @@
       "authoritative_status": "Artifact preflight/trust verification only; measurements and all final generic decisions retain their existing owners.",
       "final_disposition": "Retain Python CI/dev tooling for fixed artifact consumption under the existing Core required-path boundary.",
       "sha256": "b5a860f9187f30ffe2f81840dc35d83096482f44d5a850aa304ebe6d83ec9725"
+    },
+    {
+      "module": "tools/quality/step_cache_benchmark.py",
+      "category": "A",
+      "purpose": "Measure opt-in local step-cache lookup/store costs and synthetic positive/negative end-to-end timings.",
+      "callers": [
+        "Manual CLI documented in docs/quality/issue-32/README.md"
+      ],
+      "ci_role": "Optional developer measurement only; no required CI caller or benchmark job.",
+      "release_impact": "Not packaged in the released Rust Core or plugins. Cannot approve release, adopt a baseline or replace any required gate.",
+      "authoritative_status": "Non-authoritative timing evidence; the Rust Core retains command evidence validation, policy evaluation and final release authority.",
+      "final_disposition": "Retain optional Python development measurement tooling; no generic release-approval path and no installed runtime dependency.",
+      "sha256": "7c6986a46cad94ad844cac47ba3f0124c9dd34b0286ad1563562933c3966cd41"
     }
   ],
   "schema": "python-product-boundary/v1",

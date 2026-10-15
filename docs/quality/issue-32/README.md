@@ -51,3 +51,34 @@ CI benchmark work. Fresh required quality and hosted validation remain pending.
 
 This document does not claim that staged root relocation, remote sharing,
 Windows cache storage or output restoration has been certified.
+
+## First hosted review and repairs
+
+[The first hosted run](https://github.com/musutrade/GateHouse/actions/runs/38675458258)
+passed Linux/Windows tests, build, Clippy, documentation, release/security checks,
+legacy/production coverage and the mandatory critical-path matrix. The run
+remains failed: CLI help needed its reviewed additive snapshot, the optional
+benchmark needed category-A Python tooling registration, and macOS fixtures
+needed canonical temporary paths rather than /var aliases. The directory
+no-follow/ownership checks were retained. A Linux run using a deliberately
+symlinked TMPDIR passed all 20 cache unit regressions and the real CLI test after
+canonicalizing only the fixture paths; real macOS confirmation remains required.
+
+Fresh same-selection risk comparison also rejected three newly changed/extracted
+functions for inadequate coverage:
+
+| Function | Line coverage | Region coverage |
+| --- | ---: | ---: |
+| process/task.rs::wait_for_exit | 83.33% | 77.19% |
+| verify/steps.rs::run_uncached_step | 70.91% | 75.71% |
+| verify/steps.rs::log | 71.43% | 64.29% |
+
+The repair adds operational negative regressions: both stream overflow signals
+terminate live children and remain visible after child exit; a poisoned service
+manager blocks dispatch with ServiceSetupFailure; log allocation creates missing
+confined directories while rejecting invalid names, outside report roots and
+linked directory/file escapes without changing protected targets. Each focused
+regression passed locally. The implementation, required 80% line/region floors,
+CRAP limit, inventory selection and historical baselines remain unchanged.
+A new complete hosted collection must validate the new commit; the failed run
+and raw artifacts are retained rather than reclassified as a success.

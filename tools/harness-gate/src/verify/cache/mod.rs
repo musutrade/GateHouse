@@ -34,6 +34,8 @@ pub(super) fn run(
     if step.cache.is_none() {
         return execute();
     }
+    #[cfg(not(unix))]
+    let _ = project;
     let started = Instant::now();
     let mut evidence = CacheEvidence {
         schema_version: "step-cache/v1",
