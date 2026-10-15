@@ -1,0 +1,134 @@
+{
+  "task": "GateHouse/ci-parallel-risk-20261015",
+  "epoch": 2,
+  "base": "4620e211d11d15644eaaa2030ce99d7aed118190",
+  "head": "2a552a17b894dfa9282fc102d09a1b3c50a5d90a",
+  "scope": "local complete Risk stage only; not hosted CI evidence",
+  "status": "completed",
+  "output": "/mnt/dev-ssd/gatehouse-ci-parallel-20261015-r3",
+  "limitations": [
+    "one pair, serial first; warm OS/dependency caches may favor second run",
+    "local 8-CPU host differs from hosted runner; no CI speedup inferred"
+  ],
+  "runs": [
+    {
+      "mode": "sequential",
+      "exit_code": 0,
+      "wall_seconds": 525.2849989520037,
+      "peak_tree_rss_bytes_sampled": 2651000832,
+      "peak_process_count_sampled": 25,
+      "rss_method": "sum of live descendant RSS every 0.5s; shared pages counted more than once; short peaks may be missed",
+      "profile_count": 1981,
+      "log": "/mnt/dev-ssd/gatehouse-ci-parallel-20261015-r3/sequential.log"
+    },
+    {
+      "mode": "parallel",
+      "exit_code": 0,
+      "wall_seconds": 457.5562976599904,
+      "peak_tree_rss_bytes_sampled": 5262839808,
+      "peak_process_count_sampled": 46,
+      "rss_method": "sum of live descendant RSS every 0.5s; shared pages counted more than once; short peaks may be missed",
+      "profile_count": 3962,
+      "log": "/mnt/dev-ssd/gatehouse-ci-parallel-20261015-r3/parallel.log"
+    }
+  ],
+  "comparison": {
+    "base_risk_different_fields": [
+      "functions"
+    ],
+    "base_llvm_different_files": [
+      "tools/harness-gate/src/../quality-core/json.rs",
+      "tools/harness-gate/src/../quality-core/mod.rs",
+      "tools/harness-gate/src/config/diagnostic.rs",
+      "tools/harness-gate/src/config/loader.rs",
+      "tools/harness-gate/src/config/quality/collectors.rs",
+      "tools/harness-gate/src/config/quality/compiler.rs",
+      "tools/harness-gate/src/config/quality/validation.rs",
+      "tools/harness-gate/src/config/validation/primitives.rs",
+      "tools/harness-gate/src/preset/initialize.rs",
+      "tools/harness-gate/src/process/adapter.rs",
+      "tools/harness-gate/src/process/capture.rs",
+      "tools/harness-gate/src/process/command.rs",
+      "tools/harness-gate/src/process/reader.rs",
+      "tools/harness-gate/src/process/replay.rs",
+      "tools/harness-gate/src/process/signal.rs",
+      "tools/harness-gate/src/process/task.rs",
+      "tools/harness-gate/src/project/paths.rs",
+      "tools/harness-gate/src/secrets/config.rs",
+      "tools/harness-gate/src/secrets/matcher.rs",
+      "tools/harness-gate/src/secrets/mod.rs",
+      "tools/harness-gate/src/service/lease.rs",
+      "tools/harness-gate/src/service/mod.rs",
+      "tools/harness-gate/src/utils/git.rs",
+      "tools/harness-gate/src/verify/cache/identity.rs",
+      "tools/harness-gate/src/verify/cache/store.rs",
+      "tools/harness-gate/src/verify/mod.rs",
+      "tools/harness-gate/src/verify/report.rs"
+    ],
+    "head_risk_different_fields": [
+      "functions"
+    ],
+    "head_llvm_different_files": [
+      "tools/harness-gate/src/../quality-core/json.rs",
+      "tools/harness-gate/src/../quality-core/mod.rs",
+      "tools/harness-gate/src/config/diagnostic.rs",
+      "tools/harness-gate/src/config/loader.rs",
+      "tools/harness-gate/src/config/quality/collectors.rs",
+      "tools/harness-gate/src/config/quality/compiler.rs",
+      "tools/harness-gate/src/config/quality/validation.rs",
+      "tools/harness-gate/src/config/validation/primitives.rs",
+      "tools/harness-gate/src/preset/initialize.rs",
+      "tools/harness-gate/src/process/adapter.rs",
+      "tools/harness-gate/src/process/capture.rs",
+      "tools/harness-gate/src/process/reader.rs",
+      "tools/harness-gate/src/process/replay.rs",
+      "tools/harness-gate/src/process/signal.rs",
+      "tools/harness-gate/src/process/task.rs",
+      "tools/harness-gate/src/project/paths.rs",
+      "tools/harness-gate/src/secrets/mod.rs",
+      "tools/harness-gate/src/service/lease.rs",
+      "tools/harness-gate/src/service/mod.rs",
+      "tools/harness-gate/src/utils/git.rs",
+      "tools/harness-gate/src/verify/cache/identity.rs",
+      "tools/harness-gate/src/verify/cache/store.rs",
+      "tools/harness-gate/src/verify/mod.rs",
+      "tools/harness-gate/src/verify/report.rs"
+    ],
+    "risk_comparison_equal": true,
+    "all_checked_semantics_and_raw_file_counts_equal": false
+  },
+  "analysis": {
+    "base": {
+      "inventory_equal": true,
+      "changed_function_count": 99,
+      "semantic_change_count": 1,
+      "region_hit_change_count": 1
+    },
+    "head": {
+      "inventory_equal": true,
+      "changed_function_count": 91,
+      "semantic_change_count": 0,
+      "region_hit_change_count": 0
+    },
+    "sequential_base_vs_head": {
+      "inventory_equal": true,
+      "changed_function_count": 35,
+      "semantic_change_count": 1,
+      "region_hit_change_count": 1
+    },
+    "parallel_base_vs_head": {
+      "inventory_equal": true,
+      "changed_function_count": 92,
+      "semantic_change_count": 0,
+      "region_hit_change_count": 0
+    }
+  },
+  "decision": "keep opt-in; one local pair shows modest improvement with doubled sampled RSS and retained count differences, not proof of hosted CI improvement",
+  "wall_reduction_percent": 12.893705593561366,
+  "evidence_sha256": {
+    "result.json": "0731bab580c58d10919342002d8dffa1d416894ecfa6189bbdc24e1d56df32aa",
+    "comparison.json": "4cc8c14edcdf5c18a3e618296262fd90557b453409de79841d7bb407aae425a0",
+    "difference-analysis.json": "42897f21531c280f2eb91908211d0485ce06a57389aed39856e67ae64e8cf851",
+    "differences.json": "cbe33687ba0c597c3c40912fb90d67afc0f9d2765b80c67f2f2c5b09c131dece"
+  }
+}
