@@ -43,9 +43,9 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
-    /// Explain a registered machine failure or CLI error code without loading a project.
+    /// Explain a registered machine failure, CLI error or configuration diagnostic code without loading a project.
     Explain {
-        /// Stable machine or CLI code, for example QUALITY_BLOCKED or E1401.
+        /// Stable code, for example QUALITY_BLOCKED, E1401 or HGCFG-TOML-PARSE.
         #[arg(required_unless_present_any = ["list", "search"], conflicts_with_all = ["list", "search"])]
         code: Option<String>,
         /// List every supported code.

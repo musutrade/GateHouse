@@ -14,11 +14,20 @@ fn discovery_is_project_independent_and_selectors_are_exclusive() {
     assert!(listed.status.success());
     assert!(listed.stderr.is_empty());
     let entries: Vec<serde_json::Value> = serde_json::from_slice(&listed.stdout).unwrap();
-    assert_eq!(entries.len(), 46);
+    assert_eq!(entries.len(), 71);
     assert!(entries
         .windows(2)
         .all(|pair| pair[0]["code"].as_str() < pair[1]["code"].as_str()));
-    for query in ["coverage", "COVERAGE", "E1401"] {
+    for entry in &entries {
+        let code = entry["code"].as_str().unwrap();
+        let output = run(&["explain", code, "--json"]);
+        assert!(output.status.success(), "{code}");
+        assert_eq!(
+            serde_json::from_slice::<serde_json::Value>(&output.stdout).unwrap(),
+            *entry
+        );
+    }
+    for query in ["coverage", "COVERAGE", "E1401", "HGCFG"] {
         let result = run(&["explain", "--search", query, "--json"]);
         assert!(result.status.success());
         let found: Vec<serde_json::Value> = serde_json::from_slice(&result.stdout).unwrap();

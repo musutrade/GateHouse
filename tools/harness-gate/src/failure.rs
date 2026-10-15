@@ -119,10 +119,38 @@ const CLI_EXPLANATIONS: &[(&str, &str, &str)] = &[
     ("E1404", "Verification report failed", "Check the report destination, free space, permissions and evidence finalization error. Preserve incomplete evidence for diagnosis and rerun after correcting the cause."),
 ];
 
+const CONFIG_EXPLANATIONS: &[(&str, &str, &str)] = &[
+    ("HGCFG-VERSION", "workflow configuration version is unsupported", "migrate a v1 file with `harness-gate config migrate` or use version 2"),
+    ("HGCFG-RUNNER-VERSION", "runner contract version is unsupported", "use the supported runner contract version"),
+    ("HGCFG-DEPENDENCY-CYCLE", "dependencies contain a cycle", "remove the invalid dependency or add an explicit acyclic prerequisite"),
+    ("HGCFG-DEPENDENCY", "dependency declaration is invalid", "remove the invalid dependency or add an explicit acyclic prerequisite"),
+    ("HGCFG-SERVICE-INJECT-COLLISION", "multiple services claim the same injected environment variable", "use one service or distinct inject_env names"),
+    ("HGCFG-UNKNOWN-REFERENCE", "reference does not name a declared configuration entry", "use an identifier declared in the configuration"),
+    ("HGCFG-INVALID-PATH", "path is not a safe repository-relative path", "use a non-empty path below the repository without a prefix or parent traversal"),
+    ("HGCFG-INVALID-ENVIRONMENT", "environment variable name is invalid", "use an uppercase environment-variable name containing only letters, digits, and underscores"),
+    ("HGCFG-DUPLICATE-FIELD", "configuration declares the same identifier more than once", "keep one declaration or give each declaration a unique identifier"),
+    ("HGCFG-INVALID-LOG", "log path is not a valid single .log filename", "choose a unique single .log filename"),
+    ("HGCFG-INVALID-FIELD", "field violates a documented configuration constraint", "update the field to satisfy the documented configuration constraints"),
+    ("HGCFG-READ", "Workflow configuration could not be read", "Check that the configured file exists, is readable UTF-8 and is below the 4 MiB size limit."),
+    ("HGCFG-EXTERNAL-SERVICE-MIGRATION", "Legacy external service policies require migration", "Use the GateProbes recipe migration to create a new configuration, retain the original for rollback, and run config check before verification."),
+    ("HGCFG-ENVIRONMENT-OVERRIDE", "Environment override has an invalid value", "Set the override named by the diagnostic path to the required type, or unset it. Do not print secret environment values."),
+    ("HGCFG-DIAGNOSTICS-TRUNCATED", "Configuration diagnostic limit reached", "Fix the reported errors and run harness-gate config check again to reveal remaining diagnostics."),
+    ("HGCFG-CHECK", "Configuration could not be checked", "Verify the project root, configuration path and required security configuration files; inspect the original command error."),
+    ("HGCFG-TOML-PARSE", "Configuration is not valid TOML", "Inspect the reported line and column for malformed TOML or unsupported fields. Correct the source and run config check again."),
+    ("HGCFG-INTERPOLATION", "Configuration environment interpolation failed", "Inspect the reported location and inline help. Supply required environment inputs or correct the placeholder syntax without exposing secret values."),
+    ("HGCFG-PROJECT-SCOPED-CONFIG", "Security configuration path must remain project-scoped", "Use a literal repository-relative audit configuration path. Do not redirect the security policy through environment interpolation."),
+    ("HGCFG-QUALITY", "Quality configuration is invalid", "Correct quality.toml references, profile participation and policy/collector authority. Preserve required checks and thresholds."),
+    ("HGCFG-REQUIRED-FILE", "Required security configuration file is missing", "Create the audit or secret-scan configuration file named by the diagnostic path, or correct its configured path; do not bypass the required check."),
+    ("HGCFG-IMPACT", "Component impact graph is invalid", "Review the complete version-1 component graph. Declare an empty dependency list for components without dependencies."),
+    ("HGCFG-DUPLICATE-LOG", "Verification steps share a log filename", "Choose a unique .log filename for each verification step; use the related location to find the other owner."),
+    ("HGCFG-SHARED-SERVICE", "Shared service users have no execution ordering", "Add an explicit dependency between the affected steps or define separate service resources."),
+    ("HGCFG-TEMPLATE-PATH", "Report template path cannot be safely resolved", "Inspect the diagnostic path and related locations. Keep readable templates within their configured root and separate from report output; correct missing files or escaping symlinks."),
+];
+
 pub(crate) fn explain(code: &str, json: bool) -> anyhow::Result<bool> {
-    let (_, title, help) = EXPLANATIONS.iter().chain(CLI_EXPLANATIONS.iter())
+    let (_, title, help) = EXPLANATIONS.iter().chain(CLI_EXPLANATIONS.iter()).chain(CONFIG_EXPLANATIONS.iter())
         .find(|entry| entry.0 == code)
-        .ok_or_else(|| anyhow::anyhow!("unknown machine failure code or CLI error code; see docs/failure-codes.md for supported codes"))?;
+        .ok_or_else(|| anyhow::anyhow!("unknown machine failure code or CLI error code or configuration diagnostic code; see docs/failure-codes.md for supported codes"))?;
     let explanation = Explanation {
         code: code.to_owned(),
         title,
@@ -153,6 +181,7 @@ pub(crate) fn discover(search: Option<&str>, json: bool) -> anyhow::Result<bool>
     let mut entries: Vec<_> = EXPLANATIONS
         .iter()
         .chain(CLI_EXPLANATIONS.iter())
+        .chain(CONFIG_EXPLANATIONS.iter())
         .filter(|(code, title, help)| {
             format!("{code} {title} {help}")
                 .to_ascii_lowercase()

@@ -66,8 +66,8 @@ harness-gate explain --search coverage --json
 
 This command is read-only and does not discover a project, load workflow
 configuration, run checks or apply changes. It accepts the exact uppercase machine
-codes in the registry above; unknown codes return a nonzero exit status. The CLI `E...` codes below are also supported. Configuration `HGCFG-...` codes
-remain a separate diagnostic family with inline help and are not yet accepted by this command. JSON output has `code`, `title`, `help` and
+codes in the registry above; unknown codes return a nonzero exit status. The CLI `E...` codes below are also supported. Configuration `HGCFG-...` codes are also queryable; their existing inline diagnostics
+retain the concrete configuration path, location and related errors. JSON output has `code`, `title`, `help` and
 `documentation` fields. Advice is supplementary; retry classes, required checks
 and final status remain unchanged. This is one part of issue #64, not delivery of
 interactive edits or all diagnostic families.
@@ -359,3 +359,158 @@ Inspect the first execution error and step logs. Correct the command, environmen
 **E1404 — Verification report failed.**
 
 Check the report destination, free space, permissions and evidence finalization error. Preserve incomplete evidence for diagnosis and rerun after correcting the cause.
+
+## Configuration explanations
+
+These descriptions supplement the contextual `config check` diagnostics. They do
+not change the configuration report schema or turn failed checks into passes.
+
+## hgcfg-version
+
+**HGCFG-VERSION — workflow configuration version is unsupported.**
+
+migrate a v1 file with `harness-gate config migrate` or use version 2
+
+## hgcfg-runner-version
+
+**HGCFG-RUNNER-VERSION — runner contract version is unsupported.**
+
+use the supported runner contract version
+
+## hgcfg-dependency-cycle
+
+**HGCFG-DEPENDENCY-CYCLE — dependencies contain a cycle.**
+
+remove the invalid dependency or add an explicit acyclic prerequisite
+
+## hgcfg-dependency
+
+**HGCFG-DEPENDENCY — dependency declaration is invalid.**
+
+remove the invalid dependency or add an explicit acyclic prerequisite
+
+## hgcfg-service-inject-collision
+
+**HGCFG-SERVICE-INJECT-COLLISION — multiple services claim the same injected environment variable.**
+
+use one service or distinct inject_env names
+
+## hgcfg-unknown-reference
+
+**HGCFG-UNKNOWN-REFERENCE — reference does not name a declared configuration entry.**
+
+use an identifier declared in the configuration
+
+## hgcfg-invalid-path
+
+**HGCFG-INVALID-PATH — path is not a safe repository-relative path.**
+
+use a non-empty path below the repository without a prefix or parent traversal
+
+## hgcfg-invalid-environment
+
+**HGCFG-INVALID-ENVIRONMENT — environment variable name is invalid.**
+
+use an uppercase environment-variable name containing only letters, digits, and underscores
+
+## hgcfg-duplicate-field
+
+**HGCFG-DUPLICATE-FIELD — configuration declares the same identifier more than once.**
+
+keep one declaration or give each declaration a unique identifier
+
+## hgcfg-invalid-log
+
+**HGCFG-INVALID-LOG — log path is not a valid single .log filename.**
+
+choose a unique single .log filename
+
+## hgcfg-invalid-field
+
+**HGCFG-INVALID-FIELD — field violates a documented configuration constraint.**
+
+update the field to satisfy the documented configuration constraints
+
+## hgcfg-read
+
+**HGCFG-READ — Workflow configuration could not be read.**
+
+Check that the configured file exists, is readable UTF-8 and is below the 4 MiB size limit.
+
+## hgcfg-external-service-migration
+
+**HGCFG-EXTERNAL-SERVICE-MIGRATION — Legacy external service policies require migration.**
+
+Use the GateProbes recipe migration to create a new configuration, retain the original for rollback, and run config check before verification.
+
+## hgcfg-environment-override
+
+**HGCFG-ENVIRONMENT-OVERRIDE — Environment override has an invalid value.**
+
+Set the override named by the diagnostic path to the required type, or unset it. Do not print secret environment values.
+
+## hgcfg-diagnostics-truncated
+
+**HGCFG-DIAGNOSTICS-TRUNCATED — Configuration diagnostic limit reached.**
+
+Fix the reported errors and run harness-gate config check again to reveal remaining diagnostics.
+
+## hgcfg-check
+
+**HGCFG-CHECK — Configuration could not be checked.**
+
+Verify the project root, configuration path and required security configuration files; inspect the original command error.
+
+## hgcfg-toml-parse
+
+**HGCFG-TOML-PARSE — Configuration is not valid TOML.**
+
+Inspect the reported line and column for malformed TOML or unsupported fields. Correct the source and run config check again.
+
+## hgcfg-interpolation
+
+**HGCFG-INTERPOLATION — Configuration environment interpolation failed.**
+
+Inspect the reported location and inline help. Supply required environment inputs or correct the placeholder syntax without exposing secret values.
+
+## hgcfg-project-scoped-config
+
+**HGCFG-PROJECT-SCOPED-CONFIG — Security configuration path must remain project-scoped.**
+
+Use a literal repository-relative audit configuration path. Do not redirect the security policy through environment interpolation.
+
+## hgcfg-quality
+
+**HGCFG-QUALITY — Quality configuration is invalid.**
+
+Correct quality.toml references, profile participation and policy/collector authority. Preserve required checks and thresholds.
+
+## hgcfg-required-file
+
+**HGCFG-REQUIRED-FILE — Required security configuration file is missing.**
+
+Create the audit or secret-scan configuration file named by the diagnostic path, or correct its configured path; do not bypass the required check.
+
+## hgcfg-impact
+
+**HGCFG-IMPACT — Component impact graph is invalid.**
+
+Review the complete version-1 component graph. Declare an empty dependency list for components without dependencies.
+
+## hgcfg-duplicate-log
+
+**HGCFG-DUPLICATE-LOG — Verification steps share a log filename.**
+
+Choose a unique .log filename for each verification step; use the related location to find the other owner.
+
+## hgcfg-shared-service
+
+**HGCFG-SHARED-SERVICE — Shared service users have no execution ordering.**
+
+Add an explicit dependency between the affected steps or define separate service resources.
+
+## hgcfg-template-path
+
+**HGCFG-TEMPLATE-PATH — Report template path cannot be safely resolved.**
+
+Inspect the diagnostic path and related locations. Keep readable templates within their configured root and separate from report output; correct missing files or escaping symlinks.
