@@ -305,6 +305,7 @@ class Collector:
                     'tools/harness-gate/src/config/tests.rs',
                     'tools/harness-gate/src/verify/tests.rs',
                     'tools/harness-gate/src/verify/cache/tests.rs',
+                    'tools/harness-gate/src/verify/parser_fuzz.rs',
                     'tools/harness-gate/src/findings/tests.rs',
                     'tools/harness-gate/src/preset/tests.rs',
                     'tools/harness-gate/src/scope/tests.rs',

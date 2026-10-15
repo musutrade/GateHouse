@@ -1,3 +1,9 @@
+mod container;
+
+use container::{
+    validate_runtime_ownership, verify_runtime_record, CliRuntimeOperations, RuntimeOperations,
+};
+
 use super::report_directory::ReportDirectoryGuard;
 use crate::config::ContainerRuntimeKind;
 use crate::project::Project;
@@ -31,48 +37,6 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(15);
 #[cfg(test)]
 const HEARTBEAT_INTERVAL: Duration = Duration::from_millis(250);
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(1);
-
-trait RuntimeOperations {
-    fn inspect(
-        &self,
-        runtime: ContainerRuntimeKind,
-        project: &Project,
-        name: &str,
-        timeout: Duration,
-    ) -> Result<super::inspection::RuntimeInspection>;
-
-    fn stop(
-        &self,
-        runtime: ContainerRuntimeKind,
-        cwd: &Path,
-        name: &str,
-        timeout: Duration,
-    ) -> Result<()>;
-}
-
-struct CliRuntimeOperations;
-
-impl RuntimeOperations for CliRuntimeOperations {
-    fn inspect(
-        &self,
-        runtime: ContainerRuntimeKind,
-        project: &Project,
-        name: &str,
-        timeout: Duration,
-    ) -> Result<super::inspection::RuntimeInspection> {
-        super::runtime::inspect_owned_container(runtime, project, name, timeout)
-    }
-
-    fn stop(
-        &self,
-        runtime: ContainerRuntimeKind,
-        cwd: &Path,
-        name: &str,
-        timeout: Duration,
-    ) -> Result<()> {
-        super::runtime::stop_owned_container(runtime, cwd, name, timeout)
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct LeaseRecord {
@@ -307,7 +271,8 @@ impl ResourceLease {
         Ok(())
     }
 
-    pub(crate) fn verify_runtime_ownership(&self, project: &Project) -> Result<()> {
+    /// Return the verified immutable target; callers must not remove by reusable name.
+    pub(crate) fn verify_runtime_ownership(&self, project: &Project) -> Result<String> {
         self.ensure_heartbeat_healthy()?;
         let record = self
             .record
@@ -654,9 +619,9 @@ fn reclaim_resource_with_runtime<O: RuntimeOperations + ?Sized>(
             Some(value) => bail!("unsupported container runtime {value:?}"),
             None => bail!("container lease has no runtime"),
         };
-        verify_runtime_record(runtime_operations, project, path, record)?;
+        let object_id = verify_runtime_record(runtime_operations, project, path, record)?;
         runtime_operations
-            .stop(runtime, &project.root, name, Duration::from_secs(5))
+            .stop(runtime, &project.root, &object_id, Duration::from_secs(5))
             .with_context(|| format!("stop owned container {name:?}"))?;
     }
     match fs::remove_file(path) {
@@ -938,75 +903,6 @@ pub(crate) fn ownership_labels(
     ])
 }
 
-fn validate_runtime_ownership(
-    project: &Project,
-    path: &Path,
-    record: &LeaseRecord,
-    inspection: &super::inspection::RuntimeInspection,
-) -> Result<()> {
-    let expected_name = record.resource_name.as_deref().unwrap_or_default();
-    if expected_name.trim().is_empty() {
-        bail!("container lease has no resource name");
-    }
-    if inspection.name != expected_name.trim_start_matches('/') {
-        bail!("runtime object name does not match the lease resource name");
-    }
-    let expected = ownership_labels(
-        &record.project_identity,
-        &record.resource_id,
-        &record.resource_kind,
-        &record.invocation_id,
-    );
-    for (key, value) in expected {
-        if inspection.labels.get(&key) != Some(&value) {
-            bail!("runtime object is missing or mismatches ownership label {key:?}");
-        }
-    }
-    if record.project_identity != project.input().project_identity {
-        bail!("lease project identity does not match the current project");
-    }
-    if path.file_name().and_then(|name| name.to_str())
-        != Some(format!("{}.json", resource_key(&record.resource_id)).as_str())
-    {
-        bail!("lease filename does not match the deterministic resource key");
-    }
-    Ok(())
-}
-
-fn verify_runtime_record<O: RuntimeOperations + ?Sized>(
-    runtime_operations: &O,
-    project: &Project,
-    path: &Path,
-    record: &LeaseRecord,
-) -> Result<()> {
-    let runtime = match record.runtime.as_deref() {
-        Some("docker") => ContainerRuntimeKind::Docker,
-        Some("podman") => ContainerRuntimeKind::Podman,
-        Some(value) => bail!("unsupported container runtime {value:?}"),
-        None => bail!("container lease has no runtime"),
-    };
-    let name = record
-        .resource_name
-        .as_deref()
-        .ok_or_else(|| anyhow::anyhow!("container lease has no resource name"))?;
-    let inspection = runtime_operations.inspect(runtime, project, name, Duration::from_secs(5))?;
-    validate_runtime_ownership(project, path, record, &inspection)?;
-    let object_id = record
-        .runtime_object_id
-        .as_deref()
-        .filter(|id| !id.trim().is_empty())
-        .ok_or_else(|| anyhow::anyhow!("container lease has no immutable runtime object ID"))?;
-    if inspection.object_id != object_id {
-        bail!("runtime object identity changed since the lease was recorded");
-    }
-    for (key, value) in &record.runtime_labels {
-        if inspection.labels.get(key) != Some(value) {
-            bail!("runtime ownership label {key:?} changed since lease creation");
-        }
-    }
-    Ok(())
-}
-
 pub(super) fn lease_directory(project: &Project) -> Result<PathBuf> {
     let repository = project
         .root
@@ -1062,8 +958,13 @@ fn process_start_identity_checked(pid: u32) -> Option<String> {
 
 #[cfg(target_os = "macos")]
 fn process_start_identity_checked(pid: u32) -> Option<String> {
+    // SAFETY: libc's C-layout proc_bsdinfo contains only integer fields and
+    // fixed byte arrays, for which an all-zero representation is valid.
     let mut info = unsafe { std::mem::zeroed::<libc::proc_bsdinfo>() };
     let expected_size = std::mem::size_of::<libc::proc_bsdinfo>() as libc::c_int;
+    // SAFETY: info is aligned, writable storage for exactly expected_size
+    // bytes and lives through this synchronous call. PROC_PIDTBSDINFO selects
+    // this struct layout; fields are used only after a full-size response.
     let observed = unsafe {
         libc::proc_pidinfo(
             pid as libc::c_int,
@@ -1090,6 +991,8 @@ fn process_start_identity_checked(pid: u32) -> Option<String> {
     if pid == 0 {
         return None;
     }
+    // SAFETY: the API takes only scalar arguments. A non-null result is an
+    // owned process handle with the query rights required by GetProcessTimes.
     let handle = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid) };
     if handle.is_null() {
         return None;
@@ -1110,8 +1013,12 @@ fn process_start_identity_checked(pid: u32) -> Option<String> {
         dwLowDateTime: 0,
         dwHighDateTime: 0,
     };
+    // SAFETY: handle is live and owned here; the four distinct FILETIME
+    // values are aligned writable outputs valid for the entire call.
     let available =
         unsafe { GetProcessTimes(handle, &mut creation, &mut exit, &mut kernel, &mut user) != 0 };
+    // SAFETY: this is the sole close of the non-null OpenProcess handle,
+    // after its last use, on both success and failure of the query.
     unsafe {
         CloseHandle(handle);
     }
@@ -1134,6 +1041,8 @@ fn process_alive(pid: u32) -> Option<bool> {
     }
     // kill(pid, 0) checks existence without sending a signal. EPERM means the
     // process exists but is not inspectable by the current user.
+    // SAFETY: kill takes scalar arguments and no borrowed storage; signal 0
+    // performs an existence/permission check without delivering a signal.
     let result = unsafe { libc::kill(pid as libc::pid_t, 0) };
     if result == 0 {
         Some(true)
@@ -1810,6 +1719,114 @@ mod tests {
             report.resources[0].state, "ownership-uncertain",
             "cleanup evidence must expose the uncertain state"
         );
+    }
+
+    #[test]
+    fn reclaim_rejects_invalid_container_targets_before_runtime_removal() {
+        for (index, (name, runtime, expected)) in [
+            (None, Some("docker"), "no resource name"),
+            (
+                Some("foreign-container"),
+                Some("docker"),
+                "not Harness-Gate managed",
+            ),
+            (
+                Some("harness-gate-fixture-container"),
+                Some("unknown"),
+                "unsupported container runtime",
+            ),
+            (Some("harness-gate-fixture-container"), None, "no runtime"),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let (_workspace, project) = runtime_project(&format!("reclaim-invalid-{index}"));
+            let (path, mut record, inspection) =
+                container_lease(&project, ContainerRuntimeKind::Docker, true);
+            record.resource_name = name.map(str::to_string);
+            record.runtime = runtime.map(str::to_string);
+            let (fake, calls) = fake_runtime(ContainerRuntimeKind::Docker, Some(inspection));
+            let error =
+                super::reclaim_resource_with_runtime(&project, &path, &record, &fake).unwrap_err();
+            assert!(format!("{error:#}").contains(expected), "{error:#}");
+            assert_eq!(calls.load(Ordering::SeqCst), 0);
+            assert!(path.is_file(), "invalid target must retain its marker");
+        }
+    }
+
+    #[test]
+    fn generic_reclaim_is_idempotent_but_reports_marker_removal_errors() {
+        let (_workspace, project) = runtime_project("reclaim-marker-errors");
+        let (path, mut record, _) = container_lease(&project, ContainerRuntimeKind::Docker, true);
+        record.resource_kind = "workspace".into();
+        let (fake, calls) = fake_runtime(ContainerRuntimeKind::Docker, None);
+        std::fs::remove_file(&path).unwrap();
+        super::reclaim_resource_with_runtime(&project, &path, &record, &fake).unwrap();
+        std::fs::create_dir(&path).unwrap();
+        let error =
+            super::reclaim_resource_with_runtime(&project, &path, &record, &fake).unwrap_err();
+        assert!(format!("{error:#}").contains("remove lease"));
+        assert!(path.is_dir(), "unexpected marker type must not be removed");
+        assert_eq!(calls.load(Ordering::SeqCst), 0);
+    }
+
+    #[test]
+    fn cleanup_targets_verified_object_id_after_name_replacement() {
+        struct ReplacedNameRuntime {
+            inspection: RuntimeInspection,
+            removed_replacement: Arc<AtomicUsize>,
+        }
+        impl RuntimeOperations for ReplacedNameRuntime {
+            fn inspect(
+                &self,
+                _runtime: ContainerRuntimeKind,
+                _project: &Project,
+                _name: &str,
+                _timeout: Duration,
+            ) -> anyhow::Result<RuntimeInspection> {
+                // Return the original object. By the time stop is called, its
+                // reusable name belongs to a different, unowned object.
+                Ok(self.inspection.clone())
+            }
+            fn stop(
+                &self,
+                _runtime: ContainerRuntimeKind,
+                _cwd: &Path,
+                target: &str,
+                _timeout: Duration,
+            ) -> anyhow::Result<()> {
+                if target == self.inspection.name {
+                    self.removed_replacement.fetch_add(1, Ordering::SeqCst);
+                }
+                anyhow::ensure!(
+                    target == self.inspection.object_id,
+                    "stop target must be the verified object ID"
+                );
+                Ok(())
+            }
+        }
+        for (index, runtime) in [ContainerRuntimeKind::Docker, ContainerRuntimeKind::Podman]
+            .into_iter()
+            .enumerate()
+        {
+            let (_workspace, project) =
+                runtime_project(&format!("runtime-replaced-after-inspect-{index}"));
+            let (path, _record, inspection) = container_lease(&project, runtime, true);
+            let removed_replacement = Arc::new(AtomicUsize::new(0));
+            let fake = ReplacedNameRuntime {
+                inspection,
+                removed_replacement: Arc::clone(&removed_replacement),
+            };
+            let report = cleanup_with_runtime(&project, false, &fake).expect("cleanup report");
+            assert_eq!(
+                removed_replacement.load(Ordering::SeqCst),
+                0,
+                "cleanup must not remove an unowned replacement through a reused name"
+            );
+            assert_eq!(report.reclaimed, 1);
+            assert!(report.failures.is_empty());
+            assert!(!path.exists());
+        }
     }
 
     #[test]

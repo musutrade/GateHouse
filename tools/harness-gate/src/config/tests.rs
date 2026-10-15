@@ -1800,3 +1800,79 @@ fn configuration_loader_measurement() {
         })
     );
 }
+
+fn config_with_policy_waiver() -> FlowConfig {
+    let mut config = repository_config();
+    config.policy.waivers.push(super::model::WaiverConfig {
+        id: "reviewed-exception".into(),
+        step: config.steps[0].id.clone(),
+        scope: Some("component-a".into()),
+        risk: "temporary test outage".into(),
+        reason: "repair scheduled".into(),
+        owner: "maintainer".into(),
+        approved_by: "reviewer".into(),
+        created_at: "2026-01-01T00:00:00Z".into(),
+        expires_at: "2026-01-02T00:00:00Z".into(),
+        compensating_control: "manual review".into(),
+        revoked: false,
+    });
+    config
+}
+
+#[test]
+fn policy_waiver_configuration_accepts_valid_scoped_and_unscoped_records() {
+    for scope in [None, Some("component-a".to_string())] {
+        let mut config = config_with_policy_waiver();
+        config.policy.waivers[0].scope = scope.clone();
+        let source = toml::to_string(&config).unwrap();
+        let loaded = FlowConfig::from_source_with_diagnostics(&source, None, None)
+            .expect("structurally valid waiver; runtime expiry is checked separately");
+        assert_eq!(loaded.policy.waivers.len(), 1);
+        assert_eq!(loaded.policy.waivers[0].id, "reviewed-exception");
+        assert_eq!(loaded.policy.waivers[0].step, config.steps[0].id);
+        assert_eq!(loaded.policy.waivers[0].scope, scope);
+    }
+}
+
+#[test]
+fn policy_waiver_configuration_rejects_invalid_approval_and_time_boundaries() {
+    type Mutation = fn(&mut super::model::WaiverConfig);
+    let cases: &[(&str, Mutation)] = &[
+        ("invalid id", |w| w.id = "invalid id".into()),
+        ("unknown step", |w| w.step = "missing-step".into()),
+        ("empty risk", |w| w.risk = " ".into()),
+        ("empty reason", |w| w.reason = "\t".into()),
+        ("empty owner", |w| w.owner = " ".into()),
+        ("empty approver", |w| w.approved_by = " ".into()),
+        ("empty creation time", |w| w.created_at = " ".into()),
+        ("empty compensating control", |w| {
+            w.compensating_control = " ".into()
+        }),
+        ("self approval", |w| w.approved_by = w.owner.clone()),
+        ("invalid creation time", |w| {
+            w.created_at = "not-a-date".into()
+        }),
+        ("invalid expiry", |w| w.expires_at = "not-a-date".into()),
+        ("equal expiry", |w| w.expires_at = w.created_at.clone()),
+        ("earlier expiry", |w| {
+            w.expires_at = "2025-12-31T23:59:59Z".into()
+        }),
+        ("empty scope", |w| w.scope = Some(" ".into())),
+    ];
+    let valid = config_with_policy_waiver();
+    for (name, mutation) in cases {
+        let mut config = valid.clone();
+        mutation(&mut config.policy.waivers[0]);
+        let diagnostics = diagnostics_for(&config);
+        assert_eq!(diagnostics.len(), 1, "{name}: {diagnostics:?}");
+        assert_eq!(diagnostics[0].path, "policy", "{name}");
+        assert_eq!(diagnostics[0].id, "HGCFG-INVALID-FIELD", "{name}");
+        assert_eq!(diagnostics[0].severity, DiagnosticSeverity::Error, "{name}");
+    }
+    let mut duplicate = valid;
+    duplicate
+        .policy
+        .waivers
+        .push(duplicate.policy.waivers[0].clone());
+    assert_diagnostic(&duplicate, "policy", "HGCFG-INVALID-FIELD");
+}

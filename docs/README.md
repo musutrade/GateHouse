@@ -26,6 +26,7 @@ was true when recorded; use the current guides below for installation and use.
 | Diagnose failures / 排查 | [Failure codes](failure-codes.md), [中文修复路径](../README.zh-CN.md#常见修复路径) |
 | Release or contribute / 发布与贡献 | [Release governance](release-governance.md), [contributing](../CONTRIBUTING.md), [engineering policy](engineering-policy.md), [CI guide](quality/ci-topology/README.md) |
 | Route documentation-only CI changes / 文档 CI 分流 | [Documentation-only routing](quality/ci-docs-routing.md) |
+| Maintain Core boundaries / Core 接口与安全不变量 | [Internal API contracts](core-api-contracts.md) |
 | Build and test from source / 源码开发与数据准备 | [Contributing](../CONTRIBUTING.md), [pinned regression data and offline cache](../test-data/README.md) |
 | Keep the checkout small / 仓库与本地产物整理 | [Incremental size limits](repository-size-policy.md), [Local storage preview and cleanup](local-storage.md) |
 | Review delivered work / 验收与待办 | [Current release and issue status](release-status.md), [Arc Admin native acceptance](quality/arc-native-20260913/README.md), [historical specifications](specs/README.md), [decisions](adr/README.md) |
@@ -34,3 +35,5 @@ was true when recorded; use the current guides below for installation and use.
 Core installation, collector installation, native measurement certification and
 project policy adoption are separate milestones. A preset or an installed plugin
 does not create a trusted baseline or prove the project's quality gates pass.
+
+容器运行时插件化的待验证设计见 [Core 边界与迁移提案](runtime-plugin-boundary.md)。

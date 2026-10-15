@@ -173,6 +173,7 @@
         "src/service/docker.rs",
         "src/service/inspection.rs",
         "src/service/lease.rs",
+        "src/service/lease/container.rs",
         "src/service/mod.rs",
         "src/service/report_directory.rs"
       ]
@@ -207,6 +208,7 @@
         "src/verify/plan.rs",
         "src/verify/quality.rs",
         "src/verify/report.rs",
+        "src/verify/report/rendering.rs",
         "src/verify/scheduler.rs",
         "src/verify/steps.rs",
         "src/verify/waiver.rs",
@@ -338,6 +340,11 @@
       "path": "src/findings/tests.rs",
       "kind": "test",
       "reason": "Diagnostic finding regression tests compiled only under cfg(test)."
+    },
+    {
+      "path": "src/verify/parser_fuzz.rs",
+      "kind": "test",
+      "reason": "Bounded mutation harness included only by the cfg(test) parser module; no production implementation."
     }
   ],
   "external_exclusions": [

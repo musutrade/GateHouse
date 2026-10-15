@@ -509,9 +509,9 @@ impl Drop for RunningService {
                 .as_ref()
                 .ok_or_else(|| anyhow::anyhow!("managed container has no ownership lease"))
                 .and_then(|lease| lease.verify_runtime_ownership(&self.project));
-            if let Err(error) = ownership.and_then(|()| {
+            if let Err(error) = ownership.and_then(|object_id| {
                 self.runtime
-                    .stop_container(&self.project.root, container, Duration::from_secs(5))
+                    .stop_container(&self.project.root, &object_id, Duration::from_secs(5))
             }) {
                 cleanup_succeeded = false;
                 let detail = format!(
