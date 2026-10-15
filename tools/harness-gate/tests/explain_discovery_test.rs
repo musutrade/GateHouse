@@ -31,7 +31,7 @@ fn discovery_is_project_independent_and_selectors_are_exclusive() {
         .iter()
         .filter(|entry| entry.get("details").is_some())
         .collect();
-    assert_eq!(detailed.len(), 42);
+    assert_eq!(detailed.len(), entries.len());
     for entry in detailed {
         let details = entry["details"].as_str().unwrap();
         for heading in ["## Why this fails", "## Diagnose and repair", "## Example"] {

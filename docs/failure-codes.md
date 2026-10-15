@@ -80,8 +80,8 @@ matches is a successful empty array (or a human-readable message). These modes
 never load project configuration or write files.
 
 Detailed explanations are embedded in the binary for the following codes, so
-lookup also works offline. Human lookup prints the details; JSON adds an optional
-`details` Markdown string. Codes without this field retain their short guidance.
+lookup also works offline. Every supported code has a detailed guide. Human
+lookup prints the details; JSON includes the `details` Markdown string.
 
 - [QUALITY_BLOCKED](../tools/harness-gate/docs/errors/QUALITY_BLOCKED.md)
 - [RESULT_PARSE_FAILURE](../tools/harness-gate/docs/errors/RESULT_PARSE_FAILURE.md)
@@ -128,6 +128,36 @@ lookup also works offline. Human lookup prints the details; JSON adds an optiona
 - [E1403](../tools/harness-gate/docs/errors/E1403.md)
 - [E1404](../tools/harness-gate/docs/errors/E1404.md)
 
+- [WEBHOOK_DESTINATION_DENIED](../tools/harness-gate/docs/errors/WEBHOOK_DESTINATION_DENIED.md)
+- [WEBHOOK_REDIRECT_DENIED](../tools/harness-gate/docs/errors/WEBHOOK_REDIRECT_DENIED.md)
+- [LEASE_OWNERSHIP_UNCERTAIN](../tools/harness-gate/docs/errors/LEASE_OWNERSHIP_UNCERTAIN.md)
+- [SERVICE_SETUP_FAILURE](../tools/harness-gate/docs/errors/SERVICE_SETUP_FAILURE.md)
+- [SERVICE_LEASE_FAILURE](../tools/harness-gate/docs/errors/SERVICE_LEASE_FAILURE.md)
+- [RESULT_ZERO](../tools/harness-gate/docs/errors/RESULT_ZERO.md)
+- [RESULT_PARTIAL](../tools/harness-gate/docs/errors/RESULT_PARTIAL.md)
+- [SCHEDULER_FAILURE](../tools/harness-gate/docs/errors/SCHEDULER_FAILURE.md)
+- [SECRET_SCAN_FAILURE](../tools/harness-gate/docs/errors/SECRET_SCAN_FAILURE.md)
+- [ARCHITECTURE_AUDIT_FAILURE](../tools/harness-gate/docs/errors/ARCHITECTURE_AUDIT_FAILURE.md)
+- [STEP_EXECUTION_FAILURE](../tools/harness-gate/docs/errors/STEP_EXECUTION_FAILURE.md)
+- [STEP_SKIPPED](../tools/harness-gate/docs/errors/STEP_SKIPPED.md)
+- [OUTPUT_LIMIT_EXCEEDED](../tools/harness-gate/docs/errors/OUTPUT_LIMIT_EXCEEDED.md)
+- [READER_DEADLINE_EXCEEDED](../tools/harness-gate/docs/errors/READER_DEADLINE_EXCEEDED.md)
+- [STEP_CANCELLED](../tools/harness-gate/docs/errors/STEP_CANCELLED.md)
+- [STEP_FAILED](../tools/harness-gate/docs/errors/STEP_FAILED.md)
+- [EVIDENCE_PATH_ESCAPE](../tools/harness-gate/docs/errors/EVIDENCE_PATH_ESCAPE.md)
+- [EVIDENCE_PENDING](../tools/harness-gate/docs/errors/EVIDENCE_PENDING.md)
+- [EVIDENCE_FINALIZATION_FAILURE](../tools/harness-gate/docs/errors/EVIDENCE_FINALIZATION_FAILURE.md)
+- [EVIDENCE_PUBLICATION_FAILURE](../tools/harness-gate/docs/errors/EVIDENCE_PUBLICATION_FAILURE.md)
+- [EVIDENCE_DUPLICATE_PATH](../tools/harness-gate/docs/errors/EVIDENCE_DUPLICATE_PATH.md)
+- [EVIDENCE_STEP_UNBOUND](../tools/harness-gate/docs/errors/EVIDENCE_STEP_UNBOUND.md)
+- [EVIDENCE_INVOCATION_MISMATCH](../tools/harness-gate/docs/errors/EVIDENCE_INVOCATION_MISMATCH.md)
+- [EVIDENCE_MISSING](../tools/harness-gate/docs/errors/EVIDENCE_MISSING.md)
+- [EVIDENCE_UNDECLARED_FILE](../tools/harness-gate/docs/errors/EVIDENCE_UNDECLARED_FILE.md)
+- [EVIDENCE_SYMLINK](../tools/harness-gate/docs/errors/EVIDENCE_SYMLINK.md)
+- [EVIDENCE_INVALID_TYPE](../tools/harness-gate/docs/errors/EVIDENCE_INVALID_TYPE.md)
+- [EVIDENCE_READ_FAILURE](../tools/harness-gate/docs/errors/EVIDENCE_READ_FAILURE.md)
+- [EVIDENCE_INVALID_METADATA](../tools/harness-gate/docs/errors/EVIDENCE_INVALID_METADATA.md)
+
 ## webhook-destination-denied
 
 **WEBHOOK_DESTINATION_DENIED — URL host or resolved address is outside the egress policy.**
@@ -148,9 +178,9 @@ Inspect the recorded owner and runtime identity. Use cleanup --dry-run to inspec
 
 ## service-setup-failure
 
-**SERVICE_SETUP_FAILURE — Service configuration or startup setup failed.**
+**SERVICE_SETUP_FAILURE — Service-manager lock acquisition failed.**
 
-Inspect the service setup log and required tools or credentials. Confirm resource ownership before cleanup, then retry the original verification.
+Inspect cancellation, a poisoned mutex or the bounded service-manager lock wait. Resolve the original lock error before retrying; do not bypass synchronization.
 
 ## service-lease-failure
 
@@ -286,9 +316,9 @@ Inspect the affected artifact binding and invocation identity. Correct the produ
 
 ## evidence-missing
 
-**EVIDENCE_MISSING — A required artifact or manifest entry is missing.**
+**EVIDENCE_MISSING — Required evidence is absent or its path cannot be inspected.**
 
-Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+Inspect the original filesystem error to distinguish absence from permission or I/O failures. Repair the producer or access problem and generate fresh evidence; do not fabricate replacement artifacts.
 
 ## evidence-undeclared-file
 

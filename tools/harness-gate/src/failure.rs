@@ -73,7 +73,7 @@ const EXPLANATIONS: &[(&str, &str, &str)] = &[
     ("WEBHOOK_DESTINATION_DENIED", "URL host or resolved address is outside the egress policy", "Check the configured destination and egress policy. Use an approved endpoint; do not disable address or redirect checks."),
     ("WEBHOOK_REDIRECT_DENIED", "Webhook returned a redirect while redirects are disabled", "Check the configured destination and egress policy. Use an approved endpoint; do not disable address or redirect checks."),
     ("LEASE_OWNERSHIP_UNCERTAIN", "Lease identity or renewal cannot be proven", "Inspect the recorded owner and runtime identity. Use cleanup --dry-run to inspect stale leases; retain uncertain resources rather than deleting by name."),
-    ("SERVICE_SETUP_FAILURE", "Service configuration or startup setup failed", "Inspect the service setup log and required tools or credentials. Confirm resource ownership before cleanup, then retry the original verification."),
+    ("SERVICE_SETUP_FAILURE", "Service-manager lock acquisition failed", "Inspect cancellation, a poisoned mutex or the bounded service-manager lock wait. Resolve the original lock error before retrying; do not bypass synchronization."),
     ("SERVICE_LEASE_FAILURE", "A service lease could not be acquired", "Inspect the service setup log and required tools or credentials. Confirm resource ownership before cleanup, then retry the original verification."),
     ("RESULT_PARSE_FAILURE", "Configured test result could not be parsed", "Inspect the declared result format, output path and parser settings. Ensure the producing test command completed and emitted the required results."),
     ("RESULT_ZERO", "A parser found no results", "Inspect the declared result format, output path and parser settings. Ensure the producing test command completed and emitted the required results."),
@@ -96,7 +96,7 @@ const EXPLANATIONS: &[(&str, &str, &str)] = &[
     ("EVIDENCE_DUPLICATE_PATH", "Multiple artifact bindings claim the same path", "Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass."),
     ("EVIDENCE_STEP_UNBOUND", "An artifact is not bound to a declared verification step", "Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass."),
     ("EVIDENCE_INVOCATION_MISMATCH", "An artifact or manifest belongs to another invocation", "Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass."),
-    ("EVIDENCE_MISSING", "A required artifact or manifest entry is missing", "Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass."),
+    ("EVIDENCE_MISSING", "Required evidence is absent or its path cannot be inspected", "Inspect the original filesystem error to distinguish absence from permission or I/O failures. Repair the producer or access problem and generate fresh evidence; do not fabricate replacement artifacts."),
     ("EVIDENCE_UNDECLARED_FILE", "A file was found in the evidence root without a declaration", "Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass."),
     ("EVIDENCE_SYMLINK", "A symlink was found where a regular evidence file was required", "Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass."),
     ("EVIDENCE_INVALID_TYPE", "An evidence entry has an unsupported type or shape", "Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass."),
@@ -150,6 +150,10 @@ const CONFIG_EXPLANATIONS: &[(&str, &str, &str)] = &[
 ];
 
 const DETAILED_EXPLANATIONS: &[(&str, &str)] = &[
+    (
+        "ARCHITECTURE_AUDIT_FAILURE",
+        include_str!("../docs/errors/ARCHITECTURE_AUDIT_FAILURE.md"),
+    ),
     ("E1000", include_str!("../docs/errors/E1000.md")),
     ("E1101", include_str!("../docs/errors/E1101.md")),
     ("E1102", include_str!("../docs/errors/E1102.md")),
@@ -164,6 +168,58 @@ const DETAILED_EXPLANATIONS: &[(&str, &str)] = &[
     ("E1402", include_str!("../docs/errors/E1402.md")),
     ("E1403", include_str!("../docs/errors/E1403.md")),
     ("E1404", include_str!("../docs/errors/E1404.md")),
+    (
+        "EVIDENCE_DUPLICATE_PATH",
+        include_str!("../docs/errors/EVIDENCE_DUPLICATE_PATH.md"),
+    ),
+    (
+        "EVIDENCE_FINALIZATION_FAILURE",
+        include_str!("../docs/errors/EVIDENCE_FINALIZATION_FAILURE.md"),
+    ),
+    (
+        "EVIDENCE_INVALID_METADATA",
+        include_str!("../docs/errors/EVIDENCE_INVALID_METADATA.md"),
+    ),
+    (
+        "EVIDENCE_INVALID_TYPE",
+        include_str!("../docs/errors/EVIDENCE_INVALID_TYPE.md"),
+    ),
+    (
+        "EVIDENCE_INVOCATION_MISMATCH",
+        include_str!("../docs/errors/EVIDENCE_INVOCATION_MISMATCH.md"),
+    ),
+    (
+        "EVIDENCE_MISSING",
+        include_str!("../docs/errors/EVIDENCE_MISSING.md"),
+    ),
+    (
+        "EVIDENCE_PATH_ESCAPE",
+        include_str!("../docs/errors/EVIDENCE_PATH_ESCAPE.md"),
+    ),
+    (
+        "EVIDENCE_PENDING",
+        include_str!("../docs/errors/EVIDENCE_PENDING.md"),
+    ),
+    (
+        "EVIDENCE_PUBLICATION_FAILURE",
+        include_str!("../docs/errors/EVIDENCE_PUBLICATION_FAILURE.md"),
+    ),
+    (
+        "EVIDENCE_READ_FAILURE",
+        include_str!("../docs/errors/EVIDENCE_READ_FAILURE.md"),
+    ),
+    (
+        "EVIDENCE_STEP_UNBOUND",
+        include_str!("../docs/errors/EVIDENCE_STEP_UNBOUND.md"),
+    ),
+    (
+        "EVIDENCE_SYMLINK",
+        include_str!("../docs/errors/EVIDENCE_SYMLINK.md"),
+    ),
+    (
+        "EVIDENCE_UNDECLARED_FILE",
+        include_str!("../docs/errors/EVIDENCE_UNDECLARED_FILE.md"),
+    ),
     ("HGCFG-CHECK", include_str!("../docs/errors/HGCFG-CHECK.md")),
     (
         "HGCFG-DEPENDENCY-CYCLE",
@@ -259,16 +315,70 @@ const DETAILED_EXPLANATIONS: &[(&str, &str)] = &[
         include_str!("../docs/errors/HGCFG-VERSION.md"),
     ),
     (
+        "LEASE_OWNERSHIP_UNCERTAIN",
+        include_str!("../docs/errors/LEASE_OWNERSHIP_UNCERTAIN.md"),
+    ),
+    (
+        "OUTPUT_LIMIT_EXCEEDED",
+        include_str!("../docs/errors/OUTPUT_LIMIT_EXCEEDED.md"),
+    ),
+    (
         "QUALITY_BLOCKED",
         include_str!("../docs/errors/QUALITY_BLOCKED.md"),
+    ),
+    (
+        "READER_DEADLINE_EXCEEDED",
+        include_str!("../docs/errors/READER_DEADLINE_EXCEEDED.md"),
     ),
     (
         "RESULT_PARSE_FAILURE",
         include_str!("../docs/errors/RESULT_PARSE_FAILURE.md"),
     ),
     (
+        "RESULT_PARTIAL",
+        include_str!("../docs/errors/RESULT_PARTIAL.md"),
+    ),
+    ("RESULT_ZERO", include_str!("../docs/errors/RESULT_ZERO.md")),
+    (
+        "SCHEDULER_FAILURE",
+        include_str!("../docs/errors/SCHEDULER_FAILURE.md"),
+    ),
+    (
+        "SECRET_SCAN_FAILURE",
+        include_str!("../docs/errors/SECRET_SCAN_FAILURE.md"),
+    ),
+    (
+        "SERVICE_LEASE_FAILURE",
+        include_str!("../docs/errors/SERVICE_LEASE_FAILURE.md"),
+    ),
+    (
+        "SERVICE_SETUP_FAILURE",
+        include_str!("../docs/errors/SERVICE_SETUP_FAILURE.md"),
+    ),
+    (
+        "STEP_CANCELLED",
+        include_str!("../docs/errors/STEP_CANCELLED.md"),
+    ),
+    (
+        "STEP_EXECUTION_FAILURE",
+        include_str!("../docs/errors/STEP_EXECUTION_FAILURE.md"),
+    ),
+    ("STEP_FAILED", include_str!("../docs/errors/STEP_FAILED.md")),
+    (
+        "STEP_SKIPPED",
+        include_str!("../docs/errors/STEP_SKIPPED.md"),
+    ),
+    (
         "STEP_TIMEOUT",
         include_str!("../docs/errors/STEP_TIMEOUT.md"),
+    ),
+    (
+        "WEBHOOK_DESTINATION_DENIED",
+        include_str!("../docs/errors/WEBHOOK_DESTINATION_DENIED.md"),
+    ),
+    (
+        "WEBHOOK_REDIRECT_DENIED",
+        include_str!("../docs/errors/WEBHOOK_REDIRECT_DENIED.md"),
     ),
 ];
 
