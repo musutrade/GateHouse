@@ -20,6 +20,13 @@ pub(crate) fn run() -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
+        Commands::Explain {
+            code, search, json, ..
+        } => match code {
+            Some(code) => crate::failure::explain(code, *json),
+            None => crate::failure::discover(search.as_deref(), *json),
+        }
+        .map_err(Into::into),
         Commands::Findings { action } => crate::findings::run(action).map_err(Into::into),
         Commands::CacheClear { json } => {
             let path = cli
@@ -372,7 +379,7 @@ fn print_human_config_error(error: &anyhow::Error) {
             "{}",
             crate::ui::error("ERROR [E1000]: configuration check failed")
         );
-        eprintln!("{}", diagnostics);
+        eprintln!("{}", diagnostics.render_terminal());
     } else {
         eprintln!(
             "{}",
@@ -385,6 +392,7 @@ fn print_human_config_error(error: &anyhow::Error) {
             eprintln!("  help: {}", diagnostic.help);
         }
     }
+    eprintln!("help: harness-gate explain E1000");
     eprintln!("Next: harness-gate init --preset generic");
     eprintln!("Minimal flow.toml shape:");
     eprintln!("{}", crate::config::MINIMAL_CONFIG_SNIPPET);

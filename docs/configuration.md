@@ -44,6 +44,35 @@ current directory toward its parents, or accepts explicit paths:
     harness-gate config print --resolved
     harness-gate schema export
 
+For human output, configuration errors show a compiler-style diagnostic:
+
+```text
+error[HGCFG-TOML-PARSE]: configuration is not valid TOML
+  --> /project/.harness-gate/flow.toml:4:1
+   |
+   = field: $
+   = help: fix the TOML syntax or unknown field reported by the parser
+   = explain: harness-gate explain HGCFG-TOML-PARSE
+```
+
+Line and column are shown when available; related conflicts identify both
+configuration fields. The renderer does not print configuration source values.
+The existing `--color auto|always|never` option controls terminal styling;
+`auto` respects `NO_COLOR` and disables color when stderr is redirected.
+Explicit `always` overrides `NO_COLOR`. JSON diagnostics remain unchanged and
+contain no terminal styling. The outer E1000 error category and failing exit
+status remain unchanged. This presentation does not change validation or
+engineering-policy semantics and does not apply repairs automatically.
+
+Typed configuration failures from ordinary commands such as `verify` and
+`doctor` use the same typed diagnostic presentation, beneath
+`ERROR [E1000]: configuration is invalid`. Workflow discovery failures occur
+before creating reports or executing configured commands. Later failures, such
+as quality configuration loading during verification, may occur after report
+directories are prepared and may use the verification error boundary instead.
+Non-configuration errors retain their existing CLI presentation. The separate
+`verify --plan --json` envelope is unchanged.
+
 The project root and configuration must stay inside the checkout. Absolute
 paths, .. traversal, and symlinks that resolve outside the project are
 rejected. `${NAME}` requires an existing variable; `${NAME:-default}` supplies

@@ -43,6 +43,21 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
+    /// Explain a registered machine failure, CLI error or configuration diagnostic code without loading a project.
+    Explain {
+        /// Stable code, for example QUALITY_BLOCKED, E1401 or HGCFG-TOML-PARSE.
+        #[arg(required_unless_present_any = ["list", "search"], conflicts_with_all = ["list", "search"])]
+        code: Option<String>,
+        /// List every supported code.
+        #[arg(long, conflicts_with = "search")]
+        list: bool,
+        /// Search codes, titles and guidance (case-insensitive literal text).
+        #[arg(long)]
+        search: Option<String>,
+        /// Emit machine-readable explanation JSON.
+        #[arg(long)]
+        json: bool,
+    },
     /// Consume completed reports as diagnostic findings; never evaluate policy.
     Findings {
         #[command(subcommand)]

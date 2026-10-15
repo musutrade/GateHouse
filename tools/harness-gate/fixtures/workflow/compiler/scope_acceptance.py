@@ -84,7 +84,10 @@ def main():
         assert result.returncode == expected_status, (name, result.returncode, result.stderr)
         report_path = root / 'direct-report.json'
         if expected_error is not None:
-            assert result.stderr.strip() == 'ERROR [E1000]: command failed: ' + expected_error, result.stderr
+            assert result.stderr.strip() == (
+                'ERROR [E1000]: command failed: ' + expected_error
+                + '\nhelp: harness-gate explain E1000'
+            ), result.stderr
             assert not report_path.exists(), (name, 'stale pass report survived invalid input')
         else:
             report = json.loads(report_path.read_text())

@@ -80,6 +80,8 @@ class RiskScopeTests(unittest.TestCase):
         self.assertIn('process/command.rs', SOURCE_FILES)
         self.assertIn('process/task.rs', SOURCE_FILES)
         self.assertIn('process/capture.rs', SOURCE_FILES)
+        self.assertIn('config/diagnostic.rs', SOURCE_FILES)
+        self.assertIn('error.rs', SOURCE_FILES)
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')},
                          {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs'})
 

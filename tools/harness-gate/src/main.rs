@@ -31,10 +31,8 @@ fn main() -> ExitCode {
         Ok(true) => ExitCode::SUCCESS,
         Ok(false) => ExitCode::FAILURE,
         Err(error) => {
-            eprintln!(
-                "{}",
-                ui::error(format!("ERROR [{}]: {error}", error.code()))
-            );
+            eprintln!("{}", error.render_terminal());
+            eprintln!("help: harness-gate explain {}", error.code());
             ExitCode::FAILURE
         }
     }

@@ -47,6 +47,9 @@ SOURCE_FILES = sorted({f"preset/{name}.rs" for name in ("catalog", "composition"
     # Issue #23: certify Git scope detection with the existing AST/LLVM join.
     # Both base and head use this inventory; no retained report is rewritten.
     {"scope/detection.rs"} |
+    # Issue #64: terminal configuration diagnostics. Recollect both sides
+    # with this additive inventory; retained evidence is not reinterpreted.
+    {"config/diagnostic.rs", "error.rs"} |
     # Issue #27: runner validation is measured with the existing AST/LLVM series.
     # Base and head use the same expanded inventory.
     {"config/validation/steps.rs"} |
