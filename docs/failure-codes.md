@@ -89,6 +89,30 @@ lookup also works offline. Human lookup prints the details; JSON adds an optiona
 - [HGCFG-TOML-PARSE](../tools/harness-gate/docs/errors/HGCFG-TOML-PARSE.md)
 - [HGCFG-UNKNOWN-REFERENCE](../tools/harness-gate/docs/errors/HGCFG-UNKNOWN-REFERENCE.md)
 
+- [HGCFG-CHECK](../tools/harness-gate/docs/errors/HGCFG-CHECK.md)
+- [HGCFG-DEPENDENCY](../tools/harness-gate/docs/errors/HGCFG-DEPENDENCY.md)
+- [HGCFG-DEPENDENCY-CYCLE](../tools/harness-gate/docs/errors/HGCFG-DEPENDENCY-CYCLE.md)
+- [HGCFG-DIAGNOSTICS-TRUNCATED](../tools/harness-gate/docs/errors/HGCFG-DIAGNOSTICS-TRUNCATED.md)
+- [HGCFG-DUPLICATE-FIELD](../tools/harness-gate/docs/errors/HGCFG-DUPLICATE-FIELD.md)
+- [HGCFG-DUPLICATE-LOG](../tools/harness-gate/docs/errors/HGCFG-DUPLICATE-LOG.md)
+- [HGCFG-ENVIRONMENT-OVERRIDE](../tools/harness-gate/docs/errors/HGCFG-ENVIRONMENT-OVERRIDE.md)
+- [HGCFG-EXTERNAL-SERVICE-MIGRATION](../tools/harness-gate/docs/errors/HGCFG-EXTERNAL-SERVICE-MIGRATION.md)
+- [HGCFG-IMPACT](../tools/harness-gate/docs/errors/HGCFG-IMPACT.md)
+- [HGCFG-INTERPOLATION](../tools/harness-gate/docs/errors/HGCFG-INTERPOLATION.md)
+- [HGCFG-INVALID-ENVIRONMENT](../tools/harness-gate/docs/errors/HGCFG-INVALID-ENVIRONMENT.md)
+- [HGCFG-INVALID-FIELD](../tools/harness-gate/docs/errors/HGCFG-INVALID-FIELD.md)
+- [HGCFG-INVALID-LOG](../tools/harness-gate/docs/errors/HGCFG-INVALID-LOG.md)
+- [HGCFG-INVALID-PATH](../tools/harness-gate/docs/errors/HGCFG-INVALID-PATH.md)
+- [HGCFG-PROJECT-SCOPED-CONFIG](../tools/harness-gate/docs/errors/HGCFG-PROJECT-SCOPED-CONFIG.md)
+- [HGCFG-QUALITY](../tools/harness-gate/docs/errors/HGCFG-QUALITY.md)
+- [HGCFG-READ](../tools/harness-gate/docs/errors/HGCFG-READ.md)
+- [HGCFG-REQUIRED-FILE](../tools/harness-gate/docs/errors/HGCFG-REQUIRED-FILE.md)
+- [HGCFG-RUNNER-VERSION](../tools/harness-gate/docs/errors/HGCFG-RUNNER-VERSION.md)
+- [HGCFG-SERVICE-INJECT-COLLISION](../tools/harness-gate/docs/errors/HGCFG-SERVICE-INJECT-COLLISION.md)
+- [HGCFG-SHARED-SERVICE](../tools/harness-gate/docs/errors/HGCFG-SHARED-SERVICE.md)
+- [HGCFG-TEMPLATE-PATH](../tools/harness-gate/docs/errors/HGCFG-TEMPLATE-PATH.md)
+- [HGCFG-VERSION](../tools/harness-gate/docs/errors/HGCFG-VERSION.md)
+
 ## webhook-destination-denied
 
 **WEBHOOK_DESTINATION_DENIED — URL host or resolved address is outside the egress policy.**
@@ -401,9 +425,9 @@ remove the invalid dependency or add an explicit acyclic prerequisite
 
 ## hgcfg-service-inject-collision
 
-**HGCFG-SERVICE-INJECT-COLLISION — multiple services claim the same injected environment variable.**
+**HGCFG-SERVICE-INJECT-COLLISION — service injection variable conflicts with another service or runner setting.**
 
-use one service or distinct inject_env names
+Use distinct service injection and runner thread variable names. For conflicts across unordered steps, add the intended dependency, use distinct names or split the workflow.
 
 ## hgcfg-unknown-reference
 

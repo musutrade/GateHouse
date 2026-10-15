@@ -126,7 +126,7 @@ const CONFIG_EXPLANATIONS: &[(&str, &str, &str)] = &[
     ("HGCFG-RUNNER-VERSION", "runner contract version is unsupported", "use the supported runner contract version"),
     ("HGCFG-DEPENDENCY-CYCLE", "dependencies contain a cycle", "remove the invalid dependency or add an explicit acyclic prerequisite"),
     ("HGCFG-DEPENDENCY", "dependency declaration is invalid", "remove the invalid dependency or add an explicit acyclic prerequisite"),
-    ("HGCFG-SERVICE-INJECT-COLLISION", "multiple services claim the same injected environment variable", "use one service or distinct inject_env names"),
+    ("HGCFG-SERVICE-INJECT-COLLISION", "service injection variable conflicts with another service or runner setting", "Use distinct service injection and runner thread variable names. For conflicts across unordered steps, add the intended dependency, use distinct names or split the workflow."),
     ("HGCFG-UNKNOWN-REFERENCE", "reference does not name a declared configuration entry", "use an identifier declared in the configuration"),
     ("HGCFG-INVALID-PATH", "path is not a safe repository-relative path", "use a non-empty path below the repository without a prefix or parent traversal"),
     ("HGCFG-INVALID-ENVIRONMENT", "environment variable name is invalid", "use an uppercase environment-variable name containing only letters, digits, and underscores"),
@@ -149,17 +149,120 @@ const CONFIG_EXPLANATIONS: &[(&str, &str, &str)] = &[
     ("HGCFG-TEMPLATE-PATH", "Report template path cannot be safely resolved", "Inspect the diagnostic path and related locations. Keep readable templates within their configured root and separate from report output; correct missing files or escaping symlinks."),
 ];
 
+const DETAILED_EXPLANATIONS: &[(&str, &str)] = &[
+    ("HGCFG-CHECK", include_str!("../docs/errors/HGCFG-CHECK.md")),
+    (
+        "HGCFG-DEPENDENCY-CYCLE",
+        include_str!("../docs/errors/HGCFG-DEPENDENCY-CYCLE.md"),
+    ),
+    (
+        "HGCFG-DEPENDENCY",
+        include_str!("../docs/errors/HGCFG-DEPENDENCY.md"),
+    ),
+    (
+        "HGCFG-DIAGNOSTICS-TRUNCATED",
+        include_str!("../docs/errors/HGCFG-DIAGNOSTICS-TRUNCATED.md"),
+    ),
+    (
+        "HGCFG-DUPLICATE-FIELD",
+        include_str!("../docs/errors/HGCFG-DUPLICATE-FIELD.md"),
+    ),
+    (
+        "HGCFG-DUPLICATE-LOG",
+        include_str!("../docs/errors/HGCFG-DUPLICATE-LOG.md"),
+    ),
+    (
+        "HGCFG-ENVIRONMENT-OVERRIDE",
+        include_str!("../docs/errors/HGCFG-ENVIRONMENT-OVERRIDE.md"),
+    ),
+    (
+        "HGCFG-EXTERNAL-SERVICE-MIGRATION",
+        include_str!("../docs/errors/HGCFG-EXTERNAL-SERVICE-MIGRATION.md"),
+    ),
+    (
+        "HGCFG-IMPACT",
+        include_str!("../docs/errors/HGCFG-IMPACT.md"),
+    ),
+    (
+        "HGCFG-INTERPOLATION",
+        include_str!("../docs/errors/HGCFG-INTERPOLATION.md"),
+    ),
+    (
+        "HGCFG-INVALID-ENVIRONMENT",
+        include_str!("../docs/errors/HGCFG-INVALID-ENVIRONMENT.md"),
+    ),
+    (
+        "HGCFG-INVALID-FIELD",
+        include_str!("../docs/errors/HGCFG-INVALID-FIELD.md"),
+    ),
+    (
+        "HGCFG-INVALID-LOG",
+        include_str!("../docs/errors/HGCFG-INVALID-LOG.md"),
+    ),
+    (
+        "HGCFG-INVALID-PATH",
+        include_str!("../docs/errors/HGCFG-INVALID-PATH.md"),
+    ),
+    (
+        "HGCFG-PROJECT-SCOPED-CONFIG",
+        include_str!("../docs/errors/HGCFG-PROJECT-SCOPED-CONFIG.md"),
+    ),
+    (
+        "HGCFG-QUALITY",
+        include_str!("../docs/errors/HGCFG-QUALITY.md"),
+    ),
+    ("HGCFG-READ", include_str!("../docs/errors/HGCFG-READ.md")),
+    (
+        "HGCFG-REQUIRED-FILE",
+        include_str!("../docs/errors/HGCFG-REQUIRED-FILE.md"),
+    ),
+    (
+        "HGCFG-RUNNER-VERSION",
+        include_str!("../docs/errors/HGCFG-RUNNER-VERSION.md"),
+    ),
+    (
+        "HGCFG-SERVICE-INJECT-COLLISION",
+        include_str!("../docs/errors/HGCFG-SERVICE-INJECT-COLLISION.md"),
+    ),
+    (
+        "HGCFG-SHARED-SERVICE",
+        include_str!("../docs/errors/HGCFG-SHARED-SERVICE.md"),
+    ),
+    (
+        "HGCFG-TEMPLATE-PATH",
+        include_str!("../docs/errors/HGCFG-TEMPLATE-PATH.md"),
+    ),
+    (
+        "HGCFG-TOML-PARSE",
+        include_str!("../docs/errors/HGCFG-TOML-PARSE.md"),
+    ),
+    (
+        "HGCFG-UNKNOWN-REFERENCE",
+        include_str!("../docs/errors/HGCFG-UNKNOWN-REFERENCE.md"),
+    ),
+    (
+        "HGCFG-VERSION",
+        include_str!("../docs/errors/HGCFG-VERSION.md"),
+    ),
+    (
+        "QUALITY_BLOCKED",
+        include_str!("../docs/errors/QUALITY_BLOCKED.md"),
+    ),
+    (
+        "RESULT_PARSE_FAILURE",
+        include_str!("../docs/errors/RESULT_PARSE_FAILURE.md"),
+    ),
+    (
+        "STEP_TIMEOUT",
+        include_str!("../docs/errors/STEP_TIMEOUT.md"),
+    ),
+];
+
 fn detailed_explanation(code: &str) -> Option<&'static str> {
-    match code {
-        "QUALITY_BLOCKED" => Some(include_str!("../docs/errors/QUALITY_BLOCKED.md")),
-        "RESULT_PARSE_FAILURE" => Some(include_str!("../docs/errors/RESULT_PARSE_FAILURE.md")),
-        "STEP_TIMEOUT" => Some(include_str!("../docs/errors/STEP_TIMEOUT.md")),
-        "HGCFG-TOML-PARSE" => Some(include_str!("../docs/errors/HGCFG-TOML-PARSE.md")),
-        "HGCFG-UNKNOWN-REFERENCE" => {
-            Some(include_str!("../docs/errors/HGCFG-UNKNOWN-REFERENCE.md"))
-        }
-        _ => None,
-    }
+    DETAILED_EXPLANATIONS
+        .iter()
+        .find(|entry| entry.0 == code)
+        .map(|entry| entry.1)
 }
 
 pub(crate) fn explain(code: &str, json: bool) -> anyhow::Result<bool> {
