@@ -60,6 +60,8 @@ incomplete evidence result.
 ```sh
 harness-gate explain QUALITY_BLOCKED
 harness-gate explain RESULT_PARSE_FAILURE --json
+harness-gate explain --list
+harness-gate explain --search coverage --json
 ```
 
 This command is read-only and does not discover a project, load workflow
@@ -69,6 +71,13 @@ remain a separate diagnostic family with inline help and are not yet accepted by
 `documentation` fields. Advice is supplementary; retry classes, required checks
 and final status remain unchanged. This is one part of issue #64, not delivery of
 interactive edits or all diagnostic families.
+
+Supply exactly one code, `--list`, or `--search TEXT`. Listing and searching
+return codes sorted alphabetically. Search is a case-insensitive literal match
+against the code, title and guidance; blank search text is rejected. Catalog JSON
+is an array of the same explanation objects used for individual lookup. No
+matches is a successful empty array (or a human-readable message). These modes
+never load project configuration or write files.
 
 ## webhook-destination-denied
 

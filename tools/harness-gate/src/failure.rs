@@ -143,6 +143,44 @@ pub(crate) fn explain(code: &str, json: bool) -> anyhow::Result<bool> {
     Ok(true)
 }
 
+/// Catalog discovery never loads project configuration or evaluates policy.
+pub(crate) fn discover(search: Option<&str>, json: bool) -> anyhow::Result<bool> {
+    let query = search.unwrap_or("").trim().to_ascii_lowercase();
+    anyhow::ensure!(
+        search.is_none() || !query.is_empty(),
+        "search text must not be empty"
+    );
+    let mut entries: Vec<_> = EXPLANATIONS
+        .iter()
+        .chain(CLI_EXPLANATIONS.iter())
+        .filter(|(code, title, help)| {
+            format!("{code} {title} {help}")
+                .to_ascii_lowercase()
+                .contains(&query)
+        })
+        .map(|(code, title, help)| Explanation {
+            code: (*code).to_owned(),
+            title,
+            help,
+            documentation: format!(
+                "https://github.com/musutrade/GateHouse/blob/main/docs/failure-codes.md#{}",
+                code.to_ascii_lowercase().replace('_', "-")
+            ),
+        })
+        .collect();
+    entries.sort_by(|left, right| left.code.cmp(&right.code));
+    if json {
+        println!("{}", serde_json::to_string_pretty(&entries)?);
+    } else if entries.is_empty() {
+        println!("No matching error codes.");
+    } else {
+        for entry in entries {
+            println!("{}: {}", entry.code, entry.title);
+        }
+    }
+    Ok(true)
+}
+
 /// Retry classes are a closed configuration vocabulary. Serde keeps the
 /// existing lowercase TOML/JSON spelling while rejecting unknown classes.
 #[derive(

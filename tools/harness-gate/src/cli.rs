@@ -46,7 +46,14 @@ pub(crate) enum Commands {
     /// Explain a registered machine failure or CLI error code without loading a project.
     Explain {
         /// Stable machine or CLI code, for example QUALITY_BLOCKED or E1401.
-        code: String,
+        #[arg(required_unless_present_any = ["list", "search"], conflicts_with_all = ["list", "search"])]
+        code: Option<String>,
+        /// List every supported code.
+        #[arg(long, conflicts_with = "search")]
+        list: bool,
+        /// Search codes, titles and guidance (case-insensitive literal text).
+        #[arg(long)]
+        search: Option<String>,
         /// Emit machine-readable explanation JSON.
         #[arg(long)]
         json: bool,
