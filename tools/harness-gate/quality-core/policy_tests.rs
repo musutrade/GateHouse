@@ -31,7 +31,10 @@ fn load_reference() -> Reference {
     );
     eprintln!("{}", String::from_utf8_lossy(&output.stdout));
     let cases = json::parse(&fs::read_to_string(temp.path().join("cases.json")).unwrap()).unwrap();
-    (temp, cases.as_array().unwrap().clone())
+    let Value::Array(cases) = cases else {
+        panic!("reference cases must be an array");
+    };
+    (temp, cases)
 }
 
 fn context(value: &Value) -> ValidationContext<'_> {
@@ -124,7 +127,41 @@ fn frozen_policy_and_reference_acceptance_match_python() {
     // it in this process under nextest instead of generating the matrix twice.
     green_local_gates_and_breaking_contract_block_project_with_provenance(&reference);
     let mut mismatches = Vec::new();
-    for case in &reference.1 {
+    for (position, case) in reference.1.iter().enumerate() {
+        if let Some(index) = case.get("evaluate_case_ref") {
+            let index = usize::try_from(index.as_u64().expect("integer case reference")).unwrap();
+            assert_eq!(
+                index + 1,
+                position,
+                "report must reference its preceding evaluate case"
+            );
+            assert_eq!(case["kind"], "report");
+            assert!(case.get("args").is_none() && case.get("oracle").is_none());
+            let source = &reference.1[index];
+            assert_eq!(source["kind"], "evaluate");
+            assert_eq!(
+                case["name"],
+                format!("{}/report", source["name"].as_str().unwrap())
+            );
+            assert_eq!(source["oracle"]["accepted"], true);
+            let expected = source.get("project_report").expect("Python report oracle");
+            let actual = project_report::report(
+                &source["oracle"]["value"],
+                &source["kwargs"]["project"],
+                &source["args"][0],
+            );
+            match actual {
+                Ok(value) => {
+                    if let Some(diff) = difference(&value, expected, "$.value") {
+                        mismatches.push(format!("{}: {diff}", case["name"]));
+                    }
+                }
+                Err(error) => {
+                    mismatches.push(format!("{}: Rust rejected: {error:?}", case["name"]))
+                }
+            }
+            continue;
+        }
         let actual = match run(case) {
             Ok(value) => {
                 if let Some(expected) = case.get("project_report") {

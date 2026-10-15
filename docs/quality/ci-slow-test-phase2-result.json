@@ -1,0 +1,174 @@
+{
+  "task": "GateHouse/slow-test-optimization-20261015",
+  "epoch": 1,
+  "status": "completed",
+  "summary": {
+    "differential": {
+      "baseline": {
+        "wall_seconds": {
+          "median": 130.39889986702474,
+          "min": 130.39594387699617,
+          "max": 130.60810545901768
+        },
+        "tree_cpu_seconds": {
+          "median": 130.3376509999999,
+          "min": 130.2387169999999,
+          "max": 130.51643000000007
+        },
+        "sampled_tree_rss_peak_bytes": {
+          "median": 824500224,
+          "min": 824414208,
+          "max": 824504320
+        },
+        "python_wall_median": 21.798210781009402,
+        "input_bytes": [
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmp3BgYoa/input.json",
+              "bytes": 65220009
+            }
+          ],
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmpvaj67O/input.json",
+              "bytes": 65220009
+            }
+          ],
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmp3KqZtp/input.json",
+              "bytes": 65220009
+            }
+          ]
+        ]
+      },
+      "candidate": {
+        "wall_seconds": {
+          "median": 119.57653654599562,
+          "min": 119.57603257504525,
+          "max": 119.78013950196328
+        },
+        "tree_cpu_seconds": {
+          "median": 119.49373600000001,
+          "min": 119.36887600000006,
+          "max": 119.6243990000003
+        },
+        "sampled_tree_rss_peak_bytes": {
+          "median": 823312384,
+          "min": 823296000,
+          "max": 823439360
+        },
+        "python_wall_median": 21.8225302019855,
+        "input_bytes": [
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmpCeywCo/input.json",
+              "bytes": 65220009
+            }
+          ],
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmpk89Ovi/input.json",
+              "bytes": 65220009
+            }
+          ],
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmpGavlMe/input.json",
+              "bytes": 65220009
+            }
+          ]
+        ]
+      },
+      "median_wall_reduction_percent": 8.299428394001252
+    },
+    "policy": {
+      "baseline": {
+        "wall_seconds": {
+          "median": 117.58470927597955,
+          "min": 117.38212347502122,
+          "max": 117.98554350598715
+        },
+        "tree_cpu_seconds": {
+          "median": 117.4632590000001,
+          "min": 117.24516300000008,
+          "max": 117.81679300000002
+        },
+        "sampled_tree_rss_peak_bytes": {
+          "median": 1473445888,
+          "min": 1473363968,
+          "max": 1473466368
+        },
+        "python_wall_median": 26.306813332950696,
+        "input_bytes": [
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmpVm4oK2/cases.json",
+              "bytes": 137000153
+            }
+          ],
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmpGvt4jT/cases.json",
+              "bytes": 137000153
+            }
+          ],
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmpRVi0e5/cases.json",
+              "bytes": 137000153
+            }
+          ]
+        ]
+      },
+      "candidate": {
+        "wall_seconds": {
+          "median": 93.75001086801058,
+          "min": 93.74819550098618,
+          "max": 93.94378822302679
+        },
+        "tree_cpu_seconds": {
+          "median": 93.69565099999986,
+          "min": 93.66261800000004,
+          "max": 93.73891500000005
+        },
+        "sampled_tree_rss_peak_bytes": {
+          "median": 1473269760,
+          "min": 1473249280,
+          "max": 1473347584
+        },
+        "python_wall_median": 26.27982398500899,
+        "input_bytes": [
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmptpVXQB/cases.json",
+              "bytes": 137000153
+            }
+          ],
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmpKK4yA8/cases.json",
+              "bytes": 137000153
+            }
+          ],
+          [
+            {
+              "path": "/mnt/dev-ssd/dev-tmp/.tmpg4tmpN/cases.json",
+              "bytes": 137000153
+            }
+          ]
+        ]
+      },
+      "median_wall_reduction_percent": 20.270236287294175
+    }
+  },
+  "full_suite": {
+    "run": 576,
+    "passed": 576,
+    "skipped": 0
+  },
+  "exact_runs": 12,
+  "evidence": "/mnt/dev-ssd/gatehouse-slow-test-optimization-20261015/phase2/result.json",
+  "sha256": "7efc9148fcc61a8ecb83d739e17662a5cd88caa9ab40fea9c814523baa02e64a",
+  "memory_caveat": "Sampler follows main-thread children only, so thread-spawned subprocess RSS can be omitted. Treat values as observed visible-process RSS, not validated whole-tree peaks; full nextest RSS is unusable. Timing and test status unaffected."
+}

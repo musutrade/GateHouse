@@ -277,7 +277,7 @@ mod acceptance {
         let root = Path::new(env!("CARGO_MANIFEST_DIR"));
         let input_path = work.path().join("input.json");
         let output = Command::new("python3")
-            .arg(root.join("../quality/fixtures/generic-core/differential.py"))
+            .arg(root.join("../quality/differential_transport.py"))
             .arg("--prepare")
             .arg(work.path())
             .arg("--output")

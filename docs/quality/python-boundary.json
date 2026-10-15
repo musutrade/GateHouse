@@ -853,6 +853,34 @@
       "authoritative_status": "Non-authoritative timing evidence; the Rust Core retains command evidence validation, policy evaluation and final release authority.",
       "final_disposition": "Retain optional Python development measurement tooling; no generic release-approval path and no installed runtime dependency.",
       "sha256": "7c6986a46cad94ad844cac47ba3f0124c9dd34b0286ad1563562933c3966cd41"
+    },
+    {
+      "module": "tools/quality/ci_quality_parallel.py",
+      "category": "A",
+      "purpose": "Opt-in isolated scheduling of base/head Risk collection using the unchanged collector integrity checks.",
+      "callers": [
+        "tools/quality/ci_quality.py",
+        "tools/quality/tests/test_parallel_risk.py"
+      ],
+      "ci_role": "CI measurement orchestration only; default disabled. Worker failures block comparison, and in-flight work is joined.",
+      "release_impact": "Not packaged in release binaries; does not own thresholds, baselines, ratchets or release approval.",
+      "authoritative_status": "Non-authoritative repository orchestration/test transport; Rust retains generic decision authority.",
+      "final_disposition": "Retain as Core-owned repository tooling with fail-closed checks and explicit regression coverage.",
+      "sha256": "669e26c43b9432218a2ec7b093d666120e7e81a7d0210de466bc071527576dd7"
+    },
+    {
+      "module": "tools/quality/differential_transport.py",
+      "category": "A",
+      "purpose": "Compact temporary JSON transport for the Rust differential acceptance test using the unchanged frozen Python corpus preparation.",
+      "callers": [
+        "tools/harness-gate/quality-core/replay.rs",
+        "tools/quality/tests/test_differential_transport.py"
+      ],
+      "ci_role": "Test-only transport; all frozen oracle checks and per-field comparisons remain required. Persisted reports retain canonical encoding.",
+      "release_impact": "Not packaged in release binaries; does not own thresholds, baselines, ratchets or release approval.",
+      "authoritative_status": "Non-authoritative repository orchestration/test transport; Rust retains generic decision authority.",
+      "final_disposition": "Retain as Core-owned repository tooling with fail-closed checks and explicit regression coverage.",
+      "sha256": "76f612d587448e5b75ec6492bea64caa136f696418f6ebcb881bc943446b70cc"
     }
   ],
   "schema": "python-product-boundary/v1",

@@ -81,9 +81,10 @@ def evaluate_case(name, args, kwargs, frozen=None):
         if frozen is not None and "project_report" in frozen:
             canonical = replay.portable_errors(report, WORK / name)
             assert replay.oracle_matches(frozen["project_report"], canonical), name
+        # The independent report case reads the same Python inputs and expected
+        # report as its evaluate case. Keep one representation of these trees.
         cases.append(dict(name=name + "/report", kind="report",
-                          args=[oracle["value"], plain(kwargs["project"]), args[0]], kwargs={},
-                          oracle=dict(accepted=True, value=report)))
+                          evaluate_case_ref=len(cases) - 1))
     return oracle
 
 
@@ -130,6 +131,24 @@ def capture(module, method):
         if depth:
             return original(*args, **kwargs)
         name = active_test + '/' + method + '/' + str(len(cases))
+        if method in ('compare', 'aggregate', 'validate_policy', '_select'):
+            # Snapshot inputs before execution, but return the original native
+            # result (or re-raise its exception) to the Python reference test.
+            case = dict(name=name, kind=method, args=plain(args), kwargs=plain(kwargs))
+            depth += 1
+            try:
+                try:
+                    value = original(*args, **kwargs)
+                except (project.ModelError, evidence.MeasurementError) as error:
+                    case['oracle'] = dict(accepted=False, reason_class=type(error).__name__,
+                                          reason=str(error))
+                    cases.append(case)
+                    raise
+                case['oracle'] = dict(accepted=True, value=plain(value))
+                cases.append(case)
+                return value
+            finally:
+                depth -= 1
         saved_args, saved_kwargs = copy.deepcopy(args), copy.deepcopy(kwargs)
         if method == 'evaluate':
             for side, context in [('head', saved_kwargs), ('base', saved_kwargs.get('base_context'))]:
@@ -246,7 +265,7 @@ for name, result in [('empty', {**base_result, 'results': []}),
     cases.append(dict(name='report-boundary/' + name, kind='report',
                       args=[result, project_value, policy_value], kwargs={},
                       oracle=outcome(lambda: project_report.report(result, project_value, policy_value))))
-(WORK / 'cases.json').write_text(json.dumps(cases, ensure_ascii=False))
+(WORK / 'cases.json').write_text(json.dumps(cases, ensure_ascii=False, separators=(',', ':')))
 print(json.dumps(dict(frozen_cases=len(manifest['cases']), reference_tests=run.testsRun,
                      comparisons=len(cases), kinds={k: sum(c['kind'] == k for c in cases)
                      for k in sorted({c['kind'] for c in cases})})))

@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import tarfile
+import threading
 import time
 import uuid
 
@@ -17,6 +18,9 @@ from critical_paths import require_committed_sources
 from production_coverage import CoverageTokenizer, require
 from quality_common import ROOT, git_sha, metadata, sha256, write_json
 from source_measure import SOURCE_FILES, compiler_configuration
+
+# Feature flag for parallel risk collection (default: disabled, experimental)
+PARALLEL_RISK = os.environ.get('CI_PARALLEL_RISK', '0') == '1'
 
 COMMON = ('classify', 'test', 'test-cross-platform', 'security-audit', 'fmt', 'clippy', 'build',
           'quality-coverage', 'quality-contracts', 'docs-consistency', 'release-contracts',
@@ -203,25 +207,32 @@ class Collector:
         self.report = {**metadata(), 'schema_version': 1, 'candidate': True,
                        'base_sha': base, 'commit': head, 'run_id': run_id,
                        'stages': {}, 'commands': [], 'artifacts': {}}
+        self._save_lock = threading.Lock()
         self.save()
 
     def save(self):
-        write_json(self.directory / 'candidate.json', self.report)
+        with self._save_lock:
+            write_json(self.directory / 'candidate.json', self.report)
 
-    def command(self, name: str, command: list[str], allowed=(0,)):
+    def command(self, name: str, command: list[str], allowed=(0,), env=None):
         started = time.monotonic()
         print(f'{name}: started (log: {name}.log)', flush=True)
+        # Use provided env or fall back to self.environment
+        effective_env = env if env is not None else self.environment
         with (self.directory / f'{name}.log').open('w') as log:
-            code = subprocess.run(command, cwd=ROOT, env=self.environment,
+            code = subprocess.run(command, cwd=ROOT, env=effective_env,
                                   stdout=log, stderr=subprocess.STDOUT).returncode
-        self.report['commands'].append({'name': name, 'argv': command, 'exit_code': code,
-                                        'seconds': time.monotonic() - started})
-        self.save()
-        print(f'{name}: exited {code} in {self.report["commands"][-1]["seconds"]:.2f}s', flush=True)
+        elapsed = time.monotonic() - started
+        # Protect report mutation and save as one atomic operation
+        with self._save_lock:
+            self.report['commands'].append({'name': name, 'argv': command, 'exit_code': code,
+                                            'seconds': elapsed})
+            write_json(self.directory / 'candidate.json', self.report)
+        print(f'{name}: exited {code} in {elapsed:.2f}s', flush=True)
         require(code in allowed, f'{name} exited {code}; see {name}.log')
 
-    def python(self, name: str, script: str, *args: str, allowed=(0,)):
-        self.command(name, [sys.executable, str(ROOT / 'tools/quality' / script), *map(str, args)], allowed)
+    def python(self, name: str, script: str, *args: str, allowed=(0,), env=None):
+        self.command(name, [sys.executable, str(ROOT / 'tools/quality' / script), *map(str, args)], allowed, env=env)
 
     def measurer(self) -> Path:
         """Consume the same verified release as the Core measurement tests."""
@@ -265,79 +276,166 @@ class Collector:
                          '--group', 'arc-admin-replay'])
         return snapshot
 
-    def risk(self):
-        base, head = self.report['base_sha'], self.report['commit']
-        changed = subprocess.check_output(['git', 'diff', '--name-only', base, head, '--',
-                                            'tools/harness-gate/src', 'tools/harness-gate/quality-core'], cwd=ROOT, text=True).splitlines()
+    def _validate_risk_scope(self, base: str, head: str):
+        """Shared scope validation for both sequential and parallel risk collection."""
+        changed = subprocess.check_output(
+            ['git', 'diff', '--name-only', base, head, '--',
+             'tools/harness-gate/src', 'tools/harness-gate/quality-core'],
+            cwd=ROOT, text=True
+        ).splitlines()
+
         relocated = relocated_migration_sources(base, head)
         removed = reviewed_removals(base, head)
-        unsupported = [p for p in changed if p.endswith('.rs') and
-                       p not in relocated and
-                       p not in removed and
-                       p not in {str((ROOT / 'tools/harness-gate/src' / source).resolve().relative_to(ROOT))
-                                 for source in SOURCE_FILES} and not
-                       (p.startswith('tools/harness-gate/quality-core/tests/') or
-                        p in ('tools/harness-gate/quality-core/tests.rs', 'tools/harness-gate/quality-core/policy_tests.rs',
-                              'tools/harness-gate/src/config/quality/tests.rs',
-                              'tools/harness-gate/src/config/tests.rs',
-                              'tools/harness-gate/src/verify/tests.rs',
-                              'tools/harness-gate/src/verify/cache/tests.rs',
-                              'tools/harness-gate/src/findings/tests.rs',
-                              'tools/harness-gate/src/preset/tests.rs',
-                              'tools/harness-gate/src/scope/tests.rs',
-                              'tools/harness-gate/src/process/tests.rs',
-                              'tools/harness-gate/src/doctor/tests.rs',
-                              'tools/harness-gate/src/service/tests.rs',
-                              'tools/harness-gate/src/recipes/tests.rs',
-                              'tools/harness-gate/src/config/quality/collectors/tests.rs',
-                              'tools/harness-gate/src/config/quality/collectors/tests/dogfood_acceptance.rs',
-                              'tools/harness-gate/src/config/quality/collectors/ci_acceptance.rs'))]
+
+        unsupported = [
+            p for p in changed
+            if p.endswith('.rs')
+            and p not in relocated
+            and p not in removed
+            and p not in {
+                str((ROOT / 'tools/harness-gate/src' / source).resolve().relative_to(ROOT))
+                for source in SOURCE_FILES
+            }
+            and not (
+                p.startswith('tools/harness-gate/quality-core/tests/')
+                or p in (
+                    'tools/harness-gate/quality-core/tests.rs',
+                    'tools/harness-gate/quality-core/policy_tests.rs',
+                    'tools/harness-gate/src/config/quality/tests.rs',
+                    'tools/harness-gate/src/config/tests.rs',
+                    'tools/harness-gate/src/verify/tests.rs',
+                    'tools/harness-gate/src/verify/cache/tests.rs',
+                    'tools/harness-gate/src/findings/tests.rs',
+                    'tools/harness-gate/src/preset/tests.rs',
+                    'tools/harness-gate/src/scope/tests.rs',
+                    'tools/harness-gate/src/process/tests.rs',
+                    'tools/harness-gate/src/doctor/tests.rs',
+                    'tools/harness-gate/src/service/tests.rs',
+                    'tools/harness-gate/src/recipes/tests.rs',
+                    'tools/harness-gate/src/config/quality/collectors/tests.rs',
+                    'tools/harness-gate/src/config/quality/collectors/tests/dogfood_acceptance.rs',
+                    'tools/harness-gate/src/config/quality/collectors/ci_acceptance.rs'
+                )
+            )
+        ]
+
         unsupported = [p for p in unsupported if not only_terminal_test_module_changed(base, head, p)]
-        require(not unsupported, 'production changes outside supported risk series; measurement review required: '
-                + ', '.join(unsupported))
+
+        require(
+            not unsupported,
+            'production changes outside supported risk series; measurement review required: '
+            + ', '.join(unsupported)
+        )
+
+    def _collect_commit_coverage(self, label: str, commit: str, snapshot: Path, binary: Path, target: str, *, env=None):
+        """Shared per-commit coverage collection for both modes."""
+        crate = snapshot / 'tools/harness-gate'
+        manifest = self.directory / f'{label}-manifest.json'
+
+        self.python(
+            f'{label}-prepare',
+            'source_measure.py', 'prepare',
+            '--crate', crate,
+            '--binary', binary,
+            '--manifest', manifest,
+            '--target', target, env=env
+        )
+
+        cargo_manifest = str(crate / 'Cargo.toml')
+        self.command(
+            f'{label}-coverage',
+            ['cargo', 'llvm-cov', 'nextest', '--workspace', '--locked',
+             '--manifest-path', cargo_manifest, '--target', target,
+             '--json', '--output-path', str(self.directory / f'{label}-coverage.json')], env=env
+        )
+
+        for flag, suffix in (('--lcov', 'lcov'), ('--cobertura', 'cobertura.xml')):
+            self.command(
+                f'{label}-{suffix}',
+                ['cargo', 'llvm-cov', 'report', '--workspace',
+                 '--manifest-path', cargo_manifest, '--target', target,
+                 flag, '--output-path', str(self.directory / f'{label}-coverage.{suffix}')], env=env
+            )
+
+        self.python(
+            f'{label}-measure',
+            'source_measure.py', 'measure',
+            '--crate', crate,
+            '--binary', binary,
+            '--manifest', manifest,
+            '--llvm', self.directory / f'{label}-coverage.json',
+            '--output', self.directory / f'{label}-risk.json',
+            allowed=(0, 1), env=env
+        )
+
+        report = json.loads((self.directory / f'{label}-risk.json').read_text())
+        require(report['manifest_sha256'] == sha256(manifest), f'{label}: stale risk manifest')
+        require(
+            report['llvm_sha256'] == sha256(self.directory / f'{label}-coverage.json'),
+            f'{label}: stale risk profiles'
+        )
+
+        original = json.loads(manifest.read_text())
+        for path, item in original['files'].items():
+            relative = (ROOT / 'tools/harness-gate/src' / path).resolve().relative_to(ROOT)
+            committed = subprocess.check_output(['git', 'show', f'{commit}:{relative}'], cwd=ROOT)
+            require(item['original'].encode() == committed, f'{label}: risk source/commit mismatch for {path}')
+
+        for path in original['absent_sources']:
+            relative = (ROOT / 'tools/harness-gate/src' / path).resolve().relative_to(ROOT)
+            exists = subprocess.run(
+                ['git', 'cat-file', '-e', f'{commit}:{relative}'],
+                cwd=ROOT,
+                capture_output=True
+            ).returncode == 0
+            require(not exists, f'{label}: absent risk source exists in commit: {relative}')
+
+        return report
+
+    def _compare_risk(self, base: str, head: str):
+        """Shared risk comparison for both modes."""
+        self.python(
+            'risk-compare',
+            'source_measure.py', 'compare',
+            '--base', self.directory / 'base-risk.json',
+            '--head', self.directory / 'head-risk.json',
+            '--output', self.directory / 'risk.json'
+        )
+
+        comparison = json.loads((self.directory / 'risk.json').read_text())
+        (self.directory / 'risk.md').write_text(
+            '# Candidate function risk\n\n'
+            f'Base: `{base}`\n\nHead: `{head}`\n\n'
+            f"Identities: {len(comparison['identities'])}; "
+            f"failures: {len(comparison['failures'])}.\n\n"
+            'Scope: GH-94 files, staged snapshot input, adapter replay, '
+            'project discovery, CLI dispatch, quality configuration, '
+            'preset composition and all linked generic-core production sources. '
+            'Raw counters, exact rational CRAP and historical debt are retained '
+            'in head-risk.json. Branch coverage is unsupported. '
+            'This candidate is not an accepted baseline.\n'
+        )
+
+    def risk(self):
+        if PARALLEL_RISK:
+            from ci_quality_parallel import risk_parallel
+            risk_parallel(self)
+        else:
+            self._risk_sequential()
+
+    def _risk_sequential(self):
+        """Sequential risk collection (preserves original cache behavior)."""
+        base, head = self.report['base_sha'], self.report['commit']
+        self._validate_risk_scope(base, head)
+
         binary = self.measurer()
         target = compiler_configuration()['target']
+
         for label, commit in (('base', base), ('head', head)):
             snapshot = self.snapshot(label, commit)
-            crate = snapshot / 'tools/harness-gate'
-            manifest = self.directory / f'{label}-manifest.json'
-            self.python(f'{label}-prepare', 'source_measure.py', 'prepare', '--crate', crate,
-                        '--binary', binary, '--manifest', manifest, '--target', target)
-            # Include the separate base core package and linked head core in the same series.
-            cargo_manifest = str(crate / 'Cargo.toml')
-            self.command(f'{label}-coverage', ['cargo', 'llvm-cov', 'nextest', '--workspace', '--locked',
-                         '--manifest-path', cargo_manifest, '--target', target, '--json', '--output-path',
-                         str(self.directory / f'{label}-coverage.json')])
-            for flag, suffix in (('--lcov', 'lcov'), ('--cobertura', 'cobertura.xml')):
-                self.command(f'{label}-{suffix}', ['cargo', 'llvm-cov', 'report', '--workspace', '--manifest-path',
-                             cargo_manifest, '--target', target, flag, '--output-path', str(self.directory / f'{label}-coverage.{suffix}')])
-            # A complete base report may contain historical selected failures.
-            # The compare command enforces every selected head threshold.
-            self.python(f'{label}-measure', 'source_measure.py', 'measure', '--crate', crate,
-                        '--binary', binary, '--manifest', manifest, '--llvm',
-                        self.directory / f'{label}-coverage.json', '--output',
-                        self.directory / f'{label}-risk.json', allowed=(0, 1))
-            report = json.loads((self.directory / f'{label}-risk.json').read_text())
-            require(report['manifest_sha256'] == sha256(manifest), 'stale risk manifest')
-            require(report['llvm_sha256'] == sha256(self.directory / f'{label}-coverage.json'), 'stale risk profiles')
-            original = json.loads(manifest.read_text())
-            for path, item in original['files'].items():
-                relative = (ROOT / 'tools/harness-gate/src' / path).resolve().relative_to(ROOT)
-                committed = subprocess.check_output(['git', 'show', f'{commit}:{relative}'], cwd=ROOT)
-                require(item['original'].encode() == committed, 'risk source/commit mismatch')
-            for path in original['absent_sources']:
-                relative = (ROOT / 'tools/harness-gate/src' / path).resolve().relative_to(ROOT)
-                exists = subprocess.run(['git', 'cat-file', '-e', f'{commit}:{relative}'], cwd=ROOT,
-                                        capture_output=True).returncode == 0
-                require(not exists, f'absent risk source exists in commit: {relative}')
-        self.python('risk-compare', 'source_measure.py', 'compare', '--base', self.directory / 'base-risk.json',
-                    '--head', self.directory / 'head-risk.json', '--output', self.directory / 'risk.json')
-        comparison = json.loads((self.directory / 'risk.json').read_text())
-        (self.directory / 'risk.md').write_text('# Candidate function risk\n\n'
-            f'Base: `{base}`\n\nHead: `{head}`\n\n'
-            f"Identities: {len(comparison['identities'])}; failures: {len(comparison['failures'])}.\n\n"
-            'Scope: GH-94 files, staged snapshot input, adapter replay, project discovery, CLI dispatch, quality configuration, preset composition and all linked generic-core production sources. Raw counters, exact rational CRAP and historical debt are retained in head-risk.json. '
-            'Branch coverage is unsupported. This candidate is not an accepted baseline.\n')
+            self._collect_commit_coverage(label, commit, snapshot, binary, target)
+
+        self._compare_risk(base, head)
 
     def matrix(self):
         self.python('matrix', 'critical_paths.py', '--collect', '--evidence',

@@ -1,9 +1,72 @@
 //! Lossless integer JSON and duplicate-key rejection at every nesting level.
 use super::{error, require, Result};
-use serde::de::{MapAccess, Visitor};
+use serde::de::{MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
 use serde_json::{value::RawValue, Value};
 use std::{collections::BTreeSet, fmt};
+
+// Walk the original token stream: a Value has already discarded duplicate keys.
+// No RawValue child buffers or recursive reparsing are needed on valid input.
+struct Unique;
+impl<'de> Deserialize<'de> for Unique {
+    fn deserialize<D: Deserializer<'de>>(parser: D) -> std::result::Result<Self, D::Error> {
+        parser.deserialize_any(Unique).map(|()| Unique)
+    }
+}
+
+impl<'de> Visitor<'de> for Unique {
+    type Value = ();
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("JSON with unique object keys")
+    }
+    fn visit_unit<E: serde::de::Error>(self) -> std::result::Result<(), E> {
+        Ok(())
+    }
+    fn visit_bool<E: serde::de::Error>(self, _: bool) -> std::result::Result<(), E> {
+        Ok(())
+    }
+    fn visit_i64<E: serde::de::Error>(self, _: i64) -> std::result::Result<(), E> {
+        Ok(())
+    }
+    fn visit_u64<E: serde::de::Error>(self, _: u64) -> std::result::Result<(), E> {
+        Ok(())
+    }
+    fn visit_f64<E: serde::de::Error>(self, _: f64) -> std::result::Result<(), E> {
+        Ok(())
+    }
+    fn visit_str<E: serde::de::Error>(self, _: &str) -> std::result::Result<(), E> {
+        Ok(())
+    }
+    fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> std::result::Result<(), A::Error> {
+        while seq.next_element::<Unique>()?.is_some() {}
+        Ok(())
+    }
+    fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> std::result::Result<(), A::Error> {
+        let mut keys = BTreeSet::new();
+        while let Some(key) = map.next_key::<String>()? {
+            if let Some(key) = keys.replace(key) {
+                return Err(serde::de::Error::custom(format!(
+                    "duplicate JSON key: {key}"
+                )));
+            }
+            map.next_value::<Unique>()?;
+        }
+        Ok(())
+    }
+}
+
+fn unique(text: &str) -> Result<()> {
+    let mut parser = serde_json::Deserializer::from_str(text);
+    if Unique::deserialize(&mut parser)
+        .and_then(|_| parser.end())
+        .is_err()
+    {
+        // Preserve historical nested error locations and precedence. Only the
+        // error path pays for the old recursive RawValue walk.
+        unique_legacy(text)?;
+    }
+    Ok(())
+}
 
 struct UniqueObject;
 impl<'de> Visitor<'de> for UniqueObject {
@@ -19,13 +82,13 @@ impl<'de> Visitor<'de> for UniqueObject {
                     "duplicate JSON key: {key}"
                 )));
             }
-            unique(value.get()).map_err(serde::de::Error::custom)?;
+            unique_legacy(value.get()).map_err(serde::de::Error::custom)?;
         }
         Ok(())
     }
 }
 
-fn unique(text: &str) -> Result<()> {
+fn unique_legacy(text: &str) -> Result<()> {
     let mut parser = serde_json::Deserializer::from_str(text);
     match text.trim_start().chars().next() {
         Some('{') => parser
@@ -35,7 +98,7 @@ fn unique(text: &str) -> Result<()> {
             let values =
                 Vec::<Box<RawValue>>::deserialize(&mut parser).map_err(|e| error(e.to_string()))?;
             for value in values {
-                unique(value.get())?;
+                unique_legacy(value.get())?;
             }
         }
         _ => {
@@ -106,6 +169,79 @@ pub fn canonical(value: &Value) -> Result<Vec<u8>> {
 // round-trip a large integer through f64 (e.g. 10^100 becomes 1e+100).
 pub(super) fn decode<T: serde::de::DeserializeOwned>(value: &Value) -> Result<T> {
     serde_json::from_str(&value.to_string()).map_err(|e| error(e.to_string()))
+}
+
+#[cfg(test)]
+mod parsing_tests {
+    use super::*;
+
+    fn legacy_parse(text: &str) -> Result<Value> {
+        let value = serde_json::from_str(text).map_err(|e| error(e.to_string()))?;
+        unique_legacy(text)?;
+        Ok(value)
+    }
+
+    #[test]
+    fn streaming_check_preserves_values_and_exact_errors() {
+        let cases = [
+            "null",
+            "true",
+            "false",
+            "0",
+            "-0",
+            "-0.0",
+            "1.25",
+            "1e400",
+            "1234567890123456789012345678901234567890",
+            "-1234567890123456789012345678901234567890",
+            r#""é😀\n\t\"\\""#,
+            r#"{"empty":{},"array":[null,true,1]}"#,
+            r#"{"a":1,"a":2}"#,
+            r#"{"a":1,"\u0061":2}"#,
+            r#"[{"a":{"x":1,"\u0078":2}}]"#,
+            r#"{"a":1,"a":{"x":1,"x":2}}"#,
+            r#"{"a":{"x":1,"x":2},"a":0}"#,
+            r#"{"$serde_json::private::Number":"12345678901234567890"}"#,
+            r#"{"$serde_json::private::Number":"1","$serde_json::private::Number":"2"}"#,
+            r#"{"$serde_json::private::Number":null}"#,
+            r#"{"a":0,"$serde_json::private::Number":"1"}"#,
+            "",
+            "NaN",
+            "Infinity",
+            "[1,]",
+            "{} {}",
+            r#""\ud800""#,
+            r#"{"a":1,"a":2,"bad":]}"#,
+        ];
+        for text in cases {
+            for (prefix, suffix) in [("", ""), ("[", "]"), ("{\"outer\":", "}")] {
+                let input = format!("{prefix}{text}{suffix}");
+                let expected = legacy_parse(&input);
+                if expected.is_ok() {
+                    let mut parser = serde_json::Deserializer::from_str(&input);
+                    assert!(Unique::deserialize(&mut parser).is_ok(), "{input}");
+                    assert!(parser.end().is_ok());
+                }
+                assert_eq!(parse(&input), expected, "{input}");
+            }
+        }
+    }
+
+    #[test]
+    fn streaming_check_keeps_recursion_boundary_and_valid_fast_path() {
+        for depth in [0, 1, 63, 125, 126, 127, 128, 129] {
+            for leaf in ["0", r#"{"key":1}"#, r#"{"key":1,"key":2}"#] {
+                let text = format!("{}{leaf}{}", "[".repeat(depth), "]".repeat(depth));
+                let expected = legacy_parse(&text);
+                if expected.is_ok() {
+                    let mut parser = serde_json::Deserializer::from_str(&text);
+                    assert!(Unique::deserialize(&mut parser).is_ok(), "{text}");
+                    assert!(parser.end().is_ok());
+                }
+                assert_eq!(parse(&text), expected, "depth {depth}");
+            }
+        }
+    }
 }
 
 #[cfg(test)]
