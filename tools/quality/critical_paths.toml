@@ -359,14 +359,14 @@ path = "src/service/lease.rs"
 symbol = "verify_runtime_record"
 start = 977
 end = 1009
-sha256 = "70f3e44082bb30a7aecb3009d5f2d93c18d88330577690a08f6f4ee649c51119"
+sha256 = "04c5204dc3498627136cda26ca3c05b12ae3d61350b55e3d7f5260af4f066184"
 
 [paths.test_source]
 path = "src/service/lease.rs"
 symbol = "fake_docker_and_podman_cleanup_requires_fresh_complete_ownership"
-start = 1876
-end = 1963
-sha256 = "70f3e44082bb30a7aecb3009d5f2d93c18d88330577690a08f6f4ee649c51119"
+start = 1925
+end = 2012
+sha256 = "04c5204dc3498627136cda26ca3c05b12ae3d61350b55e3d7f5260af4f066184"
 
 [[paths.probes]]
 line = 1001

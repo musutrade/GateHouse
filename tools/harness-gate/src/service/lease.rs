@@ -1814,6 +1814,55 @@ mod tests {
     }
 
     #[test]
+    fn reclaim_rejects_invalid_container_targets_before_runtime_removal() {
+        for (index, (name, runtime, expected)) in [
+            (None, Some("docker"), "no resource name"),
+            (
+                Some("foreign-container"),
+                Some("docker"),
+                "not Harness-Gate managed",
+            ),
+            (
+                Some("harness-gate-fixture-container"),
+                Some("unknown"),
+                "unsupported container runtime",
+            ),
+            (Some("harness-gate-fixture-container"), None, "no runtime"),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let (_workspace, project) = runtime_project(&format!("reclaim-invalid-{index}"));
+            let (path, mut record, inspection) =
+                container_lease(&project, ContainerRuntimeKind::Docker, true);
+            record.resource_name = name.map(str::to_string);
+            record.runtime = runtime.map(str::to_string);
+            let (fake, calls) = fake_runtime(ContainerRuntimeKind::Docker, Some(inspection));
+            let error =
+                super::reclaim_resource_with_runtime(&project, &path, &record, &fake).unwrap_err();
+            assert!(format!("{error:#}").contains(expected), "{error:#}");
+            assert_eq!(calls.load(Ordering::SeqCst), 0);
+            assert!(path.is_file(), "invalid target must retain its marker");
+        }
+    }
+
+    #[test]
+    fn generic_reclaim_is_idempotent_but_reports_marker_removal_errors() {
+        let (_workspace, project) = runtime_project("reclaim-marker-errors");
+        let (path, mut record, _) = container_lease(&project, ContainerRuntimeKind::Docker, true);
+        record.resource_kind = "workspace".into();
+        let (fake, calls) = fake_runtime(ContainerRuntimeKind::Docker, None);
+        std::fs::remove_file(&path).unwrap();
+        super::reclaim_resource_with_runtime(&project, &path, &record, &fake).unwrap();
+        std::fs::create_dir(&path).unwrap();
+        let error =
+            super::reclaim_resource_with_runtime(&project, &path, &record, &fake).unwrap_err();
+        assert!(format!("{error:#}").contains("remove lease"));
+        assert!(path.is_dir(), "unexpected marker type must not be removed");
+        assert_eq!(calls.load(Ordering::SeqCst), 0);
+    }
+
+    #[test]
     fn cleanup_targets_verified_object_id_after_name_replacement() {
         struct ReplacedNameRuntime {
             inspection: RuntimeInspection,
