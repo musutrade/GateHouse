@@ -129,6 +129,7 @@ fn capture_command_environment(
     let (stderr_handle, stderr_receiver) =
         spawn_limited_reader(stderr, limits.stderr_bytes, Arc::clone(&stderr_overflow));
     let started = Instant::now();
+    let mut wait_round = 0_u32;
 
     let (status, timed_out, was_cancelled, output_limited) = loop {
         if let Some(status) = child.try_wait()? {
@@ -151,7 +152,14 @@ fn capture_command_environment(
         if started.elapsed() >= timeout {
             break (terminate(&mut child)?, true, false, false);
         }
-        std::thread::sleep(Duration::from_millis(50));
+        // Fast internal commands should not pay the full polling interval.
+        // Retain the previous 50 ms cap for long-running commands and never
+        // sleep beyond the remaining command deadline.
+        std::thread::sleep(capture_poll_delay(
+            wait_round,
+            timeout.saturating_sub(started.elapsed()),
+        ));
+        wait_round = wait_round.saturating_add(1);
     };
     let reader_started = Instant::now();
     let stdout = collect_limited_reader(
@@ -201,4 +209,33 @@ fn capture_command_environment(
         stdout: stdout.bytes,
         stderr: stderr.bytes,
     })
+}
+
+fn capture_poll_delay(round: u32, remaining: Duration) -> Duration {
+    Duration::from_millis((5_u64 << round.min(4)).min(50)).min(remaining)
+}
+
+#[cfg(test)]
+mod polling_tests {
+    use super::*;
+
+    #[test]
+    fn short_initial_wait_backs_off_without_exceeding_previous_cap_or_deadline() {
+        let remaining = Duration::from_secs(1);
+        let delays: Vec<_> = (0..7)
+            .map(|round| capture_poll_delay(round, remaining).as_millis())
+            .collect();
+        assert_eq!(delays, [5, 10, 20, 40, 50, 50, 50]);
+        assert_eq!(
+            capture_poll_delay(u32::MAX, remaining),
+            Duration::from_millis(50)
+        );
+        for round in [0, 1, 3, 4, u32::MAX] {
+            assert_eq!(
+                capture_poll_delay(round, Duration::from_millis(2)),
+                Duration::from_millis(2)
+            );
+            assert_eq!(capture_poll_delay(round, Duration::ZERO), Duration::ZERO);
+        }
+    }
 }
