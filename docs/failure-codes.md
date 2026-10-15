@@ -113,6 +113,21 @@ lookup also works offline. Human lookup prints the details; JSON adds an optiona
 - [HGCFG-TEMPLATE-PATH](../tools/harness-gate/docs/errors/HGCFG-TEMPLATE-PATH.md)
 - [HGCFG-VERSION](../tools/harness-gate/docs/errors/HGCFG-VERSION.md)
 
+- [E1000](../tools/harness-gate/docs/errors/E1000.md)
+- [E1101](../tools/harness-gate/docs/errors/E1101.md)
+- [E1102](../tools/harness-gate/docs/errors/E1102.md)
+- [E1103](../tools/harness-gate/docs/errors/E1103.md)
+- [E1201](../tools/harness-gate/docs/errors/E1201.md)
+- [E1202](../tools/harness-gate/docs/errors/E1202.md)
+- [E1301](../tools/harness-gate/docs/errors/E1301.md)
+- [E1302](../tools/harness-gate/docs/errors/E1302.md)
+- [E1303](../tools/harness-gate/docs/errors/E1303.md)
+- [E1304](../tools/harness-gate/docs/errors/E1304.md)
+- [E1401](../tools/harness-gate/docs/errors/E1401.md)
+- [E1402](../tools/harness-gate/docs/errors/E1402.md)
+- [E1403](../tools/harness-gate/docs/errors/E1403.md)
+- [E1404](../tools/harness-gate/docs/errors/E1404.md)
+
 ## webhook-destination-denied
 
 **WEBHOOK_DESTINATION_DENIED — URL host or resolved address is outside the egress policy.**

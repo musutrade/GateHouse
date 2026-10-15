@@ -150,6 +150,20 @@ const CONFIG_EXPLANATIONS: &[(&str, &str, &str)] = &[
 ];
 
 const DETAILED_EXPLANATIONS: &[(&str, &str)] = &[
+    ("E1000", include_str!("../docs/errors/E1000.md")),
+    ("E1101", include_str!("../docs/errors/E1101.md")),
+    ("E1102", include_str!("../docs/errors/E1102.md")),
+    ("E1103", include_str!("../docs/errors/E1103.md")),
+    ("E1201", include_str!("../docs/errors/E1201.md")),
+    ("E1202", include_str!("../docs/errors/E1202.md")),
+    ("E1301", include_str!("../docs/errors/E1301.md")),
+    ("E1302", include_str!("../docs/errors/E1302.md")),
+    ("E1303", include_str!("../docs/errors/E1303.md")),
+    ("E1304", include_str!("../docs/errors/E1304.md")),
+    ("E1401", include_str!("../docs/errors/E1401.md")),
+    ("E1402", include_str!("../docs/errors/E1402.md")),
+    ("E1403", include_str!("../docs/errors/E1403.md")),
+    ("E1404", include_str!("../docs/errors/E1404.md")),
     ("HGCFG-CHECK", include_str!("../docs/errors/HGCFG-CHECK.md")),
     (
         "HGCFG-DEPENDENCY-CYCLE",
