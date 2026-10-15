@@ -91,3 +91,28 @@ fn redirected_auto_color_is_plain_without_no_color() {
         .unwrap()
         .contains("error[HGCFG-TOML-PARSE]"));
 }
+
+#[test]
+fn ordinary_commands_preserve_typed_configuration_diagnostics() {
+    let root = malformed_config();
+    for action in ["verify", "doctor"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+            .arg("--project-root")
+            .arg(root.path())
+            .args(["--color", "never", action])
+            .output()
+            .unwrap();
+        assert_eq!(output.status.code(), Some(1), "{action}");
+        assert!(output.stdout.is_empty(), "{action}");
+        let text = String::from_utf8(output.stderr).unwrap();
+        assert!(
+            text.contains("ERROR [E1000]: configuration is invalid"),
+            "{text}"
+        );
+        assert!(text.contains("error[HGCFG-TOML-PARSE]"), "{text}");
+        assert!(text.contains("flow.toml:"), "{text}");
+        assert!(text.contains("explain: harness-gate explain HGCFG-TOML-PARSE"));
+        assert!(!text.contains("not-for-terminal-display") && !text.contains('\u{1b}'));
+    }
+    assert!(!root.path().join(".harness-gate/reports").exists());
+}
