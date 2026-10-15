@@ -83,7 +83,7 @@ class RiskScopeTests(unittest.TestCase):
         self.assertIn('config/diagnostic.rs', SOURCE_FILES)
         self.assertIn('error.rs', SOURCE_FILES)
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')},
-                         {'service/lease.rs', 'service/mod.rs', 'service/report_directory.rs'})
+                         {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs'})
 
     def test_process_test_module_reaches_measurement_but_unknown_sources_block(self):
         with tempfile.TemporaryDirectory() as temporary:

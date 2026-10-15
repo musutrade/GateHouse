@@ -675,3 +675,113 @@ esac
     crate::recipes::tests::install_fixture(&mut project, "environment", false);
     assert!(check_available(&project, "environment", Duration::from_secs(5)).is_err());
 }
+
+#[cfg(unix)]
+#[test]
+fn managed_teardown_removes_verified_id_and_retains_failed_cleanup() {
+    use super::inspection::RuntimeInspection;
+    use crate::config::ContainerRuntimeKind;
+    use std::os::unix::fs::PermissionsExt;
+    use std::sync::{Arc, Mutex};
+    if std::env::var_os("HG_ID_TEARDOWN_CHILD").is_none() {
+        let directory = tempfile::tempdir().unwrap();
+        for executable in ["docker", "podman"] {
+            let binary = directory.path().join(executable);
+            std::fs::write(
+                &binary,
+                r#"#!/bin/sh
+case "$1" in
+ container) printf '%s' "$HG_ID_INSPECTION";;
+ rm) printf '%s\n' "$*" >> "$HG_ID_REMOVE_LOG"; exit "$HG_ID_REMOVE_EXIT";;
+ *) exit 99;;
+esac
+"#,
+            )
+            .unwrap();
+            std::fs::set_permissions(binary, std::fs::Permissions::from_mode(0o700)).unwrap();
+        }
+        let mut paths = vec![directory.path().to_path_buf()];
+        paths.extend(std::env::split_paths(
+            &std::env::var_os("PATH").unwrap_or_default(),
+        ));
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "service::tests::managed_teardown_removes_verified_id_and_retains_failed_cleanup",
+                "--nocapture",
+            ])
+            .env("HG_ID_TEARDOWN_CHILD", "1")
+            .env("HG_ID_REMOVE_LOG", directory.path().join("removed"))
+            .env("PATH", std::env::join_paths(paths).unwrap())
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return;
+    }
+    for runtime in [ContainerRuntimeKind::Docker, ContainerRuntimeKind::Podman] {
+        for remove_fails in [false, true] {
+            let (_workspace, project) = project();
+            let name = "harness-gate-reused-name";
+            let id = "0123456789abcdef".repeat(4);
+            let resource = "service:teardown-id";
+            let invocation = "teardown-id-fixture";
+            let labels = super::lease::ownership_labels(
+                &project.input().project_identity,
+                resource,
+                "container",
+                invocation,
+            );
+            let lease = ResourceLease::acquire(
+                &project,
+                resource,
+                "container",
+                invocation,
+                Some(name.into()),
+                Some(runtime),
+            )
+            .unwrap();
+            lease
+                .bind_runtime_identity(
+                    &project,
+                    &RuntimeInspection {
+                        object_id: id.clone(),
+                        name: name.into(),
+                        labels: labels.clone(),
+                    },
+                )
+                .unwrap();
+            let marker = std::fs::read_dir(&project.resource_leases)
+                .unwrap()
+                .next()
+                .unwrap()
+                .unwrap()
+                .path();
+            std::env::set_var(
+                "HG_ID_INSPECTION",
+                serde_json::json!({"Id": id, "Name": name, "Config": {"Labels": labels}})
+                    .to_string(),
+            );
+            std::env::set_var("HG_ID_REMOVE_EXIT", if remove_fails { "1" } else { "0" });
+            let errors = Arc::new(Mutex::new(Vec::new()));
+            std::fs::write(std::env::var_os("HG_ID_REMOVE_LOG").unwrap(), "").unwrap();
+            drop(super::RunningService {
+                runtime,
+                inject_env: String::new(),
+                value: String::new(),
+                container: Some(name.into()),
+                project,
+                cleanup_errors: Arc::clone(&errors),
+                lease: Some(lease),
+            });
+            assert_eq!(std::fs::read_to_string(std::env::var_os("HG_ID_REMOVE_LOG").unwrap()).unwrap(), format!("rm --force {id}\n"),
+                "normal teardown must carry the inspected immutable ID to the CLI, not resolve the reused name");
+            assert_eq!(marker.exists(), remove_fails);
+            assert_eq!(errors.lock().unwrap().is_empty(), !remove_fails);
+        }
+    }
+}

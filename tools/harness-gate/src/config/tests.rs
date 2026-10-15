@@ -1810,6 +1810,72 @@ fn runner_v2_declarations_fail_closed_without_name_exemptions() {
     }
 }
 
+/// Opt-in attribution measurement; ordinary test/CI runs do not execute it.
+#[cfg(feature = "config-benchmark")]
+#[test]
+#[ignore = "run through tools/quality/config_benchmark.py"]
+fn configuration_loader_measurement() {
+    use sha2::{Digest, Sha256};
+    use std::hint::black_box;
+    use std::time::Instant;
+
+    for name in [
+        "REPORT_DIR",
+        "HARNESS_GATE_REPORTS",
+        "HARNESS_GATE_SECRETS_CONFIG",
+    ] {
+        assert!(
+            std::env::var_os(name).is_none(),
+            "unset {name} for fixed-input measurement"
+        );
+    }
+    let source = include_str!("../../fixtures/preset-compat/rust-api.flow.toml");
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("flow.toml");
+    fs::write(&path, source).unwrap();
+    let memory = FlowConfig::from_source_with_diagnostics(source, Some(&path), None).unwrap();
+    let file = FlowConfig::load_with_diagnostics(&path, None).unwrap();
+    assert_eq!(
+        serde_json::to_value(&memory).unwrap(),
+        serde_json::to_value(&file).unwrap()
+    );
+    let repetitions = 100;
+    let mut memory_seconds = Vec::new();
+    let mut file_seconds = Vec::new();
+    // Both paths warmed above; alternate order to reduce systematic order bias.
+    for sample in 0..5 {
+        for file_first in [sample % 2 == 0, sample % 2 != 0] {
+            let started = Instant::now();
+            for _ in 0..repetitions {
+                let config = if file_first {
+                    FlowConfig::load_with_diagnostics(black_box(&path), None)
+                } else {
+                    FlowConfig::from_source_with_diagnostics(black_box(source), Some(&path), None)
+                }
+                .unwrap();
+                black_box(config);
+            }
+            let seconds = started.elapsed().as_secs_f64();
+            if file_first {
+                file_seconds.push(seconds);
+            } else {
+                memory_seconds.push(seconds);
+            }
+        }
+    }
+    println!(
+        "CONFIG_BENCHMARK_JSON={}",
+        serde_json::json!({
+            "series": "config-loader/1", "fixture_bytes": source.len(),
+            "fixture_sha256": format!("{:x}", Sha256::digest(source.as_bytes())),
+            "steps": memory.steps.len(), "repetitions": repetitions,
+            "memory_batch_seconds": memory_seconds, "warm_file_batch_seconds": file_seconds,
+            "equivalent": true, "repository_root": null,
+            "scope": "parse, diagnostics, environment application and validation; allocation/drop included; file path adds warm read; no repository filesystem validation"
+        })
+    );
+}
+
 fn config_with_policy_waiver() -> FlowConfig {
     let mut config = repository_config();
     config.policy.waivers.push(super::model::WaiverConfig {

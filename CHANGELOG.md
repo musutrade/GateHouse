@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Bind managed-container teardown and stale-lease cleanup to the immutable
+  runtime object ID verified against the lease, so a reused container name is
+  not selected for deletion after inspection. Cleanup failures retain the lease
+  marker and remain reported; no name-based fallback is introduced.
+
 - Remove the unrelated ambient `rustc` probe from generic verification metadata.
   Reuse the optional checkout commit sampled at project discovery, with bounded
   Git execution, output and cancellation cleanup. Invocation metadata version 2
