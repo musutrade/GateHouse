@@ -866,6 +866,9 @@ fn extracted_cli_handlers_preserve_text_json_and_hook_snapshot_contracts() {
     assert!(stderr.contains("credential.txt"));
     assert!(stderr.contains("error[SECRET_SCAN_FAILURE]"));
     assert!(stderr.contains("harness-gate explain SECRET_SCAN_FAILURE"));
+    let secret_report_path = root.path().join(".harness-gate/reports/secret_scan.json");
+    assert!(secret_report_path.is_file());
+    assert!(stderr.contains(secret_report_path.to_str().unwrap()));
     assert!(!stderr.contains("GH94_SENTINEL"));
     let json_rejected = command(root.path())
         .args(["secrets", "--json"])

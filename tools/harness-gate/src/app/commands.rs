@@ -181,7 +181,7 @@ fn run_secrets(project: &Project, staged: bool, json: bool) -> Result<bool, CliE
                 crate::failure::FailureCode::SecretScanFailure,
                 "secret scan",
                 Some(&format!("Blocking findings in {} file(s)", findings.len())),
-                Some("secret_scan.json"),
+                Some(&project.reports.join("secret_scan.json").to_string_lossy()),
             )
         );
         for file in &findings {
