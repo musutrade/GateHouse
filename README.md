@@ -301,6 +301,7 @@ Presets are starting points, not runtime branches. After initialization is compl
 | `harness-gate audit [--json]`                                | Execute regex architecture rules and generate audit report |
 | `harness-gate verify`                                        | Execute default profile based on workspace changes |
 | `harness-gate verify --plan [--json]` | [Explain selection, dependencies and inputs without executing](docs/verification-plan.md) |
+| `harness-gate plugins --lock PATH --json` | [Verify locked offline preset plugins with host-selected keys](docs/plugin-lock.md) |
 | `harness-gate verify --profile ci --all`                     | Produce one project decision for all configured components |
 | `harness-gate hook`                                          | Execute hook profile on a private staged snapshot |
 | `harness-gate step <id>`                                     | Run a single step after passing secrets/audit |

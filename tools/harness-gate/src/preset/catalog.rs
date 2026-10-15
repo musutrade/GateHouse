@@ -121,6 +121,21 @@ pub fn print_presets(directory: Option<&Path>) -> Result<()> {
     Ok(())
 }
 
+/// Validate every reference against the verified private file inventory.
+pub(crate) fn validate(directory: &Path) -> Result<()> {
+    let (root, catalog) = load(directory)?;
+    for entry in catalog.presets.values() {
+        crate::config::FlowConfig::from_source(&read(&root, &entry.flow)?)?;
+        if let Some(recipe) = &entry.recipe {
+            read(&root, recipe)?;
+        }
+    }
+    for pack in catalog.packs.values() {
+        read(&root, pack)?;
+    }
+    Ok(())
+}
+
 pub(super) fn find(name: &str, directory: Option<&Path>) -> Result<Preset> {
     if name == "generic" {
         // An explicit bad catalog must not silently fall back to embedded data.

@@ -68,3 +68,7 @@ than the JSON shape alone.
 
 The [quality configuration reference](../docs/quality-configuration.md) documents
 collector authority, policy bindings and flow/quality cross-validation.
+
+The [plugin lock](plugin-lock.schema.json) and [plugin manifest](plugin-manifest.schema.json)
+describe data-only offline preset packages. [Plugin onboarding](../docs/plugin-lock.md)
+defines exact signing bytes, host trust, compatibility checks and migration/rollback.

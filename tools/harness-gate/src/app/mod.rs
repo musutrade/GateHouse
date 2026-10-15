@@ -20,10 +20,56 @@ pub(crate) fn run() -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
+        Commands::Plugins { lock, json } => {
+            let lock = if lock.is_absolute() {
+                lock.clone()
+            } else {
+                std::env::current_dir()
+                    .context("read current directory")?
+                    .join(lock)
+            };
+            let root = lock.parent().context("plugin lock parent")?;
+            let name = lock
+                .file_name()
+                .and_then(|s| s.to_str())
+                .context("plugin lock filename")?;
+            let result = crate::plugins::inspect(root, name, &cli.plugins);
+            let report = match result {
+                Ok(_) => {
+                    serde_json::json!({"schema_version":1,"valid":true,"truncated":false,"diagnostics":[]})
+                }
+                Err(error) => serde_json::to_value(crate::config::report_for_error(&error))
+                    .map_err(anyhow::Error::from)?,
+            };
+            if *json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&report).map_err(anyhow::Error::from)?
+                );
+            } else {
+                println!("Plugin preflight: {}", report);
+            }
+            Ok(report["valid"] == true)
+        }
         Commands::Quality { action } => {
             quality::run(action, cli.replay_state_dir.as_deref()).map_err(Into::into)
         }
-        Commands::Init { preset, force } => {
+        Commands::Init {
+            preset,
+            force,
+            plugin,
+        } => {
+            let root = standalone_root(&cli)?;
+            let prepared = crate::plugins::check(&root, &cli.plugins)?;
+            if let Some(name) = plugin {
+                let prepared = prepared.as_ref().context("HGPLUGIN-LOCK: init --plugin requires .harness-gate/plugins.lock.json; explicitly prepare and lock the product first")?;
+                let catalog = prepared.catalogs.get(name).context("HGPLUGIN-SELECTION: selected plugin is absent from lock; review and explicitly add the exact pin")?;
+                crate::preset::init_from(&root, preset, *force, Some(catalog))?;
+                return Ok(true);
+            }
+            if prepared.is_some() && preset != "generic" {
+                return Err(anyhow::anyhow!("HGPLUGIN-SELECTION: select a locked catalog with init --plugin NAME --preset NAME").into());
+            }
             let directory = cli.presets_dir.clone().or_else(|| {
                 std::env::var_os("HARNESS_GATE_PRESETS_DIR").map(std::path::PathBuf::from)
             });
@@ -103,7 +149,7 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             action: ConfigAction::Check {
                 format: ConfigFormat::Json,
             },
-        } => check_config_json(cli.project_root.clone(), cli.config.clone()),
+        } => check_config_json(cli.project_root.clone(), cli.config.clone(), &cli.plugins),
         Commands::Verify {
             plan: true,
             scope,
@@ -117,12 +163,14 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             components,
             profile.as_deref(),
             *json,
+            &cli.plugins,
         ),
         _ => run_project(
             cli.project_root,
             cli.config,
             cli.command,
             cli.replay_state_dir,
+            cli.plugins,
         ),
     }
 }
@@ -233,8 +281,10 @@ fn export_schema(
 fn check_config_json(
     root: Option<std::path::PathBuf>,
     config: Option<std::path::PathBuf>,
+    plugins: &crate::plugins::HostOptions,
 ) -> Result<bool, CliError> {
     match Project::discover(root, config).and_then(|project| {
+        crate::plugins::check(&project.execution_root, plugins)?;
         crate::config::quality::QualityConfig::load_optional(
             &project.execution_root,
             &project.config,
@@ -265,6 +315,7 @@ fn run_project(
     config: Option<std::path::PathBuf>,
     command: Commands,
     replay_state_dir: Option<std::path::PathBuf>,
+    plugins: crate::plugins::HostOptions,
 ) -> Result<bool, CliError> {
     let is_config_check = matches!(
         &command,
@@ -281,6 +332,7 @@ fn run_project(
         Err(error) => return Err(error.into()),
     };
     project.replay_state_dir = replay_state_dir;
+    project.plugins = plugins;
     if !is_config_check {
         project.prepare()?;
     }

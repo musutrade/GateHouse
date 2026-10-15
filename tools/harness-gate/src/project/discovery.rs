@@ -63,6 +63,7 @@ impl Project {
             InvocationInput::materialize_staged(&self.root, config_relative, &self.input().commit)?;
         let mut snapshot = Self::from_input(self.root.clone(), config_relative, input)?;
         snapshot.replay_state_dir = self.replay_state_dir.clone();
+        snapshot.plugins = self.plugins.clone();
         Ok(snapshot)
     }
 
@@ -71,7 +72,9 @@ impl Project {
     pub(crate) fn staged_plan_snapshot(&self) -> Result<Self> {
         let relative = self.config_path.strip_prefix(&self.execution_root)?;
         let input = InvocationInput::inspect_staged(&self.root, relative, &self.input().commit)?;
-        Self::from_input(self.root.clone(), relative, input)
+        let mut snapshot = Self::from_input(self.root.clone(), relative, input)?;
+        snapshot.plugins = self.plugins.clone();
+        Ok(snapshot)
     }
 
     fn from_input(root: PathBuf, config_relative: &Path, input: InvocationInput) -> Result<Self> {
@@ -162,6 +165,7 @@ impl Project {
         let project = Self {
             root,
             replay_state_dir: None,
+            plugins: crate::plugins::HostOptions::default(),
             execution_root,
             invocation_input: input,
             config_path,

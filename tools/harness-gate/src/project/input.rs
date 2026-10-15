@@ -77,6 +77,9 @@ impl InvocationInput {
         });
         let entries = inspect_index_entries(&snapshot_root, &index.stdout)?;
         hydrate_index_config(root, &snapshot_root, &entries, &git::index_path(config)?)?;
+        if entries.contains_key(crate::plugins::LOCK_PATH) {
+            hydrate_index_config(root, &snapshot_root, &entries, crate::plugins::LOCK_PATH)?;
+        }
         let quality_path = crate::config::quality::QUALITY_CONFIG_PATH;
         if entries.contains_key(quality_path) {
             hydrate_index_config(root, &snapshot_root, &entries, quality_path)?;

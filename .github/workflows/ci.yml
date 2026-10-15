@@ -108,6 +108,32 @@ jobs:
           cargo run --manifest-path tools/harness-gate/Cargo.toml --locked -- schema export --quality
           git diff --exit-code -- schema/flow.schema.json schema/quality.schema.json
 
+      - name: Fetch reviewed GateProbes onboarding implementation
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          repository: musutrade/GateProbes
+          ref: 7ca0d84b1e3c01acae7ff54feb60a11c387143ec
+          path: .plugin-onboarding
+          persist-credentials: false
+
+      - name: Real locked Rust and Python onboarding against this Core
+        run: |
+          set -euo pipefail
+          core_target="$(cargo metadata --manifest-path tools/harness-gate/Cargo.toml --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
+          python3 -B .plugin-onboarding/tools/onboarding/acceptance.py \
+            --core "$core_target/debug/harness-gate" --work-dir "$RUNNER_TEMP/plugin-onboarding"
+
+      - name: Retain real plugin onboarding evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: plugin-onboarding-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/plugin-onboarding/report.json
+            ${{ runner.temp }}/plugin-onboarding/*.log
+          if-no-files-found: warn
+          retention-days: 30
+
   test-cross-platform:
     name: Test (${{ matrix.os }})
     needs: [classify]
