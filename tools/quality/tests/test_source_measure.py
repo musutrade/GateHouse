@@ -258,7 +258,7 @@ fn both() {
             compare(base, head)
 
     def test_plan_sources_preserve_instrumentation_across_supported_target_configurations(self):
-        paths = ('app/plan.rs', 'verify/inspection.rs', 'config/scope.rs', 'utils/git.rs', 'scope/mod.rs', 'plugins.rs')
+        paths = ('app/plan.rs', 'verify/inspection.rs', 'config/scope.rs', 'utils/git.rs', 'scope/mod.rs', 'plugins.rs', 'project/input.rs')
         for path in paths:
             self.assertIn(path, SOURCE_FILES)
             source = (ROOT / 'tools/harness-gate/src' / path).read_text(encoding='utf-8')

@@ -154,8 +154,17 @@ impl InvocationInput {
         }
 
         let snapshot_root = allocate_snapshot_root()?;
-        let prefix = format!("{}/", snapshot_root.to_string_lossy());
-        let prefix_argument = format!("--prefix={prefix}");
+        let prefix = snapshot_root.to_string_lossy();
+        // Git appends slash-separated index paths. Win32 verbatim paths reject
+        // those mixed separators; use Git's ordinary drive/UNC path spelling.
+        #[cfg(windows)]
+        let prefix = if let Some(unc) = prefix.strip_prefix(r"\\?\UNC\") {
+            format!("//{unc}")
+        } else {
+            prefix.strip_prefix(r"\\?\").unwrap_or(&prefix).to_string()
+        }
+        .replace('\\', "/");
+        let prefix_argument = format!("--prefix={prefix}/");
         let checkout = git::capture(&root, ["checkout-index", "--all", prefix_argument.as_str()])?;
         if !checkout.status.success() {
             let _ = fs::remove_dir_all(&snapshot_root);

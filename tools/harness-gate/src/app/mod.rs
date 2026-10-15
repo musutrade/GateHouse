@@ -20,37 +20,7 @@ pub(crate) fn run() -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
-        Commands::Plugins { lock, json } => {
-            let lock = if lock.is_absolute() {
-                lock.clone()
-            } else {
-                std::env::current_dir()
-                    .context("read current directory")?
-                    .join(lock)
-            };
-            let root = lock.parent().context("plugin lock parent")?;
-            let name = lock
-                .file_name()
-                .and_then(|s| s.to_str())
-                .context("plugin lock filename")?;
-            let result = crate::plugins::inspect(root, name, &cli.plugins);
-            let report = match result {
-                Ok(_) => {
-                    serde_json::json!({"schema_version":1,"valid":true,"truncated":false,"diagnostics":[]})
-                }
-                Err(error) => serde_json::to_value(crate::config::report_for_error(&error))
-                    .map_err(anyhow::Error::from)?,
-            };
-            if *json {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&report).map_err(anyhow::Error::from)?
-                );
-            } else {
-                println!("Plugin preflight: {}", report);
-            }
-            Ok(report["valid"] == true)
-        }
+        Commands::Plugins { lock, json } => run_plugin_check(lock, *json, &cli.plugins),
         Commands::Quality { action } => {
             quality::run(action, cli.replay_state_dir.as_deref()).map_err(Into::into)
         }
@@ -58,33 +28,7 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             preset,
             force,
             plugin,
-        } => {
-            let root = standalone_root(&cli)?;
-            let prepared = crate::plugins::check(&root, &cli.plugins)?;
-            if let Some(name) = plugin {
-                let prepared = prepared.as_ref().context("HGPLUGIN-LOCK: init --plugin requires .harness-gate/plugins.lock.json; explicitly prepare and lock the product first")?;
-                let catalog = prepared.catalogs.get(name).context("HGPLUGIN-SELECTION: selected plugin is absent from lock; review and explicitly add the exact pin")?;
-                crate::preset::init_from(&root, preset, *force, Some(catalog))?;
-                return Ok(true);
-            }
-            if prepared.is_some() && preset != "generic" {
-                return Err(anyhow::anyhow!("HGPLUGIN-SELECTION: select a locked catalog with init --plugin NAME --preset NAME").into());
-            }
-            let directory = cli.presets_dir.clone().or_else(|| {
-                std::env::var_os("HARNESS_GATE_PRESETS_DIR").map(std::path::PathBuf::from)
-            });
-            if let Some(directory) = directory {
-                crate::preset::init_from(
-                    &standalone_root(&cli)?,
-                    preset,
-                    *force,
-                    Some(&directory),
-                )?;
-            } else {
-                crate::preset::init(&standalone_root(&cli)?, preset, *force)?;
-            }
-            Ok(true)
-        }
+        } => run_init(&cli, preset, *force, plugin.as_deref()),
         Commands::Presets => {
             let directory = cli.presets_dir.clone().or_else(|| {
                 std::env::var_os("HARNESS_GATE_PRESETS_DIR").map(std::path::PathBuf::from)
@@ -173,6 +117,69 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             cli.plugins,
         ),
     }
+}
+
+fn run_plugin_check(
+    lock: &std::path::Path,
+    json: bool,
+    options: &crate::plugins::HostOptions,
+) -> Result<bool, CliError> {
+    let lock = if lock.is_absolute() {
+        lock.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .context("read current directory")?
+            .join(lock)
+    };
+    let root = lock.parent().context("plugin lock parent")?;
+    let name = lock
+        .file_name()
+        .and_then(|s| s.to_str())
+        .context("plugin lock filename")?;
+    let result = crate::plugins::inspect(root, name, options);
+    let report = match result {
+        Ok(_) => {
+            serde_json::json!({"schema_version":1,"valid":true,"truncated":false,"diagnostics":[]})
+        }
+        Err(error) => serde_json::to_value(crate::config::report_for_error(&error))
+            .map_err(anyhow::Error::from)?,
+    };
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&report).map_err(anyhow::Error::from)?
+        );
+    } else {
+        println!("Plugin preflight: {}", report);
+    }
+    Ok(report["valid"] == true)
+}
+
+fn run_init(cli: &Cli, preset: &str, force: bool, plugin: Option<&str>) -> Result<bool, CliError> {
+    let root = standalone_root(cli)?;
+    let prepared = crate::plugins::check(&root, &cli.plugins)?;
+    if let Some(name) = plugin {
+        let prepared = prepared.as_ref().context("HGPLUGIN-LOCK: init --plugin requires .harness-gate/plugins.lock.json; explicitly prepare and lock the product first")?;
+        let catalog = prepared.catalogs.get(name).context("HGPLUGIN-SELECTION: selected plugin is absent from lock; review and explicitly add the exact pin")?;
+        crate::preset::init_from(&root, preset, force, Some(catalog))?;
+        return Ok(true);
+    }
+    if prepared.is_some() && preset != "generic" {
+        return Err(anyhow::anyhow!(
+            "HGPLUGIN-SELECTION: select a locked catalog with init --plugin NAME --preset NAME"
+        )
+        .into());
+    }
+    let directory = cli
+        .presets_dir
+        .clone()
+        .or_else(|| std::env::var_os("HARNESS_GATE_PRESETS_DIR").map(std::path::PathBuf::from));
+    if let Some(directory) = directory {
+        crate::preset::init_from(&root, preset, force, Some(&directory))?;
+    } else {
+        crate::preset::init(&root, preset, force)?;
+    }
+    Ok(true)
 }
 
 fn standalone_root(cli: &Cli) -> Result<std::path::PathBuf, CliError> {

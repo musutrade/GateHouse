@@ -178,15 +178,7 @@ pub(crate) fn check(root: &Path, options: &HostOptions) -> Result<Option<Prepare
 }
 
 pub(crate) fn inspect(root: &Path, lock_path: &str, options: &HostOptions) -> Result<Prepared> {
-    let lock: Lock = decode(&read(root, lock_path)?).map_err(|e| error("HGPLUGIN-LOCK", format!("invalid plugin lock: {e}"), "use harness-plugin-lock/v1 with explicit exact pins; review migration before replacing the lock"))?;
-    require(
-        lock.schema == "harness-plugin-lock/v1"
-            && !lock.plugins.is_empty()
-            && lock.plugins.len() <= 64,
-        "HGPLUGIN-LOCK",
-        "unsupported schema or empty/oversized plugin selection",
-        "select 1..64 plugins in a v1 lock; absence of a lock preserves legacy workflows",
-    )?;
+    let (lock, names) = selection(root, lock_path)?;
     let store = options.plugin_store.as_deref().ok_or_else(|| {
         error(
             "HGPLUGIN-STORE",
@@ -202,6 +194,30 @@ pub(crate) fn inspect(root: &Path, lock_path: &str, options: &HostOptions) -> Re
         )
     })?;
     let keys = keys(options).map_err(|e| error("HGPLUGIN-SIGNATURE", format!("invalid host key input: {e}"), "pass an operator-approved --plugin-trusted-key PATH; never approve keys from project configuration"))?;
+    let snapshot = tempfile::tempdir().context("create private verified plugin view")?;
+    let mut catalogs = BTreeMap::new();
+    for pin in &lock.plugins {
+        let manifest = load_manifest(&store, pin, &keys)?;
+        validate(&manifest, pin, &names)?;
+        let catalog = copy_catalog(&store, pin, &manifest, snapshot.path())?;
+        catalogs.insert(pin.name.clone(), catalog);
+    }
+    Ok(Prepared {
+        _snapshot: snapshot,
+        catalogs,
+    })
+}
+
+fn selection(root: &Path, lock_path: &str) -> Result<(Lock, BTreeMap<String, String>)> {
+    let lock: Lock = decode(&read(root, lock_path)?).map_err(|e| error("HGPLUGIN-LOCK", format!("invalid plugin lock: {e}"), "use harness-plugin-lock/v1 with explicit exact pins; review migration before replacing the lock"))?;
+    require(
+        lock.schema == "harness-plugin-lock/v1"
+            && !lock.plugins.is_empty()
+            && lock.plugins.len() <= 64,
+        "HGPLUGIN-LOCK",
+        "unsupported schema or empty/oversized plugin selection",
+        "select 1..64 plugins in a v1 lock; absence of a lock preserves legacy workflows",
+    )?;
     let mut names = BTreeMap::new();
     for pin in &lock.plugins {
         require(
@@ -219,61 +235,65 @@ pub(crate) fn inspect(root: &Path, lock_path: &str, options: &HostOptions) -> Re
             "select each plugin name once",
         )?;
     }
-    let snapshot = tempfile::tempdir().context("create private verified plugin view")?;
-    let mut catalogs = BTreeMap::new();
-    for pin in &lock.plugins {
-        let prefix = format!("{}/{}/", pin.name, pin.version);
-        let bytes = read(&store, &format!("{prefix}plugin.json"))?;
-        require(
-            digest(&bytes) == pin.manifest_sha256,
-            "HGPLUGIN-DIGEST",
-            format!("manifest digest mismatch: {}", pin.name),
-            "restore the exact pinned manifest; review and explicitly lock any upgrade",
-        )?;
-        let signature: Attestation = decode(&read(&store, &format!("{prefix}plugin.sig"))?)
-            .map_err(|_| {
-                error(
-                    "HGPLUGIN-SIGNATURE",
-                    "invalid detached signature",
-                    "prepare an Ed25519 signature over the domain and exact manifest bytes",
-                )
-            })?;
-        verify(&bytes, pin, &signature, &keys)?;
-        let manifest: Manifest = decode(&bytes).map_err(|e| {
+    Ok((lock, names))
+}
+
+fn load_manifest(
+    store: &Path,
+    pin: &Pin,
+    keys: &BTreeMap<String, VerifyingKey>,
+) -> Result<Manifest> {
+    let prefix = format!("{}/{}/", pin.name, pin.version);
+    let bytes = read(store, &format!("{prefix}plugin.json"))?;
+    require(
+        digest(&bytes) == pin.manifest_sha256,
+        "HGPLUGIN-DIGEST",
+        format!("manifest digest mismatch: {}", pin.name),
+        "restore the exact pinned manifest; review and explicitly lock any upgrade",
+    )?;
+    let signature: Attestation =
+        decode(&read(store, &format!("{prefix}plugin.sig"))?).map_err(|_| {
             error(
-                "HGPLUGIN-MANIFEST",
-                format!("invalid signed manifest: {e}"),
-                "prepare a v1 data-only preset manifest",
+                "HGPLUGIN-SIGNATURE",
+                "invalid detached signature",
+                "prepare an Ed25519 signature over the domain and exact manifest bytes",
             )
         })?;
-        validate(&manifest, pin, &names)?;
-        let destination = snapshot.path().join(&pin.name);
-        for (path, expected) in &manifest.files {
-            let content = read(&store, &format!("{prefix}{path}"))?;
-            require(
-                digest(&content) == *expected,
-                "HGPLUGIN-DIGEST",
-                format!("artifact digest mismatch: {}/{path}", pin.name),
-                "restore the exact signed file; do not change the lock to hide corruption",
-            )?;
-            let target = destination.join(path);
-            fs::create_dir_all(target.parent().context("plugin file parent")?)?;
-            fs::write(target, content)?;
-        }
-        let catalog = destination.join(&manifest.presets);
+    verify(&bytes, pin, &signature, keys)?;
+    let manifest: Manifest = decode(&bytes).map_err(|e| {
+        error(
+            "HGPLUGIN-MANIFEST",
+            format!("invalid signed manifest: {e}"),
+            "prepare a v1 data-only preset manifest",
+        )
+    })?;
+    Ok(manifest)
+}
+
+fn copy_catalog(store: &Path, pin: &Pin, manifest: &Manifest, snapshot: &Path) -> Result<PathBuf> {
+    let prefix = format!("{}/{}/", pin.name, pin.version);
+    let destination = snapshot.join(&pin.name);
+    for (path, expected) in &manifest.files {
+        let content = read(store, &format!("{prefix}{path}"))?;
         require(
-            catalog.join("catalog.json").is_file(),
-            "HGPLUGIN-MISSING",
-            "signed files do not contain the preset catalog",
-            "include the catalog and all referenced flow/recipe/pack files in the signed inventory",
+            digest(&content) == *expected,
+            "HGPLUGIN-DIGEST",
+            format!("artifact digest mismatch: {}/{path}", pin.name),
+            "restore the exact signed file; do not change the lock to hide corruption",
         )?;
-        crate::preset::validate_catalog(&catalog).map_err(|e| error("HGPLUGIN-CATALOG", format!("invalid or incomplete signed catalog: {e}"), "include every catalog reference in the signed file inventory and repair its flow configuration"))?;
-        catalogs.insert(pin.name.clone(), catalog);
+        let target = destination.join(path);
+        fs::create_dir_all(target.parent().context("plugin file parent")?)?;
+        fs::write(target, content)?;
     }
-    Ok(Prepared {
-        _snapshot: snapshot,
-        catalogs,
-    })
+    let catalog = destination.join(&manifest.presets);
+    require(
+        catalog.join("catalog.json").is_file(),
+        "HGPLUGIN-MISSING",
+        "signed files do not contain the preset catalog",
+        "include the catalog and all referenced flow/recipe/pack files in the signed inventory",
+    )?;
+    crate::preset::validate_catalog(&catalog).map_err(|e| error("HGPLUGIN-CATALOG", format!("invalid or incomplete signed catalog: {e}"), "include every catalog reference in the signed file inventory and repair its flow configuration"))?;
+    Ok(catalog)
 }
 
 fn verify(
