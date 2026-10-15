@@ -170,6 +170,35 @@
       "sha256": "b39907e62acfc4b4bec4d6db2b054053b2d7ffe702528bf60e8f1e30874b88ab"
     },
     {
+      "authoritative_status": "Non-authoritative measurement tooling; no policy, baseline or release authority.",
+      "callers": [
+        "Standalone manual CLI (__main__); documented in docs/benchmarks/submodule-coverage.md; no tracked automatic caller"
+      ],
+      "category": "A",
+      "ci_role": "Not executed by required CI; opt-in attribution measurement run manually. Quality Script Tests cover the identity helper.",
+      "final_disposition": "Retain as opt-in attribution tooling; no baseline reset or threshold change.",
+      "module": "tools/quality/config_benchmark.py",
+      "notes": "",
+      "purpose": "Run the opt-in config-loader attribution measurement and record identity-bound release-small samples.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "7090b3d92ea3771fd1dedf3c2648c822ec371bb5c233740be37af2d562dd4f26"
+    },
+    {
+      "authoritative_status": "Non-authoritative measurement identity helper; no policy or release authority.",
+      "callers": [
+        "tools/quality/config_benchmark.py",
+        "tools/quality/tests/test_config_benchmark_identity.py"
+      ],
+      "category": "A",
+      "ci_role": "Quality-scripts regression coverage; supplies verified toolchain/target/build identity for the manual benchmark.",
+      "final_disposition": "Retain maintained Python measurement tooling; no authority transfer.",
+      "module": "tools/quality/config_benchmark_identity.py",
+      "notes": "",
+      "purpose": "Build the verified toolchain, target and build identity for the opt-in config-loader benchmark.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "dfbbb311da8394fd5011c0b56f222e8dd8bb186cfadeb02a2f8353263a0d7a71"
+    },
+    {
       "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
       "callers": [
         ".github/workflows/ci.yml",

@@ -114,9 +114,14 @@ def passed_test_events(path: Path, binary: str, test: str) -> None:
     events = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
     suites = [e for e in events if e.get('type') == 'suite' and e.get('event') != 'started']
     terminals = [e for e in events if e.get('type') == 'test' and e.get('event') != 'started']
-    require(len(suites) == 1 and suites[0].get('event') == 'ok' and suites[0].get('passed') == 1 and
-            suites[0].get('failed') == 0 and suites[0].get('ignored') == 0,
-            'isolated suite must pass exactly one test without skips')
+    # nextest enumerates an ignored sibling test of the selected binary in an
+    # extra zero-pass suite block; the terminal event remains the isolation
+    # authority: exactly one test executed, and it is the expected one.
+    executed = [s for s in suites if s.get('passed') or s.get('failed')]
+    require(all(s.get('event') == 'ok' and s.get('failed') == 0 for s in suites),
+            'isolated suite must not cancel or fail')
+    require(len(executed) == 1 and executed[0].get('passed') == 1,
+            'isolated suite must pass exactly one test')
     require(len(terminals) == 1 and terminals[0].get('event') == 'ok',
             'test missing, skipped, cancelled, failed, or not isolated')
     event = terminals[0]
