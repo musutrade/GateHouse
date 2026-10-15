@@ -27,7 +27,8 @@ def run(output: Path) -> None:
         del environment[name]
     build = build_identity(root, environment)
     command = ["cargo", "test", "--manifest-path", str(CRATE / "Cargo.toml"), "--locked",
-               "--profile", "release-small", "--target", build["explicit_target"], "--bin", "harness-gate",
+               "--profile", "release-small", "--features", "config-benchmark",
+               "--target", build["explicit_target"], "--bin", "harness-gate",
                "config::tests::configuration_loader_measurement", "--", "--ignored", "--exact",
                "--nocapture", "--test-threads=1"]
     started = time.monotonic()

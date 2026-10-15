@@ -1737,6 +1737,7 @@ fn runner_v2_declarations_fail_closed_without_name_exemptions() {
 }
 
 /// Opt-in attribution measurement; ordinary test/CI runs do not execute it.
+#[cfg(feature = "config-benchmark")]
 #[test]
 #[ignore = "run through tools/quality/config_benchmark.py"]
 fn configuration_loader_measurement() {

@@ -181,7 +181,7 @@
       "notes": "",
       "purpose": "Run the opt-in config-loader attribution measurement and record identity-bound release-small samples.",
       "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
-      "sha256": "7090b3d92ea3771fd1dedf3c2648c822ec371bb5c233740be37af2d562dd4f26"
+      "sha256": "e0f4c92ed224ebfca0de6693a9d8935df3cecc7f31efa1bd2bdf55f981824b50"
     },
     {
       "authoritative_status": "Non-authoritative measurement identity helper; no policy or release authority.",

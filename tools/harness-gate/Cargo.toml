@@ -55,6 +55,12 @@ windows-sys = { version = "0.61.2", features = [
     "Win32_System_Threading",
 ] }
 
+[features]
+# Opt-in config-loader attribution benchmark. Excluded from default test
+# binaries so isolated critical-path matrix runs never enumerate an ignored
+# sibling test; run through tools/quality/config_benchmark.py.
+config-benchmark = []
+
 [profile.dev]
 # Cargo's dev defaults (incremental = true, codegen-units = 256, opt-level = 0) are
 # already tuned for iteration: measured 1.1s incremental rebuild, 0.5s `cargo check`.
