@@ -85,6 +85,34 @@ JSON diagnostics contain stable HGCFG-* IDs, field paths, a reason, and a
 remediation hint. Interpolated secrets, connection strings, and template
 contents are not emitted.
 
+### Read-only repair suggestions
+
+Run `harness-gate --project-root /path/to/project config suggest` to inspect
+workflow repair suggestions, or add `--format json` for the
+`configuration-suggestions/v1` envelope. Without `--project-root`, this command
+uses the current directory. `--config` selects an existing file inside that root.
+It neither edits files nor executes workflow steps or creates reports.
+
+This is workflow-only analysis, **not** the full `config check`: required audit
+and secret files, plugins and the separate quality plane still need their normal
+validation. Exit status is zero when workflow validation succeeds and one when
+workflow diagnostics remain. The JSON `scope` makes that limitation explicit.
+
+Suggestions distinguish manual repairs from `maybe_incorrect` candidate edits.
+Parser and step-reference guidance uses declared identifiers; missing required
+steps are never repaired by deleting the requirement. Duplicate identifiers and
+environment names require coordinated reference changes. Invalid or duplicate
+external log names may receive a candidate replacement, but consumers of that
+filename must be reviewed. Built-in gate logs do not receive edits. If this step
+or another external step has an environment-dependent log name, a collision
+cannot be ruled out from the original text, so no log edit is proposed.
+
+Candidate ranges are UTF-8 byte offsets in the **original** TOML, bound by the
+plan's `source_sha256`; they are not positions in environment-expanded text.
+Only the proposed replacement is included, not the original value. No candidate
+is automatically applied. Revalidate intended repairs with `config check` before
+running the workflow. Thresholds, requiredness and policy authority are unchanged.
+
 ## 2. Editor schema association
 
 schema/flow.schema.json is the local schema for .harness-gate/flow.toml.

@@ -79,6 +79,14 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             action: SchemaAction::Export { output, quality },
         } => export_schema(standalone_root(&cli)?, output.as_deref(), *quality),
         Commands::Config {
+            action: ConfigAction::Suggest { format },
+        } => crate::config::suggestions::run(
+            &standalone_root(&cli)?,
+            cli.config.clone(),
+            matches!(format, ConfigFormat::Json),
+        )
+        .map_err(Into::into),
+        Commands::Config {
             action:
                 ConfigAction::Import {
                     input,
