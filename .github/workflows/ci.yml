@@ -377,6 +377,15 @@ jobs:
             --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
             --output target/quality/candidate
 
+      - name: Sample cgroup memory peak
+        if: ${{ always() }}
+        run: |
+          cat /proc/self/cgroup || true
+          for path in /sys/fs/cgroup/memory.peak \
+                      /sys/fs/cgroup/memory/memory.max_usage_in_bytes; do
+            if [ -r "$path" ]; then echo "MEMORY_PEAK $path $(cat "$path")"; fi
+          done
+
       - name: Seal immutable quality evidence
         id: seal
         run: python3 tools/quality/ci_artifact.py seal --root target/quality/candidate
