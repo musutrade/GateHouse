@@ -234,7 +234,8 @@ class Collector:
         return binary
 
     def legacy(self):
-        self.python('legacy', 'coverage.py', '--output', self.directory / 'coverage.json')
+        self.python('legacy', 'coverage.py', '--test-runner', 'nextest',
+                    '--output', self.directory / 'coverage.json')
 
     def production(self):
         self.python('production', 'coverage.py', '--production', '--raw', self.directory / 'coverage.raw.json',

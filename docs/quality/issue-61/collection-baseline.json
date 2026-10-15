@@ -1,0 +1,796 @@
+{
+  "schema": 1,
+  "note": "Observational samples, not matched A/B. Command durations are rounded log values nested within stage durations; do not sum them with stages. Raw logs retained externally; original GitHub run URLs are in each event cohort.",
+  "runs": [
+    {
+      "run_id": 38678822897,
+      "event": "pull_request",
+      "source_head_sha": "e8b4de07fbea170e60823c0d6146849af8628b06",
+      "collection_identity": {
+        "BASE_SHA": "0b4b3ee132235b00f4b3dc2525ab0967519e6901",
+        "HEAD_SHA": "eaaecf48c171d98865ae7dfb239a7ac8b31e23cc",
+        "RUN_ID": "38678822897-1"
+      },
+      "stages": {
+        "legacy": {
+          "status": "success",
+          "seconds": 299.794081217
+        },
+        "production": {
+          "status": "success",
+          "seconds": 1.620827241000029
+        },
+        "risk": {
+          "status": "success",
+          "seconds": 373.729155642
+        },
+        "matrix": {
+          "status": "success",
+          "seconds": 69.689017047
+        }
+      },
+      "commands": [
+        {
+          "name": "legacy",
+          "exit_code": 0,
+          "seconds_rounded": 299.79
+        },
+        {
+          "name": "production",
+          "exit_code": 0,
+          "seconds_rounded": 1.62
+        },
+        {
+          "name": "measurer-download",
+          "exit_code": 0,
+          "seconds_rounded": 0.34
+        },
+        {
+          "name": "measurer-inventory-download",
+          "exit_code": 0,
+          "seconds_rounded": 0.23
+        },
+        {
+          "name": "base-archive",
+          "exit_code": 0,
+          "seconds_rounded": 0.02
+        },
+        {
+          "name": "base-test-data",
+          "exit_code": 0,
+          "seconds_rounded": 0.47
+        },
+        {
+          "name": "base-prepare",
+          "exit_code": 0,
+          "seconds_rounded": 0.47
+        },
+        {
+          "name": "base-coverage",
+          "exit_code": 0,
+          "seconds_rounded": 171.12
+        },
+        {
+          "name": "base-lcov",
+          "exit_code": 0,
+          "seconds_rounded": 1.11
+        },
+        {
+          "name": "base-measure",
+          "exit_code": 0,
+          "seconds_rounded": 8.77
+        },
+        {
+          "name": "head-archive",
+          "exit_code": 0,
+          "seconds_rounded": 0.02
+        },
+        {
+          "name": "head-test-data",
+          "exit_code": 0,
+          "seconds_rounded": 0.47
+        },
+        {
+          "name": "head-prepare",
+          "exit_code": 0,
+          "seconds_rounded": 0.47
+        },
+        {
+          "name": "head-coverage",
+          "exit_code": 0,
+          "seconds_rounded": 168.96
+        },
+        {
+          "name": "head-lcov",
+          "exit_code": 0,
+          "seconds_rounded": 1.22
+        },
+        {
+          "name": "head-measure",
+          "exit_code": 0,
+          "seconds_rounded": 9.53
+        },
+        {
+          "name": "risk-compare",
+          "exit_code": 0,
+          "seconds_rounded": 0.15
+        },
+        {
+          "name": "matrix",
+          "exit_code": 0,
+          "seconds_rounded": 69.69
+        }
+      ],
+      "raw_files": {
+        "run.json": "29209c74634483e7c369abbf9f05bd052d6464979beb0fb33b5ea6c37d0933bf",
+        "jobs.json": "44abc9c8e74c5bcc84fca78e8ac560b23875ba6f9dcbae296569d5a52d2cc96d",
+        "quality.log": "727642cc2a74fc4451f575fe6f3f45b265bc609058e3f016bb2b9720160c8868"
+      },
+      "raw_directory": "/home/gem/.local/state/herdr-issue-flow/musutrade-GateHouse/issue-61/baseline/38678822897",
+      "quality_job_cache_actions": [
+        {
+          "action_id": "__self.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 1216
+        },
+        {
+          "action_id": "__self_2.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 1065
+        },
+        {
+          "action_id": "__self_2.__actions_cache_2",
+          "conclusion": "skipped",
+          "milliseconds": 0
+        },
+        {
+          "action_id": "__d523601a-711c-4b87-8cb0-c16071b75197.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 105
+        },
+        {
+          "action_id": "__998c9c50-0875-45c7-b997-19873e6be573.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 158
+        }
+      ],
+      "quality_job_cache_total_seconds": 2.544,
+      "quality_job_cache_hits": [
+        "regression-data-v2-Linux-ce497a6d783580bdfc9962649432355e2b4e5f3cf66a61014a3b723e0f98988c-quality-history arc-admin-replay regression-corpus",
+        "cargo-sources-v1-Linux-X64-a7cbc8d42763de46c79369f5d87a9efd430731038ff0633319dad850cfe4d461"
+      ]
+    },
+    {
+      "run_id": 38682199206,
+      "event": "pull_request",
+      "source_head_sha": "05bb67fa74188e1a2f6eb9e28017c6c1f42fea02",
+      "collection_identity": {
+        "BASE_SHA": "dd429985066c43408cfbe676be5b84389794192d",
+        "HEAD_SHA": "67bb2fa0eb3e5693dd5b50b05d3ea494ad48dec6",
+        "RUN_ID": "38682199206-1"
+      },
+      "stages": {
+        "legacy": {
+          "status": "success",
+          "seconds": 399.82751675400004
+        },
+        "production": {
+          "status": "success",
+          "seconds": 2.9986466970000265
+        },
+        "risk": {
+          "status": "success",
+          "seconds": 555.491906137
+        },
+        "matrix": {
+          "status": "success",
+          "seconds": 89.86603522199994
+        }
+      },
+      "commands": [
+        {
+          "name": "legacy",
+          "exit_code": 0,
+          "seconds_rounded": 399.83
+        },
+        {
+          "name": "production",
+          "exit_code": 0,
+          "seconds_rounded": 3.0
+        },
+        {
+          "name": "measurer-download",
+          "exit_code": 0,
+          "seconds_rounded": 0.24
+        },
+        {
+          "name": "measurer-inventory-download",
+          "exit_code": 0,
+          "seconds_rounded": 0.19
+        },
+        {
+          "name": "base-archive",
+          "exit_code": 0,
+          "seconds_rounded": 0.03
+        },
+        {
+          "name": "base-test-data",
+          "exit_code": 0,
+          "seconds_rounded": 0.82
+        },
+        {
+          "name": "base-prepare",
+          "exit_code": 0,
+          "seconds_rounded": 0.71
+        },
+        {
+          "name": "base-coverage",
+          "exit_code": 0,
+          "seconds_rounded": 269.26
+        },
+        {
+          "name": "base-lcov",
+          "exit_code": 0,
+          "seconds_rounded": 1.75
+        },
+        {
+          "name": "base-measure",
+          "exit_code": 0,
+          "seconds_rounded": 13.98
+        },
+        {
+          "name": "head-archive",
+          "exit_code": 0,
+          "seconds_rounded": 0.03
+        },
+        {
+          "name": "head-test-data",
+          "exit_code": 0,
+          "seconds_rounded": 0.83
+        },
+        {
+          "name": "head-prepare",
+          "exit_code": 0,
+          "seconds_rounded": 0.73
+        },
+        {
+          "name": "head-coverage",
+          "exit_code": 0,
+          "seconds_rounded": 238.76
+        },
+        {
+          "name": "head-lcov",
+          "exit_code": 0,
+          "seconds_rounded": 1.8
+        },
+        {
+          "name": "head-measure",
+          "exit_code": 0,
+          "seconds_rounded": 14.46
+        },
+        {
+          "name": "risk-compare",
+          "exit_code": 0,
+          "seconds_rounded": 0.21
+        },
+        {
+          "name": "matrix",
+          "exit_code": 0,
+          "seconds_rounded": 89.86
+        }
+      ],
+      "raw_files": {
+        "run.json": "f5df9b6aeb02acbe36d8bbb4297db4f636d2f03d7b5f45efd74c71c5d4f6a0fe",
+        "jobs.json": "004d2a9b198d7a155bbbc26e898770015f328bb6110061e9cdfb52c540c835cc",
+        "quality.log": "ab1686c0817f3b5e051e1d09f6bea9d4819295c52ae2657354d4e10372401bb8"
+      },
+      "raw_directory": "/home/gem/.local/state/herdr-issue-flow/musutrade-GateHouse/issue-61/baseline/38682199206",
+      "quality_job_cache_actions": [
+        {
+          "action_id": "__self.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 735
+        },
+        {
+          "action_id": "__self_2.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 608
+        },
+        {
+          "action_id": "__self_2.__actions_cache_2",
+          "conclusion": "skipped",
+          "milliseconds": 0
+        },
+        {
+          "action_id": "__721eb597-82c7-4420-901b-ce4d109b1eb1.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 143
+        },
+        {
+          "action_id": "__b090c24d-6730-4bbf-b592-42f64eada1f9.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 205
+        }
+      ],
+      "quality_job_cache_total_seconds": 1.691,
+      "quality_job_cache_hits": [
+        "regression-data-v2-Linux-ce497a6d783580bdfc9962649432355e2b4e5f3cf66a61014a3b723e0f98988c-quality-history arc-admin-replay regression-corpus",
+        "cargo-sources-v1-Linux-X64-a7cbc8d42763de46c79369f5d87a9efd430731038ff0633319dad850cfe4d461"
+      ]
+    },
+    {
+      "run_id": 38684124984,
+      "event": "push",
+      "source_head_sha": "d8a328043dbd4776a7191d3263907b9bfc62599f",
+      "collection_identity": {
+        "BASE_SHA": "dd429985066c43408cfbe676be5b84389794192d",
+        "HEAD_SHA": "d8a328043dbd4776a7191d3263907b9bfc62599f",
+        "RUN_ID": "38684124984-1"
+      },
+      "stages": {
+        "legacy": {
+          "status": "success",
+          "seconds": 396.023492062
+        },
+        "production": {
+          "status": "success",
+          "seconds": 2.946617955000022
+        },
+        "risk": {
+          "status": "success",
+          "seconds": 555.926524794
+        },
+        "matrix": {
+          "status": "success",
+          "seconds": 87.89056357000015
+        }
+      },
+      "commands": [
+        {
+          "name": "legacy",
+          "exit_code": 0,
+          "seconds_rounded": 396.02
+        },
+        {
+          "name": "production",
+          "exit_code": 0,
+          "seconds_rounded": 2.95
+        },
+        {
+          "name": "measurer-download",
+          "exit_code": 0,
+          "seconds_rounded": 0.24
+        },
+        {
+          "name": "measurer-inventory-download",
+          "exit_code": 0,
+          "seconds_rounded": 0.29
+        },
+        {
+          "name": "base-archive",
+          "exit_code": 0,
+          "seconds_rounded": 0.03
+        },
+        {
+          "name": "base-test-data",
+          "exit_code": 0,
+          "seconds_rounded": 0.81
+        },
+        {
+          "name": "base-prepare",
+          "exit_code": 0,
+          "seconds_rounded": 0.69
+        },
+        {
+          "name": "base-coverage",
+          "exit_code": 0,
+          "seconds_rounded": 268.31
+        },
+        {
+          "name": "base-lcov",
+          "exit_code": 0,
+          "seconds_rounded": 1.75
+        },
+        {
+          "name": "base-measure",
+          "exit_code": 0,
+          "seconds_rounded": 14.04
+        },
+        {
+          "name": "head-archive",
+          "exit_code": 0,
+          "seconds_rounded": 0.03
+        },
+        {
+          "name": "head-test-data",
+          "exit_code": 0,
+          "seconds_rounded": 0.82
+        },
+        {
+          "name": "head-prepare",
+          "exit_code": 0,
+          "seconds_rounded": 0.73
+        },
+        {
+          "name": "head-coverage",
+          "exit_code": 0,
+          "seconds_rounded": 239.87
+        },
+        {
+          "name": "head-lcov",
+          "exit_code": 0,
+          "seconds_rounded": 1.78
+        },
+        {
+          "name": "head-measure",
+          "exit_code": 0,
+          "seconds_rounded": 14.39
+        },
+        {
+          "name": "risk-compare",
+          "exit_code": 0,
+          "seconds_rounded": 0.21
+        },
+        {
+          "name": "matrix",
+          "exit_code": 0,
+          "seconds_rounded": 87.89
+        }
+      ],
+      "raw_files": {
+        "run.json": "5b304d9ad03ca7cb0522eccceb02d1fe84da38b1e78ef187e55d867ba22d5d74",
+        "jobs.json": "a8025df2ecb4368c1f91908c47ce09dcab8266f73665c4e1838854b3dfa574b7",
+        "quality.log": "a6690c4e43ecf7ae2e3a48ed127d4058f958f18f684510c1a57583ca180e9bf1"
+      },
+      "raw_directory": "/home/gem/.local/state/herdr-issue-flow/musutrade-GateHouse/issue-61/baseline/38684124984",
+      "quality_job_cache_actions": [
+        {
+          "action_id": "__self.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 2946
+        },
+        {
+          "action_id": "__self_2.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 2004
+        },
+        {
+          "action_id": "__self_2.__actions_cache_2",
+          "conclusion": "skipped",
+          "milliseconds": 0
+        },
+        {
+          "action_id": "__2fd3cd13-d094-4e43-9a5a-be8b7c9ed670.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 139
+        },
+        {
+          "action_id": "__4b27e39b-e070-489f-be1e-f94ade0946e5.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 205
+        }
+      ],
+      "quality_job_cache_total_seconds": 5.294,
+      "quality_job_cache_hits": [
+        "regression-data-v2-Linux-ce497a6d783580bdfc9962649432355e2b4e5f3cf66a61014a3b723e0f98988c-quality-history arc-admin-replay regression-corpus",
+        "cargo-sources-v1-Linux-X64-a7cbc8d42763de46c79369f5d87a9efd430731038ff0633319dad850cfe4d461"
+      ]
+    },
+    {
+      "run_id": 38684527328,
+      "event": "pull_request",
+      "source_head_sha": "5d127a28c06dc36045c44df750b7a8a3b7de5d6b",
+      "collection_identity": {
+        "BASE_SHA": "d8a328043dbd4776a7191d3263907b9bfc62599f",
+        "HEAD_SHA": "8c73142961d80426bb738a647e84beedbba5a940",
+        "RUN_ID": "38684527328-1"
+      },
+      "stages": {
+        "legacy": {
+          "status": "success",
+          "seconds": 433.60315459400005
+        },
+        "production": {
+          "status": "success",
+          "seconds": 3.0315005979999796
+        },
+        "risk": {
+          "status": "success",
+          "seconds": 565.3673711109999
+        },
+        "matrix": {
+          "status": "success",
+          "seconds": 95.31557299200017
+        }
+      },
+      "commands": [
+        {
+          "name": "legacy",
+          "exit_code": 0,
+          "seconds_rounded": 433.6
+        },
+        {
+          "name": "production",
+          "exit_code": 0,
+          "seconds_rounded": 3.03
+        },
+        {
+          "name": "measurer-download",
+          "exit_code": 0,
+          "seconds_rounded": 0.29
+        },
+        {
+          "name": "measurer-inventory-download",
+          "exit_code": 0,
+          "seconds_rounded": 0.29
+        },
+        {
+          "name": "base-archive",
+          "exit_code": 0,
+          "seconds_rounded": 0.03
+        },
+        {
+          "name": "base-test-data",
+          "exit_code": 0,
+          "seconds_rounded": 0.82
+        },
+        {
+          "name": "base-prepare",
+          "exit_code": 0,
+          "seconds_rounded": 0.75
+        },
+        {
+          "name": "base-coverage",
+          "exit_code": 0,
+          "seconds_rounded": 273.37
+        },
+        {
+          "name": "base-lcov",
+          "exit_code": 0,
+          "seconds_rounded": 1.82
+        },
+        {
+          "name": "base-measure",
+          "exit_code": 0,
+          "seconds_rounded": 14.39
+        },
+        {
+          "name": "head-archive",
+          "exit_code": 0,
+          "seconds_rounded": 0.03
+        },
+        {
+          "name": "head-test-data",
+          "exit_code": 0,
+          "seconds_rounded": 0.82
+        },
+        {
+          "name": "head-prepare",
+          "exit_code": 0,
+          "seconds_rounded": 0.74
+        },
+        {
+          "name": "head-coverage",
+          "exit_code": 0,
+          "seconds_rounded": 241.02
+        },
+        {
+          "name": "head-lcov",
+          "exit_code": 0,
+          "seconds_rounded": 1.92
+        },
+        {
+          "name": "head-measure",
+          "exit_code": 0,
+          "seconds_rounded": 14.77
+        },
+        {
+          "name": "risk-compare",
+          "exit_code": 0,
+          "seconds_rounded": 0.23
+        },
+        {
+          "name": "matrix",
+          "exit_code": 0,
+          "seconds_rounded": 95.31
+        }
+      ],
+      "raw_files": {
+        "run.json": "ef30e35a5fd1b8b6494ee0d6b6c7bde47963a54580bd1b683eb43a3e8fca6fb0",
+        "jobs.json": "c6da4032727081a5ed6692137639065dcb2aea460da0701c347d3165a890f366",
+        "quality.log": "968db56969354b764f9114d11e42120b20a8cdc9f801d327fc4552cfa8b9e341"
+      },
+      "raw_directory": "/home/gem/.local/state/herdr-issue-flow/musutrade-GateHouse/issue-61/baseline/38684527328",
+      "quality_job_cache_actions": [
+        {
+          "action_id": "__self.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 4015
+        },
+        {
+          "action_id": "__self_2.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 2297
+        },
+        {
+          "action_id": "__self_2.__actions_cache_2",
+          "conclusion": "skipped",
+          "milliseconds": 0
+        },
+        {
+          "action_id": "__9884eea9-741e-42a7-b654-3e7a8bcf4f29.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 149
+        },
+        {
+          "action_id": "__d65df2e6-4959-4d21-b71e-4811ce803705.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 218
+        }
+      ],
+      "quality_job_cache_total_seconds": 6.679,
+      "quality_job_cache_hits": [
+        "regression-data-v2-Linux-ce497a6d783580bdfc9962649432355e2b4e5f3cf66a61014a3b723e0f98988c-quality-history arc-admin-replay regression-corpus",
+        "cargo-sources-v1-Linux-X64-a7cbc8d42763de46c79369f5d87a9efd430731038ff0633319dad850cfe4d461"
+      ]
+    },
+    {
+      "run_id": 38686497177,
+      "event": "push",
+      "source_head_sha": "4620e211d11d15644eaaa2030ce99d7aed118190",
+      "collection_identity": {
+        "BASE_SHA": "d8a328043dbd4776a7191d3263907b9bfc62599f",
+        "HEAD_SHA": "4620e211d11d15644eaaa2030ce99d7aed118190",
+        "RUN_ID": "38686497177-1"
+      },
+      "stages": {
+        "legacy": {
+          "status": "success",
+          "seconds": 395.02090942999996
+        },
+        "production": {
+          "status": "success",
+          "seconds": 2.320772919000035
+        },
+        "risk": {
+          "status": "success",
+          "seconds": 514.2242696980001
+        },
+        "matrix": {
+          "status": "success",
+          "seconds": 75.46193982499994
+        }
+      },
+      "commands": [
+        {
+          "name": "legacy",
+          "exit_code": 0,
+          "seconds_rounded": 395.02
+        },
+        {
+          "name": "production",
+          "exit_code": 0,
+          "seconds_rounded": 2.32
+        },
+        {
+          "name": "measurer-download",
+          "exit_code": 0,
+          "seconds_rounded": 0.37
+        },
+        {
+          "name": "measurer-inventory-download",
+          "exit_code": 0,
+          "seconds_rounded": 0.31
+        },
+        {
+          "name": "base-archive",
+          "exit_code": 0,
+          "seconds_rounded": 0.02
+        },
+        {
+          "name": "base-test-data",
+          "exit_code": 0,
+          "seconds_rounded": 0.6
+        },
+        {
+          "name": "base-prepare",
+          "exit_code": 0,
+          "seconds_rounded": 0.58
+        },
+        {
+          "name": "base-coverage",
+          "exit_code": 0,
+          "seconds_rounded": 244.19
+        },
+        {
+          "name": "base-lcov",
+          "exit_code": 0,
+          "seconds_rounded": 1.44
+        },
+        {
+          "name": "base-measure",
+          "exit_code": 0,
+          "seconds_rounded": 11.46
+        },
+        {
+          "name": "head-archive",
+          "exit_code": 0,
+          "seconds_rounded": 0.02
+        },
+        {
+          "name": "head-test-data",
+          "exit_code": 0,
+          "seconds_rounded": 0.6
+        },
+        {
+          "name": "head-prepare",
+          "exit_code": 0,
+          "seconds_rounded": 0.58
+        },
+        {
+          "name": "head-coverage",
+          "exit_code": 0,
+          "seconds_rounded": 229.23
+        },
+        {
+          "name": "head-lcov",
+          "exit_code": 0,
+          "seconds_rounded": 1.43
+        },
+        {
+          "name": "head-measure",
+          "exit_code": 0,
+          "seconds_rounded": 11.48
+        },
+        {
+          "name": "risk-compare",
+          "exit_code": 0,
+          "seconds_rounded": 0.18
+        },
+        {
+          "name": "matrix",
+          "exit_code": 0,
+          "seconds_rounded": 75.46
+        }
+      ],
+      "raw_files": {
+        "run.json": "9d12a3c5dd8d2f2c459c2eeb533eae5359efdc89c1fa1f0bde90bd8336fecc57",
+        "jobs.json": "602ca8bb8ee581a12b98f768448d8035e0987d694759d0d5b60ff3446a457b3f",
+        "quality.log": "bf4b10c42c6e6de42e6073cc17a9417feb30212c4800381d3516c3e1a875f1a5"
+      },
+      "raw_directory": "/home/gem/.local/state/herdr-issue-flow/musutrade-GateHouse/issue-61/baseline/38686497177",
+      "quality_job_cache_actions": [
+        {
+          "action_id": "__self.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 1639
+        },
+        {
+          "action_id": "__self_2.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 1519
+        },
+        {
+          "action_id": "__self_2.__actions_cache_2",
+          "conclusion": "skipped",
+          "milliseconds": 0
+        },
+        {
+          "action_id": "__4c1f23d3-793d-4dc7-b391-14087ff19813.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 116
+        },
+        {
+          "action_id": "__a5b0e792-f230-4be3-aa16-9e415fbcba3e.__actions_cache",
+          "conclusion": "success",
+          "milliseconds": 163
+        }
+      ],
+      "quality_job_cache_total_seconds": 3.437,
+      "quality_job_cache_hits": [
+        "regression-data-v2-Linux-ce497a6d783580bdfc9962649432355e2b4e5f3cf66a61014a3b723e0f98988c-quality-history arc-admin-replay regression-corpus",
+        "cargo-sources-v1-Linux-X64-a7cbc8d42763de46c79369f5d87a9efd430731038ff0633319dad850cfe4d461"
+      ]
+    }
+  ]
+}

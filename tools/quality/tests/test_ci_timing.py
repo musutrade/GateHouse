@@ -61,6 +61,39 @@ class HostedTimingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ci_timing.seconds('2026-09-09T01:00:01Z', '2026-09-09T01:00:00Z')
 
+    def test_current_pr_and_push_cohorts_reproduce_separately(self):
+        directory = ROOT / 'docs/quality/issue-61'
+        cohorts = []
+        for event in ('pull_request', 'push'):
+            raw = (directory / f'{event}-input.json').read_bytes()
+            source = json.loads(raw)
+            cohorts.extend(source['runs'])
+            result = ci_timing.normalize(source, self.contract)
+            result['input_sha256'] = hashlib.sha256(raw).hexdigest()
+            self.assertEqual(result, json.loads((directory / f'{event}-timing.json').read_text()))
+            expected = ('Quality Coverage and Critical Paths' if event == 'pull_request'
+                        else 'Quality Performance Baseline (macos-latest)')
+            self.assertTrue(all(r['last_required_child'] == expected for r in result['runs']))
+        with self.assertRaisesRegex(ValueError, 'separately'):
+            ci_timing.normalize({'runs': cohorts}, self.contract)
+        with self.assertRaisesRegex(ValueError, 'at least one run'):
+            ci_timing.normalize({'runs': []}, self.contract)
+
+    def test_push_required_jobs_cannot_be_omitted_failed_or_skipped(self):
+        source = json.loads((ROOT / 'docs/quality/issue-61/push-input.json').read_text())
+        for name in ('Quality Performance Baseline (macos-latest)', 'Code Coverage',
+                     'Build (windows-latest)', 'Quality CLI Contracts (windows-latest)'):
+            for mutation in ('missing', 'failure', 'skipped'):
+                with self.subTest(name=name, mutation=mutation):
+                    run = copy.deepcopy(source['runs'][0])
+                    job = next(j for j in run['jobs'] if j['name'] == name)
+                    if mutation == 'missing':
+                        run['jobs'].remove(job)
+                    else:
+                        job['conclusion'] = mutation
+                    with self.assertRaises((ValueError, KeyError)):
+                        ci_timing.normalize_run(run, self.contract)
+
     def test_after_and_stage_evidence_reproduce_with_the_baseline_normalization(self):
         directory = ROOT / 'docs/quality/ci-topology'
         for source, output in [('hosted-after-input.json', 'hosted-after.json'),

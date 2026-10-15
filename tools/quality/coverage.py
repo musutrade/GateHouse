@@ -34,23 +34,24 @@ ADAPTER_MODULES = {
 EXCLUDED_FILES = {"scope/benchmark.rs"}
 
 
-def run(output: Path, threshold: float, production: bool = False) -> int:
+def run(output: Path, threshold: float, production: bool = False,
+        test_runner: str = "cargo") -> int:
+    if test_runner not in ("cargo", "nextest"):
+        raise ValueError(f"unsupported coverage test runner: {test_runner}")
     raw = output.with_name("coverage.raw.json")
     raw.parent.mkdir(parents=True, exist_ok=True)
     # Keep the existing CLI measurement boundary; the candidate workspace crate
     # has its own differential tests and has not transferred semantic authority.
+    command = [
+        "cargo", "llvm-cov",
+        *(["nextest", "--profile", "default", "--retries", "0", "--no-fail-fast"]
+          if test_runner == "nextest" else []),
+        "--package", "harness-gate",
+        "--manifest-path", str(CRATE / "Cargo.toml"),
+        "--locked", "--json", "--output-path", str(raw),
+    ]
     subprocess.run(
-        [
-            "cargo",
-            "llvm-cov",
-            "--package", "harness-gate",
-            "--manifest-path",
-            str(CRATE / "Cargo.toml"),
-            "--locked",
-            "--json",
-            "--output-path",
-            str(raw),
-        ],
+        command,
         check=True,
         cwd=CRATE.parent.parent,
     )
@@ -121,7 +122,8 @@ def run(output: Path, threshold: float, production: bool = False) -> int:
     result = {
         **metadata(
             tool="cargo-llvm-cov",
-            command="cargo llvm-cov --manifest-path tools/harness-gate/Cargo.toml --locked --json",
+            command=subprocess.list2cmdline(command),
+            test_runner=test_runner,
             threshold=threshold,
             source_boundaries={**CORE_MODULES, **ADAPTER_MODULES},
             blocking_boundaries=list(CORE_MODULES),
@@ -162,6 +164,8 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path, default=QUALITY_ROOT / "coverage.json")
     parser.add_argument("--threshold", type=float, default=80.0)
     parser.add_argument("--production", action="store_true", help="Enforce the expanded production-source inventory (candidate until CI adoption)")
+    parser.add_argument("--test-runner", choices=("cargo", "nextest"), default="cargo",
+                        help="Fresh test execution backend; standalone default remains cargo")
     parser.add_argument("--raw", type=Path, help="Evaluate an existing LLVM JSON export; requires --production and --lcov")
     parser.add_argument("--lcov", type=Path, help="Matching LCOV export for --raw")
     args = parser.parse_args()
@@ -170,4 +174,4 @@ if __name__ == "__main__":
             parser.error("--raw and --lcov require each other and --production")
         from production_coverage import run as production_run
         raise SystemExit(production_run(args.raw, args.lcov, args.output, Decimal(str(args.threshold))))
-    raise SystemExit(run(args.output, args.threshold, args.production))
+    raise SystemExit(run(args.output, args.threshold, args.production, args.test_runner))

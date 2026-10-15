@@ -1,0 +1,5480 @@
+{
+  "schema_version": 1,
+  "normalization": "ci_timing.py v1; see baseline.md",
+  "critical_path_seconds": {
+    "median": 1126.0,
+    "min": 791.0,
+    "max": 1165.0
+  },
+  "runs": [
+    {
+      "run_id": 38678822897,
+      "attempt": 1,
+      "url": "https://github.com/musutrade/GateHouse/actions/runs/38678822897",
+      "event": "pull_request",
+      "workflow_blob_sha": "f4cce3bdbc0f964cca10ec81c87400c40c2d94df",
+      "pr_head_sha": "e8b4de07fbea170e60823c0d6146849af8628b06",
+      "collection_identity": {
+        "BASE_SHA": "0b4b3ee132235b00f4b3dc2525ab0967519e6901",
+        "HEAD_SHA": "eaaecf48c171d98865ae7dfb239a7ac8b31e23cc",
+        "RUN_ID": "38678822897-1"
+      },
+      "workflow_wall_seconds": 842.0,
+      "api_lifecycle_seconds": 843.0,
+      "critical_path_seconds": 791.0,
+      "last_required_child": "Quality Coverage and Critical Paths",
+      "aggregate_wait_seconds": 784.0,
+      "aggregate_dispatch_gap_seconds": 2.0,
+      "aggregate_wall_seconds": 7.0,
+      "runner_wall_minutes_by_os": {
+        "Linux": 27.3167,
+        "macOS": 7.85,
+        "Windows": 3.55
+      },
+      "category_seconds": {
+        "setup": 123.0,
+        "tool_install": 9.0,
+        "quality_collection": 746.0,
+        "execution": 1374.0,
+        "artifact": 15.0,
+        "cleanup": 12.0
+      },
+      "jobs": [
+        {
+          "id": 116238450179,
+          "name": "Classify change",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:07Z",
+          "completed_at": "2026-10-15T03:56:17Z",
+          "os": "Linux",
+          "wall_seconds": 10.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:08Z",
+              "completed_at": "2026-10-15T03:56:09Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:09Z",
+              "completed_at": "2026-10-15T03:56:10Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:10Z",
+              "completed_at": "2026-10-15T03:56:11Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Classify changed paths",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:11Z",
+              "completed_at": "2026-10-15T03:56:14Z",
+              "wall_seconds": 3.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:14Z",
+              "completed_at": "2026-10-15T03:56:14Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T03:56:14Z",
+              "completed_at": "2026-10-15T03:56:15Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T03:56:15Z",
+              "completed_at": "2026-10-15T03:56:15Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 3.0,
+            "execution": 3.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116238504152,
+          "name": "Format",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:56:28Z",
+          "os": "Linux",
+          "wall_seconds": 9.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:23Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Check formatting",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:23Z",
+              "completed_at": "2026-10-15T03:56:26Z",
+              "wall_seconds": 3.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T03:56:26Z",
+              "completed_at": "2026-10-15T03:56:26Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T03:56:26Z",
+              "completed_at": "2026-10-15T03:56:26Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 3.0,
+            "execution": 3.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116238504162,
+          "name": "Test",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:59:39Z",
+          "os": "Linux",
+          "wall_seconds": 200.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:20Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:22Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:24Z",
+              "wall_seconds": 2.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:24Z",
+              "completed_at": "2026-10-15T03:56:24Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:24Z",
+              "completed_at": "2026-10-15T03:56:27Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:27Z",
+              "completed_at": "2026-10-15T03:56:28Z",
+              "wall_seconds": 1.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:28Z",
+              "completed_at": "2026-10-15T03:59:31Z",
+              "wall_seconds": 183.0,
+              "category": "execution"
+            },
+            {
+              "name": "Validate configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T03:59:31Z",
+              "completed_at": "2026-10-15T03:59:31Z",
+              "wall_seconds": 0.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T03:59:31Z",
+              "completed_at": "2026-10-15T03:59:32Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Verify generated configuration schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T03:59:32Z",
+              "completed_at": "2026-10-15T03:59:32Z",
+              "wall_seconds": 0.0,
+              "category": "execution"
+            },
+            {
+              "name": "Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T03:59:32Z",
+              "completed_at": "2026-10-15T03:59:33Z",
+              "wall_seconds": 1.0,
+              "category": "execution"
+            },
+            {
+              "name": "Real locked Rust and Python onboarding against this Core",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:59:33Z",
+              "completed_at": "2026-10-15T03:59:35Z",
+              "wall_seconds": 2.0,
+              "category": "execution"
+            },
+            {
+              "name": "Retain real plugin onboarding evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:59:35Z",
+              "completed_at": "2026-10-15T03:59:36Z",
+              "wall_seconds": 1.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-10-15T03:59:36Z",
+              "completed_at": "2026-10-15T03:59:36Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-10-15T03:59:36Z",
+              "completed_at": "2026-10-15T03:59:36Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-15T03:59:36Z",
+              "completed_at": "2026-10-15T03:59:37Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-10-15T03:59:37Z",
+              "completed_at": "2026-10-15T03:59:37Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-10-15T03:59:37Z",
+              "completed_at": "2026-10-15T03:59:37Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 5.0,
+            "execution": 189.0,
+            "tool_install": 1.0,
+            "artifact": 1.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116238504261,
+          "name": "Test (macos-latest)",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:23Z",
+          "completed_at": "2026-10-15T04:04:14Z",
+          "os": "macOS",
+          "wall_seconds": 471.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:24Z",
+              "completed_at": "2026-10-15T03:56:25Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:25Z",
+              "completed_at": "2026-10-15T03:56:27Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:27Z",
+              "completed_at": "2026-10-15T03:56:30Z",
+              "wall_seconds": 3.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:30Z",
+              "completed_at": "2026-10-15T03:56:37Z",
+              "wall_seconds": 7.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:37Z",
+              "completed_at": "2026-10-15T03:56:41Z",
+              "wall_seconds": 4.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:41Z",
+              "completed_at": "2026-10-15T03:56:43Z",
+              "wall_seconds": 2.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:43Z",
+              "completed_at": "2026-10-15T04:04:08Z",
+              "wall_seconds": 445.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:04:08Z",
+              "completed_at": "2026-10-15T04:04:09Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:04:09Z",
+              "completed_at": "2026-10-15T04:04:10Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:04:10Z",
+              "completed_at": "2026-10-15T04:04:10Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:04:10Z",
+              "completed_at": "2026-10-15T04:04:11Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 14.0,
+            "execution": 448.0,
+            "tool_install": 2.0,
+            "cleanup": 3.0
+          },
+          "unattributed_seconds": 4.0
+        },
+        {
+          "id": 116238504268,
+          "name": "Quality CLI Contracts",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:57:33Z",
+          "os": "Linux",
+          "wall_seconds": 74.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:26Z",
+              "wall_seconds": 4.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:26Z",
+              "completed_at": "2026-10-15T03:56:29Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:29Z",
+              "completed_at": "2026-10-15T03:56:32Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run CLI contract snapshots",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:32Z",
+              "completed_at": "2026-10-15T03:57:30Z",
+              "wall_seconds": 58.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload contract evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:57:30Z",
+              "completed_at": "2026-10-15T03:57:31Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:57:31Z",
+              "completed_at": "2026-10-15T03:57:31Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:57:31Z",
+              "completed_at": "2026-10-15T03:57:31Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T03:57:31Z",
+              "completed_at": "2026-10-15T03:57:31Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T03:57:31Z",
+              "completed_at": "2026-10-15T03:57:31Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 8.0,
+            "execution": 62.0,
+            "artifact": 1.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116238504289,
+          "name": "Clippy",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:57:32Z",
+          "os": "Linux",
+          "wall_seconds": 73.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:29Z",
+              "wall_seconds": 7.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:29Z",
+              "completed_at": "2026-10-15T03:56:33Z",
+              "wall_seconds": 4.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run clippy",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:33Z",
+              "completed_at": "2026-10-15T03:57:30Z",
+              "wall_seconds": 57.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T03:57:30Z",
+              "completed_at": "2026-10-15T03:57:30Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T03:57:30Z",
+              "completed_at": "2026-10-15T03:57:30Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T03:57:30Z",
+              "completed_at": "2026-10-15T03:57:30Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 13.0,
+            "execution": 57.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116238504304,
+          "name": "Quality Coverage and Critical Paths",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T04:09:07Z",
+          "os": "Linux",
+          "wall_seconds": 768.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:25Z",
+              "wall_seconds": 3.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:25Z",
+              "completed_at": "2026-10-15T03:56:29Z",
+              "wall_seconds": 4.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:29Z",
+              "completed_at": "2026-10-15T03:56:32Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:32Z",
+              "completed_at": "2026-10-15T03:56:34Z",
+              "wall_seconds": 2.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Install cargo-llvm-cov",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:34Z",
+              "completed_at": "2026-10-15T03:56:34Z",
+              "wall_seconds": 0.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Collect and require fresh coverage, risk and matrix evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T03:56:34Z",
+              "completed_at": "2026-10-15T04:09:00Z",
+              "wall_seconds": 746.0,
+              "category": "quality_collection"
+            },
+            {
+              "name": "Seal immutable quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:09:00Z",
+              "completed_at": "2026-10-15T04:09:01Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Upload quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:09:01Z",
+              "completed_at": "2026-10-15T04:09:05Z",
+              "wall_seconds": 4.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18,
+              "started_at": "2026-10-15T04:09:05Z",
+              "completed_at": "2026-10-15T04:09:05Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-10-15T04:09:05Z",
+              "completed_at": "2026-10-15T04:09:05Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-10-15T04:09:05Z",
+              "completed_at": "2026-10-15T04:09:06Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-10-15T04:09:06Z",
+              "completed_at": "2026-10-15T04:09:06Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 9.0,
+            "execution": 3.0,
+            "tool_install": 2.0,
+            "quality_collection": 746.0,
+            "artifact": 5.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 2.0
+        },
+        {
+          "id": 116238504305,
+          "name": "Documentation Consistency",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:57:01Z",
+          "os": "Linux",
+          "wall_seconds": 42.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:25Z",
+              "wall_seconds": 3.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:25Z",
+              "completed_at": "2026-10-15T03:56:25Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:25Z",
+              "completed_at": "2026-10-15T03:56:27Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Check documentation, examples, and schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:27Z",
+              "completed_at": "2026-10-15T03:56:57Z",
+              "wall_seconds": 30.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload documentation evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:57Z",
+              "completed_at": "2026-10-15T03:56:58Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:56:58Z",
+              "completed_at": "2026-10-15T03:56:58Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:56:58Z",
+              "completed_at": "2026-10-15T03:56:58Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T03:56:58Z",
+              "completed_at": "2026-10-15T03:56:59Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T03:56:59Z",
+              "completed_at": "2026-10-15T03:56:59Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 4.0,
+            "execution": 33.0,
+            "artifact": 1.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116238504312,
+          "name": "Quality Script Tests",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:20Z",
+          "completed_at": "2026-10-15T03:59:22Z",
+          "os": "Linux",
+          "wall_seconds": 182.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:23Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:23Z",
+              "completed_at": "2026-10-15T03:56:28Z",
+              "wall_seconds": 5.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust coverage tools for measurement contract tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:28Z",
+              "completed_at": "2026-10-15T03:56:32Z",
+              "wall_seconds": 4.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:32Z",
+              "completed_at": "2026-10-15T03:56:37Z",
+              "wall_seconds": 5.0,
+              "category": "setup"
+            },
+            {
+              "name": "Test and compile quality scripts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:37Z",
+              "completed_at": "2026-10-15T03:59:18Z",
+              "wall_seconds": 161.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T03:59:18Z",
+              "completed_at": "2026-10-15T03:59:18Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T03:59:18Z",
+              "completed_at": "2026-10-15T03:59:19Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:59:19Z",
+              "completed_at": "2026-10-15T03:59:19Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:59:19Z",
+              "completed_at": "2026-10-15T03:59:19Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 11.0,
+            "execution": 166.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 4.0
+        },
+        {
+          "id": 116238504324,
+          "name": "Security Audit",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:20Z",
+          "completed_at": "2026-10-15T03:56:35Z",
+          "os": "Linux",
+          "wall_seconds": 15.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:24Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:24Z",
+              "completed_at": "2026-10-15T03:56:26Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:26Z",
+              "completed_at": "2026-10-15T03:56:27Z",
+              "wall_seconds": 1.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run security audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:27Z",
+              "completed_at": "2026-10-15T03:56:32Z",
+              "wall_seconds": 5.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T03:56:32Z",
+              "completed_at": "2026-10-15T03:56:33Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T03:56:33Z",
+              "completed_at": "2026-10-15T03:56:33Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 6.0,
+            "tool_install": 1.0,
+            "execution": 5.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 2.0
+        },
+        {
+          "id": 116238504338,
+          "name": "Release Governance Contracts",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:20Z",
+          "completed_at": "2026-10-15T03:56:52Z",
+          "os": "Linux",
+          "wall_seconds": 32.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:21Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:32Z",
+              "wall_seconds": 11.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:32Z",
+              "completed_at": "2026-10-15T03:56:37Z",
+              "wall_seconds": 5.0,
+              "category": "execution"
+            },
+            {
+              "name": "Run release policy and inventory contracts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:37Z",
+              "completed_at": "2026-10-15T03:56:49Z",
+              "wall_seconds": 12.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:49Z",
+              "completed_at": "2026-10-15T03:56:49Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T03:56:49Z",
+              "completed_at": "2026-10-15T03:56:50Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T03:56:50Z",
+              "completed_at": "2026-10-15T03:56:50Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 11.0,
+            "execution": 17.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116238504350,
+          "name": "Test (windows-latest)",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:59:52Z",
+          "os": "Windows",
+          "wall_seconds": 213.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:20Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:25Z",
+              "wall_seconds": 5.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:25Z",
+              "completed_at": "2026-10-15T03:56:30Z",
+              "wall_seconds": 5.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:30Z",
+              "completed_at": "2026-10-15T03:56:48Z",
+              "wall_seconds": 18.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:48Z",
+              "completed_at": "2026-10-15T03:56:51Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:51Z",
+              "completed_at": "2026-10-15T03:56:54Z",
+              "wall_seconds": 3.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:54Z",
+              "completed_at": "2026-10-15T03:59:48Z",
+              "wall_seconds": 174.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:59:48Z",
+              "completed_at": "2026-10-15T03:59:48Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:59:48Z",
+              "completed_at": "2026-10-15T03:59:48Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T03:59:48Z",
+              "completed_at": "2026-10-15T03:59:50Z",
+              "wall_seconds": 2.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T03:59:50Z",
+              "completed_at": "2026-10-15T03:59:50Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 26.0,
+            "execution": 179.0,
+            "tool_install": 3.0,
+            "cleanup": 2.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116238504372,
+          "name": "Build",
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:20Z",
+          "completed_at": "2026-10-15T03:59:09Z",
+          "os": "Linux",
+          "wall_seconds": 169.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:23Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:23Z",
+              "completed_at": "2026-10-15T03:56:26Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:26Z",
+              "completed_at": "2026-10-15T03:59:05Z",
+              "wall_seconds": 159.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:59:05Z",
+              "completed_at": "2026-10-15T03:59:07Z",
+              "wall_seconds": 2.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T03:59:07Z",
+              "completed_at": "2026-10-15T03:59:07Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:59:07Z",
+              "completed_at": "2026-10-15T03:59:07Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:59:07Z",
+              "completed_at": "2026-10-15T03:59:07Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 6.0,
+            "execution": 159.0,
+            "artifact": 2.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 2.0
+        },
+        {
+          "id": 116238505940,
+          "name": "Quality CLI Contracts (${{ matrix.os }})",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T03:56:18Z",
+          "completed_at": "2026-10-15T03:56:17Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116238505987,
+          "name": "Quality Performance Baseline",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T03:56:18Z",
+          "completed_at": "2026-10-15T03:56:17Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116238506229,
+          "name": "Build (${{ matrix.os }})",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T03:56:18Z",
+          "completed_at": "2026-10-15T03:56:17Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116238506245,
+          "name": "Code Coverage",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T03:56:18Z",
+          "completed_at": "2026-10-15T03:56:17Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116241978644,
+          "name": "Generic Quality Shadow",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:09:09Z",
+          "completed_at": "2026-10-15T04:10:07Z",
+          "os": "Linux",
+          "wall_seconds": 58.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:09:10Z",
+              "completed_at": "2026-10-15T04:09:11Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:09:11Z",
+              "completed_at": "2026-10-15T04:09:12Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:09:12Z",
+              "completed_at": "2026-10-15T04:09:12Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Download this run's retained Rust candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:09:12Z",
+              "completed_at": "2026-10-15T04:09:14Z",
+              "wall_seconds": 2.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Verify artifact identity and hashes before consumption",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:09:14Z",
+              "completed_at": "2026-10-15T04:09:15Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Project and compare retained evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:09:15Z",
+              "completed_at": "2026-10-15T04:10:03Z",
+              "wall_seconds": 48.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload generic projection and compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:10:03Z",
+              "completed_at": "2026-10-15T04:10:05Z",
+              "wall_seconds": 2.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:10:05Z",
+              "completed_at": "2026-10-15T04:10:05Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:10:05Z",
+              "completed_at": "2026-10-15T04:10:05Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:10:05Z",
+              "completed_at": "2026-10-15T04:10:05Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 2.0,
+            "artifact": 5.0,
+            "execution": 48.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116241978672,
+          "name": "Required Quality Aggregate",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:09:09Z",
+          "completed_at": "2026-10-15T04:09:16Z",
+          "os": "Linux",
+          "wall_seconds": 7.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:09:10Z",
+              "completed_at": "2026-10-15T04:09:11Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:09:11Z",
+              "completed_at": "2026-10-15T04:09:12Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:09:12Z",
+              "completed_at": "2026-10-15T04:09:12Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Require every quality gate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:09:12Z",
+              "completed_at": "2026-10-15T04:09:14Z",
+              "wall_seconds": 2.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:09:14Z",
+              "completed_at": "2026-10-15T04:09:14Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:09:14Z",
+              "completed_at": "2026-10-15T04:09:14Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:09:14Z",
+              "completed_at": "2026-10-15T04:09:14Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 2.0,
+            "execution": 2.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        }
+      ]
+    },
+    {
+      "run_id": 38682199206,
+      "attempt": 1,
+      "url": "https://github.com/musutrade/GateHouse/actions/runs/38682199206",
+      "event": "pull_request",
+      "workflow_blob_sha": "4fac6b3a0fa7148959de634519f57b3e5384105f",
+      "pr_head_sha": "05bb67fa74188e1a2f6eb9e28017c6c1f42fea02",
+      "collection_identity": {
+        "BASE_SHA": "dd429985066c43408cfbe676be5b84389794192d",
+        "HEAD_SHA": "67bb2fa0eb3e5693dd5b50b05d3ea494ad48dec6",
+        "RUN_ID": "38682199206-1"
+      },
+      "workflow_wall_seconds": 1180.0,
+      "api_lifecycle_seconds": 1181.0,
+      "critical_path_seconds": 1126.0,
+      "last_required_child": "Quality Coverage and Critical Paths",
+      "aggregate_wait_seconds": 1120.0,
+      "aggregate_dispatch_gap_seconds": 2.0,
+      "aggregate_wall_seconds": 6.0,
+      "runner_wall_minutes_by_os": {
+        "Linux": 32.9333,
+        "macOS": 7.2333,
+        "Windows": 6.1
+      },
+      "category_seconds": {
+        "setup": 96.0,
+        "tool_install": 10.0,
+        "quality_collection": 1050.0,
+        "execution": 1558.0,
+        "artifact": 15.0,
+        "cleanup": 12.0
+      },
+      "jobs": [
+        {
+          "id": 116249156584,
+          "name": "Classify change",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:17Z",
+          "completed_at": "2026-10-15T04:35:23Z",
+          "os": "Linux",
+          "wall_seconds": 6.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:18Z",
+              "completed_at": "2026-10-15T04:35:18Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:18Z",
+              "completed_at": "2026-10-15T04:35:19Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:19Z",
+              "completed_at": "2026-10-15T04:35:20Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Classify changed paths",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:20Z",
+              "completed_at": "2026-10-15T04:35:21Z",
+              "wall_seconds": 1.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:21Z",
+              "completed_at": "2026-10-15T04:35:21Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:35:21Z",
+              "completed_at": "2026-10-15T04:35:21Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:35:21Z",
+              "completed_at": "2026-10-15T04:35:21Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 2.0,
+            "execution": 1.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116249189516,
+          "name": "Format",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:35:32Z",
+          "os": "Linux",
+          "wall_seconds": 7.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:28Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:28Z",
+              "completed_at": "2026-10-15T04:35:29Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Check formatting",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:29Z",
+              "completed_at": "2026-10-15T04:35:30Z",
+              "wall_seconds": 1.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:35:30Z",
+              "completed_at": "2026-10-15T04:35:31Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:35:31Z",
+              "completed_at": "2026-10-15T04:35:31Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 3.0,
+            "execution": 1.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 2.0
+        },
+        {
+          "id": 116249189519,
+          "name": "Security Audit",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:35:38Z",
+          "os": "Linux",
+          "wall_seconds": 13.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:28Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:28Z",
+              "completed_at": "2026-10-15T04:35:29Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:29Z",
+              "completed_at": "2026-10-15T04:35:31Z",
+              "wall_seconds": 2.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run security audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:31Z",
+              "completed_at": "2026-10-15T04:35:36Z",
+              "wall_seconds": 5.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:35:36Z",
+              "completed_at": "2026-10-15T04:35:36Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T04:35:36Z",
+              "completed_at": "2026-10-15T04:35:36Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 3.0,
+            "tool_install": 2.0,
+            "execution": 5.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116249189546,
+          "name": "Clippy",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:36:08Z",
+          "os": "Linux",
+          "wall_seconds": 43.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:25Z",
+              "completed_at": "2026-10-15T04:35:26Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:29Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:29Z",
+              "completed_at": "2026-10-15T04:35:31Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run clippy",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:31Z",
+              "completed_at": "2026-10-15T04:36:06Z",
+              "wall_seconds": 35.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:36:06Z",
+              "completed_at": "2026-10-15T04:36:06Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:36:06Z",
+              "completed_at": "2026-10-15T04:36:06Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T04:36:06Z",
+              "completed_at": "2026-10-15T04:36:06Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 6.0,
+            "execution": 35.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 2.0
+        },
+        {
+          "id": 116249189581,
+          "name": "Test",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:40:00Z",
+          "os": "Linux",
+          "wall_seconds": 275.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:25Z",
+              "completed_at": "2026-10-15T04:35:26Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:30Z",
+              "wall_seconds": 3.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:30Z",
+              "completed_at": "2026-10-15T04:35:32Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:35Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:35Z",
+              "completed_at": "2026-10-15T04:35:36Z",
+              "wall_seconds": 1.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:36Z",
+              "completed_at": "2026-10-15T04:39:48Z",
+              "wall_seconds": 252.0,
+              "category": "execution"
+            },
+            {
+              "name": "Test findings feedback integration without publishing",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:39:48Z",
+              "completed_at": "2026-10-15T04:39:53Z",
+              "wall_seconds": 5.0,
+              "category": "execution"
+            },
+            {
+              "name": "Validate configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:39:53Z",
+              "completed_at": "2026-10-15T04:39:53Z",
+              "wall_seconds": 0.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:39:53Z",
+              "completed_at": "2026-10-15T04:39:54Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Verify generated configuration schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T04:39:54Z",
+              "completed_at": "2026-10-15T04:39:54Z",
+              "wall_seconds": 0.0,
+              "category": "execution"
+            },
+            {
+              "name": "Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:39:54Z",
+              "completed_at": "2026-10-15T04:39:55Z",
+              "wall_seconds": 1.0,
+              "category": "execution"
+            },
+            {
+              "name": "Real locked Rust and Python onboarding against this Core",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:39:55Z",
+              "completed_at": "2026-10-15T04:39:57Z",
+              "wall_seconds": 2.0,
+              "category": "execution"
+            },
+            {
+              "name": "Retain real plugin onboarding evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:39:57Z",
+              "completed_at": "2026-10-15T04:39:58Z",
+              "wall_seconds": 1.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-15T04:39:58Z",
+              "completed_at": "2026-10-15T04:39:58Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-10-15T04:39:58Z",
+              "completed_at": "2026-10-15T04:39:58Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-10-15T04:39:58Z",
+              "completed_at": "2026-10-15T04:39:58Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28,
+              "started_at": "2026-10-15T04:39:58Z",
+              "completed_at": "2026-10-15T04:39:59Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 29,
+              "started_at": "2026-10-15T04:39:59Z",
+              "completed_at": "2026-10-15T04:39:59Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 7.0,
+            "execution": 264.0,
+            "tool_install": 1.0,
+            "artifact": 1.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 1.0
+        },
+        {
+          "id": 116249189592,
+          "name": "Build",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:30Z",
+          "completed_at": "2026-10-15T04:38:25Z",
+          "os": "Linux",
+          "wall_seconds": 175.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:30Z",
+              "completed_at": "2026-10-15T04:35:31Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:31Z",
+              "completed_at": "2026-10-15T04:35:32Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:33Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:33Z",
+              "completed_at": "2026-10-15T04:35:34Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:34Z",
+              "completed_at": "2026-10-15T04:38:22Z",
+              "wall_seconds": 168.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:38:22Z",
+              "completed_at": "2026-10-15T04:38:23Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T04:38:23Z",
+              "completed_at": "2026-10-15T04:38:23Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:38:23Z",
+              "completed_at": "2026-10-15T04:38:24Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:38:24Z",
+              "completed_at": "2026-10-15T04:38:24Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 4.0,
+            "execution": 168.0,
+            "artifact": 1.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 1.0
+        },
+        {
+          "id": 116249189593,
+          "name": "Test (windows-latest)",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:41:31Z",
+          "os": "Windows",
+          "wall_seconds": 366.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:26Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:32Z",
+              "wall_seconds": 6.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:39Z",
+              "wall_seconds": 7.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:39Z",
+              "completed_at": "2026-10-15T04:35:47Z",
+              "wall_seconds": 8.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:47Z",
+              "completed_at": "2026-10-15T04:35:53Z",
+              "wall_seconds": 6.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:53Z",
+              "completed_at": "2026-10-15T04:35:57Z",
+              "wall_seconds": 4.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:57Z",
+              "completed_at": "2026-10-15T04:41:26Z",
+              "wall_seconds": 329.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:41:26Z",
+              "completed_at": "2026-10-15T04:41:26Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:41:26Z",
+              "completed_at": "2026-10-15T04:41:27Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:41:27Z",
+              "completed_at": "2026-10-15T04:41:29Z",
+              "wall_seconds": 2.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:41:29Z",
+              "completed_at": "2026-10-15T04:41:29Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 20.0,
+            "execution": 336.0,
+            "tool_install": 4.0,
+            "cleanup": 3.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116249189612,
+          "name": "Test (macos-latest)",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:32Z",
+          "completed_at": "2026-10-15T04:42:46Z",
+          "os": "macOS",
+          "wall_seconds": 434.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:33Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:33Z",
+              "completed_at": "2026-10-15T04:35:35Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:35Z",
+              "completed_at": "2026-10-15T04:35:39Z",
+              "wall_seconds": 4.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:39Z",
+              "completed_at": "2026-10-15T04:35:47Z",
+              "wall_seconds": 8.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:47Z",
+              "completed_at": "2026-10-15T04:35:51Z",
+              "wall_seconds": 4.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:51Z",
+              "completed_at": "2026-10-15T04:35:53Z",
+              "wall_seconds": 2.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:53Z",
+              "completed_at": "2026-10-15T04:42:41Z",
+              "wall_seconds": 408.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:42:41Z",
+              "completed_at": "2026-10-15T04:42:42Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:42:42Z",
+              "completed_at": "2026-10-15T04:42:42Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:42:42Z",
+              "completed_at": "2026-10-15T04:42:43Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:42:43Z",
+              "completed_at": "2026-10-15T04:42:44Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 15.0,
+            "execution": 412.0,
+            "tool_install": 2.0,
+            "cleanup": 3.0
+          },
+          "unattributed_seconds": 2.0
+        },
+        {
+          "id": 116249189622,
+          "name": "Quality Script Tests",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:38:08Z",
+          "os": "Linux",
+          "wall_seconds": 163.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:28Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:28Z",
+              "completed_at": "2026-10-15T04:35:32Z",
+              "wall_seconds": 4.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust coverage tools for measurement contract tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:35Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:35Z",
+              "completed_at": "2026-10-15T04:35:39Z",
+              "wall_seconds": 4.0,
+              "category": "setup"
+            },
+            {
+              "name": "Test and compile quality scripts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:39Z",
+              "completed_at": "2026-10-15T04:38:04Z",
+              "wall_seconds": 145.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:38:04Z",
+              "completed_at": "2026-10-15T04:38:04Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T04:38:04Z",
+              "completed_at": "2026-10-15T04:38:04Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:38:04Z",
+              "completed_at": "2026-10-15T04:38:05Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:38:05Z",
+              "completed_at": "2026-10-15T04:38:05Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 9.0,
+            "execution": 149.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 4.0
+        },
+        {
+          "id": 116249189626,
+          "name": "Release Governance Contracts",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:35:51Z",
+          "os": "Linux",
+          "wall_seconds": 26.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:26Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:28Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:28Z",
+              "completed_at": "2026-10-15T04:35:35Z",
+              "wall_seconds": 7.0,
+              "category": "execution"
+            },
+            {
+              "name": "Run release policy and inventory contracts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:35Z",
+              "completed_at": "2026-10-15T04:35:48Z",
+              "wall_seconds": 13.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:48Z",
+              "completed_at": "2026-10-15T04:35:49Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:35:49Z",
+              "completed_at": "2026-10-15T04:35:49Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:35:49Z",
+              "completed_at": "2026-10-15T04:35:49Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 1.0,
+            "execution": 20.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 4.0
+        },
+        {
+          "id": 116249189636,
+          "name": "Quality Coverage and Critical Paths",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:53:21Z",
+          "os": "Linux",
+          "wall_seconds": 1076.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:25Z",
+              "completed_at": "2026-10-15T04:35:26Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:32Z",
+              "wall_seconds": 5.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:39Z",
+              "wall_seconds": 7.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:39Z",
+              "completed_at": "2026-10-15T04:35:42Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:42Z",
+              "completed_at": "2026-10-15T04:35:43Z",
+              "wall_seconds": 1.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Install cargo-llvm-cov",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:43Z",
+              "completed_at": "2026-10-15T04:35:43Z",
+              "wall_seconds": 0.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Collect and require fresh coverage, risk and matrix evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:35:43Z",
+              "completed_at": "2026-10-15T04:53:13Z",
+              "wall_seconds": 1050.0,
+              "category": "quality_collection"
+            },
+            {
+              "name": "Seal immutable quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:53:13Z",
+              "completed_at": "2026-10-15T04:53:14Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Upload quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:53:14Z",
+              "completed_at": "2026-10-15T04:53:20Z",
+              "wall_seconds": 6.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18,
+              "started_at": "2026-10-15T04:53:20Z",
+              "completed_at": "2026-10-15T04:53:20Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-10-15T04:53:20Z",
+              "completed_at": "2026-10-15T04:53:20Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-10-15T04:53:20Z",
+              "completed_at": "2026-10-15T04:53:20Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-10-15T04:53:20Z",
+              "completed_at": "2026-10-15T04:53:20Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 12.0,
+            "execution": 5.0,
+            "tool_install": 1.0,
+            "quality_collection": 1050.0,
+            "artifact": 7.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 1.0
+        },
+        {
+          "id": 116249189654,
+          "name": "Quality CLI Contracts",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:36:30Z",
+          "os": "Linux",
+          "wall_seconds": 65.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:25Z",
+              "completed_at": "2026-10-15T04:35:26Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:30Z",
+              "wall_seconds": 3.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:30Z",
+              "completed_at": "2026-10-15T04:35:31Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:31Z",
+              "completed_at": "2026-10-15T04:35:34Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run CLI contract snapshots",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:34Z",
+              "completed_at": "2026-10-15T04:36:27Z",
+              "wall_seconds": 53.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload contract evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:36:27Z",
+              "completed_at": "2026-10-15T04:36:28Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:36:28Z",
+              "completed_at": "2026-10-15T04:36:28Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:36:28Z",
+              "completed_at": "2026-10-15T04:36:28Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:36:28Z",
+              "completed_at": "2026-10-15T04:36:29Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:36:29Z",
+              "completed_at": "2026-10-15T04:36:29Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 6.0,
+            "execution": 56.0,
+            "artifact": 1.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 1.0
+        },
+        {
+          "id": 116249189678,
+          "name": "Documentation Consistency",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:36:26Z",
+          "os": "Linux",
+          "wall_seconds": 61.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:26Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:32Z",
+              "wall_seconds": 5.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:32Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:35Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Check documentation, examples, and schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:35Z",
+              "completed_at": "2026-10-15T04:36:23Z",
+              "wall_seconds": 48.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload documentation evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:36:23Z",
+              "completed_at": "2026-10-15T04:36:24Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:36:24Z",
+              "completed_at": "2026-10-15T04:36:24Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:36:24Z",
+              "completed_at": "2026-10-15T04:36:24Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:36:24Z",
+              "completed_at": "2026-10-15T04:36:24Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:36:24Z",
+              "completed_at": "2026-10-15T04:36:24Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 4.0,
+            "execution": 53.0,
+            "artifact": 1.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116249190542,
+          "name": "Code Coverage",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T04:35:23Z",
+          "completed_at": "2026-10-15T04:35:23Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116249190649,
+          "name": "Quality CLI Contracts (${{ matrix.os }})",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T04:35:23Z",
+          "completed_at": "2026-10-15T04:35:23Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116249191049,
+          "name": "Build (${{ matrix.os }})",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T04:35:23Z",
+          "completed_at": "2026-10-15T04:35:23Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116249191314,
+          "name": "Quality Performance Baseline",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T04:35:23Z",
+          "completed_at": "2026-10-15T04:35:23Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116254076763,
+          "name": "Required Quality Aggregate",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:53:23Z",
+          "completed_at": "2026-10-15T04:53:29Z",
+          "os": "Linux",
+          "wall_seconds": 6.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:53:24Z",
+              "completed_at": "2026-10-15T04:53:25Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:53:25Z",
+              "completed_at": "2026-10-15T04:53:26Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:53:26Z",
+              "completed_at": "2026-10-15T04:53:26Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Require every quality gate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:53:26Z",
+              "completed_at": "2026-10-15T04:53:27Z",
+              "wall_seconds": 1.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:53:27Z",
+              "completed_at": "2026-10-15T04:53:27Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:53:27Z",
+              "completed_at": "2026-10-15T04:53:27Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:53:27Z",
+              "completed_at": "2026-10-15T04:53:27Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 2.0,
+            "execution": 1.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116254076902,
+          "name": "Generic Quality Shadow",
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:53:23Z",
+          "completed_at": "2026-10-15T04:54:23Z",
+          "os": "Linux",
+          "wall_seconds": 60.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:53:24Z",
+              "completed_at": "2026-10-15T04:53:25Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:53:25Z",
+              "completed_at": "2026-10-15T04:53:26Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:53:26Z",
+              "completed_at": "2026-10-15T04:53:26Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Download this run's retained Rust candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:53:26Z",
+              "completed_at": "2026-10-15T04:53:28Z",
+              "wall_seconds": 2.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Verify artifact identity and hashes before consumption",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:53:28Z",
+              "completed_at": "2026-10-15T04:53:28Z",
+              "wall_seconds": 0.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Project and compare retained evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:53:28Z",
+              "completed_at": "2026-10-15T04:54:20Z",
+              "wall_seconds": 52.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload generic projection and compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:54:20Z",
+              "completed_at": "2026-10-15T04:54:22Z",
+              "wall_seconds": 2.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:54:22Z",
+              "completed_at": "2026-10-15T04:54:22Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:54:22Z",
+              "completed_at": "2026-10-15T04:54:22Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:54:22Z",
+              "completed_at": "2026-10-15T04:54:22Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 2.0,
+            "artifact": 4.0,
+            "execution": 52.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 2.0
+        }
+      ]
+    },
+    {
+      "run_id": 38684527328,
+      "attempt": 1,
+      "url": "https://github.com/musutrade/GateHouse/actions/runs/38684527328",
+      "event": "pull_request",
+      "workflow_blob_sha": "4fac6b3a0fa7148959de634519f57b3e5384105f",
+      "pr_head_sha": "5d127a28c06dc36045c44df750b7a8a3b7de5d6b",
+      "collection_identity": {
+        "BASE_SHA": "d8a328043dbd4776a7191d3263907b9bfc62599f",
+        "HEAD_SHA": "8c73142961d80426bb738a647e84beedbba5a940",
+        "RUN_ID": "38684527328-1"
+      },
+      "workflow_wall_seconds": 1266.0,
+      "api_lifecycle_seconds": 1267.0,
+      "critical_path_seconds": 1165.0,
+      "last_required_child": "Quality Coverage and Critical Paths",
+      "aggregate_wait_seconds": 1157.0,
+      "aggregate_dispatch_gap_seconds": 2.0,
+      "aggregate_wall_seconds": 8.0,
+      "runner_wall_minutes_by_os": {
+        "Linux": 34.5167,
+        "macOS": 7.5167,
+        "Windows": 6.1333
+      },
+      "category_seconds": {
+        "setup": 135.0,
+        "tool_install": 11.0,
+        "quality_collection": 1099.0,
+        "execution": 1570.0,
+        "artifact": 19.0,
+        "cleanup": 11.0
+      },
+      "jobs": [
+        {
+          "id": 116256237019,
+          "name": "Classify change",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:18Z",
+          "completed_at": "2026-10-15T05:01:25Z",
+          "os": "Linux",
+          "wall_seconds": 7.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:19Z",
+              "completed_at": "2026-10-15T05:01:20Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:20Z",
+              "completed_at": "2026-10-15T05:01:21Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:21Z",
+              "completed_at": "2026-10-15T05:01:21Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Classify changed paths",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:21Z",
+              "completed_at": "2026-10-15T05:01:23Z",
+              "wall_seconds": 2.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:01:23Z",
+              "completed_at": "2026-10-15T05:01:23Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:01:23Z",
+              "completed_at": "2026-10-15T05:01:23Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:01:23Z",
+              "completed_at": "2026-10-15T05:01:23Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 2.0,
+            "execution": 2.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116256282246,
+          "name": "Format",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:01:38Z",
+          "os": "Linux",
+          "wall_seconds": 11.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:30Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:33Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Check formatting",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:33Z",
+              "completed_at": "2026-10-15T05:01:36Z",
+              "wall_seconds": 3.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:01:36Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:01:36Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 5.0,
+            "execution": 3.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116256282299,
+          "name": "Build",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:28Z",
+          "completed_at": "2026-10-15T05:04:28Z",
+          "os": "Linux",
+          "wall_seconds": 180.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:31Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:31Z",
+              "completed_at": "2026-10-15T05:01:32Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:32Z",
+              "completed_at": "2026-10-15T05:01:36Z",
+              "wall_seconds": 4.0,
+              "category": "setup"
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:04:22Z",
+              "wall_seconds": 166.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:04:22Z",
+              "completed_at": "2026-10-15T05:04:25Z",
+              "wall_seconds": 3.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T05:04:25Z",
+              "completed_at": "2026-10-15T05:04:25Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:04:25Z",
+              "completed_at": "2026-10-15T05:04:25Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:04:25Z",
+              "completed_at": "2026-10-15T05:04:25Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 8.0,
+            "execution": 166.0,
+            "artifact": 3.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116256282329,
+          "name": "Quality Coverage and Critical Paths",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:28Z",
+          "completed_at": "2026-10-15T05:20:30Z",
+          "os": "Linux",
+          "wall_seconds": 1142.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:30Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:31Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:31Z",
+              "completed_at": "2026-10-15T05:01:41Z",
+              "wall_seconds": 10.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:41Z",
+              "completed_at": "2026-10-15T05:01:50Z",
+              "wall_seconds": 9.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:50Z",
+              "completed_at": "2026-10-15T05:01:58Z",
+              "wall_seconds": 8.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:58Z",
+              "completed_at": "2026-10-15T05:01:59Z",
+              "wall_seconds": 1.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Install cargo-llvm-cov",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:01:59Z",
+              "completed_at": "2026-10-15T05:02:00Z",
+              "wall_seconds": 1.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Collect and require fresh coverage, risk and matrix evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:02:00Z",
+              "completed_at": "2026-10-15T05:20:19Z",
+              "wall_seconds": 1099.0,
+              "category": "quality_collection"
+            },
+            {
+              "name": "Seal immutable quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:20:19Z",
+              "completed_at": "2026-10-15T05:20:20Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Upload quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T05:20:20Z",
+              "completed_at": "2026-10-15T05:20:26Z",
+              "wall_seconds": 6.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18,
+              "started_at": "2026-10-15T05:20:26Z",
+              "completed_at": "2026-10-15T05:20:27Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-10-15T05:20:27Z",
+              "completed_at": "2026-10-15T05:20:27Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-10-15T05:20:27Z",
+              "completed_at": "2026-10-15T05:20:27Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-10-15T05:20:27Z",
+              "completed_at": "2026-10-15T05:20:27Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 19.0,
+            "execution": 10.0,
+            "tool_install": 2.0,
+            "quality_collection": 1099.0,
+            "artifact": 7.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 4.0
+        },
+        {
+          "id": 116256282344,
+          "name": "Test (macos-latest)",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:33Z",
+          "completed_at": "2026-10-15T05:09:04Z",
+          "os": "macOS",
+          "wall_seconds": 451.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:33Z",
+              "completed_at": "2026-10-15T05:01:34Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:34Z",
+              "completed_at": "2026-10-15T05:01:36Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:01:41Z",
+              "wall_seconds": 5.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:41Z",
+              "completed_at": "2026-10-15T05:01:49Z",
+              "wall_seconds": 8.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:49Z",
+              "completed_at": "2026-10-15T05:01:52Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:52Z",
+              "completed_at": "2026-10-15T05:01:54Z",
+              "wall_seconds": 2.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:01:54Z",
+              "completed_at": "2026-10-15T05:08:58Z",
+              "wall_seconds": 424.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:08:58Z",
+              "completed_at": "2026-10-15T05:08:59Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:08:59Z",
+              "completed_at": "2026-10-15T05:08:59Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:08:59Z",
+              "completed_at": "2026-10-15T05:09:00Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T05:09:00Z",
+              "completed_at": "2026-10-15T05:09:02Z",
+              "wall_seconds": 2.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 14.0,
+            "execution": 429.0,
+            "tool_install": 2.0,
+            "cleanup": 4.0
+          },
+          "unattributed_seconds": 2.0
+        },
+        {
+          "id": 116256282346,
+          "name": "Security Audit",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:01:37Z",
+          "os": "Linux",
+          "wall_seconds": 10.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:28Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:30Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:30Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:32Z",
+              "wall_seconds": 2.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run security audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:32Z",
+              "completed_at": "2026-10-15T05:01:35Z",
+              "wall_seconds": 3.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:35Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:35Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 2.0,
+            "tool_install": 2.0,
+            "execution": 3.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116256282353,
+          "name": "Test (windows-latest)",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:07:35Z",
+          "os": "Windows",
+          "wall_seconds": 368.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:28Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:34Z",
+              "wall_seconds": 6.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:34Z",
+              "completed_at": "2026-10-15T05:01:40Z",
+              "wall_seconds": 6.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:40Z",
+              "completed_at": "2026-10-15T05:02:06Z",
+              "wall_seconds": 26.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:02:06Z",
+              "completed_at": "2026-10-15T05:02:10Z",
+              "wall_seconds": 4.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:02:10Z",
+              "completed_at": "2026-10-15T05:02:13Z",
+              "wall_seconds": 3.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:02:13Z",
+              "completed_at": "2026-10-15T05:07:31Z",
+              "wall_seconds": 318.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:07:31Z",
+              "completed_at": "2026-10-15T05:07:31Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:07:31Z",
+              "completed_at": "2026-10-15T05:07:31Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:07:31Z",
+              "completed_at": "2026-10-15T05:07:34Z",
+              "wall_seconds": 3.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T05:07:34Z",
+              "completed_at": "2026-10-15T05:07:34Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 36.0,
+            "execution": 324.0,
+            "tool_install": 3.0,
+            "cleanup": 3.0
+          },
+          "unattributed_seconds": 2.0
+        },
+        {
+          "id": 116256282376,
+          "name": "Quality Script Tests",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:03:45Z",
+          "os": "Linux",
+          "wall_seconds": 138.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:31Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:31Z",
+              "completed_at": "2026-10-15T05:01:35Z",
+              "wall_seconds": 4.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust coverage tools for measurement contract tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:40Z",
+              "wall_seconds": 5.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:40Z",
+              "completed_at": "2026-10-15T05:01:43Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Test and compile quality scripts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:43Z",
+              "completed_at": "2026-10-15T05:03:42Z",
+              "wall_seconds": 119.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T05:03:42Z",
+              "completed_at": "2026-10-15T05:03:42Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T05:03:42Z",
+              "completed_at": "2026-10-15T05:03:42Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:03:42Z",
+              "completed_at": "2026-10-15T05:03:42Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:03:42Z",
+              "completed_at": "2026-10-15T05:03:42Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 11.0,
+            "execution": 123.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 4.0
+        },
+        {
+          "id": 116256282411,
+          "name": "Test",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:05:45Z",
+          "os": "Linux",
+          "wall_seconds": 258.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:31Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:31Z",
+              "completed_at": "2026-10-15T05:01:36Z",
+              "wall_seconds": 5.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:01:37Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:37Z",
+              "completed_at": "2026-10-15T05:01:41Z",
+              "wall_seconds": 4.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:41Z",
+              "completed_at": "2026-10-15T05:01:43Z",
+              "wall_seconds": 2.0,
+              "category": "tool_install"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:01:43Z",
+              "completed_at": "2026-10-15T05:05:35Z",
+              "wall_seconds": 232.0,
+              "category": "execution"
+            },
+            {
+              "name": "Test findings feedback integration without publishing",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:05:35Z",
+              "completed_at": "2026-10-15T05:05:35Z",
+              "wall_seconds": 0.0,
+              "category": "execution"
+            },
+            {
+              "name": "Validate configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:05:35Z",
+              "completed_at": "2026-10-15T05:05:35Z",
+              "wall_seconds": 0.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T05:05:35Z",
+              "completed_at": "2026-10-15T05:05:36Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Verify generated configuration schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T05:05:36Z",
+              "completed_at": "2026-10-15T05:05:37Z",
+              "wall_seconds": 1.0,
+              "category": "execution"
+            },
+            {
+              "name": "Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:05:37Z",
+              "completed_at": "2026-10-15T05:05:38Z",
+              "wall_seconds": 1.0,
+              "category": "execution"
+            },
+            {
+              "name": "Real locked Rust and Python onboarding against this Core",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:05:38Z",
+              "completed_at": "2026-10-15T05:05:40Z",
+              "wall_seconds": 2.0,
+              "category": "execution"
+            },
+            {
+              "name": "Retain real plugin onboarding evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:05:40Z",
+              "completed_at": "2026-10-15T05:05:41Z",
+              "wall_seconds": 1.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-15T05:05:41Z",
+              "completed_at": "2026-10-15T05:05:42Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-10-15T05:05:42Z",
+              "completed_at": "2026-10-15T05:05:42Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-10-15T05:05:42Z",
+              "completed_at": "2026-10-15T05:05:42Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28,
+              "started_at": "2026-10-15T05:05:42Z",
+              "completed_at": "2026-10-15T05:05:42Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 29,
+              "started_at": "2026-10-15T05:05:42Z",
+              "completed_at": "2026-10-15T05:05:42Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 8.0,
+            "execution": 242.0,
+            "tool_install": 2.0,
+            "artifact": 1.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 4.0
+        },
+        {
+          "id": 116256282425,
+          "name": "Documentation Consistency",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:02:38Z",
+          "os": "Linux",
+          "wall_seconds": 71.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:30Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:35Z",
+              "wall_seconds": 5.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:36Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:01:39Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Check documentation, examples, and schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:39Z",
+              "completed_at": "2026-10-15T05:02:35Z",
+              "wall_seconds": 56.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload documentation evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:02:35Z",
+              "completed_at": "2026-10-15T05:02:35Z",
+              "wall_seconds": 0.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:02:35Z",
+              "completed_at": "2026-10-15T05:02:36Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:02:36Z",
+              "completed_at": "2026-10-15T05:02:36Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:02:36Z",
+              "completed_at": "2026-10-15T05:02:36Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T05:02:36Z",
+              "completed_at": "2026-10-15T05:02:36Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 6.0,
+            "execution": 61.0,
+            "artifact": 0.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116256282453,
+          "name": "Release Governance Contracts",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:01:48Z",
+          "os": "Linux",
+          "wall_seconds": 21.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:28Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:33Z",
+              "wall_seconds": 4.0,
+              "category": "execution"
+            },
+            {
+              "name": "Run release policy and inventory contracts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:33Z",
+              "completed_at": "2026-10-15T05:01:45Z",
+              "wall_seconds": 12.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:01:45Z",
+              "completed_at": "2026-10-15T05:01:46Z",
+              "wall_seconds": 1.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:01:46Z",
+              "completed_at": "2026-10-15T05:01:46Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:01:46Z",
+              "completed_at": "2026-10-15T05:01:46Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 1.0,
+            "execution": 16.0,
+            "cleanup": 1.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116256282490,
+          "name": "Quality CLI Contracts",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:28Z",
+          "completed_at": "2026-10-15T05:02:19Z",
+          "os": "Linux",
+          "wall_seconds": 51.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:31Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:31Z",
+              "completed_at": "2026-10-15T05:01:34Z",
+              "wall_seconds": 3.0,
+              "category": "execution"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:34Z",
+              "completed_at": "2026-10-15T05:01:35Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:38Z",
+              "wall_seconds": 3.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run CLI contract snapshots",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:38Z",
+              "completed_at": "2026-10-15T05:02:15Z",
+              "wall_seconds": 37.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload contract evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:02:15Z",
+              "completed_at": "2026-10-15T05:02:16Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:02:16Z",
+              "completed_at": "2026-10-15T05:02:16Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:02:16Z",
+              "completed_at": "2026-10-15T05:02:16Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:02:16Z",
+              "completed_at": "2026-10-15T05:02:16Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T05:02:16Z",
+              "completed_at": "2026-10-15T05:02:16Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 7.0,
+            "execution": 40.0,
+            "artifact": 1.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116256282591,
+          "name": "Clippy",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:02:32Z",
+          "os": "Linux",
+          "wall_seconds": 65.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:30Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:35Z",
+              "wall_seconds": 5.0,
+              "category": "setup"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:39Z",
+              "wall_seconds": 4.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run clippy",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:39Z",
+              "completed_at": "2026-10-15T05:02:31Z",
+              "wall_seconds": 52.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:02:31Z",
+              "completed_at": "2026-10-15T05:02:31Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T05:02:31Z",
+              "completed_at": "2026-10-15T05:02:31Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T05:02:31Z",
+              "completed_at": "2026-10-15T05:02:31Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 11.0,
+            "execution": 52.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 2.0
+        },
+        {
+          "id": 116256283510,
+          "name": "Code Coverage",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T05:01:26Z",
+          "completed_at": "2026-10-15T05:01:25Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116256283849,
+          "name": "Quality Performance Baseline",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T05:01:26Z",
+          "completed_at": "2026-10-15T05:01:25Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116256284029,
+          "name": "Quality CLI Contracts (${{ matrix.os }})",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T05:01:26Z",
+          "completed_at": "2026-10-15T05:01:25Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116256284078,
+          "name": "Build (${{ matrix.os }})",
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T05:01:26Z",
+          "completed_at": "2026-10-15T05:01:25Z",
+          "os": null,
+          "wall_seconds": 0,
+          "steps": [],
+          "category_seconds": {}
+        },
+        {
+          "id": 116261678035,
+          "name": "Generic Quality Shadow",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:20:32Z",
+          "completed_at": "2026-10-15T05:22:21Z",
+          "os": "Linux",
+          "wall_seconds": 109.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:20:33Z",
+              "completed_at": "2026-10-15T05:20:35Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:20:35Z",
+              "completed_at": "2026-10-15T05:20:36Z",
+              "wall_seconds": 1.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:20:36Z",
+              "completed_at": "2026-10-15T05:20:36Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Download this run's retained Rust candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:20:36Z",
+              "completed_at": "2026-10-15T05:20:39Z",
+              "wall_seconds": 3.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Verify artifact identity and hashes before consumption",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:20:39Z",
+              "completed_at": "2026-10-15T05:20:40Z",
+              "wall_seconds": 1.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Project and compare retained evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:20:40Z",
+              "completed_at": "2026-10-15T05:22:16Z",
+              "wall_seconds": 96.0,
+              "category": "execution"
+            },
+            {
+              "name": "Upload generic projection and compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:22:16Z",
+              "completed_at": "2026-10-15T05:22:19Z",
+              "wall_seconds": 3.0,
+              "category": "artifact"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:22:19Z",
+              "completed_at": "2026-10-15T05:22:19Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:22:19Z",
+              "completed_at": "2026-10-15T05:22:19Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T05:22:19Z",
+              "completed_at": "2026-10-15T05:22:19Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 3.0,
+            "artifact": 7.0,
+            "execution": 96.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        },
+        {
+          "id": 116261678053,
+          "name": "Required Quality Aggregate",
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:20:32Z",
+          "completed_at": "2026-10-15T05:20:40Z",
+          "os": "Linux",
+          "wall_seconds": 8.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:20:33Z",
+              "completed_at": "2026-10-15T05:20:33Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:20:33Z",
+              "completed_at": "2026-10-15T05:20:35Z",
+              "wall_seconds": 2.0,
+              "category": "setup"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:20:35Z",
+              "completed_at": "2026-10-15T05:20:35Z",
+              "wall_seconds": 0.0,
+              "category": "setup"
+            },
+            {
+              "name": "Require every quality gate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:20:35Z",
+              "completed_at": "2026-10-15T05:20:38Z",
+              "wall_seconds": 3.0,
+              "category": "execution"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:20:38Z",
+              "completed_at": "2026-10-15T05:20:38Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:20:38Z",
+              "completed_at": "2026-10-15T05:20:38Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:20:38Z",
+              "completed_at": "2026-10-15T05:20:38Z",
+              "wall_seconds": 0.0,
+              "category": "cleanup"
+            }
+          ],
+          "category_seconds": {
+            "setup": 2.0,
+            "execution": 3.0,
+            "cleanup": 0.0
+          },
+          "unattributed_seconds": 3.0
+        }
+      ]
+    }
+  ],
+  "input_sha256": "7a55441d707f84f2cb76df6b8c5170b387aaec25936cccbe62f4c31bc7a19b6f"
+}

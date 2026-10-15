@@ -165,6 +165,14 @@ need hosted evidence for both developer wait and runner work, preserving the
 same measurement identities. Revert neutral/worse or ambiguous optimizations
 individually; never recover speed by weakening required assurance.
 
+The [current #61 diagnosis](../issue-61/README.md) separates PR and push paths,
+retains collection subcommand timings, and validates nextest scheduling for the
+legacy coverage stage. Standalone `coverage.py` still defaults to cargo; CI
+explicitly selects nextest with zero retries. Production projects those fresh
+exports; risk and critical-path isolation remain unchanged. Push's observed
+critical path is the macOS performance baseline, so a faster Linux collection
+does not imply the same end-to-end push improvement.
+
 ## Separate policy and product changes
 
 Any future risk-driven conditional cross-platform execution is a **separate

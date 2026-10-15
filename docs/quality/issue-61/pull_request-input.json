@@ -1,0 +1,4319 @@
+{
+  "runs": [
+    {
+      "id": 38678822897,
+      "run_attempt": 1,
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "e8b4de07fbea170e60823c0d6146849af8628b06",
+      "created_at": "2026-10-15T03:56:05Z",
+      "run_started_at": "2026-10-15T03:56:05Z",
+      "updated_at": "2026-10-15T04:10:08Z",
+      "html_url": "https://github.com/musutrade/GateHouse/actions/runs/38678822897",
+      "jobs": [
+        {
+          "id": 116238450179,
+          "name": "Classify change",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:07Z",
+          "completed_at": "2026-10-15T03:56:17Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:08Z",
+              "completed_at": "2026-10-15T03:56:09Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:09Z",
+              "completed_at": "2026-10-15T03:56:10Z"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:10Z",
+              "completed_at": "2026-10-15T03:56:11Z"
+            },
+            {
+              "name": "Classify changed paths",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:11Z",
+              "completed_at": "2026-10-15T03:56:14Z"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:14Z",
+              "completed_at": "2026-10-15T03:56:14Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T03:56:14Z",
+              "completed_at": "2026-10-15T03:56:15Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T03:56:15Z",
+              "completed_at": "2026-10-15T03:56:15Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504152,
+          "name": "Format",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:56:28Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:23Z"
+            },
+            {
+              "name": "Check formatting",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:23Z",
+              "completed_at": "2026-10-15T03:56:26Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T03:56:26Z",
+              "completed_at": "2026-10-15T03:56:26Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T03:56:26Z",
+              "completed_at": "2026-10-15T03:56:26Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504162,
+          "name": "Test",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:59:39Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:20Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:22Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:24Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:24Z",
+              "completed_at": "2026-10-15T03:56:24Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:24Z",
+              "completed_at": "2026-10-15T03:56:27Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:27Z",
+              "completed_at": "2026-10-15T03:56:28Z"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:28Z",
+              "completed_at": "2026-10-15T03:59:31Z"
+            },
+            {
+              "name": "Validate configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T03:59:31Z",
+              "completed_at": "2026-10-15T03:59:31Z"
+            },
+            {
+              "name": "Upload configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T03:59:31Z",
+              "completed_at": "2026-10-15T03:59:32Z"
+            },
+            {
+              "name": "Verify generated configuration schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T03:59:32Z",
+              "completed_at": "2026-10-15T03:59:32Z"
+            },
+            {
+              "name": "Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T03:59:32Z",
+              "completed_at": "2026-10-15T03:59:33Z"
+            },
+            {
+              "name": "Real locked Rust and Python onboarding against this Core",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:59:33Z",
+              "completed_at": "2026-10-15T03:59:35Z"
+            },
+            {
+              "name": "Retain real plugin onboarding evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:59:35Z",
+              "completed_at": "2026-10-15T03:59:36Z"
+            },
+            {
+              "name": "Post Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-10-15T03:59:36Z",
+              "completed_at": "2026-10-15T03:59:36Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-10-15T03:59:36Z",
+              "completed_at": "2026-10-15T03:59:36Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-15T03:59:36Z",
+              "completed_at": "2026-10-15T03:59:37Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-10-15T03:59:37Z",
+              "completed_at": "2026-10-15T03:59:37Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-10-15T03:59:37Z",
+              "completed_at": "2026-10-15T03:59:37Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504261,
+          "name": "Test (macos-latest)",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:23Z",
+          "completed_at": "2026-10-15T04:04:14Z",
+          "labels": [
+            "macos-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:24Z",
+              "completed_at": "2026-10-15T03:56:25Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:25Z",
+              "completed_at": "2026-10-15T03:56:27Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:27Z",
+              "completed_at": "2026-10-15T03:56:30Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:30Z",
+              "completed_at": "2026-10-15T03:56:37Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:37Z",
+              "completed_at": "2026-10-15T03:56:41Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:41Z",
+              "completed_at": "2026-10-15T03:56:43Z"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:43Z",
+              "completed_at": "2026-10-15T04:04:08Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:04:08Z",
+              "completed_at": "2026-10-15T04:04:09Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:04:09Z",
+              "completed_at": "2026-10-15T04:04:10Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:04:10Z",
+              "completed_at": "2026-10-15T04:04:10Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:04:10Z",
+              "completed_at": "2026-10-15T04:04:11Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504268,
+          "name": "Quality CLI Contracts",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:57:33Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:26Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:26Z",
+              "completed_at": "2026-10-15T03:56:29Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:29Z",
+              "completed_at": "2026-10-15T03:56:32Z"
+            },
+            {
+              "name": "Run CLI contract snapshots",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:32Z",
+              "completed_at": "2026-10-15T03:57:30Z"
+            },
+            {
+              "name": "Upload contract evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:57:30Z",
+              "completed_at": "2026-10-15T03:57:31Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:57:31Z",
+              "completed_at": "2026-10-15T03:57:31Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:57:31Z",
+              "completed_at": "2026-10-15T03:57:31Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T03:57:31Z",
+              "completed_at": "2026-10-15T03:57:31Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T03:57:31Z",
+              "completed_at": "2026-10-15T03:57:31Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504289,
+          "name": "Clippy",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:57:32Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:29Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:29Z",
+              "completed_at": "2026-10-15T03:56:33Z"
+            },
+            {
+              "name": "Run clippy",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:33Z",
+              "completed_at": "2026-10-15T03:57:30Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T03:57:30Z",
+              "completed_at": "2026-10-15T03:57:30Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T03:57:30Z",
+              "completed_at": "2026-10-15T03:57:30Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T03:57:30Z",
+              "completed_at": "2026-10-15T03:57:30Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504304,
+          "name": "Quality Coverage and Critical Paths",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T04:09:07Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:25Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:25Z",
+              "completed_at": "2026-10-15T03:56:29Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:29Z",
+              "completed_at": "2026-10-15T03:56:32Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:32Z",
+              "completed_at": "2026-10-15T03:56:34Z"
+            },
+            {
+              "name": "Install cargo-llvm-cov",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:34Z",
+              "completed_at": "2026-10-15T03:56:34Z"
+            },
+            {
+              "name": "Collect and require fresh coverage, risk and matrix evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T03:56:34Z",
+              "completed_at": "2026-10-15T04:09:00Z"
+            },
+            {
+              "name": "Seal immutable quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:09:00Z",
+              "completed_at": "2026-10-15T04:09:01Z"
+            },
+            {
+              "name": "Upload quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:09:01Z",
+              "completed_at": "2026-10-15T04:09:05Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18,
+              "started_at": "2026-10-15T04:09:05Z",
+              "completed_at": "2026-10-15T04:09:05Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-10-15T04:09:05Z",
+              "completed_at": "2026-10-15T04:09:05Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-10-15T04:09:05Z",
+              "completed_at": "2026-10-15T04:09:06Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-10-15T04:09:06Z",
+              "completed_at": "2026-10-15T04:09:06Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504305,
+          "name": "Documentation Consistency",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:57:01Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:25Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:25Z",
+              "completed_at": "2026-10-15T03:56:25Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:25Z",
+              "completed_at": "2026-10-15T03:56:27Z"
+            },
+            {
+              "name": "Check documentation, examples, and schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:27Z",
+              "completed_at": "2026-10-15T03:56:57Z"
+            },
+            {
+              "name": "Upload documentation evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:57Z",
+              "completed_at": "2026-10-15T03:56:58Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:56:58Z",
+              "completed_at": "2026-10-15T03:56:58Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:56:58Z",
+              "completed_at": "2026-10-15T03:56:58Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T03:56:58Z",
+              "completed_at": "2026-10-15T03:56:59Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T03:56:59Z",
+              "completed_at": "2026-10-15T03:56:59Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504312,
+          "name": "Quality Script Tests",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:20Z",
+          "completed_at": "2026-10-15T03:59:22Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:23Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:23Z",
+              "completed_at": "2026-10-15T03:56:28Z"
+            },
+            {
+              "name": "Install Rust coverage tools for measurement contract tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:28Z",
+              "completed_at": "2026-10-15T03:56:32Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:32Z",
+              "completed_at": "2026-10-15T03:56:37Z"
+            },
+            {
+              "name": "Test and compile quality scripts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:37Z",
+              "completed_at": "2026-10-15T03:59:18Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T03:59:18Z",
+              "completed_at": "2026-10-15T03:59:18Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T03:59:18Z",
+              "completed_at": "2026-10-15T03:59:19Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:59:19Z",
+              "completed_at": "2026-10-15T03:59:19Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:59:19Z",
+              "completed_at": "2026-10-15T03:59:19Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504324,
+          "name": "Security Audit",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:20Z",
+          "completed_at": "2026-10-15T03:56:35Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:24Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:24Z",
+              "completed_at": "2026-10-15T03:56:26Z"
+            },
+            {
+              "name": "Install cargo-audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:26Z",
+              "completed_at": "2026-10-15T03:56:27Z"
+            },
+            {
+              "name": "Run security audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:27Z",
+              "completed_at": "2026-10-15T03:56:32Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T03:56:32Z",
+              "completed_at": "2026-10-15T03:56:33Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T03:56:33Z",
+              "completed_at": "2026-10-15T03:56:33Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504338,
+          "name": "Release Governance Contracts",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:20Z",
+          "completed_at": "2026-10-15T03:56:52Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:21Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:32Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:32Z",
+              "completed_at": "2026-10-15T03:56:37Z"
+            },
+            {
+              "name": "Run release policy and inventory contracts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:37Z",
+              "completed_at": "2026-10-15T03:56:49Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:49Z",
+              "completed_at": "2026-10-15T03:56:49Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T03:56:49Z",
+              "completed_at": "2026-10-15T03:56:50Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T03:56:50Z",
+              "completed_at": "2026-10-15T03:56:50Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504350,
+          "name": "Test (windows-latest)",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:19Z",
+          "completed_at": "2026-10-15T03:59:52Z",
+          "labels": [
+            "windows-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:20Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:25Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:25Z",
+              "completed_at": "2026-10-15T03:56:30Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:30Z",
+              "completed_at": "2026-10-15T03:56:48Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:48Z",
+              "completed_at": "2026-10-15T03:56:51Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:56:51Z",
+              "completed_at": "2026-10-15T03:56:54Z"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T03:56:54Z",
+              "completed_at": "2026-10-15T03:59:48Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:59:48Z",
+              "completed_at": "2026-10-15T03:59:48Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:59:48Z",
+              "completed_at": "2026-10-15T03:59:48Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T03:59:48Z",
+              "completed_at": "2026-10-15T03:59:50Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T03:59:50Z",
+              "completed_at": "2026-10-15T03:59:50Z"
+            }
+          ]
+        },
+        {
+          "id": 116238504372,
+          "name": "Build",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T03:56:20Z",
+          "completed_at": "2026-10-15T03:59:09Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T03:56:20Z",
+              "completed_at": "2026-10-15T03:56:21Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T03:56:21Z",
+              "completed_at": "2026-10-15T03:56:22Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T03:56:22Z",
+              "completed_at": "2026-10-15T03:56:23Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T03:56:23Z",
+              "completed_at": "2026-10-15T03:56:26Z"
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T03:56:26Z",
+              "completed_at": "2026-10-15T03:59:05Z"
+            },
+            {
+              "name": "Upload artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T03:59:05Z",
+              "completed_at": "2026-10-15T03:59:07Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T03:59:07Z",
+              "completed_at": "2026-10-15T03:59:07Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T03:59:07Z",
+              "completed_at": "2026-10-15T03:59:07Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T03:59:07Z",
+              "completed_at": "2026-10-15T03:59:07Z"
+            }
+          ]
+        },
+        {
+          "id": 116238505940,
+          "name": "Quality CLI Contracts (${{ matrix.os }})",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T03:56:18Z",
+          "completed_at": "2026-10-15T03:56:17Z",
+          "labels": [],
+          "steps": []
+        },
+        {
+          "id": 116238505987,
+          "name": "Quality Performance Baseline",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T03:56:18Z",
+          "completed_at": "2026-10-15T03:56:17Z",
+          "labels": [],
+          "steps": []
+        },
+        {
+          "id": 116238506229,
+          "name": "Build (${{ matrix.os }})",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T03:56:18Z",
+          "completed_at": "2026-10-15T03:56:17Z",
+          "labels": [],
+          "steps": []
+        },
+        {
+          "id": 116238506245,
+          "name": "Code Coverage",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T03:56:18Z",
+          "completed_at": "2026-10-15T03:56:17Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": []
+        },
+        {
+          "id": 116241978644,
+          "name": "Generic Quality Shadow",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:09:09Z",
+          "completed_at": "2026-10-15T04:10:07Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:09:10Z",
+              "completed_at": "2026-10-15T04:09:11Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:09:11Z",
+              "completed_at": "2026-10-15T04:09:12Z"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:09:12Z",
+              "completed_at": "2026-10-15T04:09:12Z"
+            },
+            {
+              "name": "Download this run's retained Rust candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:09:12Z",
+              "completed_at": "2026-10-15T04:09:14Z"
+            },
+            {
+              "name": "Verify artifact identity and hashes before consumption",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:09:14Z",
+              "completed_at": "2026-10-15T04:09:15Z"
+            },
+            {
+              "name": "Project and compare retained evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:09:15Z",
+              "completed_at": "2026-10-15T04:10:03Z"
+            },
+            {
+              "name": "Upload generic projection and compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:10:03Z",
+              "completed_at": "2026-10-15T04:10:05Z"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:10:05Z",
+              "completed_at": "2026-10-15T04:10:05Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:10:05Z",
+              "completed_at": "2026-10-15T04:10:05Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:10:05Z",
+              "completed_at": "2026-10-15T04:10:05Z"
+            }
+          ]
+        },
+        {
+          "id": 116241978672,
+          "name": "Required Quality Aggregate",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:09:09Z",
+          "completed_at": "2026-10-15T04:09:16Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:09:10Z",
+              "completed_at": "2026-10-15T04:09:11Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:09:11Z",
+              "completed_at": "2026-10-15T04:09:12Z"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:09:12Z",
+              "completed_at": "2026-10-15T04:09:12Z"
+            },
+            {
+              "name": "Require every quality gate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:09:12Z",
+              "completed_at": "2026-10-15T04:09:14Z"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:09:14Z",
+              "completed_at": "2026-10-15T04:09:14Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:09:14Z",
+              "completed_at": "2026-10-15T04:09:14Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:09:14Z",
+              "completed_at": "2026-10-15T04:09:14Z"
+            }
+          ]
+        }
+      ],
+      "workflow_blob_sha": "f4cce3bdbc0f964cca10ec81c87400c40c2d94df",
+      "collection_identity": {
+        "BASE_SHA": "0b4b3ee132235b00f4b3dc2525ab0967519e6901",
+        "HEAD_SHA": "eaaecf48c171d98865ae7dfb239a7ac8b31e23cc",
+        "RUN_ID": "38678822897-1"
+      }
+    },
+    {
+      "id": 38682199206,
+      "run_attempt": 1,
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "05bb67fa74188e1a2f6eb9e28017c6c1f42fea02",
+      "created_at": "2026-10-15T04:34:43Z",
+      "run_started_at": "2026-10-15T04:34:43Z",
+      "updated_at": "2026-10-15T04:54:24Z",
+      "html_url": "https://github.com/musutrade/GateHouse/actions/runs/38682199206",
+      "jobs": [
+        {
+          "id": 116249156584,
+          "name": "Classify change",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:17Z",
+          "completed_at": "2026-10-15T04:35:23Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:18Z",
+              "completed_at": "2026-10-15T04:35:18Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:18Z",
+              "completed_at": "2026-10-15T04:35:19Z"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:19Z",
+              "completed_at": "2026-10-15T04:35:20Z"
+            },
+            {
+              "name": "Classify changed paths",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:20Z",
+              "completed_at": "2026-10-15T04:35:21Z"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:21Z",
+              "completed_at": "2026-10-15T04:35:21Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:35:21Z",
+              "completed_at": "2026-10-15T04:35:21Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:35:21Z",
+              "completed_at": "2026-10-15T04:35:21Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189516,
+          "name": "Format",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:35:32Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:28Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:28Z",
+              "completed_at": "2026-10-15T04:35:29Z"
+            },
+            {
+              "name": "Check formatting",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:29Z",
+              "completed_at": "2026-10-15T04:35:30Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:35:30Z",
+              "completed_at": "2026-10-15T04:35:31Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:35:31Z",
+              "completed_at": "2026-10-15T04:35:31Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189519,
+          "name": "Security Audit",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:35:38Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:28Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:28Z",
+              "completed_at": "2026-10-15T04:35:29Z"
+            },
+            {
+              "name": "Install cargo-audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:29Z",
+              "completed_at": "2026-10-15T04:35:31Z"
+            },
+            {
+              "name": "Run security audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:31Z",
+              "completed_at": "2026-10-15T04:35:36Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:35:36Z",
+              "completed_at": "2026-10-15T04:35:36Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T04:35:36Z",
+              "completed_at": "2026-10-15T04:35:36Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189546,
+          "name": "Clippy",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:36:08Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:25Z",
+              "completed_at": "2026-10-15T04:35:26Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:29Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:29Z",
+              "completed_at": "2026-10-15T04:35:31Z"
+            },
+            {
+              "name": "Run clippy",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:31Z",
+              "completed_at": "2026-10-15T04:36:06Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:36:06Z",
+              "completed_at": "2026-10-15T04:36:06Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:36:06Z",
+              "completed_at": "2026-10-15T04:36:06Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T04:36:06Z",
+              "completed_at": "2026-10-15T04:36:06Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189581,
+          "name": "Test",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:40:00Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:25Z",
+              "completed_at": "2026-10-15T04:35:26Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:30Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:30Z",
+              "completed_at": "2026-10-15T04:35:32Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:35Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:35Z",
+              "completed_at": "2026-10-15T04:35:36Z"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:36Z",
+              "completed_at": "2026-10-15T04:39:48Z"
+            },
+            {
+              "name": "Test findings feedback integration without publishing",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:39:48Z",
+              "completed_at": "2026-10-15T04:39:53Z"
+            },
+            {
+              "name": "Validate configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:39:53Z",
+              "completed_at": "2026-10-15T04:39:53Z"
+            },
+            {
+              "name": "Upload configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:39:53Z",
+              "completed_at": "2026-10-15T04:39:54Z"
+            },
+            {
+              "name": "Verify generated configuration schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T04:39:54Z",
+              "completed_at": "2026-10-15T04:39:54Z"
+            },
+            {
+              "name": "Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:39:54Z",
+              "completed_at": "2026-10-15T04:39:55Z"
+            },
+            {
+              "name": "Real locked Rust and Python onboarding against this Core",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:39:55Z",
+              "completed_at": "2026-10-15T04:39:57Z"
+            },
+            {
+              "name": "Retain real plugin onboarding evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:39:57Z",
+              "completed_at": "2026-10-15T04:39:58Z"
+            },
+            {
+              "name": "Post Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-15T04:39:58Z",
+              "completed_at": "2026-10-15T04:39:58Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-10-15T04:39:58Z",
+              "completed_at": "2026-10-15T04:39:58Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-10-15T04:39:58Z",
+              "completed_at": "2026-10-15T04:39:58Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28,
+              "started_at": "2026-10-15T04:39:58Z",
+              "completed_at": "2026-10-15T04:39:59Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 29,
+              "started_at": "2026-10-15T04:39:59Z",
+              "completed_at": "2026-10-15T04:39:59Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189592,
+          "name": "Build",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:30Z",
+          "completed_at": "2026-10-15T04:38:25Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:30Z",
+              "completed_at": "2026-10-15T04:35:31Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:31Z",
+              "completed_at": "2026-10-15T04:35:32Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:33Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:33Z",
+              "completed_at": "2026-10-15T04:35:34Z"
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:34Z",
+              "completed_at": "2026-10-15T04:38:22Z"
+            },
+            {
+              "name": "Upload artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:38:22Z",
+              "completed_at": "2026-10-15T04:38:23Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T04:38:23Z",
+              "completed_at": "2026-10-15T04:38:23Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:38:23Z",
+              "completed_at": "2026-10-15T04:38:24Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:38:24Z",
+              "completed_at": "2026-10-15T04:38:24Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189593,
+          "name": "Test (windows-latest)",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:41:31Z",
+          "labels": [
+            "windows-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:26Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:32Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:39Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:39Z",
+              "completed_at": "2026-10-15T04:35:47Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:47Z",
+              "completed_at": "2026-10-15T04:35:53Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:53Z",
+              "completed_at": "2026-10-15T04:35:57Z"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:57Z",
+              "completed_at": "2026-10-15T04:41:26Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:41:26Z",
+              "completed_at": "2026-10-15T04:41:26Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:41:26Z",
+              "completed_at": "2026-10-15T04:41:27Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:41:27Z",
+              "completed_at": "2026-10-15T04:41:29Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:41:29Z",
+              "completed_at": "2026-10-15T04:41:29Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189612,
+          "name": "Test (macos-latest)",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:32Z",
+          "completed_at": "2026-10-15T04:42:46Z",
+          "labels": [
+            "macos-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:33Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:33Z",
+              "completed_at": "2026-10-15T04:35:35Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:35Z",
+              "completed_at": "2026-10-15T04:35:39Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:39Z",
+              "completed_at": "2026-10-15T04:35:47Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:47Z",
+              "completed_at": "2026-10-15T04:35:51Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:51Z",
+              "completed_at": "2026-10-15T04:35:53Z"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:53Z",
+              "completed_at": "2026-10-15T04:42:41Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:42:41Z",
+              "completed_at": "2026-10-15T04:42:42Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:42:42Z",
+              "completed_at": "2026-10-15T04:42:42Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:42:42Z",
+              "completed_at": "2026-10-15T04:42:43Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:42:43Z",
+              "completed_at": "2026-10-15T04:42:44Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189622,
+          "name": "Quality Script Tests",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:38:08Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:28Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:28Z",
+              "completed_at": "2026-10-15T04:35:32Z"
+            },
+            {
+              "name": "Install Rust coverage tools for measurement contract tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:35Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:35Z",
+              "completed_at": "2026-10-15T04:35:39Z"
+            },
+            {
+              "name": "Test and compile quality scripts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:39Z",
+              "completed_at": "2026-10-15T04:38:04Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:38:04Z",
+              "completed_at": "2026-10-15T04:38:04Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T04:38:04Z",
+              "completed_at": "2026-10-15T04:38:04Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:38:04Z",
+              "completed_at": "2026-10-15T04:38:05Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:38:05Z",
+              "completed_at": "2026-10-15T04:38:05Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189626,
+          "name": "Release Governance Contracts",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:35:51Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:26Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:28Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:28Z",
+              "completed_at": "2026-10-15T04:35:35Z"
+            },
+            {
+              "name": "Run release policy and inventory contracts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:35Z",
+              "completed_at": "2026-10-15T04:35:48Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:48Z",
+              "completed_at": "2026-10-15T04:35:49Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:35:49Z",
+              "completed_at": "2026-10-15T04:35:49Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:35:49Z",
+              "completed_at": "2026-10-15T04:35:49Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189636,
+          "name": "Quality Coverage and Critical Paths",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:53:21Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:25Z",
+              "completed_at": "2026-10-15T04:35:26Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:32Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:39Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:39Z",
+              "completed_at": "2026-10-15T04:35:42Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:42Z",
+              "completed_at": "2026-10-15T04:35:43Z"
+            },
+            {
+              "name": "Install cargo-llvm-cov",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:35:43Z",
+              "completed_at": "2026-10-15T04:35:43Z"
+            },
+            {
+              "name": "Collect and require fresh coverage, risk and matrix evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:35:43Z",
+              "completed_at": "2026-10-15T04:53:13Z"
+            },
+            {
+              "name": "Seal immutable quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:53:13Z",
+              "completed_at": "2026-10-15T04:53:14Z"
+            },
+            {
+              "name": "Upload quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T04:53:14Z",
+              "completed_at": "2026-10-15T04:53:20Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18,
+              "started_at": "2026-10-15T04:53:20Z",
+              "completed_at": "2026-10-15T04:53:20Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-10-15T04:53:20Z",
+              "completed_at": "2026-10-15T04:53:20Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-10-15T04:53:20Z",
+              "completed_at": "2026-10-15T04:53:20Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-10-15T04:53:20Z",
+              "completed_at": "2026-10-15T04:53:20Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189654,
+          "name": "Quality CLI Contracts",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:36:30Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:25Z",
+              "completed_at": "2026-10-15T04:35:26Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:30Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:30Z",
+              "completed_at": "2026-10-15T04:35:31Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:31Z",
+              "completed_at": "2026-10-15T04:35:34Z"
+            },
+            {
+              "name": "Run CLI contract snapshots",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:34Z",
+              "completed_at": "2026-10-15T04:36:27Z"
+            },
+            {
+              "name": "Upload contract evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:36:27Z",
+              "completed_at": "2026-10-15T04:36:28Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:36:28Z",
+              "completed_at": "2026-10-15T04:36:28Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:36:28Z",
+              "completed_at": "2026-10-15T04:36:28Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:36:28Z",
+              "completed_at": "2026-10-15T04:36:29Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:36:29Z",
+              "completed_at": "2026-10-15T04:36:29Z"
+            }
+          ]
+        },
+        {
+          "id": 116249189678,
+          "name": "Documentation Consistency",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:35:25Z",
+          "completed_at": "2026-10-15T04:36:26Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:26Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:35:26Z",
+              "completed_at": "2026-10-15T04:35:27Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:35:27Z",
+              "completed_at": "2026-10-15T04:35:32Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:32Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:35:32Z",
+              "completed_at": "2026-10-15T04:35:35Z"
+            },
+            {
+              "name": "Check documentation, examples, and schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:35:35Z",
+              "completed_at": "2026-10-15T04:36:23Z"
+            },
+            {
+              "name": "Upload documentation evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:36:23Z",
+              "completed_at": "2026-10-15T04:36:24Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T04:36:24Z",
+              "completed_at": "2026-10-15T04:36:24Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:36:24Z",
+              "completed_at": "2026-10-15T04:36:24Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:36:24Z",
+              "completed_at": "2026-10-15T04:36:24Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:36:24Z",
+              "completed_at": "2026-10-15T04:36:24Z"
+            }
+          ]
+        },
+        {
+          "id": 116249190542,
+          "name": "Code Coverage",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T04:35:23Z",
+          "completed_at": "2026-10-15T04:35:23Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": []
+        },
+        {
+          "id": 116249190649,
+          "name": "Quality CLI Contracts (${{ matrix.os }})",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T04:35:23Z",
+          "completed_at": "2026-10-15T04:35:23Z",
+          "labels": [],
+          "steps": []
+        },
+        {
+          "id": 116249191049,
+          "name": "Build (${{ matrix.os }})",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T04:35:23Z",
+          "completed_at": "2026-10-15T04:35:23Z",
+          "labels": [],
+          "steps": []
+        },
+        {
+          "id": 116249191314,
+          "name": "Quality Performance Baseline",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T04:35:23Z",
+          "completed_at": "2026-10-15T04:35:23Z",
+          "labels": [],
+          "steps": []
+        },
+        {
+          "id": 116254076763,
+          "name": "Required Quality Aggregate",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:53:23Z",
+          "completed_at": "2026-10-15T04:53:29Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:53:24Z",
+              "completed_at": "2026-10-15T04:53:25Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:53:25Z",
+              "completed_at": "2026-10-15T04:53:26Z"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:53:26Z",
+              "completed_at": "2026-10-15T04:53:26Z"
+            },
+            {
+              "name": "Require every quality gate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:53:26Z",
+              "completed_at": "2026-10-15T04:53:27Z"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:53:27Z",
+              "completed_at": "2026-10-15T04:53:27Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T04:53:27Z",
+              "completed_at": "2026-10-15T04:53:27Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T04:53:27Z",
+              "completed_at": "2026-10-15T04:53:27Z"
+            }
+          ]
+        },
+        {
+          "id": 116254076902,
+          "name": "Generic Quality Shadow",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T04:53:23Z",
+          "completed_at": "2026-10-15T04:54:23Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T04:53:24Z",
+              "completed_at": "2026-10-15T04:53:25Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T04:53:25Z",
+              "completed_at": "2026-10-15T04:53:26Z"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T04:53:26Z",
+              "completed_at": "2026-10-15T04:53:26Z"
+            },
+            {
+              "name": "Download this run's retained Rust candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T04:53:26Z",
+              "completed_at": "2026-10-15T04:53:28Z"
+            },
+            {
+              "name": "Verify artifact identity and hashes before consumption",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T04:53:28Z",
+              "completed_at": "2026-10-15T04:53:28Z"
+            },
+            {
+              "name": "Project and compare retained evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T04:53:28Z",
+              "completed_at": "2026-10-15T04:54:20Z"
+            },
+            {
+              "name": "Upload generic projection and compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T04:54:20Z",
+              "completed_at": "2026-10-15T04:54:22Z"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T04:54:22Z",
+              "completed_at": "2026-10-15T04:54:22Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T04:54:22Z",
+              "completed_at": "2026-10-15T04:54:22Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T04:54:22Z",
+              "completed_at": "2026-10-15T04:54:22Z"
+            }
+          ]
+        }
+      ],
+      "workflow_blob_sha": "4fac6b3a0fa7148959de634519f57b3e5384105f",
+      "collection_identity": {
+        "BASE_SHA": "dd429985066c43408cfbe676be5b84389794192d",
+        "HEAD_SHA": "67bb2fa0eb3e5693dd5b50b05d3ea494ad48dec6",
+        "RUN_ID": "38682199206-1"
+      }
+    },
+    {
+      "id": 38684527328,
+      "run_attempt": 1,
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "5d127a28c06dc36045c44df750b7a8a3b7de5d6b",
+      "created_at": "2026-10-15T05:01:15Z",
+      "run_started_at": "2026-10-15T05:01:15Z",
+      "updated_at": "2026-10-15T05:22:22Z",
+      "html_url": "https://github.com/musutrade/GateHouse/actions/runs/38684527328",
+      "jobs": [
+        {
+          "id": 116256237019,
+          "name": "Classify change",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:18Z",
+          "completed_at": "2026-10-15T05:01:25Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:19Z",
+              "completed_at": "2026-10-15T05:01:20Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:20Z",
+              "completed_at": "2026-10-15T05:01:21Z"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:21Z",
+              "completed_at": "2026-10-15T05:01:21Z"
+            },
+            {
+              "name": "Classify changed paths",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:21Z",
+              "completed_at": "2026-10-15T05:01:23Z"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:01:23Z",
+              "completed_at": "2026-10-15T05:01:23Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:01:23Z",
+              "completed_at": "2026-10-15T05:01:23Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:01:23Z",
+              "completed_at": "2026-10-15T05:01:23Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282246,
+          "name": "Format",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:01:38Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:30Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:33Z"
+            },
+            {
+              "name": "Check formatting",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:33Z",
+              "completed_at": "2026-10-15T05:01:36Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:01:36Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:01:36Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282299,
+          "name": "Build",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:28Z",
+          "completed_at": "2026-10-15T05:04:28Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:31Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:31Z",
+              "completed_at": "2026-10-15T05:01:32Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:32Z",
+              "completed_at": "2026-10-15T05:01:36Z"
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:04:22Z"
+            },
+            {
+              "name": "Upload artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:04:22Z",
+              "completed_at": "2026-10-15T05:04:25Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T05:04:25Z",
+              "completed_at": "2026-10-15T05:04:25Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:04:25Z",
+              "completed_at": "2026-10-15T05:04:25Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:04:25Z",
+              "completed_at": "2026-10-15T05:04:25Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282329,
+          "name": "Quality Coverage and Critical Paths",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:28Z",
+          "completed_at": "2026-10-15T05:20:30Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:30Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:31Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:31Z",
+              "completed_at": "2026-10-15T05:01:41Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:41Z",
+              "completed_at": "2026-10-15T05:01:50Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:50Z",
+              "completed_at": "2026-10-15T05:01:58Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:58Z",
+              "completed_at": "2026-10-15T05:01:59Z"
+            },
+            {
+              "name": "Install cargo-llvm-cov",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:01:59Z",
+              "completed_at": "2026-10-15T05:02:00Z"
+            },
+            {
+              "name": "Collect and require fresh coverage, risk and matrix evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:02:00Z",
+              "completed_at": "2026-10-15T05:20:19Z"
+            },
+            {
+              "name": "Seal immutable quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:20:19Z",
+              "completed_at": "2026-10-15T05:20:20Z"
+            },
+            {
+              "name": "Upload quality evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T05:20:20Z",
+              "completed_at": "2026-10-15T05:20:26Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18,
+              "started_at": "2026-10-15T05:20:26Z",
+              "completed_at": "2026-10-15T05:20:27Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-10-15T05:20:27Z",
+              "completed_at": "2026-10-15T05:20:27Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-10-15T05:20:27Z",
+              "completed_at": "2026-10-15T05:20:27Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-10-15T05:20:27Z",
+              "completed_at": "2026-10-15T05:20:27Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282344,
+          "name": "Test (macos-latest)",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:33Z",
+          "completed_at": "2026-10-15T05:09:04Z",
+          "labels": [
+            "macos-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:33Z",
+              "completed_at": "2026-10-15T05:01:34Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:34Z",
+              "completed_at": "2026-10-15T05:01:36Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:01:41Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:41Z",
+              "completed_at": "2026-10-15T05:01:49Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:49Z",
+              "completed_at": "2026-10-15T05:01:52Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:52Z",
+              "completed_at": "2026-10-15T05:01:54Z"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:01:54Z",
+              "completed_at": "2026-10-15T05:08:58Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:08:58Z",
+              "completed_at": "2026-10-15T05:08:59Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:08:59Z",
+              "completed_at": "2026-10-15T05:08:59Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:08:59Z",
+              "completed_at": "2026-10-15T05:09:00Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T05:09:00Z",
+              "completed_at": "2026-10-15T05:09:02Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282346,
+          "name": "Security Audit",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:01:37Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:28Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:30Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:30Z"
+            },
+            {
+              "name": "Install cargo-audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:32Z"
+            },
+            {
+              "name": "Run security audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:32Z",
+              "completed_at": "2026-10-15T05:01:35Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:35Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:35Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282353,
+          "name": "Test (windows-latest)",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:07:35Z",
+          "labels": [
+            "windows-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:28Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:34Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:34Z",
+              "completed_at": "2026-10-15T05:01:40Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:40Z",
+              "completed_at": "2026-10-15T05:02:06Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:02:06Z",
+              "completed_at": "2026-10-15T05:02:10Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:02:10Z",
+              "completed_at": "2026-10-15T05:02:13Z"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:02:13Z",
+              "completed_at": "2026-10-15T05:07:31Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:07:31Z",
+              "completed_at": "2026-10-15T05:07:31Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:07:31Z",
+              "completed_at": "2026-10-15T05:07:31Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:07:31Z",
+              "completed_at": "2026-10-15T05:07:34Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T05:07:34Z",
+              "completed_at": "2026-10-15T05:07:34Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282376,
+          "name": "Quality Script Tests",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:03:45Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:31Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:31Z",
+              "completed_at": "2026-10-15T05:01:35Z"
+            },
+            {
+              "name": "Install Rust coverage tools for measurement contract tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:40Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:40Z",
+              "completed_at": "2026-10-15T05:01:43Z"
+            },
+            {
+              "name": "Test and compile quality scripts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:43Z",
+              "completed_at": "2026-10-15T05:03:42Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T05:03:42Z",
+              "completed_at": "2026-10-15T05:03:42Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T05:03:42Z",
+              "completed_at": "2026-10-15T05:03:42Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:03:42Z",
+              "completed_at": "2026-10-15T05:03:42Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:03:42Z",
+              "completed_at": "2026-10-15T05:03:42Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282411,
+          "name": "Test",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:05:45Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:31Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:31Z",
+              "completed_at": "2026-10-15T05:01:36Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:01:37Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:37Z",
+              "completed_at": "2026-10-15T05:01:41Z"
+            },
+            {
+              "name": "Install cargo-nextest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:41Z",
+              "completed_at": "2026-10-15T05:01:43Z"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:01:43Z",
+              "completed_at": "2026-10-15T05:05:35Z"
+            },
+            {
+              "name": "Test findings feedback integration without publishing",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:05:35Z",
+              "completed_at": "2026-10-15T05:05:35Z"
+            },
+            {
+              "name": "Validate configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:05:35Z",
+              "completed_at": "2026-10-15T05:05:35Z"
+            },
+            {
+              "name": "Upload configured workflow acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T05:05:35Z",
+              "completed_at": "2026-10-15T05:05:36Z"
+            },
+            {
+              "name": "Verify generated configuration schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T05:05:36Z",
+              "completed_at": "2026-10-15T05:05:37Z"
+            },
+            {
+              "name": "Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:05:37Z",
+              "completed_at": "2026-10-15T05:05:38Z"
+            },
+            {
+              "name": "Real locked Rust and Python onboarding against this Core",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:05:38Z",
+              "completed_at": "2026-10-15T05:05:40Z"
+            },
+            {
+              "name": "Retain real plugin onboarding evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:05:40Z",
+              "completed_at": "2026-10-15T05:05:41Z"
+            },
+            {
+              "name": "Post Fetch reviewed GateProbes onboarding implementation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-15T05:05:41Z",
+              "completed_at": "2026-10-15T05:05:42Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-10-15T05:05:42Z",
+              "completed_at": "2026-10-15T05:05:42Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-10-15T05:05:42Z",
+              "completed_at": "2026-10-15T05:05:42Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28,
+              "started_at": "2026-10-15T05:05:42Z",
+              "completed_at": "2026-10-15T05:05:42Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 29,
+              "started_at": "2026-10-15T05:05:42Z",
+              "completed_at": "2026-10-15T05:05:42Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282425,
+          "name": "Documentation Consistency",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:02:38Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:30Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:35Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:36Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:36Z",
+              "completed_at": "2026-10-15T05:01:39Z"
+            },
+            {
+              "name": "Check documentation, examples, and schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:39Z",
+              "completed_at": "2026-10-15T05:02:35Z"
+            },
+            {
+              "name": "Upload documentation evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:02:35Z",
+              "completed_at": "2026-10-15T05:02:35Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:02:35Z",
+              "completed_at": "2026-10-15T05:02:36Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:02:36Z",
+              "completed_at": "2026-10-15T05:02:36Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:02:36Z",
+              "completed_at": "2026-10-15T05:02:36Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T05:02:36Z",
+              "completed_at": "2026-10-15T05:02:36Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282453,
+          "name": "Release Governance Contracts",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:01:48Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:28Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:33Z"
+            },
+            {
+              "name": "Run release policy and inventory contracts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:33Z",
+              "completed_at": "2026-10-15T05:01:45Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:01:45Z",
+              "completed_at": "2026-10-15T05:01:46Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:01:46Z",
+              "completed_at": "2026-10-15T05:01:46Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:01:46Z",
+              "completed_at": "2026-10-15T05:01:46Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282490,
+          "name": "Quality CLI Contracts",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:28Z",
+          "completed_at": "2026-10-15T05:02:19Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:31Z"
+            },
+            {
+              "name": "Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:31Z",
+              "completed_at": "2026-10-15T05:01:34Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:34Z",
+              "completed_at": "2026-10-15T05:01:35Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:38Z"
+            },
+            {
+              "name": "Run CLI contract snapshots",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:01:38Z",
+              "completed_at": "2026-10-15T05:02:15Z"
+            },
+            {
+              "name": "Upload contract evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:02:15Z",
+              "completed_at": "2026-10-15T05:02:16Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-15T05:02:16Z",
+              "completed_at": "2026-10-15T05:02:16Z"
+            },
+            {
+              "name": "Post Restore pinned regression data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:02:16Z",
+              "completed_at": "2026-10-15T05:02:16Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:02:16Z",
+              "completed_at": "2026-10-15T05:02:16Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T05:02:16Z",
+              "completed_at": "2026-10-15T05:02:16Z"
+            }
+          ]
+        },
+        {
+          "id": 116256282591,
+          "name": "Clippy",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:01:27Z",
+          "completed_at": "2026-10-15T05:02:32Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:01:28Z",
+              "completed_at": "2026-10-15T05:01:29Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:01:29Z",
+              "completed_at": "2026-10-15T05:01:30Z"
+            },
+            {
+              "name": "Install Rust",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:01:30Z",
+              "completed_at": "2026-10-15T05:01:35Z"
+            },
+            {
+              "name": "Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:01:35Z",
+              "completed_at": "2026-10-15T05:01:39Z"
+            },
+            {
+              "name": "Run clippy",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:01:39Z",
+              "completed_at": "2026-10-15T05:02:31Z"
+            },
+            {
+              "name": "Post Configure Cargo state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:02:31Z",
+              "completed_at": "2026-10-15T05:02:31Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-15T05:02:31Z",
+              "completed_at": "2026-10-15T05:02:31Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-15T05:02:31Z",
+              "completed_at": "2026-10-15T05:02:31Z"
+            }
+          ]
+        },
+        {
+          "id": 116256283510,
+          "name": "Code Coverage",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T05:01:26Z",
+          "completed_at": "2026-10-15T05:01:25Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": []
+        },
+        {
+          "id": 116256283849,
+          "name": "Quality Performance Baseline",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T05:01:26Z",
+          "completed_at": "2026-10-15T05:01:25Z",
+          "labels": [],
+          "steps": []
+        },
+        {
+          "id": 116256284029,
+          "name": "Quality CLI Contracts (${{ matrix.os }})",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T05:01:26Z",
+          "completed_at": "2026-10-15T05:01:25Z",
+          "labels": [],
+          "steps": []
+        },
+        {
+          "id": 116256284078,
+          "name": "Build (${{ matrix.os }})",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "started_at": "2026-10-15T05:01:26Z",
+          "completed_at": "2026-10-15T05:01:25Z",
+          "labels": [],
+          "steps": []
+        },
+        {
+          "id": 116261678035,
+          "name": "Generic Quality Shadow",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:20:32Z",
+          "completed_at": "2026-10-15T05:22:21Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:20:33Z",
+              "completed_at": "2026-10-15T05:20:35Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:20:35Z",
+              "completed_at": "2026-10-15T05:20:36Z"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:20:36Z",
+              "completed_at": "2026-10-15T05:20:36Z"
+            },
+            {
+              "name": "Download this run's retained Rust candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:20:36Z",
+              "completed_at": "2026-10-15T05:20:39Z"
+            },
+            {
+              "name": "Verify artifact identity and hashes before consumption",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-15T05:20:39Z",
+              "completed_at": "2026-10-15T05:20:40Z"
+            },
+            {
+              "name": "Project and compare retained evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-15T05:20:40Z",
+              "completed_at": "2026-10-15T05:22:16Z"
+            },
+            {
+              "name": "Upload generic projection and compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:22:16Z",
+              "completed_at": "2026-10-15T05:22:19Z"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-15T05:22:19Z",
+              "completed_at": "2026-10-15T05:22:19Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-15T05:22:19Z",
+              "completed_at": "2026-10-15T05:22:19Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-15T05:22:19Z",
+              "completed_at": "2026-10-15T05:22:19Z"
+            }
+          ]
+        },
+        {
+          "id": 116261678053,
+          "name": "Required Quality Aggregate",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "started_at": "2026-10-15T05:20:32Z",
+          "completed_at": "2026-10-15T05:20:40Z",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-15T05:20:33Z",
+              "completed_at": "2026-10-15T05:20:33Z"
+            },
+            {
+              "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-15T05:20:33Z",
+              "completed_at": "2026-10-15T05:20:35Z"
+            },
+            {
+              "name": "Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-15T05:20:35Z",
+              "completed_at": "2026-10-15T05:20:35Z"
+            },
+            {
+              "name": "Require every quality gate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-15T05:20:35Z",
+              "completed_at": "2026-10-15T05:20:38Z"
+            },
+            {
+              "name": "Post Install Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-15T05:20:38Z",
+              "completed_at": "2026-10-15T05:20:38Z"
+            },
+            {
+              "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-15T05:20:38Z",
+              "completed_at": "2026-10-15T05:20:38Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-15T05:20:38Z",
+              "completed_at": "2026-10-15T05:20:38Z"
+            }
+          ]
+        }
+      ],
+      "workflow_blob_sha": "4fac6b3a0fa7148959de634519f57b3e5384105f",
+      "collection_identity": {
+        "BASE_SHA": "d8a328043dbd4776a7191d3263907b9bfc62599f",
+        "HEAD_SHA": "8c73142961d80426bb738a647e84beedbba5a940",
+        "RUN_ID": "38684527328-1"
+      }
+    }
+  ]
+}
