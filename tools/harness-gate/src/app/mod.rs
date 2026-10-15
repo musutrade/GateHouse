@@ -20,6 +20,9 @@ pub(crate) fn run() -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
+        Commands::Explain { code, json } => {
+            crate::failure::explain(code, *json).map_err(Into::into)
+        }
         Commands::Findings { action } => crate::findings::run(action).map_err(Into::into),
         Commands::CacheClear { json } => {
             let path = cli

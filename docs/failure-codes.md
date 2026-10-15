@@ -54,3 +54,211 @@ incomplete evidence result.
 | `steps[].retry_class` | Existing lowercase class strings | Keep the field and use one of `cancelled`, `timeout`, `parser`, or `exit`. |
 | `failures[].code` | Uppercase registry value | New failure records must use a registered `FailureCode`; human detail is supplementary. |
 | Unknown code or class | Rejected | Publication fails closed and retains incomplete evidence for inspection. |
+
+## Query an explanation
+
+```sh
+harness-gate explain QUALITY_BLOCKED
+harness-gate explain RESULT_PARSE_FAILURE --json
+```
+
+This command is read-only and does not discover a project, load workflow
+configuration, run checks or apply changes. It accepts the exact uppercase machine
+codes in the registry above; unknown codes return a nonzero exit status. CLI
+`E...` and configuration `HGCFG-...` codes are separate diagnostic families and
+are not yet accepted by this command. JSON output has `code`, `title`, `help` and
+`documentation` fields. Advice is supplementary; retry classes, required checks
+and final status remain unchanged. This is one part of issue #64, not delivery of
+interactive edits or all diagnostic families.
+
+## webhook-destination-denied
+
+**WEBHOOK_DESTINATION_DENIED — URL host or resolved address is outside the egress policy.**
+
+Check the configured destination and egress policy. Use an approved endpoint; do not disable address or redirect checks.
+
+## webhook-redirect-denied
+
+**WEBHOOK_REDIRECT_DENIED — Webhook returned a redirect while redirects are disabled.**
+
+Check the configured destination and egress policy. Use an approved endpoint; do not disable address or redirect checks.
+
+## lease-ownership-uncertain
+
+**LEASE_OWNERSHIP_UNCERTAIN — Lease identity or renewal cannot be proven.**
+
+Inspect the recorded owner and runtime identity. Use cleanup --dry-run to inspect stale leases; retain uncertain resources rather than deleting by name.
+
+## service-setup-failure
+
+**SERVICE_SETUP_FAILURE — Service configuration or startup setup failed.**
+
+Inspect the service setup log and required tools or credentials. Confirm resource ownership before cleanup, then retry the original verification.
+
+## service-lease-failure
+
+**SERVICE_LEASE_FAILURE — A service lease could not be acquired.**
+
+Inspect the service setup log and required tools or credentials. Confirm resource ownership before cleanup, then retry the original verification.
+
+## result-parse-failure
+
+**RESULT_PARSE_FAILURE — Configured test result could not be parsed.**
+
+Inspect the declared result format, output path and parser settings. Ensure the producing test command completed and emitted the required results.
+
+## result-zero
+
+**RESULT_ZERO — A parser found no results.**
+
+Inspect the declared result format, output path and parser settings. Ensure the producing test command completed and emitted the required results.
+
+## result-partial
+
+**RESULT_PARTIAL — A parser found fewer results than required.**
+
+Inspect the declared result format, output path and parser settings. Ensure the producing test command completed and emitted the required results.
+
+## scheduler-failure
+
+**SCHEDULER_FAILURE — The verification scheduler or cleanup failed.**
+
+Inspect the first scheduler or cleanup failure and its step logs. Resolve the underlying error before rerunning verification.
+
+## secret-scan-failure
+
+**SECRET_SCAN_FAILURE — Secret scan found a blocking finding.**
+
+Inspect the finding without printing the secret. Remove exposed credentials from tracked inputs and rotate compromised values before rerunning the scan.
+
+## quality-blocked
+
+**QUALITY_BLOCKED — Generic quality policy failed or trusted workflow inputs/evidence are invalid.**
+
+Inspect the normalized findings and evidence-validation errors. Repair missing or invalid evidence, improve tested coverage or simplify risky code; preserve required gates and thresholds.
+
+## architecture-audit-failure
+
+**ARCHITECTURE_AUDIT_FAILURE — Architecture audit found a blocking violation.**
+
+Inspect the reported rule and source location. Correct the dependency or boundary violation, then rerun the audit.
+
+## step-execution-failure
+
+**STEP_EXECUTION_FAILURE — A configured step could not execute.**
+
+Inspect the step log, command, dependencies and execution environment. Correct the first failure before rerunning; a skipped or cancelled step is not a pass.
+
+## step-skipped
+
+**STEP_SKIPPED — A step was not dispatched because a prerequisite failed.**
+
+Inspect the step log, command, dependencies and execution environment. Correct the first failure before rerunning; a skipped or cancelled step is not a pass.
+
+## output-limit-exceeded
+
+**OUTPUT_LIMIT_EXCEEDED — A bounded process reader exceeded its byte budget.**
+
+Reduce unnecessary command output or correct runaway logging. Inspect the explicit output budget; truncated output cannot establish a successful result.
+
+## reader-deadline-exceeded
+
+**READER_DEADLINE_EXCEEDED — A process reader exceeded its completion deadline.**
+
+Check whether child processes still hold stdout or stderr open. Ensure descendants terminate and close inherited pipes before retrying.
+
+## step-cancelled
+
+**STEP_CANCELLED — The run was cancelled before completion.**
+
+Inspect the step log, command, dependencies and execution environment. Correct the first failure before rerunning; a skipped or cancelled step is not a pass.
+
+## step-timeout
+
+**STEP_TIMEOUT — A step exceeded its timeout.**
+
+Inspect the step log, command, dependencies and execution environment. Correct the first failure before rerunning; a skipped or cancelled step is not a pass.
+
+## step-failed
+
+**STEP_FAILED — A step exited unsuccessfully without a more specific code.**
+
+Inspect the step log, command, dependencies and execution environment. Correct the first failure before rerunning; a skipped or cancelled step is not a pass.
+
+## evidence-path-escape
+
+**EVIDENCE_PATH_ESCAPE — An artifact or step log escapes the invocation root.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-pending
+
+**EVIDENCE_PENDING — Evidence publication has not reached a complete state.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-finalization-failure
+
+**EVIDENCE_FINALIZATION_FAILURE — Evidence finalization failed before the machine result could be published.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-publication-failure
+
+**EVIDENCE_PUBLICATION_FAILURE — A machine or human report could not be published atomically.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-duplicate-path
+
+**EVIDENCE_DUPLICATE_PATH — Multiple artifact bindings claim the same path.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-step-unbound
+
+**EVIDENCE_STEP_UNBOUND — An artifact is not bound to a declared verification step.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-invocation-mismatch
+
+**EVIDENCE_INVOCATION_MISMATCH — An artifact or manifest belongs to another invocation.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-missing
+
+**EVIDENCE_MISSING — A required artifact or manifest entry is missing.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-undeclared-file
+
+**EVIDENCE_UNDECLARED_FILE — A file was found in the evidence root without a declaration.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-symlink
+
+**EVIDENCE_SYMLINK — A symlink was found where a regular evidence file was required.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-invalid-type
+
+**EVIDENCE_INVALID_TYPE — An evidence entry has an unsupported type or shape.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-read-failure
+
+**EVIDENCE_READ_FAILURE — An evidence file could not be read safely.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## evidence-invalid-metadata
+
+**EVIDENCE_INVALID_METADATA — Evidence metadata is malformed or inconsistent.**
+
+Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.

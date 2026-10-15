@@ -43,6 +43,14 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
+    /// Explain a registered machine failure code without loading a project.
+    Explain {
+        /// Stable uppercase code from a machine result, for example QUALITY_BLOCKED.
+        code: String,
+        /// Emit machine-readable explanation JSON.
+        #[arg(long)]
+        json: bool,
+    },
     /// Consume completed reports as diagnostic findings; never evaluate policy.
     Findings {
         #[command(subcommand)]

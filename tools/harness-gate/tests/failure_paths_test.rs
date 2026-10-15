@@ -971,3 +971,48 @@ fn compatibility_dispatch_retains_request_identity_and_shadow_failure() {
     );
     assert!(fs::read_to_string(output).unwrap().contains("root cause"));
 }
+
+#[test]
+fn explain_is_project_independent_and_rejects_unknown_codes() {
+    let root = TempDir::new().unwrap();
+    let binary = env!("CARGO_BIN_EXE_harness-gate");
+    for json in [false, true] {
+        let mut command = Command::new(binary);
+        command.current_dir(root.path()).args([
+            "--config",
+            "missing.toml",
+            "--color",
+            "never",
+            "explain",
+            "QUALITY_BLOCKED",
+        ]);
+        if json {
+            command.arg("--json");
+        }
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{:?}", output);
+        assert!(output.stderr.is_empty());
+        let text = String::from_utf8(output.stdout).unwrap();
+        if json {
+            let value: Value = serde_json::from_str(&text).unwrap();
+            assert_eq!(value["code"], "QUALITY_BLOCKED");
+            assert!(value["help"]
+                .as_str()
+                .unwrap()
+                .contains("preserve required gates"));
+        } else {
+            assert!(text.contains("QUALITY_BLOCKED:") && text.contains("Next steps:"));
+            assert!(!text.contains('\u{1b}'));
+        }
+    }
+    let output = Command::new(binary)
+        .current_dir(root.path())
+        .args(["explain", "UNKNOWN_CODE"])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8(output.stderr)
+        .unwrap()
+        .contains("unknown machine failure code"));
+    assert_eq!(fs::read_dir(root.path()).unwrap().count(), 0);
+}
