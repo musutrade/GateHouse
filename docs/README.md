@@ -22,6 +22,7 @@ was true when recorded; use the current guides below for installation and use.
 | Integrate a project / 接入项目 | [Quality workflow](quality-workflow.md), [reference presets](quality-presets.md) |
 | Configure execution / 执行配置 | [English reference](configuration.md), [中文参考](configuration.zh-CN.md), [schemas](../schema/README.md) |
 | Configure quality / 质量配置 | [Quality configuration](quality-configuration.md), [trusted collectors](quality-collectors.md) |
+| Consume findings and PR annotations / 问题反馈 | [Versioned findings, SARIF and explicit GitHub integration](findings.md) |
 | Diagnose failures / 排查 | [Failure codes](failure-codes.md), [中文修复路径](../README.zh-CN.md#常见修复路径) |
 | Release or contribute / 发布与贡献 | [Release governance](release-governance.md), [contributing](../CONTRIBUTING.md), [engineering policy](engineering-policy.md), [CI guide](quality/ci-topology/README.md) |
 | Route documentation-only CI changes / 文档 CI 分流 | [Documentation-only routing](quality/ci-docs-routing.md) |

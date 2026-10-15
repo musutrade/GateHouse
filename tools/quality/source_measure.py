@@ -22,7 +22,7 @@ from production_coverage import counts, require
 
 SERIES = {"analyzer": "harness-gate-rust-measure/0.3.1", "rule": "mccabe-rust-3/1",
           "instrumentation": "closure-black-box/1", "mapping": "insertions-utf8/1",
-          "selection": "gh32-step-cache/1", "configuration": "compiler-target-production/4"}
+          "selection": "gh33-findings/1", "configuration": "compiler-target-production/4"}
 PREFIX = "{ ::std::hint::black_box(()); "
 SUFFIX = " }"
 HOTSPOTS = {
@@ -64,6 +64,8 @@ SOURCE_FILES = sorted({f"preset/{name}.rs" for name in ("catalog", "composition"
     # local cache storage/identity plus its task/scheduler integration.
     {"verify/cache/mod.rs", "verify/cache/identity.rs", "verify/cache/store.rs",
      "process/task.rs", "verify/scheduler.rs"} |
+    # Issue #33: add the report-only finding boundary; recollect both commits.
+    {f"findings/{name}.rs" for name in ("mod", "model", "history", "sarif")} |
     {f"config/quality/{name}.rs" for name in ("mod", "model", "policy", "validation", "compiler", "collectors", "baseline", "baseline/git")} |
     {f"../quality-core/{name}.rs" for name in (
     "comparison", "cross_component", "evidence", "json", "mod", "model",

@@ -60,7 +60,7 @@ class RiskScopeTests(unittest.TestCase):
         self.assertEqual(SERIES, {
             'analyzer': 'harness-gate-rust-measure/0.3.1', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
-            'selection': 'gh32-step-cache/1', 'configuration': 'compiler-target-production/4',
+            'selection': 'gh33-findings/1', 'configuration': 'compiler-target-production/4',
         })
         self.assertIn('process/command.rs', SOURCE_FILES)
         self.assertIn('process/task.rs', SOURCE_FILES)
@@ -80,6 +80,9 @@ class RiskScopeTests(unittest.TestCase):
                 ('tools/harness-gate/src/project/mod.rs', True),
                 ('tools/harness-gate/src/utils/redaction.rs', True),
                 ('tools/harness-gate/src/scope/detection.rs', True),
+                ('tools/harness-gate/src/findings/tests.rs', True),
+                ('tools/harness-gate/src/findings/mod.rs', True),
+                ('tools/harness-gate/src/findings/unknown.rs', False),
                 ('tools/harness-gate/src/scope/unknown.rs', False),
                 ('tools/harness-gate/src/utils/unknown.rs', False),
                 ('tools/harness-gate/src/process/unknown.rs', False),

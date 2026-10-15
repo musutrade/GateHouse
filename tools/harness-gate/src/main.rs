@@ -6,6 +6,7 @@ mod config;
 mod doctor;
 mod error;
 mod failure;
+mod findings;
 mod net_policy;
 mod plugins;
 mod preset;

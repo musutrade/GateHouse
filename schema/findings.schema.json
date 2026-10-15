@@ -1,0 +1,231 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
+    "Context": {
+      "additionalProperties": false,
+      "properties": {
+        "commit": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "series": {
+          "type": "string"
+        },
+        "tree": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "commit",
+        "repository",
+        "series",
+        "tree"
+      ],
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "anchor": {
+          "type": "string"
+        },
+        "fixes": true,
+        "id": {
+          "type": "string"
+        },
+        "locations": {
+          "items": {
+            "$ref": "#/definitions/Location"
+          },
+          "type": "array"
+        },
+        "message": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "pointer": {
+          "type": "string"
+        },
+        "rule": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "source": {
+          "format": "uint",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "stable": {
+          "type": "boolean"
+        },
+        "tool": {
+          "type": "string"
+        },
+        "tool_version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "anchor",
+        "fixes",
+        "id",
+        "locations",
+        "message",
+        "namespace",
+        "pointer",
+        "rule",
+        "severity",
+        "source",
+        "stable",
+        "tool",
+        "tool_version"
+      ],
+      "type": "object"
+    },
+    "Location": {
+      "additionalProperties": false,
+      "properties": {
+        "end_line": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "line": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "end_line",
+        "line",
+        "path"
+      ],
+      "type": "object"
+    },
+    "Record": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "$ref": "#/definitions/Source"
+        },
+        "finding": {
+          "$ref": "#/definitions/Finding"
+        },
+        "first_seen": {
+          "type": "string"
+        },
+        "last_seen": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence",
+        "finding",
+        "first_seen",
+        "last_seen",
+        "state"
+      ],
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "complete": {
+          "type": "boolean"
+        },
+        "document": true,
+        "format": {
+          "type": "string"
+        },
+        "measurement_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "complete",
+        "document",
+        "format",
+        "measurement_id"
+      ],
+      "type": "object"
+    }
+  },
+  "properties": {
+    "context": {
+      "$ref": "#/definitions/Context"
+    },
+    "core_status": {
+      "type": "string"
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/definitions/Finding"
+      },
+      "type": "array"
+    },
+    "history": {
+      "items": {
+        "$ref": "#/definitions/Record"
+      },
+      "type": "array"
+    },
+    "invocation_id": {
+      "type": "string"
+    },
+    "previous_sha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "report_sha256": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "source_identity": {
+      "type": "string"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/definitions/Source"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "context",
+    "core_status",
+    "diagnostics",
+    "findings",
+    "history",
+    "invocation_id",
+    "report_sha256",
+    "schema_version",
+    "source_identity",
+    "sources"
+  ],
+  "title": "Report",
+  "type": "object"
+}

@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add source-only `harness-gate findings` normalization, pinned diagnostic history,
+  SARIF export and an opt-in GitHub Actions feedback integration. Explicit stable
+  fingerprints retain identity across moves; Core policy and publication authority
+  are unchanged. See [the contract](docs/findings.md).
+
 - Optional version-1 component impact graphs select transitive consumers of
   changed shared components, with pinned graph inputs and full source-chain
   explanations in verification plans. Profiles and step prerequisites retain
