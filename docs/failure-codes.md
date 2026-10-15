@@ -64,9 +64,8 @@ harness-gate explain RESULT_PARSE_FAILURE --json
 
 This command is read-only and does not discover a project, load workflow
 configuration, run checks or apply changes. It accepts the exact uppercase machine
-codes in the registry above; unknown codes return a nonzero exit status. CLI
-`E...` and configuration `HGCFG-...` codes are separate diagnostic families and
-are not yet accepted by this command. JSON output has `code`, `title`, `help` and
+codes in the registry above; unknown codes return a nonzero exit status. The CLI `E...` codes below are also supported. Configuration `HGCFG-...` codes
+remain a separate diagnostic family with inline help and are not yet accepted by this command. JSON output has `code`, `title`, `help` and
 `documentation` fields. Advice is supplementary; retry classes, required checks
 and final status remain unchanged. This is one part of issue #64, not delivery of
 interactive edits or all diagnostic families.
@@ -262,3 +261,92 @@ Inspect the affected artifact binding and invocation identity. Correct the produ
 **EVIDENCE_INVALID_METADATA — Evidence metadata is malformed or inconsistent.**
 
 Inspect the affected artifact binding and invocation identity. Correct the producer or path and generate fresh evidence; do not edit manifests to make stale or missing evidence pass.
+
+## CLI error explanations
+
+Human CLI failures retain their existing code and exit status and now print an
+`explain` command. These codes are not additions to the machine FailureCode registry.
+
+## e1000
+
+**E1000 — Command invocation failed.**
+
+Read the accompanying command error. Check arguments, explicit input paths and required files; use --help for the failing command. No successful verification is implied.
+
+## e1101
+
+**E1101 — Architecture audit configuration failed.**
+
+Inspect the audit configuration diagnostic and fix the named rule or path before rerunning audit.
+
+## e1102
+
+**E1102 — Architecture audit execution failed.**
+
+Inspect the audit error and scan inputs. Correct the execution or access problem before rerunning the required audit.
+
+## e1103
+
+**E1103 — Audit log parsing failed.**
+
+Check the input log path and supported format for parse-logs; retain the original log when correcting the producer.
+
+## e1201
+
+**E1201 — Secret scan configuration failed.**
+
+Correct the named secret-scan configuration error. Keep required scanning enabled and avoid printing secret values.
+
+## e1202
+
+**E1202 — Secret scan failed.**
+
+Inspect the scan error or finding, correct unreadable inputs, and remove or rotate exposed credentials as applicable. Do not bypass required scanning.
+
+## e1301
+
+**E1301 — Git scope detection failed.**
+
+Check the selected repository, Git availability and requested revision or staged snapshot. Retry with the intended scope after correcting the Git error.
+
+## e1302
+
+**E1302 — Scope configuration failed.**
+
+Inspect the scope rule diagnostic and correct invalid patterns, components or configuration before rerunning scope.
+
+## e1303
+
+**E1303 — Changed files do not match scope rules.**
+
+Review each unmatched path and assign it to the correct component with reviewed scope rules. Do not exclude changed files merely to pass verification.
+
+## e1304
+
+**E1304 — Scope report failed.**
+
+Check the report destination and permissions. Correct the write failure and regenerate the scope report.
+
+## e1401
+
+**E1401 — Verification profile or step is invalid.**
+
+Check the configured profile and step identifiers and whether the step belongs to the selected profile. Use verify --plan to inspect the corrected execution plan.
+
+## e1402
+
+**E1402 — Verification was cancelled.**
+
+Identify the cancellation source and confirm cleanup outcomes. Rerun the intended verification after cancellation is resolved; cancelled work is not successful evidence.
+
+## e1403
+
+**E1403 — Verification execution failed.**
+
+Inspect the first execution error and step logs. Correct the command, environment or prerequisite failure, then generate fresh verification evidence.
+
+## e1404
+
+**E1404 — Verification report failed.**
+
+Check the report destination, free space, permissions and evidence finalization error. Preserve incomplete evidence for diagnosis and rerun after correcting the cause.

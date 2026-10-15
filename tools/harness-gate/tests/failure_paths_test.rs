@@ -1016,3 +1016,72 @@ fn explain_is_project_independent_and_rejects_unknown_codes() {
         .contains("unknown machine failure code"));
     assert_eq!(fs::read_dir(root.path()).unwrap().count(), 0);
 }
+
+#[test]
+fn explain_cli_codes_preserves_errors_and_machine_output() {
+    let root = TempDir::new().unwrap();
+    let binary = env!("CARGO_BIN_EXE_harness-gate");
+    for code in [
+        "E1000", "E1101", "E1102", "E1103", "E1201", "E1202", "E1301", "E1302", "E1303", "E1304",
+        "E1401", "E1402", "E1403", "E1404",
+    ] {
+        let output = Command::new(binary)
+            .current_dir(root.path())
+            .args(["explain", code, "--json"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        let value: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(value["code"], code);
+        assert!(!value["title"].as_str().unwrap().is_empty());
+        assert!(!value["help"].as_str().unwrap().is_empty());
+        assert!(value["documentation"]
+            .as_str()
+            .unwrap()
+            .ends_with(&format!("#{}", code.to_ascii_lowercase())));
+    }
+    let output = Command::new(binary)
+        .current_dir(root.path())
+        .args(["--color", "never", "explain", "E9999", "--json"])
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(1));
+    assert!(output.stdout.is_empty());
+    let text = String::from_utf8(output.stderr).unwrap();
+    assert!(text.contains("ERROR [E1000]") && text.contains("help: harness-gate explain E1000"));
+    assert!(!text.contains('\u{1b}'));
+    assert_eq!(fs::read_dir(root.path()).unwrap().count(), 0);
+}
+
+#[test]
+fn configuration_failure_help_preserves_json_diagnostics() {
+    let root = TempDir::new().unwrap();
+    for json in [false, true] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_harness-gate"));
+        command
+            .current_dir(root.path())
+            .arg("--project-root")
+            .arg(root.path())
+            .args(["--color", "never", "config", "check"]);
+        if json {
+            command.args(["--format", "json"]);
+        }
+        let output = command.output().unwrap();
+        assert_eq!(output.status.code(), Some(1));
+        if json {
+            let value: Value = serde_json::from_slice(&output.stdout).unwrap();
+            assert!(value["diagnostics"]
+                .as_array()
+                .is_some_and(|items| !items.is_empty()));
+            assert!(output.stderr.is_empty());
+        } else {
+            let text = String::from_utf8(output.stderr).unwrap();
+            assert!(
+                text.contains("ERROR [E1000]") && text.contains("help: harness-gate explain E1000")
+            );
+            assert!(output.stdout.is_empty());
+        }
+    }
+    assert_eq!(fs::read_dir(root.path()).unwrap().count(), 0);
+}

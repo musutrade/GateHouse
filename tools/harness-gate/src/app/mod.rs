@@ -388,6 +388,7 @@ fn print_human_config_error(error: &anyhow::Error) {
             eprintln!("  help: {}", diagnostic.help);
         }
     }
+    eprintln!("help: harness-gate explain E1000");
     eprintln!("Next: harness-gate init --preset generic");
     eprintln!("Minimal flow.toml shape:");
     eprintln!("{}", crate::config::MINIMAL_CONFIG_SNIPPET);
