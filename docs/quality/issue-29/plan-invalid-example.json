@@ -1,0 +1,21 @@
+{
+  "diagnostics": [
+    {
+      "code": "PLAN_INVALID",
+      "configuration": [
+        {
+          "help": "verify the project root, configuration path, and required security configuration files",
+          "id": "HGCFG-CHECK",
+          "message": "configuration could not be checked",
+          "path": "$",
+          "severity": "error"
+        }
+      ],
+      "message": "unknown or empty verification profile \"missing\""
+    }
+  ],
+  "plan": null,
+  "schema": "verification-plan/v1",
+  "status": "invalid",
+  "verification_result": null
+}

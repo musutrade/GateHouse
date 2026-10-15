@@ -11,9 +11,43 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<str>,
 {
-    let args = command_args(args);
+    let mut args = command_args(args);
+    // Git's optional index refresh and configured filesystem-monitor hooks are
+    // unnecessary for metadata reads, including read-only plan inspection.
+    args.splice(
+        0..0,
+        [
+            "--no-optional-locks".into(),
+            "-c".into(),
+            "core.fsmonitor=false".into(),
+        ],
+    );
     crate::process::capture("git", &args, project_root, GIT_TIMEOUT)
         .with_context(|| format!("run git {}", args.join(" ")))
+}
+
+/// Read object/configuration metadata without partial-clone lazy fetching.
+/// Unsupported Git versions fail explicitly rather than accessing a remote.
+pub(crate) fn capture_readonly<I, S>(root: &Path, args: I) -> Result<CapturedOutput>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    let mut args = command_args(args);
+    args.insert(0, "--no-lazy-fetch".into());
+    capture(root, args)
+}
+
+pub(crate) fn scope_paths<I, S>(root: &Path, args: I, readonly: bool) -> Result<Vec<String>>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    let mut args = command_args(args);
+    if readonly {
+        args.insert(0, "--no-lazy-fetch".into());
+    }
+    null_terminated_paths(root, args)
 }
 
 /// Return NUL-delimited Git path output as UTF-8 repository-relative paths.

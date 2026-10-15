@@ -257,6 +257,36 @@ fn both() {
         with self.assertRaisesRegex(ValueError, 'incompatible base/head target configurations'):
             compare(base, head)
 
+    def test_plan_sources_preserve_instrumentation_across_supported_target_configurations(self):
+        paths = ('app/plan.rs', 'verify/inspection.rs', 'config/scope.rs', 'utils/git.rs', 'scope/mod.rs')
+        for path in paths:
+            self.assertIn(path, SOURCE_FILES)
+            source = (ROOT / 'tools/harness-gate/src' / path).read_text(encoding='utf-8')
+            for target in ('x86_64-unknown-linux-gnu', 'aarch64-apple-darwin', 'x86_64-pc-windows-msvc'):
+                with self.subTest(path=path, target=target):
+                    inventory = self.inventory(source, target)
+                    symbols = inventory['symbols']
+                    self.assertFalse(any(s['test'] for s in symbols))
+                    if path == 'scope/mod.rs':
+                        self.assertEqual(symbols, [])
+                    else:
+                        self.assertTrue(symbols)
+                    transformed, edits = instrument(source, inventory)
+                    reparsed = self.inventory(transformed, target)
+                    self.assertEqual([s['kind'] for s in reparsed['symbols']], [s['kind'] for s in symbols])
+                    self.assertEqual([complexity(s['raw']) for s in reparsed['symbols']],
+                                     [complexity(s['raw']) for s in symbols])
+                    for original, inserted in zip(symbols, reparsed['symbols']):
+                        mapped = byte_span(transformed, inserted['span'])
+                        self.assertEqual((*original_point(mapped[:2], edits), *original_point(mapped[2:], edits)),
+                                         byte_span(source, original['span']))
+
+    def test_plan_selection_refuses_previous_or_mixed_series(self):
+        previous = dict(SERIES, selection='gh315-review-low/1')
+        for old, new in ((previous, SERIES), (SERIES, previous)):
+            with self.assertRaisesRegex(ValueError, 'incompatible base/head series'):
+                compare({'series': old}, {'series': new})
+
     def test_scope_detection_inventory_and_instrumentation(self):
         path = 'scope/detection.rs'
         self.assertIn(path, SOURCE_FILES)
@@ -266,7 +296,7 @@ fn both() {
                 inventory = self.inventory(source, target)
                 symbols = inventory['symbols']
                 self.assertEqual([s['name'] for s in symbols if s['kind'] == 'function'],
-                                 ['detect', 'ensure_git_worktree'])
+                                 ['detect', 'detect_with_access', 'ensure_git_worktree'])
                 self.assertFalse(any(s['test'] for s in symbols))
                 transformed, edits = instrument(source, inventory)
                 reparsed = self.inventory(transformed, target)
@@ -486,7 +516,7 @@ fn both() {
         self.assertEqual(SERIES, {
             'analyzer': 'harness-gate-rust-measure/0.3.1', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
-            'selection': 'gh315-review-low/1', 'configuration': 'compiler-target-production/4',
+            'selection': 'gh29-verify-plan/1', 'configuration': 'compiler-target-production/4',
         })
         path = 'utils/redaction.rs'
         self.assertIn(path, SOURCE_FILES)
@@ -727,7 +757,7 @@ fn main() {
         self.assertEqual(SERIES, {
             'analyzer': 'harness-gate-rust-measure/0.3.1', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
-            'selection': 'gh315-review-low/1', 'configuration': 'compiler-target-production/4',
+            'selection': 'gh29-verify-plan/1', 'configuration': 'compiler-target-production/4',
         })
         for label, source in self.process_command_sources().items():
             for target in ('x86_64-unknown-linux-gnu', 'aarch64-apple-darwin', 'x86_64-pc-windows-msvc'):

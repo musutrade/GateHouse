@@ -12,6 +12,13 @@ pub(crate) struct CompiledScopeRules {
 }
 
 impl CompiledScopeRules {
+    pub(crate) fn matching_rules(&self, path: &str) -> Vec<usize> {
+        self.matchers
+            .iter()
+            .enumerate()
+            .filter_map(|(index, matcher)| matcher.is_match(path).then_some(index))
+            .collect()
+    }
     pub(crate) fn compile(config: &FlowConfig) -> Result<Self> {
         let matchers = config
             .scope
@@ -33,11 +40,9 @@ impl CompiledScopeRules {
         let mut unmatched = Vec::new();
         for path in paths {
             let mut matched = false;
-            for (rule, matcher) in config.scope.rules.iter().zip(&self.matchers) {
-                if matcher.is_match(path) {
-                    matched = true;
-                    components.extend(rule.components.iter().cloned());
-                }
+            for index in self.matching_rules(path) {
+                matched = true;
+                components.extend(config.scope.rules[index].components.iter().cloned());
             }
             if !matched {
                 unmatched.push(path.clone());

@@ -1141,3 +1141,7 @@ DAG，应先在上层编排器中显式安排 invocation 和结果映射。
 迁移退出条件：活动配置均使用显式 required 检查以及已验证兼容的正式 Core/插件组合。
 回滚须同时恢复保留的旧 flow 与兼容的不可变 Core/插件产物；不通过移除检查绕过验证。
 Engineering Policy 的 requiredness、阈值、baseline/debt/ratchet 和发布权威保持不变。
+
+## 只读验证计划
+
+使用 [verify --plan](verification-plan.zh-CN.md) 预览实际 scope/profile 选择、依赖和输入需求，不执行验证。新增 verification-plan/v1 输出不修改配置或政策版本。

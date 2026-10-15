@@ -10,6 +10,7 @@
         "src/app/commands.rs",
         "src/app/mod.rs",
         "src/app/output.rs",
+        "src/app/plan.rs",
         "src/app/quality.rs"
       ]
     },
@@ -194,6 +195,7 @@
     "verify": {
       "blocking": true,
       "files": [
+        "src/verify/inspection.rs",
         "src/verify/mod.rs",
         "src/verify/parser.rs",
         "src/verify/plan.rs",
@@ -379,7 +381,7 @@
     {
       "path": "src/scope/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "15907f6c2103a0d8f67718a8ff1221e04b5852519dec6f6d3d812e29add4cc28"
+      "sha256": "cc89124f4c9efc4f22f8bb640db23d6908317bd50906d2cd38a60e6b0a4df0c4"
     },
     {
       "path": "src/utils/mod.rs",

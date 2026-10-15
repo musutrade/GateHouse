@@ -112,6 +112,12 @@ pub(crate) enum Commands {
         /// Select any profile declared by configured steps.
         #[arg(long, value_name = "PROFILE")]
         profile: Option<String>,
+        /// Explain the execution plan without running gates, commands or collectors.
+        #[arg(long)]
+        plan: bool,
+        /// Emit a versioned plan envelope (requires --plan).
+        #[arg(long, requires = "plan")]
+        json: bool,
     },
     /// Run the staged, fast verification profile used by pre-commit.
     Hook,

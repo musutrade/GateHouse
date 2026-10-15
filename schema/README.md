@@ -11,6 +11,7 @@ editor validation, CI checks, and downstream integrations.
 | [quality.schema.json](quality.schema.json) | Optional .harness-gate/quality.toml quality intent | Generated from the Rust QualityConfig model; configuration version 1. |
 | [flow.schema.json](flow.schema.json) | .harness-gate/flow.toml configuration | Generated from the Rust FlowConfig model; configuration version 2. |
 | [machine-result.schema.json](machine-result.schema.json) | test_result.json verification result | Machine result schema version 1. |
+| [verification-plan.schema.json](verification-plan.schema.json) | Read-only verify --plan --json selection explanation | verification-plan/v1; always has a null verification_result. |
 | [artifact-manifest.schema.json](artifact-manifest.schema.json) | Invocation artifact manifest | Manifest schema version 1. |
 | [artifact-registry.schema.json](artifact-registry.schema.json) | Invocation artifact registry | Registry schema version 1. |
 | [adapter-request.schema.json](adapter-request.schema.json) | Signed out-of-process adapter request | Adapter protocol version 2; result schema version 1. |

@@ -753,3 +753,7 @@ flow and its compatible immutable Core/plugin artifacts together; do not combine
 a migrated flow with v0.4.9 or downgrade checks to bypass validation. Engineering
 Policy requiredness, thresholds, baseline/debt/ratchet and release authority remain
 unchanged.
+
+## Read-only verification plans
+
+Use [verify --plan](verification-plan.md) to inspect the effective scope/profile selection and requirements without executing verification. The additive verification-plan/v1 output does not change configuration or policy versions.

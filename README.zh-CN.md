@@ -274,6 +274,7 @@ Core 构建；已发布的 0.4.8 仍使用旧版内置预设。
 | `harness-gate secrets [--staged] [--json]`                   | 扫描已追踪文件内容中的高置信凭据模式，只输出文件名  |
 | `harness-gate audit [--json]`                                | 执行正则架构规则并生成审计报告        |
 | `harness-gate verify`                                        | 按默认 profile 合并执行和质量门禁，输出一个项目决策 |
+| `harness-gate verify --plan [--json]` | [只读解释选择、排除、依赖和所需输入](docs/verification-plan.zh-CN.md) |
 | `harness-gate verify --profile ci --all`                     | 对全部 components 执行指定 profile    |
 | `harness-gate hook`                                          | 对暂存快照执行 hook profile           |
 | `harness-gate step <id>`                                     | 通过 secrets/audit 后单独运行一个步骤 |

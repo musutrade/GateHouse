@@ -1,0 +1,395 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GateHouse verification-plan/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "verification_result",
+    "plan",
+    "diagnostics"
+  ],
+  "properties": {
+    "schema": {
+      "const": "verification-plan/v1"
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "invalid"
+      ]
+    },
+    "verification_result": {
+      "type": "null"
+    },
+    "plan": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/plan"
+        }
+      ]
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "configuration"
+        ],
+        "properties": {
+          "code": {
+            "const": "PLAN_INVALID"
+          },
+          "message": {
+            "type": "string"
+          },
+          "configuration": {
+            "type": "array"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "planned"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "plan": {
+            "$ref": "#/$defs/plan"
+          },
+          "diagnostics": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "invalid"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "plan": {
+            "type": "null"
+          },
+          "diagnostics": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "ALL_COMPONENTS",
+            "COLLECTOR_NOT_SELECTED",
+            "COLLECTOR_SELECTED",
+            "COMPONENT_AND_PROFILE",
+            "COMPONENT_NOT_AFFECTED",
+            "COMPONENT_NOT_SELECTED",
+            "DEPENDENCY_REQUIRED",
+            "EXPLICIT_COMPONENT",
+            "MANDATORY_BUILTIN_GATE",
+            "PATH_RULE_MATCH",
+            "POLICY_NOT_SELECTED",
+            "POLICY_SELECTED",
+            "PROFILE_DEFAULT",
+            "PROFILE_NOT_INCLUDED",
+            "PROFILE_NOT_SELECTED",
+            "PROFILE_REQUESTED",
+            "QUALITY_NOT_CONFIGURED",
+            "RULE_MATCHED",
+            "RULE_NOT_MATCHED",
+            "SCOPE_RULE_COMPONENT",
+            "SERVICE_NOT_REQUIRED",
+            "SERVICE_REQUIRED",
+            "UNMATCHED_ALL",
+            "UNMATCHED_FALLBACK_ALL",
+            "UNMATCHED_IGNORED"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "explained": {
+      "type": "object",
+      "required": [
+        "selected",
+        "reasons"
+      ],
+      "properties": {
+        "selected": {
+          "type": "boolean"
+        },
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/reason"
+          }
+        }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "required": [
+        "project",
+        "configuration_digest",
+        "scope",
+        "paths",
+        "rules",
+        "components",
+        "profiles",
+        "profile",
+        "nodes",
+        "execution_order",
+        "services",
+        "quality",
+        "runtime_inputs",
+        "notice"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string"
+        },
+        "configuration_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "scope": {
+          "type": "object",
+          "required": [
+            "mode",
+            "changed_files",
+            "components",
+            "unmatched_files"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string"
+            },
+            "changed_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "unmatched_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "rules",
+              "reasons"
+            ],
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "rules": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "reasons": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/reason"
+                }
+              }
+            }
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/explained"
+              },
+              {
+                "required": [
+                  "index",
+                  "patterns",
+                  "components",
+                  "paths"
+                ]
+              }
+            ]
+          }
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/explained"
+              },
+              {
+                "required": [
+                  "id",
+                  "rules"
+                ]
+              }
+            ]
+          }
+        },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/explained"
+              },
+              {
+                "required": [
+                  "id"
+                ]
+              }
+            ]
+          }
+        },
+        "profile": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/explained"
+              },
+              {
+                "required": [
+                  "id",
+                  "kind",
+                  "label",
+                  "component",
+                  "profiles",
+                  "input",
+                  "depends_on",
+                  "required_by",
+                  "services"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "enum": [
+                      "external-step",
+                      "builtin-gate"
+                    ]
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "required_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "execution_order": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/explained"
+              },
+              {
+                "required": [
+                  "id",
+                  "required_by",
+                  "checks"
+                ]
+              }
+            ]
+          }
+        },
+        "quality": {
+          "type": "object",
+          "required": [
+            "enabled"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "runtime_inputs": {
+          "const": "not_validated"
+        },
+        "notice": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -11,6 +11,21 @@ impl Project {
         override_root: Option<PathBuf>,
         config_override: Option<PathBuf>,
     ) -> Result<Self> {
+        Self::discover_with_access(override_root, config_override, false)
+    }
+
+    pub(crate) fn discover_for_plan(
+        override_root: Option<PathBuf>,
+        config_override: Option<PathBuf>,
+    ) -> Result<Self> {
+        Self::discover_with_access(override_root, config_override, true)
+    }
+
+    fn discover_with_access(
+        override_root: Option<PathBuf>,
+        config_override: Option<PathBuf>,
+        readonly: bool,
+    ) -> Result<Self> {
         let root = match override_root {
             Some(root) => canonical_directory(&root)?,
             None => {
@@ -30,7 +45,7 @@ impl Project {
             .to_path_buf();
         let config_bytes = fs::read(&config_path)
             .with_context(|| format!("read workflow config {}", config_path.display()))?;
-        let input = InvocationInput::working_tree(&root, &config_bytes)?;
+        let input = InvocationInput::working_tree(&root, &config_bytes, readonly)?;
         Self::from_input(root, &config_relative, input)
     }
 
@@ -49,6 +64,14 @@ impl Project {
         let mut snapshot = Self::from_input(self.root.clone(), config_relative, input)?;
         snapshot.replay_state_dir = self.replay_state_dir.clone();
         Ok(snapshot)
+    }
+
+    /// Inspect staged configuration using only read-only Git commands. No
+    /// write-tree, checkout filters, report allocation or repository writes.
+    pub(crate) fn staged_plan_snapshot(&self) -> Result<Self> {
+        let relative = self.config_path.strip_prefix(&self.execution_root)?;
+        let input = InvocationInput::inspect_staged(&self.root, relative, &self.input().commit)?;
+        Self::from_input(self.root.clone(), relative, input)
     }
 
     fn from_input(root: PathBuf, config_relative: &Path, input: InvocationInput) -> Result<Self> {

@@ -1,5 +1,6 @@
 mod commands;
 mod output;
+mod plan;
 pub(crate) mod quality;
 
 use crate::cli::{
@@ -103,6 +104,20 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
                 format: ConfigFormat::Json,
             },
         } => check_config_json(cli.project_root.clone(), cli.config.clone()),
+        Commands::Verify {
+            plan: true,
+            scope,
+            components,
+            profile,
+            json,
+        } => plan::run(
+            cli.project_root.clone(),
+            cli.config.clone(),
+            scope.mode(),
+            components,
+            profile.as_deref(),
+            *json,
+        ),
         _ => run_project(
             cli.project_root,
             cli.config,
