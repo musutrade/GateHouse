@@ -27,7 +27,7 @@ offline and Python uses standard-library unittest. Per-command logs and the
 Core binary digest accompany `report.json`; CI uploads no private key.
 
 The Linux Test job checks out GateProbes at immutable reviewed source
-`7ca0d84b1e3c01acae7ff54feb60a11c387143ec` and repeats that acceptance against
+`53c01505bed2ff61dfad1d106abbec2dcd961d05` and repeats that acceptance against
 the Core binary built from the current candidate. This source acceptance does
 not change GateProbes' independently pinned legacy Core release contract.
 Three-platform Core tests and all existing required quality jobs remain enabled.
