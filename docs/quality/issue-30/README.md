@@ -17,7 +17,7 @@ nonregular/oversized inputs and unlisted catalog references. The critical path
 CLI rejection before any invocation directory or verification report exists.
 No existing mandatory path or applicability rule is removed.
 
-Local validation: 527 Rust nextest cases passed, zero skipped; format and
+Local validation: 528 Rust nextest cases passed, zero skipped; format and
 Clippy with warnings denied passed. GateProbes' eight preparation/install tests
 passed. The real two-ecosystem script completed 29 subprocess steps: actual
 operator signing, preparation, planned installation, fresh Rust/Python
@@ -25,6 +25,13 @@ init→config check→doctor→plan→verify, missing-trust/corruption rejection
 upgrade, byte-for-byte rollback and subsequent verification. Rust compiles
 offline and Python uses standard-library unittest. Per-command logs and the
 Core binary digest accompany `report.json`; CI uploads no private key.
+
+A CLI authority regression asserts that plugin-only keys cannot populate adapter
+request trust, adapter-only keys cannot populate plugin trust, and explicit
+selections of both remain independent. The flattened plugin argument uses its
+own parser identity. Full Windows staged verification additionally guards Git
+checkout prefixes against mixed Win32 verbatim/slash paths; the same source is
+analyzed under Linux, macOS and Windows compiler configurations.
 
 The Linux Test job checks out GateProbes at immutable reviewed source
 `53c01505bed2ff61dfad1d106abbec2dcd961d05` and repeats that acceptance against

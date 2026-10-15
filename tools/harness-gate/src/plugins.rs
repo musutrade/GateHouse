@@ -19,7 +19,7 @@ pub(crate) struct HostOptions {
     pub plugin_store: Option<PathBuf>,
     /// Operator-selected Ed25519 public key JSON; never read from project config.
     #[arg(long = "plugin-trusted-key", global = true, value_name = "PATH")]
-    pub trusted_keys: Vec<PathBuf>,
+    pub plugin_trusted_keys: Vec<PathBuf>,
 }
 
 #[derive(Deserialize)]
@@ -149,7 +149,7 @@ fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> Result<T> {
 
 fn keys(options: &HostOptions) -> Result<BTreeMap<String, VerifyingKey>> {
     let mut keys = BTreeMap::new();
-    for path in &options.trusted_keys {
+    for path in &options.plugin_trusted_keys {
         let value: crate::process::TrustedKey = decode(&fs::read(path)?)?;
         let bytes: [u8; 32] = BASE64
             .decode(&value.public_key)?
@@ -302,17 +302,24 @@ fn verify(
     signature: &Attestation,
     keys: &BTreeMap<String, VerifyingKey>,
 ) -> Result<()> {
-    let result = (|| -> Result<()> {
-        anyhow::ensure!(signature.key_id == pin.signer, "lock signer differs");
-        let key = keys
-            .get(&pin.signer)
-            .context("signer is not approved by the host")?;
-        let signature = Signature::from_slice(&BASE64.decode(&signature.signature)?)?;
-        let payload = [DOMAIN, bytes].concat();
-        key.verify_strict(&payload, &signature)?;
-        Ok(())
-    })();
+    let result = verify_payload(bytes, pin, signature, keys);
     result.map_err(|_| error("HGPLUGIN-SIGNATURE", format!("untrusted or invalid signature: {}", pin.name), "have the operator verify signer identity and supply --plugin-trusted-key; project pins never authorize a key"))
+}
+
+fn verify_payload(
+    bytes: &[u8],
+    pin: &Pin,
+    signature: &Attestation,
+    keys: &BTreeMap<String, VerifyingKey>,
+) -> Result<()> {
+    anyhow::ensure!(signature.key_id == pin.signer, "lock signer differs");
+    let key = keys
+        .get(&pin.signer)
+        .context("signer is not approved by the host")?;
+    let signature = Signature::from_slice(&BASE64.decode(&signature.signature)?)?;
+    let payload = [DOMAIN, bytes].concat();
+    key.verify_strict(&payload, &signature)?;
+    Ok(())
 }
 
 fn validate(manifest: &Manifest, pin: &Pin, names: &BTreeMap<String, String>) -> Result<()> {
@@ -408,4 +415,76 @@ fn validate(manifest: &Manifest, pin: &Pin, names: &BTreeMap<String, String>) ->
         require(available, "HGPLUGIN-DEPENDENCY", format!("missing program dependency: {program}"), "install the reviewed toolchain yourself or repair PATH; preflight never runs or replaces it")?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::cli::{AdapterAction, Cli, Commands};
+    use clap::Parser;
+    use std::path::PathBuf;
+
+    #[test]
+    fn plugin_signer_selection_never_authorizes_adapter_requests() {
+        let cli = Cli::try_parse_from([
+            "harness-gate",
+            "--plugin-trusted-key",
+            "plugin-key.json",
+            "adapter",
+            "run",
+            "--request",
+            "request.json",
+        ])
+        .unwrap();
+        let Commands::Adapter {
+            action: AdapterAction::Run { trusted_keys, .. },
+        } = cli.command
+        else {
+            panic!("adapter command")
+        };
+        assert!(
+            trusted_keys.is_empty(),
+            "plugin trust must never become adapter request authority"
+        );
+        assert_eq!(
+            cli.plugins.plugin_trusted_keys,
+            [PathBuf::from("plugin-key.json")]
+        );
+        let cli = Cli::try_parse_from([
+            "harness-gate",
+            "--plugin-trusted-key",
+            "plugin-key.json",
+            "adapter",
+            "run",
+            "--request",
+            "request.json",
+            "--trusted-key",
+            "adapter-key.json",
+        ])
+        .unwrap();
+        let Commands::Adapter {
+            action: AdapterAction::Run { trusted_keys, .. },
+        } = cli.command
+        else {
+            panic!("adapter command")
+        };
+        assert_eq!(trusted_keys, [PathBuf::from("adapter-key.json")]);
+        assert_eq!(
+            cli.plugins.plugin_trusted_keys,
+            [PathBuf::from("plugin-key.json")]
+        );
+        let cli = Cli::try_parse_from([
+            "harness-gate",
+            "adapter",
+            "run",
+            "--request",
+            "request.json",
+            "--trusted-key",
+            "adapter-key.json",
+        ])
+        .unwrap();
+        assert!(
+            cli.plugins.plugin_trusted_keys.is_empty(),
+            "adapter trust must never populate plugin trust"
+        );
+    }
 }

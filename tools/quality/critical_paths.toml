@@ -480,10 +480,10 @@ binary = "plugin_lock_test"
 assertions = ["assert!(!output.status.success());", "HGPLUGIN-SIGNATURE", "reports/invocations"]
 [paths.source]
 path = "src/plugins.rs"
-symbol = "verify"
-start = 299
-end = 316
-sha256 = "aef8a54ce244f5dfcdbb23e549a53ccac72476b2ee0a1698a1ae488665d215f2"
+symbol = "verify_payload"
+start = 309
+end = 323
+sha256 = "90267bd908b1ad9dcda86913ee858351c1a9f54b4e620d7773a981d6ec968cdb"
 
 [paths.test_source]
 path = "tests/plugin_lock_test.rs"
@@ -493,6 +493,6 @@ end = 374
 sha256 = "c7098b24a1309a1f9e1017102bc73fbef2c29ca0e2badb246d1049fb2dced157"
 
 [[paths.probes]]
-line = 312
-column = 9
+line = 321
+column = 5
 text = "key.verify_strict(&payload, &signature)?;"
