@@ -328,7 +328,7 @@ path = "src/verify/parser.rs"
 symbol = "count_json_results"
 start = 302
 end = 332
-sha256 = "75ae046db0b72a7c2d984283c5145e5e8a6e323412745046065de75ed3c2dc9b"
+sha256 = "fd28873545a856af2f5d0ca424ffbfeb392f11dc919a8b23f759f037cfc6e67e"
 
 [paths.test_source]
 path = "tests/critical_paths_test.rs"

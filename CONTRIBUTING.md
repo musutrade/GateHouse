@@ -122,6 +122,9 @@ Closes #123
 
 ### 测试要求
 
+结构化结果解析器的固定种子、输入上限、执行预算和复现命令见
+[有界 mutation 测试](tools/harness-gate/fuzz/README.md)。
+
 - 新功能必须包含单元测试
 - 修复 bug 应包含回归测试
 - Coverage、CRAP、complexity、risk 和 debt/ratchet 的权威要求以 Engineering Policy、已接受 measurement series 和机器门禁为准；不得用此文档中的简化数字覆盖它们
