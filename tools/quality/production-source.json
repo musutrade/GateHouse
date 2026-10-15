@@ -51,6 +51,8 @@
       "blocking": true,
       "files": [
         "src/config/diagnostic.rs",
+        "src/config/suggestions.rs",
+        "src/config/suggestions/apply.rs",
         "src/config/import.rs",
         "src/config/loader.rs",
         "src/config/migration.rs",
@@ -382,7 +384,7 @@
     {
       "path": "src/config/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "6fd939e65de01011b3ed5fa82379acd7138b3ad24ac6650299a797d24f4d94e0"
+      "sha256": "8ebf6d2a8d6fc41eee5c9ff12b898aeab525d13bb5993c18a0154614ecdec7f2"
     },
     {
       "path": "src/doctor/mod.rs",

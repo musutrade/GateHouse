@@ -340,7 +340,9 @@ fn run_config(project: &Project, action: ConfigAction) -> Result<bool, CliError>
             }
             Ok(true)
         }
-        ConfigAction::Migrate { .. } | ConfigAction::Import { .. } => {
+        ConfigAction::Migrate { .. }
+        | ConfigAction::Import { .. }
+        | ConfigAction::Suggest { .. } => {
             unreachable!("handled before project discovery")
         }
     }
