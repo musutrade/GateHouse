@@ -335,7 +335,7 @@ Read the accompanying command error. Check arguments, explicit input paths and r
 
 **E1101 — Architecture audit configuration failed.**
 
-Inspect the audit configuration diagnostic and fix the named rule or path before rerunning audit.
+Inspect the audit configuration read or TOML/schema error. Correct the selected input before rerunning audit; later semantic rule validation can report E1102.
 
 ## e1102
 
@@ -347,7 +347,7 @@ Inspect the audit error and scan inputs. Correct the execution or access problem
 
 **E1103 — Audit log parsing failed.**
 
-Check the input log path and supported format for parse-logs; retain the original log when correcting the producer.
+Inspect input and output I/O, UTF-8 encoding and the bounded-line error. Retain the original log; unrecognized JSON can be skipped or fall back to a raw tail.
 
 ## e1201
 
@@ -371,7 +371,7 @@ Check the selected repository, Git availability and requested revision or staged
 
 **E1302 — Scope configuration failed.**
 
-Inspect the scope rule diagnostic and correct invalid patterns, components or configuration before rerunning scope.
+Inspect impact-input paths, readability and pinned SHA256 freshness. Review or regenerate the graph and its pins together; do not blindly rewrite hashes.
 
 ## e1303
 
@@ -407,7 +407,7 @@ Inspect the first execution error and step logs. Correct the command, environmen
 
 **E1404 — Verification report failed.**
 
-Check the report destination, free space, permissions and evidence finalization error. Preserve incomplete evidence for diagnosis and rerun after correcting the cause.
+Identify the failed reporting stage: local publication, mirroring or notification. Local reports may already be complete; inspect webhook delivery and egress errors as applicable.
 
 ## Configuration explanations
 

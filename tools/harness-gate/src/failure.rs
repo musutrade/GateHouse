@@ -106,19 +106,19 @@ const EXPLANATIONS: &[(&str, &str, &str)] = &[
 
 const CLI_EXPLANATIONS: &[(&str, &str, &str)] = &[
     ("E1000", "Command invocation failed", "Read the accompanying command error. Check arguments, explicit input paths and required files; use --help for the failing command. No successful verification is implied."),
-    ("E1101", "Architecture audit configuration failed", "Inspect the audit configuration diagnostic and fix the named rule or path before rerunning audit."),
+    ("E1101", "Architecture audit configuration failed", "Inspect the audit configuration read or TOML/schema error. Correct the selected input before rerunning audit; later semantic rule validation can report E1102."),
     ("E1102", "Architecture audit execution failed", "Inspect the audit error and scan inputs. Correct the execution or access problem before rerunning the required audit."),
-    ("E1103", "Audit log parsing failed", "Check the input log path and supported format for parse-logs; retain the original log when correcting the producer."),
+    ("E1103", "Audit log parsing failed", "Inspect input and output I/O, UTF-8 encoding and the bounded-line error. Retain the original log; unrecognized JSON can be skipped or fall back to a raw tail."),
     ("E1201", "Secret scan configuration failed", "Correct the named secret-scan configuration error. Keep required scanning enabled and avoid printing secret values."),
     ("E1202", "Secret scan failed", "Inspect the scan error or finding, correct unreadable inputs, and remove or rotate exposed credentials as applicable. Do not bypass required scanning."),
     ("E1301", "Git scope detection failed", "Check the selected repository, Git availability and requested revision or staged snapshot. Retry with the intended scope after correcting the Git error."),
-    ("E1302", "Scope configuration failed", "Inspect the scope rule diagnostic and correct invalid patterns, components or configuration before rerunning scope."),
+    ("E1302", "Scope configuration failed", "Inspect impact-input paths, readability and pinned SHA256 freshness. Review or regenerate the graph and its pins together; do not blindly rewrite hashes."),
     ("E1303", "Changed files do not match scope rules", "Review each unmatched path and assign it to the correct component with reviewed scope rules. Do not exclude changed files merely to pass verification."),
     ("E1304", "Scope report failed", "Check the report destination and permissions. Correct the write failure and regenerate the scope report."),
     ("E1401", "Verification profile or step is invalid", "Check the configured profile and step identifiers and whether the step belongs to the selected profile. Use verify --plan to inspect the corrected execution plan."),
     ("E1402", "Verification was cancelled", "Identify the cancellation source and confirm cleanup outcomes. Rerun the intended verification after cancellation is resolved; cancelled work is not successful evidence."),
     ("E1403", "Verification execution failed", "Inspect the first execution error and step logs. Correct the command, environment or prerequisite failure, then generate fresh verification evidence."),
-    ("E1404", "Verification report failed", "Check the report destination, free space, permissions and evidence finalization error. Preserve incomplete evidence for diagnosis and rerun after correcting the cause."),
+    ("E1404", "Verification report failed", "Identify the failed reporting stage: local publication, mirroring or notification. Local reports may already be complete; inspect webhook delivery and egress errors as applicable."),
 ];
 
 const CONFIG_EXPLANATIONS: &[(&str, &str, &str)] = &[
