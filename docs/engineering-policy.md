@@ -73,6 +73,30 @@ Quality is continuous, but not every measurement belongs in every latency tier.
 - Expensive cross-platform or ecosystem-certification work should be risk-driven by affected capabilities/paths when that can be done without weakening required assurance.
 - CI performance regressions are engineering regressions. New required work must state its expected profile/critical-path cost and avoid unnecessary recollection of equivalent evidence.
 
+### CI cadence amendment
+
+The CI cost reduction separates supplemental trend collection from per-change
+acceptance. This explicitly replaces the previous push-required cadence for the
+three-platform performance baseline and the independent tarpaulin/Codecov series.
+They run daily and on manual dispatch in `quality-trends.yml`, with the same
+platforms, five samples, cold build isolation and measurement commands. Measurement failure
+remains a failed workflow; the existing non-blocking Codecov upload error policy
+remains unchanged. Results never automatically adopt a baseline.
+
+Every full PR and main push still requires fresh production/legacy coverage,
+paired exact risk/CRAP, critical-path evidence, native Linux/macOS/Windows tests,
+and applicable contracts/security/build checks. Thresholds, measurement series,
+requiredness within these gates, debt and release authority are unchanged.
+The tarpaulin series is not substituted with LLVM quality measurements or mixed
+with that series. The tradeoff is explicit: supplemental performance and Codecov
+trend regressions may be discovered at the next daily run rather than every push.
+Release-specific validation remains governed by the release workflow. The existing
+weekly baseline candidate workflow still requires review before baseline adoption.
+
+Rollback restores the two jobs and aggregate dependencies to every full push;
+it does not reset history or adopt a worse measurement baseline. Validate both
+routing and failure propagation when changing this cadence.
+
 ## 7. Project-owned validation and extension boundaries
 
 Application- and repository-specific validation logic belongs to the project being verified. Harness-Gate orchestrates, ingests and decides at generic boundaries; it does not become the implementation home for every API, E2E, integration, smoke, migration, load, generation or framework-specific test system.

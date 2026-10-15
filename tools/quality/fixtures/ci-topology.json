@@ -168,26 +168,6 @@
       "outcome": "Locked native macOS and Windows release builds.",
       "condition": "${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}"
     },
-    "coverage": {
-      "name": "Code Coverage",
-      "check_names": [
-        "Code Coverage"
-      ],
-      "runner_labels": [
-        "ubuntu-latest"
-      ],
-      "events": [
-        "push"
-      ],
-      "required_events": [
-        "push"
-      ],
-      "needs": [
-        "classify"
-      ],
-      "outcome": "Full tarpaulin LLVM coverage; Codecov upload retains fail_ci_if_error: false.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}"
-    },
     "quality-coverage": {
       "name": "Quality Coverage and Critical Paths",
       "check_names": [
@@ -272,30 +252,6 @@
         "classify"
       ],
       "outcome": "Native macOS/Windows structured CLI contracts.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}"
-    },
-    "quality-baseline": {
-      "name": "Quality Performance Baseline",
-      "check_names": [
-        "Quality Performance Baseline (ubuntu-latest)",
-        "Quality Performance Baseline (macos-latest)",
-        "Quality Performance Baseline (windows-latest)"
-      ],
-      "runner_labels": [
-        "ubuntu-latest",
-        "macos-latest",
-        "windows-latest"
-      ],
-      "events": [
-        "push"
-      ],
-      "required_events": [
-        "push"
-      ],
-      "needs": [
-        "classify"
-      ],
-      "outcome": "Native Linux/macOS/Windows benchmark and size candidates, five samples, existing performance policy.",
       "condition": "${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}"
     },
     "docs-consistency": {
@@ -385,11 +341,9 @@
         "clippy",
         "build",
         "build-cross-platform",
-        "coverage",
         "quality-coverage",
         "quality-contracts",
         "quality-contracts-cross-platform",
-        "quality-baseline",
         "docs-consistency",
         "release-contracts",
         "quality-scripts"
@@ -415,5 +369,6 @@
       "outcome": "Pure-docs vs full selection from changed paths; conservative for unknown or empty scope."
     }
   },
-  "observed_pre_change_aggregate_gap": "test-cross-platform ran on both events but was mistakenly in ci_quality.PUSH_ONLY. GH-164 enforces the already specified PR requirement; no scheduling change."
+  "observed_pre_change_aggregate_gap": "test-cross-platform ran on both events but was mistakenly in ci_quality.PUSH_ONLY. GH-164 enforces the already specified PR requirement; no scheduling change.",
+  "cadence_amendment": "docs/engineering-policy.md#ci-cadence-amendment"
 }

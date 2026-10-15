@@ -25,8 +25,7 @@ PARALLEL_RISK = os.environ.get('CI_PARALLEL_RISK', '0') == '1'
 COMMON = ('classify', 'test', 'test-cross-platform', 'security-audit', 'fmt', 'clippy', 'build',
           'quality-coverage', 'quality-contracts', 'docs-consistency', 'release-contracts',
           'quality-scripts')
-PUSH_ONLY = ('build-cross-platform', 'coverage',
-             'quality-contracts-cross-platform', 'quality-baseline')
+PUSH_ONLY = ('build-cross-platform', 'quality-contracts-cross-platform')
 STAGES = ('legacy', 'production', 'risk', 'matrix')
 # Rust integration tests and their Python oracles read these repository trees.
 # Historical reports under docs/quality are not test inputs: archiving that

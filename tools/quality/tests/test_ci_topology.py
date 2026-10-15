@@ -168,6 +168,40 @@ class TopologyTests(unittest.TestCase):
         self.assertIn('RUN_FULL: ${{ needs.classify.outputs.run_full }}', aggregate)
 
 
+class SupplementalCadenceTests(unittest.TestCase):
+    def test_daily_manual_workflow_preserves_measurement_contract(self):
+        workflow = (ROOT / '.github/workflows/quality-trends.yml').read_text()
+        self.assertIn("cron: '43 2 * * *'", workflow)
+        self.assertIn('  workflow_dispatch:', workflow)
+        self.assertNotRegex(workflow, re.compile(r'^  (push|pull_request):', re.M))
+        self.assertIn('contents: read', workflow)
+        self.assertNotRegex(workflow, r'contents: write|pull-requests: write|continue-on-error:')
+        self.assertIn('os: [ubuntu-latest, macos-latest, windows-latest]', workflow)
+        self.assertIn('python tools/quality/benchmarks.py --output target/quality/benchmarks.json --samples 5', workflow)
+        self.assertIn('cargo tarpaulin --manifest-path tools/harness-gate/Cargo.toml --locked --engine llvm --timeout 300 --out Xml', workflow)
+        self.assertEqual(workflow.count("cache-target: 'false'"), 2)
+        self.assertIn("profiles: 'release-small,test;default;cold'", workflow)
+        self.assertIn('fail-fast: false', workflow)
+        self.assertNotRegex(workflow, r'\|\|\s*true|baseline_delivery.py|create-pull-request')
+        jobs = re.split(r'^  ([a-z][a-z-]+):\n', workflow.split('jobs:\n')[1], flags=re.M)
+        jobs = dict(zip(jobs[1::2], jobs[2::2]))
+        self.assertEqual(set(jobs), {'coverage', 'quality-baseline'})
+        for body in jobs.values():
+            # Capture must run and fail normally; only artifact retention uses always().
+            before_upload = body.split('      - name: Upload')[0]
+            self.assertNotIn('if:', before_upload)
+
+    def test_supplemental_jobs_are_separate_from_per_change_required_checks(self):
+        previous = json.loads((ROOT / 'tools/quality/fixtures/ci-topology-pre-cadence.json').read_text())
+        self.assertEqual(set(previous['jobs']) - set(CONTRACT['jobs']), {'coverage', 'quality-baseline'})
+        for name, row in CONTRACT['jobs'].items():
+            if name != 'quality-required':
+                self.assertEqual(row, previous['jobs'][name])
+        self.assertEqual(set(previous['jobs']['quality-required']['needs']) -
+                         set(CONTRACT['jobs']['quality-required']['needs']),
+                         {'coverage', 'quality-baseline'})
+
+
 class ClassifyAndSelectionTests(unittest.TestCase):
     def test_pure_document_paths_exclude_inputs_fixtures_and_protocols(self):
         for path in ('README.md', 'CHANGELOG.md', 'docs/development.md', 'docs/adr/0001-x.md',

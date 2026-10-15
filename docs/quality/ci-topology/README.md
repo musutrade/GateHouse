@@ -185,3 +185,19 @@ provides no implicit authorization to reduce platform assurance.
 Product workflow integration (`quality.toml`, verify collector orchestration,
 baseline UX and preset quality integration) remains the independent
 `integrate-generic-quality-into-project-workflow` follow-up.
+
+## Supplemental measurement cadence
+
+The [CI cadence amendment](../../engineering-policy.md#ci-cadence-amendment)
+moves the independent tarpaulin/Codecov collection and three-platform performance
+baseline from every main push to daily/manual `Quality Trends`. Commands, platforms,
+five samples and cold measurement state are preserved. These jobs no longer hold
+`Required Quality Aggregate` open; their failures remain visible in their own
+workflow and must be investigated. This delays supplemental regression detection
+until the next capture. No baseline is adopted automatically.
+
+Fresh coverage, paired risk/CRAP and isolated critical paths remain required on
+PRs and main pushes, as do native tests on all three platforms. The historical
+push-only tables above describe the prior cadence; this section supersedes their
+coverage/benchmark scheduling entries. Weekly baseline-review PR delivery remains
+separate and unchanged.
