@@ -158,6 +158,10 @@ fn node_explanations(
         } else {
             reason("DEPENDENCY_REQUIRED", "Dependency closure includes this step even outside its component or profile.")
         };
+        let mut reasons = vec![explanation];
+        if node.step.is_some_and(|s| s.cache.is_some()) {
+            reasons.push(reason("CACHE_RUNTIME_NOT_VALIDATED", "Local reuse is declared; host trust, actual inputs and output integrity are checked only during execution."));
+        }
         json!({"id": node.id, "label": node.label, "selected": true,
             "kind": if node.kind == PlanNodeKind::External { "external-step" } else { "builtin-gate" },
             "component": node.step.map(|s| &s.component),
@@ -165,7 +169,7 @@ fn node_explanations(
             "input": node.step.map(|s| s.input),
             "depends_on": node.depends_on, "required_by": required_by,
             "services": node.step.map(|s| &s.services),
-            "reasons": [explanation]})
+            "reasons": reasons})
     }).collect::<Vec<_>>();
     for step in &project.config.steps {
         if plan.nodes.iter().any(|n| n.id == step.id) {

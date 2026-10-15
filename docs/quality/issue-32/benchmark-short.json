@@ -1,0 +1,262 @@
+{
+  "schema": "step-cache-synthetic-benchmark/v1",
+  "series": "linux-deterministic-cpu-100m/v1",
+  "adopted_baseline": false,
+  "host": {
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+    "cpu_count": 8
+  },
+  "binary_sha256": "bafaf5a27fd8d89bb807fa9d9902bfe5f0a60b58a41d1fb3f3366c8892cd3ff1",
+  "fixture_sha256": "ab4409f9d4c9e1fe78fd9846b4a91bac09be88c3363217b0d5be9510bc00f3d4",
+  "toolchain": [
+    {
+      "path": "/mnt/dev-ssd/dev-tmp/gatehouse-step-cache-benchmark-cs1t01oo/project/checker",
+      "sha256": "13c83b2fdee7fa0da4d0b378df7f13d3e87762830c5c5bb39b389f361deb0473"
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+      "sha256": "bda779ea9e9ad234f60315477d7cfd0bdde861cd8ddd9df8cdaf62f18c4cec14"
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+      "sha256": "85e64f97e348786a8fb4d9f3d52fec289e2fb86bba20f0731dfe61990525e0f7"
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "sha256": "9d339ecb409578d6a5d587e6c537a8f9589b8a13fefba30d167433a4b5758bee"
+    }
+  ],
+  "core_version": "harness-gate 0.5.0",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1",
+  "cold": {
+    "wall_ms": 1883.275,
+    "command_or_hit_ms": 318,
+    "cache": {
+      "key": "090c96f75a2529c900c0f94d8e1c1970cb993c9aa103df7ffaf48a8acf9223e7",
+      "lookup_ms": 277,
+      "reason": "CACHE_ENTRY_ABSENT",
+      "saved_execution_ms": 0,
+      "schema_version": "step-cache/v1",
+      "source_invocation": null,
+      "status": "MISS",
+      "store_ms": 235
+    }
+  },
+  "samples": [
+    {
+      "uncached": {
+        "wall_ms": 1379.135,
+        "command_or_hit_ms": 318,
+        "cache": {
+          "key": null,
+          "lookup_ms": 0,
+          "reason": "CACHE_HOST_DISABLED",
+          "saved_execution_ms": 0,
+          "schema_version": "step-cache/v1",
+          "source_invocation": null,
+          "status": "BYPASS",
+          "store_ms": 0
+        }
+      },
+      "hit": {
+        "wall_ms": 1533.736,
+        "command_or_hit_ms": 474,
+        "cache": {
+          "key": "090c96f75a2529c900c0f94d8e1c1970cb993c9aa103df7ffaf48a8acf9223e7",
+          "lookup_ms": 474,
+          "reason": "CACHE_INPUTS_AND_OUTPUTS_VERIFIED",
+          "saved_execution_ms": 318,
+          "schema_version": "step-cache/v1",
+          "source_invocation": "inv-1792033890-210470725-2691964-1",
+          "status": "HIT",
+          "store_ms": 0
+        }
+      }
+    },
+    {
+      "uncached": {
+        "wall_ms": 1380.823,
+        "command_or_hit_ms": 318,
+        "cache": {
+          "key": null,
+          "lookup_ms": 0,
+          "reason": "CACHE_HOST_DISABLED",
+          "saved_execution_ms": 0,
+          "schema_version": "step-cache/v1",
+          "source_invocation": null,
+          "status": "BYPASS",
+          "store_ms": 0
+        }
+      },
+      "hit": {
+        "wall_ms": 1650.843,
+        "command_or_hit_ms": 443,
+        "cache": {
+          "key": "090c96f75a2529c900c0f94d8e1c1970cb993c9aa103df7ffaf48a8acf9223e7",
+          "lookup_ms": 443,
+          "reason": "CACHE_INPUTS_AND_OUTPUTS_VERIFIED",
+          "saved_execution_ms": 318,
+          "schema_version": "step-cache/v1",
+          "source_invocation": "inv-1792033890-210470725-2691964-1",
+          "status": "HIT",
+          "store_ms": 0
+        }
+      }
+    },
+    {
+      "uncached": {
+        "wall_ms": 1382.213,
+        "command_or_hit_ms": 319,
+        "cache": {
+          "key": null,
+          "lookup_ms": 0,
+          "reason": "CACHE_HOST_DISABLED",
+          "saved_execution_ms": 0,
+          "schema_version": "step-cache/v1",
+          "source_invocation": null,
+          "status": "BYPASS",
+          "store_ms": 0
+        }
+      },
+      "hit": {
+        "wall_ms": 1558.356,
+        "command_or_hit_ms": 467,
+        "cache": {
+          "key": "090c96f75a2529c900c0f94d8e1c1970cb993c9aa103df7ffaf48a8acf9223e7",
+          "lookup_ms": 467,
+          "reason": "CACHE_INPUTS_AND_OUTPUTS_VERIFIED",
+          "saved_execution_ms": 318,
+          "schema_version": "step-cache/v1",
+          "source_invocation": "inv-1792033890-210470725-2691964-1",
+          "status": "HIT",
+          "store_ms": 0
+        }
+      }
+    },
+    {
+      "uncached": {
+        "wall_ms": 1388.291,
+        "command_or_hit_ms": 319,
+        "cache": {
+          "key": null,
+          "lookup_ms": 0,
+          "reason": "CACHE_HOST_DISABLED",
+          "saved_execution_ms": 0,
+          "schema_version": "step-cache/v1",
+          "source_invocation": null,
+          "status": "BYPASS",
+          "store_ms": 0
+        }
+      },
+      "hit": {
+        "wall_ms": 1532.4,
+        "command_or_hit_ms": 469,
+        "cache": {
+          "key": "090c96f75a2529c900c0f94d8e1c1970cb993c9aa103df7ffaf48a8acf9223e7",
+          "lookup_ms": 469,
+          "reason": "CACHE_INPUTS_AND_OUTPUTS_VERIFIED",
+          "saved_execution_ms": 318,
+          "schema_version": "step-cache/v1",
+          "source_invocation": "inv-1792033890-210470725-2691964-1",
+          "status": "HIT",
+          "store_ms": 0
+        }
+      }
+    },
+    {
+      "uncached": {
+        "wall_ms": 1375.343,
+        "command_or_hit_ms": 319,
+        "cache": {
+          "key": null,
+          "lookup_ms": 0,
+          "reason": "CACHE_HOST_DISABLED",
+          "saved_execution_ms": 0,
+          "schema_version": "step-cache/v1",
+          "source_invocation": null,
+          "status": "BYPASS",
+          "store_ms": 0
+        }
+      },
+      "hit": {
+        "wall_ms": 1518.471,
+        "command_or_hit_ms": 464,
+        "cache": {
+          "key": "090c96f75a2529c900c0f94d8e1c1970cb993c9aa103df7ffaf48a8acf9223e7",
+          "lookup_ms": 464,
+          "reason": "CACHE_INPUTS_AND_OUTPUTS_VERIFIED",
+          "saved_execution_ms": 318,
+          "schema_version": "step-cache/v1",
+          "source_invocation": "inv-1792033890-210470725-2691964-1",
+          "status": "HIT",
+          "store_ms": 0
+        }
+      }
+    },
+    {
+      "uncached": {
+        "wall_ms": 1394.934,
+        "command_or_hit_ms": 319,
+        "cache": {
+          "key": null,
+          "lookup_ms": 0,
+          "reason": "CACHE_HOST_DISABLED",
+          "saved_execution_ms": 0,
+          "schema_version": "step-cache/v1",
+          "source_invocation": null,
+          "status": "BYPASS",
+          "store_ms": 0
+        }
+      },
+      "hit": {
+        "wall_ms": 1528.549,
+        "command_or_hit_ms": 462,
+        "cache": {
+          "key": "090c96f75a2529c900c0f94d8e1c1970cb993c9aa103df7ffaf48a8acf9223e7",
+          "lookup_ms": 462,
+          "reason": "CACHE_INPUTS_AND_OUTPUTS_VERIFIED",
+          "saved_execution_ms": 318,
+          "schema_version": "step-cache/v1",
+          "source_invocation": "inv-1792033890-210470725-2691964-1",
+          "status": "HIT",
+          "store_ms": 0
+        }
+      }
+    },
+    {
+      "uncached": {
+        "wall_ms": 1395.99,
+        "command_or_hit_ms": 319,
+        "cache": {
+          "key": null,
+          "lookup_ms": 0,
+          "reason": "CACHE_HOST_DISABLED",
+          "saved_execution_ms": 0,
+          "schema_version": "step-cache/v1",
+          "source_invocation": null,
+          "status": "BYPASS",
+          "store_ms": 0
+        }
+      },
+      "hit": {
+        "wall_ms": 1519.01,
+        "command_or_hit_ms": 459,
+        "cache": {
+          "key": "090c96f75a2529c900c0f94d8e1c1970cb993c9aa103df7ffaf48a8acf9223e7",
+          "lookup_ms": 459,
+          "reason": "CACHE_INPUTS_AND_OUTPUTS_VERIFIED",
+          "saved_execution_ms": 318,
+          "schema_version": "step-cache/v1",
+          "source_invocation": "inv-1792033890-210470725-2691964-1",
+          "status": "HIT",
+          "store_ms": 0
+        }
+      }
+    }
+  ],
+  "median": {
+    "uncached_wall_ms": 1382.213,
+    "hit_wall_ms": 1532.4,
+    "reduction_percent": -10.87
+  }
+}

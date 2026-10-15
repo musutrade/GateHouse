@@ -30,6 +30,7 @@ pub struct Task {
     log: PathBuf,
     runner: Option<RunnerExecution>,
     isolation_state: Option<PathBuf>,
+    clear_environment: bool,
 }
 
 /// Records the declared runner contract and the effective inputs used for a task.
@@ -64,6 +65,8 @@ pub struct RunnerExecution {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct TaskResult {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache: Option<CacheEvidence>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub step_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -150,6 +153,7 @@ impl Task {
             log,
             runner: None,
             isolation_state: None,
+            clear_environment: false,
         }
     }
 
@@ -174,6 +178,11 @@ impl Task {
         self
     }
 
+    pub fn clear_environment(mut self) -> Self {
+        self.clear_environment = true;
+        self
+    }
+
     pub fn timeout(mut self, seconds: u64) -> Self {
         self.timeout = Duration::from_secs(seconds);
         self
@@ -189,6 +198,21 @@ impl Task {
         self
     }
 
+    fn command(&self) -> Command {
+        let mut command = Command::new(&self.program);
+        if self.clear_environment {
+            command.env_clear();
+        }
+        command
+            .args(&self.args)
+            .current_dir(&self.cwd)
+            .envs(self.env.iter().map(|(key, value)| (key, value)));
+        for name in &self.env_remove {
+            command.env_remove(name);
+        }
+        command
+    }
+
     pub fn run(self) -> Result<TaskResult> {
         let _state_guard = self
             .isolation_state
@@ -198,14 +222,7 @@ impl Task {
             .with_context(|| format!("create log {}", self.log.display()))?;
         let started = Instant::now();
         let started_at = chrono::Utc::now().to_rfc3339();
-        let mut command = Command::new(&self.program);
-        command
-            .args(&self.args)
-            .current_dir(&self.cwd)
-            .envs(self.env);
-        for name in self.env_remove {
-            command.env_remove(name);
-        }
+        let mut command = self.command();
         command.stdout(Stdio::piped()).stderr(Stdio::piped());
         isolate_process_tree(&mut command);
         let mut child = command
@@ -227,37 +244,13 @@ impl Task {
         let (stderr_handle, stderr_receiver) =
             spawn_limited_reader(stderr, DEFAULT_CAPTURE_BYTES, Arc::clone(&stderr_overflow));
 
-        let mut output_limited = None;
-        let mut wait_round = 0_u32;
-        let (status, timed_out, was_cancelled) = loop {
-            if let Some(status) = child.try_wait()? {
-                if stdout_overflow.load(Ordering::Acquire) {
-                    output_limited = Some("stdout");
-                } else if stderr_overflow.load(Ordering::Acquire) {
-                    output_limited = Some("stderr");
-                }
-                break (status, false, false);
-            }
-            if stdout_overflow.load(Ordering::Acquire) {
-                output_limited = Some("stdout");
-                break (terminate(&mut child)?, false, false);
-            }
-            if stderr_overflow.load(Ordering::Acquire) {
-                output_limited = Some("stderr");
-                break (terminate(&mut child)?, false, false);
-            }
-            if cancelled() {
-                break (terminate(&mut child)?, false, true);
-            }
-            if started.elapsed() >= self.timeout {
-                break (terminate(&mut child)?, true, false);
-            }
-            // `Child::try_wait` is the portable API available on all supported
-            // platforms. Keep the initial delay short for fast commands, then
-            // back off to cap wakeups while preserving timeout/cancellation checks.
-            std::thread::sleep(wait_backoff(wait_round));
-            wait_round = wait_round.saturating_add(1);
-        };
+        let (status, timed_out, was_cancelled, output_limited) = wait_for_exit(
+            &mut child,
+            &stdout_overflow,
+            &stderr_overflow,
+            self.timeout,
+            started,
+        )?;
 
         let reader_started = Instant::now();
         let mut reader_error = None;
@@ -295,40 +288,8 @@ impl Task {
             }
         };
 
-        let mut failure_code = None;
-        let mut limit_detail = None;
-        let combined_bytes = stdout.bytes.len().saturating_add(stderr.bytes.len());
-        if let Some(stream) = output_limited
-            .or_else(|| {
-                stdout
-                    .truncated
-                    .then_some("stdout")
-                    .or_else(|| stderr.truncated.then_some("stderr"))
-            })
-            .or_else(|| {
-                (combined_bytes > DEFAULT_CAPTURE_BYTES.saturating_mul(2)).then_some("combined")
-            })
-        {
-            failure_code = Some(FailureCode::OutputLimitExceeded);
-            let captured = if stream == "stdout" {
-                stdout.bytes.len()
-            } else if stream == "stderr" {
-                stderr.bytes.len()
-            } else {
-                combined_bytes
-            };
-            limit_detail = Some(format!(
-                "{stream} output exceeded {} bytes (captured {captured} bytes; truncated=true)",
-                if stream == "combined" {
-                    DEFAULT_CAPTURE_BYTES.saturating_mul(2)
-                } else {
-                    DEFAULT_CAPTURE_BYTES
-                }
-            ));
-        } else if let Some(error) = reader_error {
-            failure_code = Some(FailureCode::ReaderDeadlineExceeded);
-            limit_detail = Some(error);
-        }
+        let (failure_code, limit_detail) =
+            output_failure(&stdout, &stderr, output_limited, reader_error);
 
         log_file.write_all(&stdout.bytes)?;
         if !stdout.bytes.is_empty() && !stderr.bytes.is_empty() {
@@ -376,8 +337,95 @@ impl Task {
             waived: false,
             waiver: None,
             runner: self.runner,
+            cache: None,
         })
     }
+}
+
+fn wait_for_exit(
+    child: &mut std::process::Child,
+    stdout_overflow: &AtomicBool,
+    stderr_overflow: &AtomicBool,
+    timeout: Duration,
+    started: Instant,
+) -> Result<(std::process::ExitStatus, bool, bool, Option<&'static str>)> {
+    let mut output_limited = None;
+    let mut wait_round = 0_u32;
+    let (status, timed_out, was_cancelled) = loop {
+        if let Some(status) = child.try_wait()? {
+            if stdout_overflow.load(Ordering::Acquire) {
+                output_limited = Some("stdout");
+            } else if stderr_overflow.load(Ordering::Acquire) {
+                output_limited = Some("stderr");
+            }
+            break (status, false, false);
+        }
+        if stdout_overflow.load(Ordering::Acquire) {
+            output_limited = Some("stdout");
+            break (terminate(child)?, false, false);
+        }
+        if stderr_overflow.load(Ordering::Acquire) {
+            output_limited = Some("stderr");
+            break (terminate(child)?, false, false);
+        }
+        if cancelled() {
+            break (terminate(child)?, false, true);
+        }
+        if started.elapsed() >= timeout {
+            break (terminate(child)?, true, false);
+        }
+        // `Child::try_wait` is the portable API available on all supported
+        // platforms. Keep the initial delay short for fast commands, then
+        // back off to cap wakeups while preserving timeout/cancellation checks.
+        std::thread::sleep(wait_backoff(wait_round));
+        wait_round = wait_round.saturating_add(1);
+    };
+
+    Ok((status, timed_out, was_cancelled, output_limited))
+}
+
+fn output_failure(
+    stdout: &LimitedOutput,
+    stderr: &LimitedOutput,
+    output_limited: Option<&str>,
+    reader_error: Option<String>,
+) -> (Option<FailureCode>, Option<String>) {
+    let mut failure_code = None;
+    let mut limit_detail = None;
+    let combined_bytes = stdout.bytes.len().saturating_add(stderr.bytes.len());
+    if let Some(stream) = output_limited
+        .or_else(|| {
+            stdout
+                .truncated
+                .then_some("stdout")
+                .or_else(|| stderr.truncated.then_some("stderr"))
+        })
+        .or_else(|| {
+            (combined_bytes > DEFAULT_CAPTURE_BYTES.saturating_mul(2)).then_some("combined")
+        })
+    {
+        failure_code = Some(FailureCode::OutputLimitExceeded);
+        let captured = if stream == "stdout" {
+            stdout.bytes.len()
+        } else if stream == "stderr" {
+            stderr.bytes.len()
+        } else {
+            combined_bytes
+        };
+        limit_detail = Some(format!(
+            "{stream} output exceeded {} bytes (captured {captured} bytes; truncated=true)",
+            if stream == "combined" {
+                DEFAULT_CAPTURE_BYTES.saturating_mul(2)
+            } else {
+                DEFAULT_CAPTURE_BYTES
+            }
+        ));
+    } else if let Some(error) = reader_error {
+        failure_code = Some(FailureCode::ReaderDeadlineExceeded);
+        limit_detail = Some(error);
+    }
+
+    (failure_code, limit_detail)
 }
 
 fn wait_backoff(round: u32) -> Duration {
@@ -414,4 +462,17 @@ mod tests {
         assert_eq!(wait_backoff(4), Duration::from_millis(80));
         assert_eq!(wait_backoff(u32::MAX), Duration::from_millis(80));
     }
+}
+
+/// Versioned cache explanation; never a project verification decision.
+#[derive(Debug, Clone, Serialize)]
+pub struct CacheEvidence {
+    pub schema_version: &'static str,
+    pub status: String,
+    pub reason: String,
+    pub key: Option<String>,
+    pub source_invocation: Option<String>,
+    pub lookup_ms: u128,
+    pub saved_execution_ms: u128,
+    pub store_ms: u128,
 }

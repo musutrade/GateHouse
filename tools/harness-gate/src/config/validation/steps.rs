@@ -1,5 +1,6 @@
 use super::super::model::{
-    RunnerConfig, ServiceConfig, StepConfig, StepKind, TestIsolation, RUNNER_CONFIG_VERSION,
+    RunnerConfig, ServiceConfig, StepCacheConfig, StepConfig, StepKind, TestIsolation,
+    RUNNER_CONFIG_VERSION,
 };
 use super::primitives::{validate_env_name, validate_id, validate_program};
 use super::FlowConfig;
@@ -7,6 +8,27 @@ use super::{ConfigIssueKind, ValidationIssue};
 use anyhow::{bail, Result};
 use std::collections::HashSet;
 use std::path::Path;
+
+pub(super) fn validate_step_with_cache(config: &FlowConfig, step: &StepConfig) -> Result<()> {
+    validate_step_cache(config, step)?;
+    validate_step(config, step)
+}
+
+pub(super) fn validate_step_with_cache_diagnostic(
+    config: &FlowConfig,
+    step: &StepConfig,
+    index: usize,
+) -> std::result::Result<(), ValidationIssue> {
+    let base = format!("steps[{index}]");
+    validate_step_cache(config, step).map_err(|error| {
+        ValidationIssue::new(
+            ConfigIssueKind::InvalidField,
+            format!("{base}.cache"),
+            error.to_string(),
+        )
+    })?;
+    validate_step_diagnostic(config, step, index)
+}
 
 pub(super) fn validate_step(config: &FlowConfig, step: &StepConfig) -> Result<()> {
     validate_id("verification step id", &step.id)?;
@@ -522,6 +544,94 @@ fn validate_builtin_gate(step: &StepConfig) -> Result<()> {
     Ok(())
 }
 
+pub(crate) fn validate_step_cache(config: &FlowConfig, step: &StepConfig) -> Result<()> {
+    let Some(cache) = &step.cache else {
+        return Ok(());
+    };
+    if cache.version != 1 || !cache.deterministic || !cache.side_effect_free {
+        bail!("step cache requires version=1, deterministic=true and side_effect_free=true");
+    }
+    validate_cache_command(config, step)?;
+    let executable = &cache.toolchain[0];
+    if Path::new(executable).file_name().and_then(|v| v.to_str()) != Some(step.program.as_str()) {
+        bail!("first cache toolchain file must pin the declared bare program name");
+    }
+    validate_cache_files(config, cache)?;
+    validate_cache_toolchain(cache)?;
+    validate_cache_environment(cache)?;
+    Ok(())
+}
+
+fn validate_cache_command(config: &FlowConfig, step: &StepConfig) -> Result<()> {
+    let cache = step.cache.as_ref().expect("cache declaration");
+    if step.kind == Some(StepKind::BuiltinGate)
+        || step.input != crate::config::StepInput::Snapshot
+        || !step.services.is_empty()
+        || step.runner.is_some()
+        || config.execution.retries.contains_key(&step.id)
+        || config.execution.shards.contains_key(&step.id)
+    {
+        bail!("step cache requires an external snapshot command without services, runners, retries or shards");
+    }
+    if cache.toolchain.is_empty() || step.args.iter().any(|arg| arg.contains("{reports}")) {
+        bail!("step cache requires explicit toolchain files and no invocation report arguments");
+    }
+    Ok(())
+}
+
+fn validate_cache_files(config: &FlowConfig, cache: &StepCacheConfig) -> Result<()> {
+    if cache.inputs.len() + cache.outputs.len() + cache.toolchain.len() + cache.environment.len()
+        > 256
+    {
+        bail!("step cache declarations exceed 256 entries");
+    }
+    let mut inputs = HashSet::new();
+    for name in &cache.inputs {
+        validate_cache_path(name)?;
+        if Path::new(name).starts_with(config.paths.reports.trim_start_matches("./")) {
+            bail!("cache inputs must not be invocation evidence");
+        }
+        if !inputs.insert(name) {
+            bail!("duplicate cache input");
+        }
+    }
+    let mut outputs = HashSet::new();
+    for name in &cache.outputs {
+        validate_cache_path(name)?;
+        if inputs.contains(name) || !outputs.insert(name) {
+            bail!("cache inputs and outputs must be distinct files");
+        }
+        if Path::new(name).starts_with(config.paths.reports.trim_start_matches("./")) {
+            bail!("cache output must not be invocation evidence");
+        }
+    }
+    Ok(())
+}
+
+fn validate_cache_toolchain(cache: &StepCacheConfig) -> Result<()> {
+    for tool in &cache.toolchain {
+        if !Path::new(tool).is_absolute()
+            || Path::new(tool)
+                .components()
+                .any(|p| matches!(p, std::path::Component::ParentDir))
+        {
+            bail!("cache toolchain must name absolute files without traversal");
+        }
+    }
+    Ok(())
+}
+
+fn validate_cache_environment(cache: &StepCacheConfig) -> Result<()> {
+    let mut environment = HashSet::new();
+    for name in &cache.environment {
+        validate_env_name("cache environment", name)?;
+        if !environment.insert(name) {
+            bail!("duplicate cache environment");
+        }
+    }
+    Ok(())
+}
+
 fn validate_runner(config: &FlowConfig, step: &StepConfig, runner: &RunnerConfig) -> Result<()> {
     if runner.version != RUNNER_CONFIG_VERSION {
         bail!(
@@ -656,4 +766,20 @@ fn is_shell(program: &str) -> bool {
 fn is_shell_command_argument(arg: &str) -> bool {
     arg.starts_with("--command")
         || (arg.starts_with('-') && !arg.starts_with("--") && arg[1..].contains('c'))
+}
+
+pub(crate) fn validate_cache_path(value: &str) -> Result<()> {
+    anyhow::ensure!(
+        !value.is_empty()
+            && !value.contains(['\\', ':', '{', '}'])
+            && Path::new(value)
+                .components()
+                .all(|v| matches!(v, std::path::Component::Normal(_)))
+            && !value
+                .split('/')
+                .any(|v| v.is_empty() || v == "." || v == "..")
+            && !value.split('/').any(|v| v.eq_ignore_ascii_case(".git")),
+        "cache path must be a plain repository-relative file"
+    );
+    Ok(())
 }

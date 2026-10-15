@@ -58,6 +58,8 @@ struct MachineResult {
 
 #[derive(Debug, Serialize)]
 struct MachineStep {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    cache: Option<crate::process::CacheEvidence>,
     step_id: Option<String>,
     invocation_id: Option<String>,
     label: String,
@@ -321,6 +323,7 @@ fn machine_result(report: &VerificationReport) -> MachineResult {
                     .collect()
             };
             MachineStep {
+                cache: step.cache.clone(),
                 step_id: step.step_id.clone(),
                 invocation_id: step.invocation_id.clone(),
                 label: step.label.clone(),
@@ -2651,6 +2654,7 @@ mod tests {
                 waived: false,
                 waiver: None,
                 runner: None,
+                cache: None,
             }],
             skipped_steps: vec![],
             passed: false,

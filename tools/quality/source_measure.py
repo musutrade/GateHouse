@@ -22,7 +22,7 @@ from production_coverage import counts, require
 
 SERIES = {"analyzer": "harness-gate-rust-measure/0.3.1", "rule": "mccabe-rust-3/1",
           "instrumentation": "closure-black-box/1", "mapping": "insertions-utf8/1",
-          "selection": "gh31-component-impact/1", "configuration": "compiler-target-production/4"}
+          "selection": "gh32-step-cache/1", "configuration": "compiler-target-production/4"}
 PREFIX = "{ ::std::hint::black_box(()); "
 SUFFIX = " }"
 HOTSPOTS = {
@@ -60,6 +60,10 @@ SOURCE_FILES = sorted({f"preset/{name}.rs" for name in ("catalog", "composition"
     # Issue #31: preserve the existing inventory and recollect both commits
     # with the explicit component graph boundary under a distinct selection.
     {"config/impact.rs"} |
+    # Issue #32: preserve prior sources and freshly measure both commits with
+    # local cache storage/identity plus its task/scheduler integration.
+    {"verify/cache/mod.rs", "verify/cache/identity.rs", "verify/cache/store.rs",
+     "process/task.rs", "verify/scheduler.rs"} |
     {f"config/quality/{name}.rs" for name in ("mod", "model", "policy", "validation", "compiler", "collectors", "baseline", "baseline/git")} |
     {f"../quality-core/{name}.rs" for name in (
     "comparison", "cross_component", "evidence", "json", "mod", "model",

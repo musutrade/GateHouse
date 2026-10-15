@@ -1,3 +1,4 @@
+pub(crate) mod cache;
 pub(crate) mod inspection;
 pub(crate) mod parser;
 mod plan;
@@ -257,6 +258,8 @@ fn run_selected(
     }
     let mut invocation_project = project.clone();
     invocation_project.reports = invocation.root.clone();
+    invocation_project.cache_profile =
+        Some(only_step.map_or_else(|| profile.to_string(), |id| format!("step:{id}:{profile}")));
     let mut progress = Progress::new(plan.nodes.len());
     scope.write_reports(&invocation_project)?;
     let quality_inputs = if only_step.is_none() {
@@ -467,6 +470,7 @@ fn merge_results(
             waived: false,
             waiver: None,
             runner: None,
+            cache: None,
         });
     }
     (steps, skipped_steps)

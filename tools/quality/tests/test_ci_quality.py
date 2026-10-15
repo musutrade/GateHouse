@@ -60,10 +60,10 @@ class RiskScopeTests(unittest.TestCase):
         self.assertEqual(SERIES, {
             'analyzer': 'harness-gate-rust-measure/0.3.1', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
-            'selection': 'gh31-component-impact/1', 'configuration': 'compiler-target-production/4',
+            'selection': 'gh32-step-cache/1', 'configuration': 'compiler-target-production/4',
         })
         self.assertIn('process/command.rs', SOURCE_FILES)
-        self.assertNotIn('process/task.rs', SOURCE_FILES)
+        self.assertIn('process/task.rs', SOURCE_FILES)
         self.assertIn('process/capture.rs', SOURCE_FILES)
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')},
                          {'service/lease.rs', 'service/mod.rs', 'service/report_directory.rs'})

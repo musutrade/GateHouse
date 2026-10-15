@@ -15,10 +15,10 @@ binary = "harness-gate"
 assertions = ["assert!(!result.passed);", "assert!(result.timed_out);", "assert!(log.is_file());"]
 [paths.source]
 path = "src/process/task.rs"
-symbol = "run"
-start = 192
-end = 380
-sha256 = "bbb7f1d90d741f41c6cb761f1433f4cb7c8ca168fac0082bd366a9377ae149a8"
+symbol = "wait_for_exit"
+start = 345
+end = 385
+sha256 = "0a70658fdf895d10a92f98f92b1ecf3c5ea760174c632f6f769cd0d012282605"
 
 [paths.test_source]
 path = "src/process/tests.rs"
@@ -28,9 +28,9 @@ end = 46
 sha256 = "e4df8a76ec42569ad1fc189b51f132f8977efb2eaeeb915a64c5d76405b2691e"
 
 [[paths.probes]]
-line = 253
+line = 375
 column = 24
-text = "break (terminate(&mut child)?, true, false);"
+text = "break (terminate(child)?, true, false);"
 
 [[paths]]
 id = "process.cancellation"
@@ -46,10 +46,10 @@ binary = "failure_paths_test"
 assertions = ["\"cancelled child still alive\"", "assert_eq!(json[\"passed\"], false);", "assert_sealed_evidence(&json);"]
 [paths.source]
 path = "src/process/task.rs"
-symbol = "run"
-start = 192
-end = 380
-sha256 = "bbb7f1d90d741f41c6cb761f1433f4cb7c8ca168fac0082bd366a9377ae149a8"
+symbol = "wait_for_exit"
+start = 345
+end = 385
+sha256 = "0a70658fdf895d10a92f98f92b1ecf3c5ea760174c632f6f769cd0d012282605"
 
 [paths.test_source]
 path = "tests/failure_paths_test.rs"
@@ -59,9 +59,9 @@ end = 817
 sha256 = "7c80c2cf89dd4c88b700ccaa90be7cd6901ee1037421347cb9c78768221b0fa1"
 
 [[paths.probes]]
-line = 250
+line = 372
 column = 24
-text = "break (terminate(&mut child)?, false, true);"
+text = "break (terminate(child)?, false, true);"
 
 [[paths]]
 id = "process.tree_cleanup"
@@ -77,10 +77,10 @@ binary = "harness-gate"
 assertions = ["assert!(result.timed_out, \"fixture must reach the timeout boundary\");", "assert!(!result.passed);", "marker.with_extension(\"ready\").exists(),", "fs::write(marker.with_extension(\"probe\"), b\"probe\").expect(\"send liveness probe\");", "assert!(!marker.exists(), \"timed-out task left a descendant process\");"]
 [paths.source]
 path = "src/process/task.rs"
-symbol = "run"
-start = 192
-end = 380
-sha256 = "bbb7f1d90d741f41c6cb761f1433f4cb7c8ca168fac0082bd366a9377ae149a8"
+symbol = "wait_for_exit"
+start = 345
+end = 385
+sha256 = "0a70658fdf895d10a92f98f92b1ecf3c5ea760174c632f6f769cd0d012282605"
 
 [paths.test_source]
 path = "src/process/tests.rs"
@@ -90,9 +90,9 @@ end = 220
 sha256 = "e4df8a76ec42569ad1fc189b51f132f8977efb2eaeeb915a64c5d76405b2691e"
 
 [[paths.probes]]
-line = 253
+line = 375
 column = 24
-text = "break (terminate(&mut child)?, true, false);"
+text = "break (terminate(child)?, true, false);"
 
 [[paths]]
 id = "step.non_zero"
@@ -108,20 +108,20 @@ binary = "harness-gate"
 assertions = ["assert!(!step.passed);", "assert_eq!(step.detail.as_deref(), Some(\"exit code 7\"));", "assert!(PathBuf::from(&step.log).is_file());"]
 [paths.source]
 path = "src/verify/steps.rs"
-symbol = "execute"
-start = 398
-end = 463
-sha256 = "908258e45a615fcfd575b9fec0f13fb705409942a278dcc55d3428f1e1212ec1"
+symbol = "evaluate_result"
+start = 430
+end = 497
+sha256 = "1b899b8c428d0897fba736cb781a484844375b4282f1fa9b8f684802064f2e04"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "non_zero_step_retains_exit_detail_and_log"
-start = 301
-end = 318
-sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
+start = 302
+end = 319
+sha256 = "0182da342cea761b1a2f6b007abf9406b1a479f36167d6f778ccd37278289ff3"
 
 [[paths.probes]]
-line = 462
+line = 496
 column = 5
 text = "Ok(result)"
 
@@ -139,20 +139,20 @@ binary = "harness-gate"
 assertions = ["assert!(!report.passed);"]
 [paths.source]
 path = "src/verify/steps.rs"
-symbol = "run_configured_step"
-start = 18
-end = 131
-sha256 = "908258e45a615fcfd575b9fec0f13fb705409942a278dcc55d3428f1e1212ec1"
+symbol = "run_uncached_step"
+start = 26
+end = 141
+sha256 = "1b899b8c428d0897fba736cb781a484844375b4282f1fa9b8f684802064f2e04"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "service_failure_does_not_skip_unrelated_steps"
 start = 45
 end = 88
-sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
+sha256 = "0182da342cea761b1a2f6b007abf9406b1a479f36167d6f778ccd37278289ff3"
 
 [[paths.probes]]
-line = 70
+line = 79
 column = 21
 text = "failure_code: Some(FailureCode::ServiceLeaseFailure),"
 
@@ -171,19 +171,19 @@ assertions = ["assert!(!report.passed);", "step.label == \"secret scan\" && !ste
 [paths.source]
 path = "src/verify/mod.rs"
 symbol = "run_selected"
-start = 205
-end = 365
-sha256 = "4612c49c5d26f1e238c76c449f2b3ba1ada286f02c9cea8c5b68d8330dde8d77"
+start = 206
+end = 368
+sha256 = "03797ae2743d524361e2988fdbb9b85d8465210189030c96c0057a7a3382a84e"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "gate_failure_writes_compatible_report"
-start = 552
-end = 574
-sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
+start = 553
+end = 575
+sha256 = "0182da342cea761b1a2f6b007abf9406b1a479f36167d6f778ccd37278289ff3"
 
 [[paths.probes]]
-line = 347
+line = 350
 column = 5
 text = "publish_report(&report, &invocation_project, project, &mut progress)?;"
 
@@ -232,20 +232,20 @@ binary = "harness-gate"
 assertions = ["assert!(!step.passed);", "Some(\"RESULT_ZERO\")"]
 [paths.source]
 path = "src/verify/steps.rs"
-symbol = "execute"
-start = 398
-end = 463
-sha256 = "908258e45a615fcfd575b9fec0f13fb705409942a278dcc55d3428f1e1212ec1"
+symbol = "evaluate_result"
+start = 430
+end = 497
+sha256 = "1b899b8c428d0897fba736cb781a484844375b4282f1fa9b8f684802064f2e04"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "parser_failure_marks_step_failed"
-start = 347
-end = 380
-sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
+start = 348
+end = 381
+sha256 = "0182da342cea761b1a2f6b007abf9406b1a479f36167d6f778ccd37278289ff3"
 
 [[paths.probes]]
-line = 445
+line = 479
 column = 21
 text = "FailureCode::ResultZero"
 
@@ -264,19 +264,19 @@ assertions = ["assert!(matches!(error, VerifyError::Report { .. }));"]
 [paths.source]
 path = "src/verify/report.rs"
 symbol = "write_report_file"
-start = 1222
-end = 1232
-sha256 = "fd6753bf466c923e995f469b13155470aae44d98f6552f51dd92378238e29549"
+start = 1225
+end = 1235
+sha256 = "b55d7dfc15ab8c7f2b88caf9a7741393e33f0be3e1198b554868485b1c058b30"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "report_write_failure_returns_error"
-start = 604
-end = 613
-sha256 = "7814fc130149d5d7f4b0f834262a9d96c73d1f1913e42616e9127e46bbcf4667"
+start = 605
+end = 614
+sha256 = "0182da342cea761b1a2f6b007abf9406b1a479f36167d6f778ccd37278289ff3"
 
 [[paths.probes]]
-line = 1223
+line = 1226
 column = 5
 text = "report_target(project, relative)?;"
 
@@ -295,19 +295,19 @@ assertions = ["assert!(verify_manifest(&invocation_project).is_err());"]
 [paths.source]
 path = "src/verify/report.rs"
 symbol = "verify_manifest_without_result"
-start = 1801
-end = 1888
-sha256 = "fd6753bf466c923e995f469b13155470aae44d98f6552f51dd92378238e29549"
+start = 1804
+end = 1891
+sha256 = "b55d7dfc15ab8c7f2b88caf9a7741393e33f0be3e1198b554868485b1c058b30"
 
 [paths.test_source]
 path = "src/verify/report.rs"
 symbol = "manifest_records_digests_and_detects_tampering"
-start = 3416
-end = 3469
-sha256 = "fd6753bf466c923e995f469b13155470aae44d98f6552f51dd92378238e29549"
+start = 3420
+end = 3473
+sha256 = "b55d7dfc15ab8c7f2b88caf9a7741393e33f0be3e1198b554868485b1c058b30"
 
 [[paths.probes]]
-line = 1884
+line = 1887
 column = 13
 text = "bail!(\"artifact digest or size changed: {}\", artifact.path);"
 
@@ -421,7 +421,7 @@ path = "src/process/replay.rs"
 symbol = "claim"
 start = 103
 end = 128
-sha256 = "f7a87b71cebaaf93e80a3927cce9fa0fc7592f4f0c206076458359eaaf6f7ff6"
+sha256 = "db82cdbe717cccc1cd72917b0c42b277135de57bb408601cacd34b8e0982fe38"
 
 [paths.test_source]
 path = "src/process/adapter.rs"

@@ -109,6 +109,7 @@
         "code": {
           "enum": [
             "ALL_COMPONENTS",
+            "CACHE_RUNTIME_NOT_VALIDATED",
             "COLLECTOR_NOT_SELECTED",
             "COLLECTOR_SELECTED",
             "COMPONENT_AND_PROFILE",

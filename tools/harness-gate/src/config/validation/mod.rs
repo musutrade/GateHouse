@@ -1294,12 +1294,12 @@ fn validate_step_dependencies(config: &FlowConfig) -> Result<()> {
 }
 
 mod primitives;
-mod steps;
+pub(crate) mod steps;
 
 use primitives::{
     validate_env_name, validate_id, validate_image, validate_program, validate_repo_path,
 };
-use steps::{validate_arguments, validate_step, validate_template};
+use steps::{validate_arguments, validate_step_with_cache as validate_step, validate_template};
 
 fn validate_version(version: u32) -> Result<()> {
     if version != CONFIG_VERSION {
@@ -1517,7 +1517,7 @@ fn collect_step_field_diagnostics(
     source_map: &SourceMap,
     diagnostics: &mut ConfigDiagnostics,
 ) {
-    if let Err(issue) = steps::validate_step_diagnostic(config, step, index) {
+    if let Err(issue) = steps::validate_step_with_cache_diagnostic(config, step, index) {
         diagnostics.push(ConfigDiagnostic {
             id: issue.kind.id().into(),
             severity: DiagnosticSeverity::Error,

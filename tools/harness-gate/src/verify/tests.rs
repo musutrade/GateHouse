@@ -217,6 +217,7 @@ fn failed_external_node_blocks_only_its_descendants() {
         gate_type: None,
         runner: None,
         input: crate::config::StepInput::Snapshot,
+        cache: None,
     });
 
     let report = run(&project, ScopeResult::all(&project), "full", false)

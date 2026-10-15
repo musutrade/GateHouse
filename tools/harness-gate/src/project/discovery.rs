@@ -63,6 +63,7 @@ impl Project {
             InvocationInput::materialize_staged(&self.root, config_relative, &self.input().commit)?;
         let mut snapshot = Self::from_input(self.root.clone(), config_relative, input)?;
         snapshot.replay_state_dir = self.replay_state_dir.clone();
+        snapshot.step_cache_dir = self.step_cache_dir.clone();
         snapshot.plugins = self.plugins.clone();
         Ok(snapshot)
     }
@@ -165,6 +166,8 @@ impl Project {
         let project = Self {
             root,
             replay_state_dir: None,
+            step_cache_dir: None,
+            cache_profile: None,
             plugins: crate::plugins::HostOptions::default(),
             execution_root,
             invocation_input: input,
