@@ -1,4 +1,5 @@
 //! Read-only repair plans bound to original TOML bytes, not display locations.
+mod apply;
 use super::diagnostic::{ConfigCheckReport, ConfigDiagnostic, ConfigDiagnostics};
 use super::{read_config_source, resolve_config_path, FlowConfig};
 use anyhow::{Context, Result};
@@ -55,7 +56,16 @@ struct StepView {
     log: Option<toml::Spanned<String>>,
 }
 
-pub(crate) fn run(root: &Path, override_path: Option<PathBuf>, json: bool) -> Result<bool> {
+pub(crate) fn run(
+    root: &Path,
+    override_path: Option<PathBuf>,
+    json: bool,
+    apply: bool,
+) -> Result<bool> {
+    if apply {
+        anyhow::ensure!(!json, "interactive repairs cannot use JSON output");
+        return self::apply::run(root, override_path);
+    }
     let root = root.canonicalize().context("resolve project root")?;
     let path = resolve_config_path(&root, override_path)?;
     let source = read_config_source(&path)?;

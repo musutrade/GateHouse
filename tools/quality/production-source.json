@@ -52,6 +52,7 @@
       "files": [
         "src/config/diagnostic.rs",
         "src/config/suggestions.rs",
+        "src/config/suggestions/apply.rs",
         "src/config/import.rs",
         "src/config/loader.rs",
         "src/config/migration.rs",

@@ -249,3 +249,164 @@ fn environment_dependent_peer_log_withholds_a_collision_prone_edit() {
     assert_eq!(suggestion["applicability"], "manual");
     assert!(suggestion.get("edit").is_none());
 }
+
+#[test]
+fn interactive_application_rejects_pipes_and_json_without_writes() {
+    let directory = TempDir::new().unwrap();
+    let source = FLOW.replace("probe.log", "bad/path.log");
+    let path = directory.path().join("flow.toml");
+    fs::write(&path, &source).unwrap();
+    for format in ["human", "json"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+            .arg("--project-root")
+            .arg(directory.path())
+            .args([
+                "--config",
+                "flow.toml",
+                "config",
+                "suggest",
+                "--apply",
+                "--format",
+                format,
+            ])
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        let error = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            error.contains(if format == "json" {
+                "interactive repairs cannot use JSON output"
+            } else {
+                "interactive repairs require terminal input and stderr"
+            }),
+            "{error}"
+        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), source);
+        assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 1);
+    }
+}
+
+#[cfg(unix)]
+mod terminal {
+    use super::*;
+    use std::io::{Read, Write};
+    use std::os::fd::{AsRawFd, FromRawFd};
+    use std::process::{Child, Stdio};
+    use std::time::{Duration, Instant};
+
+    struct ChildGuard(Child);
+    impl Drop for ChildGuard {
+        fn drop(&mut self) {
+            let _ = self.0.kill();
+            let _ = self.0.wait();
+        }
+    }
+
+    fn terminals() -> (fs::File, fs::File) {
+        let (mut master, mut slave) = (-1, -1);
+        // SAFETY: openpty receives valid writable descriptor pointers; optional
+        // name, terminal settings and window size pointers are null defaults.
+        let result = unsafe {
+            libc::openpty(
+                &mut master,
+                &mut slave,
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+            )
+        };
+        assert_eq!(result, 0, "{}", std::io::Error::last_os_error());
+        // SAFETY: successful openpty returned two owned, distinct descriptors.
+        let (master, slave) =
+            unsafe { (fs::File::from_raw_fd(master), fs::File::from_raw_fd(slave)) };
+        // SAFETY: master is a live owned descriptor and F_SETFL takes an integer
+        // flag argument. Nonblocking reads keep the test deadline enforceable.
+        assert_ne!(
+            unsafe { libc::fcntl(master.as_raw_fd(), libc::F_SETFL, libc::O_NONBLOCK) },
+            -1
+        );
+        (master, slave)
+    }
+
+    fn exercise(answer: &[u8], concurrent_edit: bool, expect_success: bool) {
+        let directory = TempDir::new().unwrap();
+        let path = directory.path().join("flow.toml");
+        let source = FLOW.replace("probe.log", "bad/path.log");
+        fs::write(&path, &source).unwrap();
+        let (mut master, slave) = terminals();
+        let mut child = ChildGuard(
+            Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+                .arg("--project-root")
+                .arg(directory.path())
+                .args(["--config", "flow.toml", "config", "suggest", "--apply"])
+                .stdin(slave.try_clone().unwrap())
+                .stderr(slave)
+                .stdout(Stdio::null())
+                .spawn()
+                .unwrap(),
+        );
+        let deadline = Instant::now() + Duration::from_secs(15);
+        let mut output = Vec::new();
+        let mut sent = false;
+        let status = loop {
+            assert!(
+                Instant::now() < deadline,
+                "terminal repair timed out: {}",
+                String::from_utf8_lossy(&output)
+            );
+            let mut buffer = [0; 4096];
+            match master.read(&mut buffer) {
+                Ok(count) => output.extend_from_slice(&buffer[..count]),
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {}
+                // Linux PTYs report EIO after the last slave closes.
+                Err(error) if error.raw_os_error() == Some(libc::EIO) => {}
+                Err(error) => panic!("terminal read: {error}"),
+            }
+            if !sent
+                && String::from_utf8_lossy(&output).contains("Apply these candidate edits? [y/N]")
+            {
+                assert!(String::from_utf8_lossy(&output).contains("step-0-repaired.log"));
+                if concurrent_edit {
+                    fs::write(&path, format!("{source}\n# concurrent edit\n")).unwrap();
+                }
+                master.write_all(answer).unwrap();
+                sent = true;
+            }
+            if let Some(status) = child.0.try_wait().unwrap() {
+                break status;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        };
+        assert!(sent, "{}", String::from_utf8_lossy(&output));
+        assert_eq!(
+            status.success(),
+            expect_success,
+            "{}",
+            String::from_utf8_lossy(&output)
+        );
+        let expected = if concurrent_edit {
+            format!("{source}\n# concurrent edit\n")
+        } else if expect_success {
+            source.replace("bad/path.log", "step-0-repaired.log")
+        } else {
+            source
+        };
+        assert_eq!(fs::read_to_string(path).unwrap(), expected);
+        assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn confirms_real_terminal_repair() {
+        exercise(b"yes\n", false, true);
+    }
+
+    #[test]
+    fn empty_terminal_confirmation_declines() {
+        exercise(b"\n", false, false);
+    }
+
+    #[test]
+    fn terminal_repair_refuses_concurrent_file_changes() {
+        exercise(b"yes\n", true, false);
+    }
+}

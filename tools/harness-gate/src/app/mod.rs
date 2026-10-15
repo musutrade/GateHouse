@@ -50,13 +50,7 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             force,
             plugin,
         } => run_init(&cli, preset, *force, plugin.as_deref()),
-        Commands::Presets => {
-            let directory = cli.presets_dir.clone().or_else(|| {
-                std::env::var_os("HARNESS_GATE_PRESETS_DIR").map(std::path::PathBuf::from)
-            });
-            crate::preset::print_presets(directory.as_deref())?;
-            Ok(true)
-        }
+        Commands::Presets => run_presets(cli.presets_dir.clone()),
         Commands::Adapter { action } => run_adapter(action, cli.replay_state_dir.as_deref()),
         Commands::Compat {
             action: CompatAction::Compare { old, new, output },
@@ -79,13 +73,8 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             action: SchemaAction::Export { output, quality },
         } => export_schema(standalone_root(&cli)?, output.as_deref(), *quality),
         Commands::Config {
-            action: ConfigAction::Suggest { format },
-        } => crate::config::suggestions::run(
-            &standalone_root(&cli)?,
-            cli.config.clone(),
-            matches!(format, ConfigFormat::Json),
-        )
-        .map_err(Into::into),
+            action: ConfigAction::Suggest { format, apply },
+        } => run_suggestions(&cli, format, *apply),
         Commands::Config {
             action:
                 ConfigAction::Import {
@@ -147,6 +136,23 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             cli.step_cache_dir,
         ),
     }
+}
+
+fn run_suggestions(cli: &Cli, format: &ConfigFormat, apply: bool) -> Result<bool, CliError> {
+    crate::config::suggestions::run(
+        &standalone_root(cli)?,
+        cli.config.clone(),
+        matches!(format, ConfigFormat::Json),
+        apply,
+    )
+    .map_err(Into::into)
+}
+
+fn run_presets(directory: Option<std::path::PathBuf>) -> Result<bool, CliError> {
+    let directory = directory
+        .or_else(|| std::env::var_os("HARNESS_GATE_PRESETS_DIR").map(std::path::PathBuf::from));
+    crate::preset::print_presets(directory.as_deref())?;
+    Ok(true)
 }
 
 fn run_plugin_check(

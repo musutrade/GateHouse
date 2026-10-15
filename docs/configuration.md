@@ -113,6 +113,22 @@ Only the proposed replacement is included, not the original value. No candidate
 is automatically applied. Revalidate intended repairs with `config check` before
 running the workflow. Thresholds, requiredness and policy authority are unchanged.
 
+### Interactive candidate application
+
+Add `--apply` to `config suggest` in a terminal to preview candidate replacement
+values and explicitly confirm with `y` or `yes`. Empty input declines. This mode
+requires terminal input and stderr, and does not accept `--format json`.
+It applies only generated log-name candidates; manual suggestions remain manual.
+The complete candidate must pass workflow validation before confirmation and
+again before publication. Full project validation still requires `config check`.
+
+Application checks the original file contents again before replacing the file,
+rejects symbolic links within the project path, and preserves file permissions.
+A sibling `.FILENAME.repair.lock` prevents concurrent cooperating repair commands;
+it is removed on normal exit. Inspect an abandoned lock before removing it.
+Do not edit the configuration concurrently: the lock does not coordinate external
+editors, and content checks are not a filesystem compare-and-swap operation.
+
 ## 2. Editor schema association
 
 schema/flow.schema.json is the local schema for .harness-gate/flow.toml.

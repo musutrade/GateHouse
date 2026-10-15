@@ -268,6 +268,9 @@ pub(crate) enum ConfigAction {
     Suggest {
         #[arg(long, value_enum, default_value_t = ConfigFormat::Human)]
         format: ConfigFormat,
+        /// Preview candidate edits and ask before applying them from a terminal.
+        #[arg(long)]
+        apply: bool,
     },
     /// Import compatible Arc-Flow v2 execution configuration and a parity report.
     Import {
