@@ -1085,3 +1085,63 @@ fn configuration_failure_help_preserves_json_diagnostics() {
     }
     assert_eq!(fs::read_dir(root.path()).unwrap().count(), 0);
 }
+
+#[test]
+fn runtime_failure_terminal_context_matches_sealed_report() {
+    for (color, service_failure) in [("never", false), ("always", false), ("never", true)] {
+        let root = fixture();
+        fs::write(
+            root.path().join("probe.sh"),
+            "echo expected-failure\nexit 7\n",
+        )
+        .unwrap();
+        if service_failure {
+            let flow = FLOW.replace("timeout_secs = 20", "timeout_secs = 20\nservices = ['fixture']")
+                + "\n[services.fixture]\nkind = 'environment'\nsource_env = 'GH93_SERVICE_ENV'\ninject_env = 'PROBE_SERVICE'\n";
+            fs::write(root.path().join(".harness-gate/flow.toml"), flow).unwrap();
+        }
+        let output = command(root.path())
+            .args(["--color", color, "verify", "--all"])
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let json = report(root.path());
+        assert_eq!(json["passed"], false);
+        assert_sealed_evidence(&json);
+        let step = json["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|step| step["step_id"] == "probe")
+            .unwrap();
+        let code = if service_failure {
+            "SERVICE_LEASE_FAILURE"
+        } else {
+            "STEP_FAILED"
+        };
+        assert_eq!(step["failure_code"], code);
+        assert!(stderr.contains(&format!("error[{code}]")), "{stderr}");
+        assert!(stderr.contains("= context: probe"), "{stderr}");
+        assert!(
+            stderr.contains(&format!("harness-gate explain {code}")),
+            "{stderr}"
+        );
+        assert_eq!(stderr.contains('\u{1b}'), color == "always");
+        assert_eq!(step["passed"], false);
+        assert!(step.get("terminal_diagnostics").is_none());
+    }
+}
+
+#[test]
+fn successful_verification_does_not_emit_failure_diagnostics() {
+    let root = fixture();
+    let output = success(
+        command(root.path())
+            .args(["--color", "never", "verify", "--all"])
+            .output()
+            .unwrap(),
+    );
+    assert!(!String::from_utf8_lossy(&output.stderr).contains("error["));
+    assert_eq!(report(root.path())["passed"], true);
+}

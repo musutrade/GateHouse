@@ -297,7 +297,7 @@
         }
       },
       "status": "pass",
-      "stderr": "",
+      "stderr": "error[STEP_FAILED]: A step exited unsuccessfully without a more specific code\n  = context: project.diff-check\n  = reason: exit code 1\n  = log: <PROJECT_ROOT>/.harness-gate/reports/invocations/<INVOCATION_ID>/logs/git_diff_check.log\n  = help: Inspect the step log, command, dependencies and execution environment. Correct the first failure before rerunning; a skipped or cancelled step is not a pass.\n  = explain: harness-gate explain STEP_FAILED\n",
       "stdout": "harness-gate verify\nScope: all\nComponents: project\n\n[PASS] secret scan (<DURATION>)\n[PASS] architecture audit (<DURATION>)\n[RUN ] Git whitespace check ... FAIL (<DURATION>)\n       log: <PROJECT_ROOT>/.harness-gate/reports/invocations/<INVOCATION_ID>/logs/git_diff_check.log\n\nVerification report: <PROJECT_ROOT>/.harness-gate/reports/test_result.md\nTEST_SUMMARY: FAIL\n"
     },
     {
@@ -325,7 +325,7 @@
         }
       },
       "status": "pass",
-      "stderr": "",
+      "stderr": "error[RESULT_PARSE_FAILURE]: Configured test result could not be parsed\n  = context: fixture.json-parse-failure\n  = reason: parser failure: JSON test results contain no supported result array\n  = log: <PROJECT_ROOT>/.harness-gate/reports/invocations/<INVOCATION_ID>/logs/json_parse_failure.log\n  = help: Inspect the declared result format, output path and parser settings. Ensure the producing test command completed and emitted the required results.\n  = explain: harness-gate explain RESULT_PARSE_FAILURE\n",
       "stdout": "harness-gate verify\nScope: all\nComponents: project\n\n[PASS] secret scan (<DURATION>)\n[PASS] architecture audit (<DURATION>)\n[RUN ] Git whitespace check ... PASS (<DURATION>)\n[RUN ] JSON parse failure fixture ... FAIL (<DURATION>)\n       log: <PROJECT_ROOT>/.harness-gate/reports/invocations/<INVOCATION_ID>/logs/json_parse_failure.log\n\nVerification report: <PROJECT_ROOT>/.harness-gate/reports/test_result.md\nTEST_SUMMARY: FAIL\n"
     },
     {

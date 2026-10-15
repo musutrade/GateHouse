@@ -6,6 +6,7 @@ mod quality;
 mod report;
 mod scheduler;
 mod steps;
+mod terminal;
 mod waiver;
 
 #[cfg(test)]
@@ -487,6 +488,7 @@ fn publish_report(
     report::mirror_legacy_outputs(invocation_project, project).map_err(VerifyError::report)?;
     report::notify(report, invocation_project).map_err(VerifyError::report)?;
     progress.finish();
+    terminal::print(report);
     println!(
         "\nVerification report: {}",
         project.reports.join("test_result.md").display()
