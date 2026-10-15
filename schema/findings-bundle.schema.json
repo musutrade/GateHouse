@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
+    "Context": {
+      "additionalProperties": false,
+      "properties": {
+        "commit": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "series": {
+          "type": "string"
+        },
+        "tree": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "commit",
+        "repository",
+        "series",
+        "tree"
+      ],
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "complete": {
+          "type": "boolean"
+        },
+        "document": true,
+        "format": {
+          "type": "string"
+        },
+        "measurement_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "complete",
+        "document",
+        "format",
+        "measurement_id"
+      ],
+      "type": "object"
+    }
+  },
+  "properties": {
+    "context": {
+      "$ref": "#/definitions/Context"
+    },
+    "report_sha256": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/definitions/Source"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "context",
+    "report_sha256",
+    "schema_version",
+    "sources"
+  ],
+  "title": "Bundle",
+  "type": "object"
+}

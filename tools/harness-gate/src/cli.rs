@@ -43,6 +43,11 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
+    /// Consume completed reports as diagnostic findings; never evaluate policy.
+    Findings {
+        #[command(subcommand)]
+        action: crate::findings::Action,
+    },
     /// Clear authenticated local step-cache entries; retain unknown or modified files.
     CacheClear {
         #[arg(long)]

@@ -20,6 +20,7 @@ pub(crate) fn run() -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
+        Commands::Findings { action } => crate::findings::run(action).map_err(Into::into),
         Commands::CacheClear { json } => {
             let path = cli
                 .step_cache_dir

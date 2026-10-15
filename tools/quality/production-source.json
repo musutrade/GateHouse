@@ -11,7 +11,11 @@
         "src/app/mod.rs",
         "src/app/output.rs",
         "src/app/plan.rs",
-        "src/app/quality.rs"
+        "src/app/quality.rs",
+        "src/findings/history.rs",
+        "src/findings/mod.rs",
+        "src/findings/model.rs",
+        "src/findings/sarif.rs"
       ]
     },
     "audit": {
@@ -329,6 +333,11 @@
       "path": "src/verify/cache/tests.rs",
       "kind": "test",
       "reason": "Unix-only step cache regressions compiled under cfg(all(test, unix))."
+    },
+    {
+      "path": "src/findings/tests.rs",
+      "kind": "test",
+      "reason": "Diagnostic finding regression tests compiled only under cfg(test)."
     }
   ],
   "external_exclusions": [

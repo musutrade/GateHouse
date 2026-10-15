@@ -90,6 +90,9 @@ jobs:
           HARNESS_GATE_CI_ACCEPTANCE: ${{ github.workspace }}/target/quality/workflow-acceptance
         run: cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked
 
+      - name: Test findings feedback integration without publishing
+        run: node --test .github/actions/findings-feedback/feedback.test.cjs
+
       - name: Validate configured workflow acceptance
         run: python3 tools/quality/ci_acceptance.py --directory target/quality/workflow-acceptance
 
