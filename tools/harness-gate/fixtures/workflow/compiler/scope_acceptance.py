@@ -95,10 +95,18 @@ def main():
             gates = report['policy_result']['results']
             assert len(gates) == (2 if expected_status else 1), gates
             if expected_status:
+                assert 'error[QUALITY_BLOCKED]' in result.stderr, result.stderr
+                assert 'harness-gate explain QUALITY_BLOCKED' in result.stderr, result.stderr
+                # Terminal diagnostics escape control characters (escape_debug),
+                # which doubles backslashes on Windows paths. Keep the exact
+                # published-path check in its rendered form on every platform.
+                assert str(report_path).replace('\\', '\\\\') in result.stderr, result.stderr
                 assert {gate['subject'] for gate in gates} == {subject['id'] for subject in direct['project']['subjects']}
                 assert {gate['state'] for gate in gates} == {'pass', 'fail'}
                 failing = next(gate for gate in gates if gate['state'] == 'fail')
                 assert failing['record']['component'] == 'failing'
+            else:
+                assert not result.stderr, result.stderr
         results.append(dict(case=name, exit=result.returncode))
     write(output / 'acceptance.json', dict(status='pass', cases=results))
 

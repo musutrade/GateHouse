@@ -308,7 +308,19 @@ fn evaluate(args: &EvaluateArgs) -> Result<bool> {
         format!("{}\n", serde_json::to_string_pretty(&report)?),
         true,
     )?;
-    Ok(report["aggregate"]["state"] == "pass")
+    let passed = report["aggregate"]["state"] == "pass";
+    if !passed {
+        eprintln!(
+            "{}",
+            crate::failure::render_terminal(
+                crate::failure::FailureCode::QualityBlocked,
+                "quality evaluate",
+                Some("The published aggregate did not pass; inspect its findings and evidence errors"),
+                Some(&args.output.to_string_lossy()),
+            )
+        );
+    }
+    Ok(passed)
 }
 
 fn read_state(path: &PathBuf) -> Result<TrustedState> {
