@@ -70,11 +70,12 @@ timeout_secs = 10
     let machine_bytes = fs::read(reports.join("test_result.json")).unwrap();
     let machine: Value = serde_json::from_slice(&machine_bytes).unwrap();
     assert_eq!(machine["evidence_complete"], true);
+    let project_root = project.canonicalize().unwrap();
     let reports = std::path::PathBuf::from(machine["report_directory"].as_str().unwrap());
     let index = project.join("history.json");
     fs::write(&index, serde_json::to_vec(&json!({
         "schema":"harness-report-history/v1", "samples":[{
-            "directory":reports.strip_prefix(&project).unwrap().to_string_lossy().replace('\\', "/"),
+            "directory":reports.strip_prefix(&project_root).unwrap().to_string_lossy().replace('\\', "/"),
             "machine_sha256":format!("{:x}", Sha256::digest(&machine_bytes)),
             "manifest_sha256":format!("{:x}", Sha256::digest(fs::read(reports.join("manifest.json")).unwrap()))
         }]
