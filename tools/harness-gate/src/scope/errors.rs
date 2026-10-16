@@ -2,6 +2,7 @@ use crate::error::CodedError;
 
 /// Errors emitted while determining a verification scope.
 #[derive(Debug, thiserror::Error)]
+#[cfg_attr(test, derive(schemars::JsonSchema))]
 pub enum ScopeError {
     #[error("Git scope detection failed: {message}")]
     Git { message: String },

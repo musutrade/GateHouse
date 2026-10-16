@@ -502,6 +502,164 @@ impl TryFrom<&str> for RetryClass {
 mod tests {
     use super::{FailureCode, RetryClass};
 
+    fn enum_variants(schema: &serde_json::Value) -> Vec<String> {
+        let branches = schema["oneOf"]
+            .as_array()
+            .expect("expected externally tagged enum oneOf");
+        assert!(!branches.is_empty());
+        let mut names = std::collections::BTreeSet::new();
+        for branch in branches {
+            let name = if branch["type"] == "string" {
+                let values = branch["enum"].as_array().expect("unit enum values");
+                assert_eq!(values.len(), 1, "unexpected grouped unit variants");
+                values[0].as_str().expect("unit name")
+            } else {
+                assert_eq!(branch["type"], "object", "unknown enum branch: {branch}");
+                let required = branch["required"].as_array().expect("tag required");
+                let properties = branch["properties"].as_object().expect("tag properties");
+                assert_eq!(required.len(), 1);
+                assert_eq!(properties.len(), 1);
+                let name = required[0].as_str().expect("tag name");
+                assert!(properties.contains_key(name));
+                name
+            };
+            assert!(names.insert(name.to_owned()), "duplicate variant: {name}");
+        }
+        names.into_iter().collect()
+    }
+
+    #[test]
+    fn variant_discovery_rejects_unknown_and_duplicate_branches() {
+        let unit = serde_json::json!({"type":"string", "enum":["Unit"]});
+        for branches in [
+            vec![],
+            vec![unit.clone(), serde_json::json!({"type":"number"})],
+            vec![unit.clone(), unit],
+        ] {
+            assert!(std::panic::catch_unwind(|| enum_variants(
+                &serde_json::json!({"oneOf":branches})
+            ))
+            .is_err());
+        }
+    }
+
+    fn check_producers<
+        E: schemars::JsonSchema
+            + crate::error::CodedError
+            + Into<crate::error::CliError>
+            + Into<crate::verify::VerifyError>,
+    >(
+        sample: impl Fn(&str) -> E,
+    ) {
+        use crate::error::CodedError;
+        let schema = serde_json::to_value(schemars::schema_for!(E)).unwrap();
+        for name in enum_variants(&schema) {
+            let error = sample(&name);
+            let code = error.code();
+            assert!(
+                super::CLI_EXPLANATIONS.iter().any(|entry| entry.0 == code),
+                "missing explanation for {}::{name} -> {code}",
+                std::any::type_name::<E>()
+            );
+            let cli: crate::error::CliError = error.into();
+            assert_eq!(cli.code(), code, "CLI delegation changed for {name}");
+            let verify: crate::verify::VerifyError = sample(&name).into();
+            assert_eq!(verify.code(), code, "Verify delegation changed for {name}");
+            assert_eq!(crate::error::CliError::from(verify).code(), code);
+        }
+    }
+
+    #[test]
+    fn cli_producer_variants_have_explanations() {
+        use crate::{
+            audit::AuditError as A, scope::ScopeError as S, secrets::SecretsError as K,
+            verify::VerifyError as V,
+        };
+        check_producers(|name| match name {
+            "Configuration" => A::Configuration {
+                message: "sample".into(),
+            },
+            "Execution" => A::Execution {
+                message: "sample".into(),
+            },
+            "LogParsing" => A::LogParsing {
+                message: "sample".into(),
+            },
+            _ => panic!("missing AuditError sample: {name}"),
+        });
+        check_producers(|name| match name {
+            "Configuration" => K::Configuration {
+                message: "sample".into(),
+            },
+            "Scan" => K::Scan {
+                message: "sample".into(),
+            },
+            _ => panic!("missing SecretsError sample: {name}"),
+        });
+        check_producers(|name| match name {
+            "Git" => S::Git {
+                message: "sample".into(),
+            },
+            "Configuration" => S::Configuration {
+                message: "sample".into(),
+            },
+            "UnmatchedFiles" => S::UnmatchedFiles {
+                count: 1,
+                files: "sample".into(),
+            },
+            "Report" => S::Report {
+                message: "sample".into(),
+            },
+            _ => panic!("missing ScopeError sample: {name}"),
+        });
+        check_producers(|name| match name {
+            "UnknownProfile" => V::UnknownProfile {
+                profile: "sample".into(),
+            },
+            "UnknownStep" => V::UnknownStep {
+                id: "sample".into(),
+            },
+            "StepNotInProfile" => V::StepNotInProfile {
+                id: "sample".into(),
+                profile: "sample".into(),
+            },
+            "Cancelled" => V::Cancelled,
+            "Execution" => V::Execution {
+                message: "sample".into(),
+            },
+            "Report" => V::Report {
+                message: "sample".into(),
+            },
+            "Scope" => V::Scope(S::Git {
+                message: "sample".into(),
+            }),
+            "Secrets" => V::Secrets(K::Scan {
+                message: "sample".into(),
+            }),
+            "Audit" => V::Audit(A::Execution {
+                message: "sample".into(),
+            }),
+            _ => panic!("missing VerifyError sample: {name}"),
+        });
+        use crate::error::{CliError, CodedError};
+        for error in [
+            CliError::from(anyhow::anyhow!("sample")),
+            CliError::from(anyhow::Error::new(
+                crate::config::ConfigDiagnostics::single(
+                    "HGCFG-CHECK",
+                    "project",
+                    "sample",
+                    "repair",
+                ),
+            )),
+        ] {
+            assert_eq!(error.code(), "E1000");
+            assert!(super::CLI_EXPLANATIONS
+                .iter()
+                .any(|entry| entry.0 == error.code()));
+        }
+    }
+
     #[test]
     fn explanations_cover_the_closed_registry_without_duplicates() {
         let schema = serde_json::to_value(schemars::schema_for!(FailureCode)).unwrap();

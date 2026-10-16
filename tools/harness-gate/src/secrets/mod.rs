@@ -45,6 +45,7 @@ fn read_working_tree_file(path: &Path, file: &str, size: u64) -> Result<Option<V
 
 /// Errors emitted by the secret-scan boundary.
 #[derive(Debug, thiserror::Error)]
+#[cfg_attr(test, derive(schemars::JsonSchema))]
 pub enum SecretsError {
     #[error("secret scan configuration failed: {message}")]
     Configuration { message: String },

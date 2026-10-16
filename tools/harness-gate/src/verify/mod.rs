@@ -50,6 +50,7 @@ pub(crate) fn select_scope(
 }
 
 #[derive(Debug, thiserror::Error)]
+#[cfg_attr(test, derive(schemars::JsonSchema))]
 pub enum VerifyError {
     #[error("unknown or empty verification profile {profile:?}")]
     UnknownProfile { profile: String },

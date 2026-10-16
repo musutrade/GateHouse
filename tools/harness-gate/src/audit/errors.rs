@@ -3,6 +3,7 @@ use crate::utils::redaction::redact_text;
 
 /// Errors emitted by the architecture-audit boundary.
 #[derive(Debug, thiserror::Error)]
+#[cfg_attr(test, derive(schemars::JsonSchema))]
 pub enum AuditError {
     #[error("audit configuration failed: {message}")]
     Configuration { message: String },
