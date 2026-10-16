@@ -4290,4 +4290,93 @@ mod tests {
             read_log(control, "stderr.log")
         )
     }
+    #[test]
+    fn offline_html_template_is_published_escaped_and_manifest_verified() {
+        let (workspace, _project, invocation, mut project, mut current) =
+            complete_invocation_fixture("offline-html-preview");
+        let templates = workspace.root.join("templates");
+        std::fs::create_dir_all(&templates).unwrap();
+        std::fs::write(
+            templates.join("verification.html"),
+            include_str!("../../templates/verification.html"),
+        )
+        .unwrap();
+        project.config.report_templates.root = Some("templates".into());
+        project.config.report_templates.template = Some("templates/verification.html".into());
+        current.steps[0].label = "成功 café <script>window.pwned=1</script> \"".into();
+        current.steps[0].detail =
+            Some("token=synthetic-secret </script><img src=x onerror=window.pwned=2>".into());
+        let mut failed = current.steps[0].clone();
+        failed.step_id = Some("unit.failed".into());
+        failed.label = "Failed API".into();
+        failed.passed = false;
+        failed.log = "logs/failed.log".into();
+        failed.detail = Some("Expected response did not match".into());
+        std::fs::write(invocation.root.join(&failed.log), "failure\n").unwrap();
+        let mut waived = failed.clone();
+        waived.step_id = Some("unit.waived".into());
+        waived.label = "Waived review".into();
+        waived.waived = true;
+        waived.passed = true;
+        waived.log = "logs/waived.log".into();
+        std::fs::write(invocation.root.join(&waived.log), "waived\n").unwrap();
+        let mut cancelled = failed.clone();
+        cancelled.step_id = Some("unit.cancelled".into());
+        cancelled.label = "Cancelled worker".into();
+        cancelled.cancelled = true;
+        cancelled.log = "logs/cancelled.log".into();
+        std::fs::write(invocation.root.join(&cancelled.log), "cancelled\n").unwrap();
+        current.steps.extend([failed, waived, cancelled]);
+        current.skipped_steps.push(SkippedStep {
+            id: "blocked.step".into(),
+            label: "Skipped dependent".into(),
+            reason: "Prerequisite failed <b>not markup</b>".into(),
+            cancelled: false,
+        });
+        current.passed = false;
+        write(&current, &project).expect("publish real offline HTML artifact");
+        verify_manifest(&project).expect("published HTML has valid manifest binding");
+        let html_path = invocation.root.join("test_result.html");
+        let html = std::fs::read_to_string(&html_path).unwrap();
+        for status in ["PASS", "FAIL", "WAIVED", "CANCELLED", "SKIPPED"] {
+            assert!(
+                html.contains(&format!("data-status=\"{status}\"")),
+                "{status}"
+            );
+        }
+        assert_eq!(html.matches("<script>").count(), 1);
+        assert!(!html.contains("<img src=x") && !html.contains("<b>not markup</b>"));
+        assert!(!html.contains("synthetic-secret"));
+        assert!(html.contains("[REDACTED]"));
+        assert!(html.contains("&lt;script&gt;") && html.contains("成功 café"));
+        assert!(html.contains(&current.invocation_id));
+        assert!(!html.contains("innerHTML") && !html.contains("fetch("));
+        if let Some(path_file) = std::env::var_os("HG_HTML_PREVIEW_PATH") {
+            std::fs::write(path_file, html_path.to_string_lossy().as_bytes()).unwrap();
+            std::mem::forget(workspace); // Explicit browser-review retention after successful publication validation.
+        }
+    }
+
+    #[test]
+    fn offline_html_template_preserves_empty_sections() {
+        let (workspace, _project, invocation, mut project, mut current) =
+            complete_invocation_fixture("offline-html-empty");
+        let templates = workspace.root.join("templates");
+        std::fs::create_dir_all(&templates).unwrap();
+        std::fs::write(
+            templates.join("verification.html"),
+            include_str!("../../templates/verification.html"),
+        )
+        .unwrap();
+        project.config.report_templates.root = Some("templates".into());
+        project.config.report_templates.template = Some("templates/verification.html".into());
+        current.steps.clear();
+        std::fs::remove_file(invocation.root.join("logs/unit.log")).unwrap();
+        write(&current, &project).expect("publish empty report");
+        verify_manifest(&project).expect("empty report manifest");
+        let html = std::fs::read_to_string(invocation.root.join("test_result.html")).unwrap();
+        assert!(html.contains("No executed steps were reported."));
+        assert!(html.contains("No skipped steps were reported."));
+        assert!(!html.contains("<tr data-row"));
+    }
 }
