@@ -217,15 +217,19 @@ class SupplementalCadenceTests(unittest.TestCase):
     def test_supplemental_jobs_are_separate_from_per_change_required_checks(self):
         previous = json.loads((ROOT / 'tools/quality/fixtures/ci-topology-pre-cadence.json').read_text())
         self.assertEqual(set(previous['jobs']) - set(CONTRACT['jobs']), {'coverage', 'quality-baseline'})
+        added = set(CONTRACT['jobs']) - set(previous['jobs'])
+        # The only post-cadence additions are the three split-collection shards.
+        self.assertEqual(added, {'quality-fast', 'quality-risk', 'quality-matrix'})
+        for name in sorted(added):
+            row = CONTRACT['jobs'][name]
+            self.assertEqual(row['required_events'], [], name)
+            self.assertEqual(row['needs'], ['classify'], name)
+            self.assertEqual(row['runner_labels'], ['ubuntu-latest'], name)
+            self.assertEqual(row['events'], ['pull_request', 'push'], name)
+            self.assertEqual(row['condition'],
+                             "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}", name)
         for name, row in CONTRACT['jobs'].items():
-            if name == 'quality-required':
-                continue
-            if name not in previous['jobs']:
-                # Split-collection shards added after the pre-cadence fixture are
-                # never required by aggregate on their own; the merge job is the
-                # only required quality-coverage entry.
-                self.assertEqual(row['required_events'], [])
-                self.assertEqual(row['needs'], ['classify'])
+            if name == 'quality-required' or name in added:
                 continue
             expected = copy.deepcopy(previous['jobs'][name])
             if name in ('test', 'test-cross-platform', 'quality-coverage', 'quality-generic-shadow'):
@@ -236,8 +240,6 @@ class SupplementalCadenceTests(unittest.TestCase):
                     "needs.classify.outputs.run_full == 'true'",
                     "needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false'")
             if name == 'quality-coverage':
-                expected['name'] = 'Quality Coverage (merge and verify)'
-                expected['check_names'] = ['Quality Coverage (merge and verify)']
                 expected['needs'] = ['classify', 'quality-fast', 'quality-risk', 'quality-matrix']
                 expected['outcome'] = (
                     'Merge the fast, risk and matrix shard candidates, require the complete'

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "source_commit": "57ef195",
-  "source_workflow_blob": "84d076d0855bc015689c9bf4b8798440d8f380a4",
+  "source_workflow_blob": "5e8ba056ccf7a4d19680bd8dcd4b42e478401ec3",
   "workflow": "CI",
   "branches": [
     "main"
@@ -226,9 +226,9 @@
       "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "quality-coverage": {
-      "name": "Quality Coverage (merge and verify)",
+      "name": "Quality Coverage and Critical Paths",
       "check_names": [
-        "Quality Coverage (merge and verify)"
+        "Quality Coverage and Critical Paths"
       ],
       "runner_labels": [
         "ubuntu-latest"

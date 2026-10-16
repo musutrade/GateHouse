@@ -381,6 +381,11 @@ jobs:
             --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
             --output target/quality/candidate
 
+      - name: Record shard tool identity (fast)
+        run: |
+          python3 tools/quality/ci_quality.py tool-identity \
+            --output target/quality/candidate/tool-identity.json
+
       - name: Upload quality artifacts (fast)
         if: ${{ always() }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -444,6 +449,11 @@ jobs:
             --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
             --output target/quality/candidate
 
+      - name: Record shard tool identity (risk)
+        run: |
+          python3 tools/quality/ci_quality.py tool-identity \
+            --output target/quality/candidate/tool-identity.json
+
       - name: Upload quality artifacts (risk)
         if: ${{ always() }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -506,6 +516,11 @@ jobs:
             --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
             --output target/quality/candidate
 
+      - name: Record shard tool identity (matrix)
+        run: |
+          python3 tools/quality/ci_quality.py tool-identity \
+            --output target/quality/candidate/tool-identity.json
+
       - name: Upload quality artifacts (matrix)
         if: ${{ always() }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -518,9 +533,11 @@ jobs:
             !target/quality/candidate/snapshots
           if-no-files-found: error
 
-  # Merge all stages and run verify
+  # Merge all stages and run verify. The display name stays stable because
+  # certified-base discovery (ci_quality.py) and PR-check reuse (ci_reuse.py)
+  # match this exact name.
   quality-coverage:
-    name: Quality Coverage (merge and verify)
+    name: Quality Coverage and Critical Paths
     needs: [classify, quality-fast, quality-risk, quality-matrix]
     if: ${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}
     runs-on: ubuntu-latest
@@ -566,31 +583,11 @@ jobs:
 
       - name: Merge artifacts
         run: |
-          set -euo pipefail
-          mkdir -p target/quality/candidate
-          # Copy shard files first, then write the merged candidate.json last so
-          # no shard's partial candidate.json overwrites the merged report.
-          for shard in fast risk matrix; do
-            cp -r "target/quality/candidate-$shard/." target/quality/candidate/
-          done
-          python3 - <<'MERGE'
-          import json
-          from pathlib import Path
-          shards = [json.loads(Path(f'target/quality/candidate-{n}/candidate.json').read_text())
-                    for n in ('fast', 'risk', 'matrix')]
-          identity = {(s['base_sha'], s['commit'], s['run_id']) for s in shards}
-          assert len(identity) == 1, f'shard identity mismatch: {identity}'
-          merged = shards[0]
-          for shard in shards[1:]:
-              overlap = set(merged['stages']) & set(shard['stages'])
-              assert not overlap, f'stage collected twice: {overlap}'
-              merged['stages'].update(shard['stages'])
-              merged['commands'].extend(shard['commands'])
-              merged['artifacts'].update(shard['artifacts'])
-              if 'measurer' in shard and 'measurer' not in merged:
-                  merged['measurer'] = shard['measurer']
-          Path('target/quality/candidate/candidate.json').write_text(json.dumps(merged, indent=2))
-          MERGE
+          python3 tools/quality/ci_quality.py merge \
+            --output target/quality/candidate \
+            --shard fast=target/quality/candidate-fast \
+            --shard risk=target/quality/candidate-risk \
+            --shard matrix=target/quality/candidate-matrix
 
       - name: Run verify stage
         env:
