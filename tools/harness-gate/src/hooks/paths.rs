@@ -40,14 +40,12 @@ pub(super) fn resolve(root: &Path) -> Result<PathBuf> {
         metadata.is_dir() && !metadata.file_type().is_symlink(),
         "hooks directory must be a real directory, not a symlink"
     );
-    // Check the path before canonicalization so aliases cannot authorize external hooksPath.
-    ensure!(
-        actual == expected || actual == root.join(".git/hooks"),
-        "non-default core.hooksPath is not managed; keep your existing hook manager"
-    );
+    // Canonical identity is the authority. Textual comparison would wrongly
+    // reject the worktree common-dir form and Windows separator differences;
+    // a custom core.hooksPath still fails here because it resolves elsewhere.
     ensure!(
         actual.canonicalize()? == expected,
-        "hook path does not resolve to the default common directory"
+        "non-default or non-canonical hooks path is not managed; keep your existing hook manager"
     );
     Ok(expected)
 }
