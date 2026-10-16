@@ -100,16 +100,29 @@ fn initialize(
     );
     atomic_write_batch(&flow_entries)?;
 
-    println!("Initialized preset {name:?} in {}", directory.display());
     println!(
-        "Next: harness-gate --project-root {} config check",
-        root.display()
+        "Initialized preset {name:?} in {}",
+        directory.display().to_string().escape_debug()
+    );
+    println!(
+        "Project directory (display only): {}",
+        root.display().to_string().escape_debug()
+    );
+    println!("From that project directory, run:");
+    println!("  harness-gate config check");
+    println!("    Validate the generated configuration.");
+    println!("  harness-gate doctor");
+    println!("    Execute the declared dependency checks.");
+    println!("  harness-gate verify --plan --all");
+    println!(
+        "    Inspect the configured default-profile plan without running gates, commands or collectors."
     );
     if preset.recipe.is_some() {
         println!("Quality enabled: review .harness-gate/QUALITY.md and provision signed workflow inputs before verify.");
     } else {
         println!("Quality remains opt-in; no quality policy was generated.");
     }
+    println!("After reviewing the configuration and prerequisites, run harness-gate verify --all to execute verification.");
     Ok(())
 }
 

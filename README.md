@@ -741,3 +741,13 @@ This interface uses numbered line input, without arrow navigation or project-typ
 detection. It does not install plugins, start services or run verify.
 Generated security configuration, preset validation and engineering-policy
 semantics are unchanged. Review the generated files and run `config check` next.
+
+After successful initialization, the displayed directory is escaped metadata,
+not a shell command. From that project directory, run `harness-gate config check`
+to validate the generated configuration, then `harness-gate doctor` to execute
+the declared dependency checks. `harness-gate verify --plan --all` previews the
+configured default profile without executing gates or collectors. After reviewing
+configuration and prerequisites, run `harness-gate verify --all` yourself.
+Initialization only prints these suggestions; it does not run checks, install
+hooks, download plugins or claim verification passed. Quality opt-in and signed
+workflow prerequisites remain unchanged, as do engineering-policy semantics.
