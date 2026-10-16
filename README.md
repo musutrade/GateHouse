@@ -794,6 +794,60 @@ Missing values are marked not available, and absent quality never implies a pass
 Raw records, exception error arrays and evidence objects are not displayed.
 History, trends and additional quality charts are outside this template.
 
+### Explicit offline metric history
+
+`report-history` reads completed invocation publications; it does not run gates,
+collectors or policy evaluation. Select one exact policy, subject and metric:
+
+```sh
+harness-gate report-history --input archive/history.json --output history-view \
+  --policy coverage-floor --subject SUBJECT_ID --metric coverage.line
+```
+
+The index uses caller-supplied lowercase SHA-256 pins for the exact
+`test_result.json` and `manifest.json` bytes. These pins establish integrity against
+that index, not signature trust. Supply between 1 and 30 samples in display order:
+
+```json
+{
+  "schema": "harness-report-history/v1",
+  "samples": [
+    {
+      "directory": "invocation-1",
+      "machine_sha256": "REPLACE_WITH_64_LOWERCASE_HEX_DIGITS",
+      "manifest_sha256": "REPLACE_WITH_64_LOWERCASE_HEX_DIGITS"
+    }
+  ]
+}
+```
+
+Each directory is relative to the index's parent and must remain beneath it.
+Include the complete published invocation directory, not just its JSON report.
+Symlinks, duplicate invocations, incomplete evidence, mismatched pins/manifests,
+and inconsistent claimed quality evidence are rejected. The index is limited to
+64 KiB; machine reports to 32 MiB each and 64 MiB combined. The output must be a
+new directory outside the index's input tree; existing outputs are never replaced.
+Input files are read-only. Files are written privately before publication using
+filesystem hard links; unsupported filesystems fail explicitly. Failed publication
+removes its own files and empty directory, but preserves and reports conflicting
+external changes. This is not a transaction against concurrent external editors.
+A successful command produces `history.html` and `provenance.json`.
+
+Open `history.html` locally without JavaScript or network access. The table keeps
+exact typed metric values and reported states. Count and ratio metrics have an SVG
+history chart; zero totals, unsupported types or precision, unavailable quality,
+and missing selected metrics remain explicit gaps. Plot positions use index order,
+not elapsed time. No new verification status, threshold or quality score is computed.
+
+Comparison is deliberately strict: points must match the first plotted sample's
+project path, profile, input mode, flow configuration digest, complete quality
+project/policy models, selected rule/subject and measurement series. Incompatible
+points remain in the table and break the line. A function subject's identity
+includes its source fingerprint and span; this view does not infer identity across
+source edits, relocated clones or renamed functions. Working-tree source identity
+records the resolved commit, not a digest of uncommitted changes. This explicit
+history view does not maintain a rolling baseline or a historical database.
+
 ### Explicit repository hooks
 
 Run `harness-gate hooks install` from an initialized Git project to install

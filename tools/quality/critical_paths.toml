@@ -171,9 +171,9 @@ assertions = ["assert!(!report.passed);", "step.label == \"secret scan\" && !ste
 [paths.source]
 path = "src/verify/mod.rs"
 symbol = "run_selected"
-start = 207
-end = 369
-sha256 = "27ace0f19971b1f236ee0010a45a9bbb3406789e15bd23b3b4109d33828dfa49"
+start = 208
+end = 370
+sha256 = "8ff772f8b25171248f6d17820f76f131bd49185ce39ba2228c315cf6cbd7c0a3"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
@@ -183,7 +183,7 @@ end = 575
 sha256 = "4e62387920a8c4648cbf0f07aaa9947d1ea7f51ba80c1bf565c23ee42facd0b4"
 
 [[paths.probes]]
-line = 351
+line = 352
 column = 5
 text = "publish_report(&report, &invocation_project, project, &mut progress)?;"
 
@@ -266,7 +266,7 @@ path = "src/verify/report.rs"
 symbol = "write_report_file"
 start = 1231
 end = 1241
-sha256 = "925e8b612cb99734992cbe1b84c427ce71a517dffc9afa729d7d72fc6b8f64c6"
+sha256 = "924e649159f050f6f1d394eac46480dd13bf274b53b252420b5519fc0f7d9615"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
@@ -294,20 +294,20 @@ test = "verify::report::tests::manifest_records_digests_and_detects_tampering"
 assertions = ["assert!(verify_manifest(&invocation_project).is_err());"]
 [paths.source]
 path = "src/verify/report.rs"
-symbol = "verify_manifest_without_result"
-start = 1810
-end = 1897
-sha256 = "925e8b612cb99734992cbe1b84c427ce71a517dffc9afa729d7d72fc6b8f64c6"
+symbol = "verify_manifest_without_result_at"
+start = 1814
+end = 1900
+sha256 = "924e649159f050f6f1d394eac46480dd13bf274b53b252420b5519fc0f7d9615"
 
 [paths.test_source]
 path = "src/verify/report.rs"
 symbol = "manifest_records_digests_and_detects_tampering"
-start = 3329
-end = 3382
-sha256 = "925e8b612cb99734992cbe1b84c427ce71a517dffc9afa729d7d72fc6b8f64c6"
+start = 3336
+end = 3389
+sha256 = "924e649159f050f6f1d394eac46480dd13bf274b53b252420b5519fc0f7d9615"
 
 [[paths.probes]]
-line = 1893
+line = 1896
 column = 13
 text = "bail!(\"artifact digest or size changed: {}\", artifact.path);"
 

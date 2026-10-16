@@ -20,6 +20,14 @@ pub(crate) fn run() -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
+        Commands::ReportHistory {
+            input,
+            output,
+            policy,
+            subject,
+            metric,
+        } => crate::report_history::run(input, output, policy, subject, metric).map_err(Into::into),
+
         Commands::Explain {
             code, search, json, ..
         } => match code {

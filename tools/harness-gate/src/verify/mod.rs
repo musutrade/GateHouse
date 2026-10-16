@@ -4,6 +4,7 @@ pub(crate) mod parser;
 mod plan;
 mod quality;
 mod report;
+pub(crate) use report::verify_manifest_at;
 mod scheduler;
 mod steps;
 mod terminal;
