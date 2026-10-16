@@ -5,6 +5,7 @@ use crate::verify::VerifyError;
 use thiserror::Error;
 
 /// A user-visible error code that remains stable across command output changes.
+/// This trait ensures consistent error identification for tooling and diagnostics.
 pub trait CodedError {
     fn code(&self) -> &'static str;
 }
