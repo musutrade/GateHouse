@@ -15,7 +15,10 @@
         "src/findings/history.rs",
         "src/findings/mod.rs",
         "src/findings/model.rs",
-        "src/findings/sarif.rs"
+        "src/findings/sarif.rs",
+        "src/hooks/filesystem.rs",
+        "src/hooks/mod.rs",
+        "src/hooks/paths.rs"
       ]
     },
     "audit": {

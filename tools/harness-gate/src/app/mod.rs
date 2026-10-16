@@ -41,6 +41,15 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             }
             Ok(report["retained"] == 0)
         }
+        Commands::Hooks { action } => {
+            if cli.config.is_some() {
+                return Err(anyhow::anyhow!(
+                    "hooks use the default project configuration; --config is unsupported"
+                )
+                .into());
+            }
+            crate::hooks::run(&standalone_root(&cli)?, *action).map_err(Into::into)
+        }
         Commands::Plugins { lock, json } => run_plugin_check(lock, *json, &cli.plugins),
         Commands::Quality { action } => {
             quality::run(action, cli.replay_state_dir.as_deref()).map_err(Into::into)

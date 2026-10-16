@@ -64,7 +64,8 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
         Commands::Init { .. }
         | Commands::Presets
         | Commands::Schema { .. }
-        | Commands::Plugins { .. } => {
+        | Commands::Plugins { .. }
+        | Commands::Hooks { .. } => {
             unreachable!("handled before project discovery")
         }
         Commands::Explain { .. } | Commands::Findings { .. } | Commands::CacheClear { .. } => {
