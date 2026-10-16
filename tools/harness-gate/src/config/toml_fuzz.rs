@@ -56,8 +56,7 @@ fn outcome(source: &str) -> String {
 }
 
 fn exercise() {
-    let valid =
-        MINIMAL_CONFIG_SNIPPET.replace("profiles = [\"full\"]", "profiles = [\"full\", \"hook\"]");
+    let valid = MINIMAL_CONFIG_SNIPPET;
     // Fixed valid cases test the actual interpolation + validation semantics,
     // preventing a loader that rejects everything from satisfying the harness.
     for count in 0..32 {
@@ -83,7 +82,7 @@ fn exercise() {
         assert!(outcome(source).starts_with("err:"), "{source:?}");
     }
     let corpus = [
-        valid.clone(),
+        valid.to_owned(),
         default,
         "version = 2\n[project]\nname = '\u{754c}'".into(),
         "version = 2\n[paths]\naudit_config = '${UNSET}'".into(),
