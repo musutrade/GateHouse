@@ -329,6 +329,11 @@ jobs:
           profiles: 'release;default'
 
       - name: Build
+        # Fast native compile check; Linux Build retains the original release profile.
+        # Release artifacts and benchmarks use their separate release-small profile.
+        env:
+          CARGO_PROFILE_RELEASE_LTO: 'false'
+          CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '16'
         run: cargo build --manifest-path tools/harness-gate/Cargo.toml --locked --release
 
   # Fast baseline stages (legacy + production)
