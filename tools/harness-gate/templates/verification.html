@@ -1,3 +1,15 @@
+{% macro scalar(v) -%}
+{%- if v is string or v is number or v == true or v == false -%}{{ v }}{%- else -%}not available{%- endif -%}
+{%- endmacro %}
+{% macro metric(v) -%}
+{%- if v is object and v.type is defined -%}
+  {%- if v.type == "ratio" -%}ratio: {{ self::scalar(v=v.covered | default(value="not available")) }} / {{ self::scalar(v=v.total | default(value="not available")) }}
+  {%- elif v.type == "rational" -%}rational: {{ self::scalar(v=v.numerator | default(value="not available")) }} / {{ self::scalar(v=v.denominator | default(value="not available")) }}
+  {%- elif v.type == "count" or v.type == "boolean" or v.type == "decimal" -%}{{ v.type }}: {{ self::scalar(v=v.value | default(value="not available")) }}
+  {%- elif v.type == "duration" or v.type == "size" -%}{{ v.type }}: {{ self::scalar(v=v.value | default(value="not available")) }} {{ self::scalar(v=v.unit | default(value="not available")) }}
+  {%- else -%}unsupported metric type; inspect machine report{%- endif -%}
+{%- else -%}not available{%- endif -%}
+{%- endmacro %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -63,6 +75,36 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 <tr data-row data-status="{{ step.status }}"><th scope="row">{{ step.label }}<span class="id">{{ step.id }}</span></th><td>{{ step.status }}</td><td class="detail">{{ step.reason }}</td></tr>
 {% else %}<tr><td colspan="3">No skipped steps were reported.</td></tr>{% endfor %}
 </tbody></table></div>
+</section>
+<section aria-labelledby="quality-heading">
+<h2 id="quality-heading">Current-run quality</h2>
+{% if report.quality is defined and report.quality %}
+{% set q = report.quality %}
+<dl class="metadata">
+<dt>Quality status</dt><dd>{{ self::scalar(v=q.status | default(value="not available")) }}</dd>
+<dt>Full quality status</dt><dd>{{ self::scalar(v=q.full_quality_status | default(value="not available")) }}</dd>
+<dt>Phase</dt><dd>{{ self::scalar(v=q.phase | default(value="not available")) }}</dd>
+{% if q.error %}<dt>Quality error</dt><dd>{{ self::scalar(v=q.error) }}</dd>{% endif %}
+</dl>
+{% if q.schema == "quality-verification/v1" and q.project_report and q.project_report.schema is defined and q.project_report.schema == "harness-project-report/v1" %}
+<p>Aggregate state: {{ self::scalar(v=q.project_report.aggregate.state | default(value="not available")) }}.</p>
+<p class="note">Gate states below are supplied results, not a blocker list. Optional failures do not necessarily block verification. Values are shown as recorded, without converting units or calculating percentages.</p>
+{% if q.project_report.aggregate.blockers is defined %}
+<p>Authoritative aggregate blockers: {{ q.project_report.aggregate.blockers | length }}. This list is not changed by table filters.</p>
+<ul>
+{% for blocker in q.project_report.aggregate.blockers %}
+<li>Policy: {{ self::scalar(v=blocker.policy | default(value="not available")) }}; subject: {{ self::scalar(v=blocker.subject | default(value="not available")) }}; state: {{ self::scalar(v=blocker.state | default(value="not available")) }}{% if blocker.reason %}; reason: {{ self::scalar(v=blocker.reason) }}{% endif %}</li>
+{% endfor %}
+</ul>
+{% else %}<p>Aggregate blocker information: not available.</p>{% endif %}
+<div class="table-region" tabindex="0" role="region" aria-label="Quality gates table; scroll horizontally if needed">
+<table><caption>Current-run quality gates</caption><thead><tr><th scope="col">Policy / subject</th><th scope="col">State / reason</th><th scope="col">Metric</th><th scope="col">Base</th><th scope="col">Head</th><th scope="col">Limit</th></tr></thead><tbody>
+{% for id, gate in q.project_report.gates %}
+<tr data-row data-status="{{ self::scalar(v=gate.state | default(value="not available")) }}"><th scope="row">{{ self::scalar(v=gate.policy | default(value="not available")) }}<span class="id">{{ self::scalar(v=gate.subject | default(value="not available")) }}</span></th><td>{{ self::scalar(v=gate.state | default(value="not available")) }}<div class="detail">{{ self::scalar(v=gate.reason | default(value="not available")) }}</div></td><td>{{ self::scalar(v=gate.record.metric | default(value="not available")) }}</td><td>{{ self::metric(v=gate.record.base | default(value="not available")) }}</td><td>{{ self::metric(v=gate.record.head | default(value="not available")) }}</td><td>{{ self::metric(v=gate.record.policy.limit | default(value="not available")) }}</td></tr>
+{% else %}<tr><td colspan="6">No quality gates were reported.</td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}<p>Quality gate details: not available for this phase or report schema.</p>{% endif %}
+{% else %}<p>Quality was not collected in this report. No quality pass is claimed.</p>{% endif %}
 </section>
 <script>
 (() => {
