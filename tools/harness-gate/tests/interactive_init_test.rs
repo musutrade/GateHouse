@@ -23,6 +23,44 @@ fn interactive_requires_terminal_and_rejects_explicit_preset() {
         assert!(!root.path().join(".harness-gate").exists());
     }
 }
+
+#[test]
+fn explicit_project_name_validates_before_writing() {
+    let root = tempfile::tempdir().unwrap();
+    let target = root.path().join("not-created");
+    for name in ["", "UPPER", "bad/name", " bad", "bad ", "bad\nname"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+            .arg("--project-root")
+            .arg(&target)
+            .args(["init", "--project-name", name])
+            .output()
+            .unwrap();
+        assert!(!output.status.success(), "{name:?}");
+        assert!(!target.exists());
+    }
+    for name in ["q", "7.valid_id-", "a"] {
+        let target = root.path().join(name);
+        assert!(Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+            .arg("--project-root")
+            .arg(&target)
+            .args(["init", "--preset", "generic", "--project-name", name])
+            .output()
+            .unwrap()
+            .status
+            .success());
+        let source = std::fs::read_to_string(target.join(".harness-gate/flow.toml")).unwrap();
+        let config: toml::Value = toml::from_str(&source).unwrap();
+        assert_eq!(config["project"]["name"].as_str(), Some(name));
+        assert!(Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+            .arg("--project-root")
+            .arg(&target)
+            .args(["config", "check"])
+            .output()
+            .unwrap()
+            .status
+            .success());
+    }
+}
 #[cfg(unix)]
 mod terminal {
     use super::*;
@@ -66,11 +104,18 @@ mod terminal {
     }
 
     fn run(root: &std::path::Path, answer: &[u8], force: bool) -> bool {
+        run_named(root, answer, force, None)
+    }
+
+    fn run_named(root: &std::path::Path, answer: &[u8], force: bool, name: Option<&str>) -> bool {
         let (mut master, slave) = terminals();
         let mut cmd = Command::new(env!("CARGO_BIN_EXE_harness-gate"));
         cmd.arg("--project-root")
             .arg(root)
             .args(["init", "--interactive"]);
+        if let Some(name) = name {
+            cmd.args(["--project-name", name]);
+        }
         if force {
             cmd.arg("--force");
         }
@@ -114,11 +159,19 @@ mod terminal {
         let missing = root.path().join("not-created");
         assert!(!run(&missing, b"q\n", false));
         assert!(!missing.exists());
-        for answer in [b"q\n".as_slice(), b"1\nn\n", b"\x04", b"2\ny\n"] {
+        for answer in [
+            b"q\n".as_slice(),
+            b"1\n\nn\n",
+            b"\x04",
+            b"1\n\x04",
+            b"2\ny\n",
+        ] {
             assert!(!run(root.path(), answer, false));
             assert!(!root.path().join(".harness-gate").exists());
         }
-        assert!(run(root.path(), b"1\ny\n", false));
+        assert!(!run(root.path(), b"1\nUPPER\ny\n", false));
+        assert!(!root.path().join(".harness-gate").exists());
+        assert!(run(root.path(), b"1\nchosen-name\ny\n", false));
         let checked = Command::new(env!("CARGO_BIN_EXE_harness-gate"))
             .arg("--project-root")
             .arg(root.path())
@@ -134,12 +187,26 @@ mod terminal {
         let source = fs::read_to_string(&path).unwrap();
         let value: toml::Value = toml::from_str(&source).unwrap();
         assert_eq!(value["version"].as_integer(), Some(2));
+        assert_eq!(value["project"]["name"].as_str(), Some("chosen-name"));
         fs::write(&path, format!("{source}\n# preserve\n")).unwrap();
-        assert!(!run(root.path(), b"1\ny\n", false));
+        assert!(!run(root.path(), b"1\n\ny\n", false));
         assert!(fs::read_to_string(&path).unwrap().contains("# preserve"));
-        assert!(!run(root.path(), b"1\nn\n", true));
+        assert!(!run(root.path(), b"1\n\nn\n", true));
         assert!(fs::read_to_string(&path).unwrap().contains("# preserve"));
-        assert!(run(root.path(), b"1\ny\n", true));
+        assert!(run(root.path(), b"1\n\ny\n", true));
         assert!(!fs::read_to_string(&path).unwrap().contains("# preserve"));
+    }
+    #[test]
+    fn explicit_name_is_an_editable_interactive_default() {
+        for (answer, expected) in [
+            (b"1\n\ny\n".as_slice(), "flag-default"),
+            (b"1\nq\ny\n", "q"),
+        ] {
+            let root = tempfile::tempdir().unwrap();
+            assert!(run_named(root.path(), answer, false, Some("flag-default")));
+            let source = fs::read_to_string(root.path().join(".harness-gate/flow.toml")).unwrap();
+            let config: toml::Value = toml::from_str(&source).unwrap();
+            assert_eq!(config["project"]["name"].as_str(), Some(expected));
+        }
     }
 }
