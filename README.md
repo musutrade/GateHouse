@@ -792,6 +792,22 @@ supported typed metric values (count, boolean, ratio, rational, decimal, duratio
 size) are displayed, including zero and false; values are not converted or scored.
 Missing values are marked not available, and absent quality never implies a pass.
 Raw records, exception error arrays and evidence objects are not displayed.
+Quality details are grouped by the supplied component and source file, with the
+subject kind, discriminator and source span shown as text. Components are project
+groupings, not inferred language modules. Search includes these fields; the quality
+component selector combines with search and status filters. Group counts count
+reported gates, so multiple policies for one subject remain separate observations.
+
+The coverage map shows only `coverage.line` ratio values whose unique evidence,
+canonical subject registry and measurement series agree with the supplied gate.
+Panels separate component, policy and series; every cell has the same metric/type
+and dimensionless ratio unit. Blue shading encodes covered / total as a display
+coordinate, not a pass threshold. Exact values and supplied states remain in the
+details. Select a cell to focus its corresponding row. Zero totals, missing metadata,
+unsafe numeric precision and inconsistent evidence have no colored cell; their
+gate rows remain visible. No component coverage average or new blocker is computed.
+No JavaScript is required to read the map or expand the component/file sections.
+Source paths are display text, not automatically constructed external links.
 History, trends and additional quality charts are outside this template.
 
 ### Explicit offline metric history

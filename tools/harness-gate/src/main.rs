@@ -14,6 +14,7 @@ mod preset;
 mod process;
 mod project;
 mod recipes;
+mod report_evidence;
 mod report_history;
 mod scope;
 mod secrets;

@@ -1,3 +1,4 @@
+mod quality_view;
 mod rendering;
 
 #[cfg(test)]
@@ -931,6 +932,9 @@ fn configured_html(report: &VerificationReport, project: &Project) -> Result<Opt
     let mut context = tera::Context::from_serialize(report)
         .context("serialize verification report for HTML template")?;
     context.insert("report", report);
+    if let Some(quality) = &report.quality {
+        context.insert("quality_view", &quality_view::project(quality));
+    }
     context.insert("summary", if report.passed { "PASS" } else { "FAIL" });
     context.insert(
         "components",
@@ -4667,6 +4671,48 @@ mod tests {
                 output.join("history.html").to_string_lossy().as_bytes(),
             )
             .unwrap();
+            std::mem::forget(workspace);
+        }
+    }
+    #[test]
+    fn coverage_map_publishes_thousand_subjects_without_external_assets() {
+        let (workspace, _project, _invocation, mut project, mut current) =
+            complete_invocation_fixture("coverage-map");
+        let templates = project.root.join("templates");
+        std::fs::create_dir_all(&templates).unwrap();
+        std::fs::write(
+            templates.join("verification.html"),
+            include_str!("../../templates/verification.html"),
+        )
+        .unwrap();
+        project.config.report_templates.root = Some("templates".into());
+        project.config.report_templates.template = Some("templates/verification.html".into());
+        let mut quality = super::quality_view::tests::fixture(1000);
+        quality.project_report["gates"]["g0000"]["record"]["subject"]["discriminator"] =
+            serde_json::json!("<img src=x onerror=alert(1)> token=map-secret");
+        current.quality = Some(quality);
+        let render_started = std::time::Instant::now();
+        super::configured_html(&current, &project).unwrap().unwrap();
+        let render_elapsed = render_started.elapsed().as_secs_f64();
+        let started = std::time::Instant::now();
+        write(&current, &project).unwrap();
+        verify_manifest(&project).unwrap();
+        let elapsed = started.elapsed().as_secs_f64();
+        let html_path = project.reports.join("test_result.html");
+        let html = std::fs::read_to_string(&html_path).unwrap();
+        assert_eq!(html.matches("data-component=").count(), 1000);
+        assert_eq!(html.matches("class=\"coverage-cell\"").count(), 999);
+        assert!(html.contains("&lt;img") && html.contains("[REDACTED]"));
+        assert!(!html.contains("<img") && !html.contains("map-secret"));
+        assert!(html.contains("Authoritative aggregate blockers: 0."));
+        assert!(html.contains("file0.rs") && html.contains("function_999"));
+        eprintln!(
+            "coverage-map: 1000 subjects, {:.3}s real publication+manifest, {} HTML bytes",
+            elapsed,
+            html.len()
+        );
+        if let Some(path) = std::env::var_os("HG_COVERAGE_MAP_PREVIEW") {
+            std::fs::write(path,serde_json::to_vec_pretty(&serde_json::json!({"html":html_path,"subjects":1000,"publication_seconds":elapsed,"render_seconds":render_elapsed,"html_bytes":html.len()})).unwrap()).unwrap();
             std::mem::forget(workspace);
         }
     }
