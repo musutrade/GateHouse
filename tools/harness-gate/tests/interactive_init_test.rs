@@ -39,7 +39,7 @@ fn explicit_project_name_validates_before_writing() {
         assert!(!target.exists());
     }
     for name in ["q", "7.valid_id-", "a"] {
-        let target = root.path().join(name);
+        let target = root.path().join(format!("project space {name}"));
         assert!(Command::new(env!("CARGO_BIN_EXE_harness-gate"))
             .arg("--project-root")
             .arg(&target)
@@ -48,6 +48,27 @@ fn explicit_project_name_validates_before_writing() {
             .unwrap()
             .status
             .success());
+        let repeated = Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+            .arg("--project-root")
+            .arg(&target)
+            .args(["init", "--force", "--project-name", name])
+            .output()
+            .unwrap();
+        assert!(repeated.status.success());
+        let guidance = String::from_utf8(repeated.stdout).unwrap();
+        assert!(guidance
+            .lines()
+            .any(|line| line == "  harness-gate config check"));
+        assert!(!guidance.contains("--project-root"));
+        assert!(guidance.contains(
+            &target
+                .canonicalize()
+                .unwrap()
+                .display()
+                .to_string()
+                .escape_debug()
+                .to_string()
+        ));
         let source = std::fs::read_to_string(target.join(".harness-gate/flow.toml")).unwrap();
         let config: toml::Value = toml::from_str(&source).unwrap();
         assert_eq!(config["project"]["name"].as_str(), Some(name));
@@ -122,7 +143,7 @@ mod terminal {
         let mut child = ChildGuard(
             cmd.stdin(slave.try_clone().unwrap())
                 .stderr(slave)
-                .stdout(Stdio::null())
+                .stdout(Stdio::piped())
                 .spawn()
                 .unwrap(),
         );
@@ -148,6 +169,17 @@ mod terminal {
                 sent = true;
             }
             if let Some(status) = child.0.try_wait().unwrap() {
+                if !status.success() {
+                    let mut stdout = String::new();
+                    child
+                        .0
+                        .stdout
+                        .take()
+                        .unwrap()
+                        .read_to_string(&mut stdout)
+                        .unwrap();
+                    assert!(stdout.is_empty(), "unexpected success guidance: {stdout}");
+                }
                 return status.success();
             }
             std::thread::sleep(Duration::from_millis(5));
@@ -209,4 +241,77 @@ mod terminal {
             assert_eq!(config["project"]["name"].as_str(), Some(expected));
         }
     }
+}
+
+#[cfg(unix)]
+#[test]
+fn initialization_guidance_escapes_paths_and_does_not_execute_declared_commands() {
+    let workspace = tempfile::tempdir().unwrap();
+    let root = workspace
+        .path()
+        .join("project space;$(touch injected)\n\u{1b}[2J");
+    let catalog = workspace.path().join("catalog");
+    std::fs::create_dir(&catalog).unwrap();
+    let flow = include_str!("../presets/generic.flow.toml")
+        .replace("program = \"git\"", "program = \"touch\"")
+        .replace(
+            "args = [\"diff\", \"--check\"]",
+            "args = [\"executed-marker\"]",
+        )
+        .replace("args = [\"--version\"]", "args = [\"executed-marker\"]");
+    std::fs::write(catalog.join("flow.toml"), flow).unwrap();
+    std::fs::write(catalog.join("catalog.json"), r#"{"schema":"harness-preset-catalog/v1","presets":{"custom":{"description":"Explicit test commands","flow":"flow.toml"}},"packs":{}}"#).unwrap();
+    let init = || {
+        Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+            .arg("--project-root")
+            .arg(&root)
+            .args(["init", "--preset", "custom", "--presets-dir"])
+            .arg(&catalog)
+            .output()
+            .unwrap()
+    };
+    let output = init();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(!stdout.contains('\u{1b}'));
+    assert!(stdout.contains("\\n\\u{1b}[2J"));
+    assert!(!stdout.contains("--project-root"));
+    for command in [
+        "  harness-gate config check",
+        "  harness-gate doctor",
+        "  harness-gate verify --plan --all",
+    ] {
+        assert!(stdout.lines().any(|line| line == command));
+    }
+    assert!(stdout.contains("Execute the declared dependency checks"));
+    assert!(!root.join("executed-marker").exists());
+    assert!(!workspace.path().join("injected").exists());
+    assert!(Command::new("git")
+        .args(["init", "--quiet"])
+        .arg(&root)
+        .output()
+        .unwrap()
+        .status
+        .success());
+    for args in [vec!["config", "check"], vec!["verify", "--plan", "--all"]] {
+        let result = Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+            .current_dir(&root)
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+    }
+    assert!(!root.join("executed-marker").exists());
+    assert!(!root.join(".harness-gate/reports").exists());
+    let denied = init();
+    assert!(!denied.status.success());
+    assert!(denied.stdout.is_empty());
 }

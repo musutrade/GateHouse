@@ -56,7 +56,7 @@
       "reports": {},
       "status": "pass",
       "stderr": "",
-      "stdout": "Initialized preset \"generic\" in <PROJECT_ROOT>/.harness-gate\nNext: harness-gate --project-root <PROJECT_ROOT> config check\nQuality remains opt-in; no quality policy was generated.\n"
+      "stdout": "Initialized preset \"generic\" in <PROJECT_ROOT>/.harness-gate\nProject directory (display only): <PROJECT_ROOT>\nFrom that project directory, run:\n  harness-gate config check\n    Validate the generated configuration.\n  harness-gate doctor\n    Execute the declared dependency checks.\n  harness-gate verify --plan --all\n    Inspect the configured default-profile plan without running gates, commands or collectors.\nQuality remains opt-in; no quality policy was generated.\nAfter reviewing the configuration and prerequisites, run harness-gate verify --all to execute verification.\n"
     },
     {
       "ansi": false,
