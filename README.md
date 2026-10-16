@@ -236,6 +236,10 @@ Initialize in an existing Git project (run `git init` first for a new directory)
 harness-gate --project-root /path/to/new-project init --preset rust-api --presets-dir /path/to/GateProbes/presets
 ```
 
+Invalid interactive preset selections or project names can be corrected at the same
+prompt. Input errors or oversized responses stop initialization; no project files
+change before final confirmation. Noninteractive validation still fails directly.
+
 ### Validate configuration and provision quality inputs
 
 ```bash
