@@ -355,3 +355,15 @@ normalized evidence. [Configuration, contract metrics and CLI examples](../../do
 include a single Rust topology and a synthetic Angular + Rust + Python + Java
 project whose green local gates are blocked by a breaking API contract. These
 fixtures do not certify additional adapters or replace required Rust CI.
+
+## Equivalent main push checks
+
+The [CI inheritance amendment](../../docs/engineering-policy.md#equivalent-main-push-check-inheritance)
+permits three checks to inherit verified PR success on an equivalent main merge:
+Linux tests, native macOS/Windows tests and quality coverage. `ci_reuse.py` verifies
+the original run and a small PR identity receipt; it does not rewrite or republish
+quality evidence. Classify logs report the original run/attempt and reason for
+reuse or full execution. Missing or mismatched proof runs all checks normally.
+PR checks always retain their normal routing. Producer changes, including first
+deployment, cannot inherit results. The aggregate accepts only these explicitly
+authorized skips; all failures and missing dependencies still block.

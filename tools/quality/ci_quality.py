@@ -26,6 +26,8 @@ COMMON = ('classify', 'test', 'test-cross-platform', 'security-audit', 'fmt', 'c
           'quality-coverage', 'quality-contracts', 'docs-consistency', 'release-contracts',
           'quality-scripts')
 PUSH_ONLY = ('build-cross-platform', 'quality-contracts-cross-platform')
+# Only these jobs may inherit a verified PR result on an equivalent main push.
+REUSABLE = ('test', 'test-cross-platform', 'quality-coverage')
 STAGES = ('legacy', 'production', 'risk', 'matrix')
 # Rust integration tests and their Python oracles read these repository trees.
 # Historical reports under docs/quality are not test inputs: archiving that
@@ -157,14 +159,16 @@ def classify(base: str, head: str) -> dict:
     return {'docs_only': docs_only, 'run_full': not docs_only, 'files': len(paths)}
 
 
-def aggregate(event: str, needs: dict, full: bool = True) -> list[str]:
+def aggregate(event: str, needs: dict, full: bool = True, reuse: bool = False) -> list[str]:
     """Evaluate child outcomes only; never collect evidence or launch tools here."""
     require(event in ('push', 'pull_request'), 'unsupported CI event')
     require(isinstance(needs, dict), 'CI needs must be an object')
+    require(not reuse or (event == 'push' and full), 'reuse requires a full push')
     required = COMMON + (PUSH_ONLY if event == 'push' else ())
     if full:
         return [name for name in required
-                if not isinstance(needs.get(name), dict) or needs[name].get('result') != 'success']
+                if not isinstance(needs.get(name), dict) or needs[name].get('result') not in
+                (('success', 'skipped') if reuse and name in REUSABLE else ('success',))]
     failures = []
     for name in required:
         entry = needs.get(name)
@@ -482,7 +486,10 @@ def main():
     try:
         if args.operation == 'aggregate':
             full = os.environ.get('RUN_FULL', 'true').strip().lower() != 'false'
-            failures = aggregate(args.event, json.loads(args.needs or '{}'), full=full)
+            reuse_value = os.environ.get('REUSE_VERIFIED', 'false')
+            require(reuse_value in ('true', 'false'), 'invalid reuse decision')
+            failures = aggregate(args.event, json.loads(args.needs or '{}'), full=full,
+                                 reuse=reuse_value == 'true')
             require(not failures, f'required jobs did not succeed: {failures}')
         elif args.operation == 'classify':
             result = classify(args.base_sha or '', args.head_sha or '')

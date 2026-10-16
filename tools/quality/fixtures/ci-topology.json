@@ -32,7 +32,7 @@
         "classify"
       ],
       "outcome": "Full locked Linux nextest suite; exported schema must match committed schema.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' }}"
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "test-cross-platform": {
       "name": "Test (${{ matrix.os }})",
@@ -56,7 +56,7 @@
         "classify"
       ],
       "outcome": "Full locked native macOS and Windows nextest suites with --no-fail-fast; both PR-required.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' }}"
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "security-audit": {
       "name": "Security Audit",
@@ -188,7 +188,7 @@
         "classify"
       ],
       "outcome": "Fresh legacy coverage, production coverage, base/head exact risk and isolated critical-path evidence; all four stages required; always retain available candidate evidence.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' }}"
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "quality-generic-shadow": {
       "name": "Generic Quality Shadow",
@@ -208,7 +208,7 @@
         "quality-coverage"
       ],
       "outcome": "Advisory projection of retained candidate with identity/hash validation; no aggregate dependency or release authority.",
-      "condition": "${{ always() && needs.classify.outputs.run_full == 'true' }}"
+      "condition": "${{ always() && needs.classify.outputs.run_full == 'true' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "quality-contracts": {
       "name": "Quality CLI Contracts",
@@ -370,5 +370,6 @@
     }
   },
   "observed_pre_change_aggregate_gap": "test-cross-platform ran on both events but was mistakenly in ci_quality.PUSH_ONLY. GH-164 enforces the already specified PR requirement; no scheduling change.",
-  "cadence_amendment": "docs/engineering-policy.md#ci-cadence-amendment"
+  "cadence_amendment": "docs/engineering-policy.md#ci-cadence-amendment",
+  "inheritance_amendment": "docs/engineering-policy.md#equivalent-main-push-check-inheritance"
 }

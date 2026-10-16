@@ -83,7 +83,7 @@ platforms, five samples, cold build isolation and measurement commands. Measurem
 remains a failed workflow; the existing non-blocking Codecov upload error policy
 remains unchanged. Results never automatically adopt a baseline.
 
-Every full PR and main push still requires fresh production/legacy coverage,
+Every full PR and unmatched main push requires fresh production/legacy coverage,
 paired exact risk/CRAP, critical-path evidence, native Linux/macOS/Windows tests,
 and applicable contracts/security/build checks. Thresholds, measurement series,
 requiredness within these gates, debt and release authority are unchanged.
@@ -96,6 +96,35 @@ weekly baseline candidate workflow still requires review before baseline adoptio
 Rollback restores the two jobs and aggregate dependencies to every full push;
 it does not reset history or adopt a worse measurement baseline. Validate both
 routing and failure propagation when changing this cadence.
+
+### Equivalent main push check inheritance
+
+A main push may inherit successful Linux/macOS/Windows tests and quality coverage
+checks from its accepted PR instead of repeating them. This explicitly amends the
+fresh-per-push requirement above; every full PR still collects fresh evidence.
+The original evidence retains its synthetic merge commit identity and is never
+presented as a fresh measurement of the main commit.
+
+Inheritance requires a normal two-parent merge, identical tested and pushed Git
+trees, the same risk base (the push's previous commit), same-repository PR head,
+unchanged receipt producer and workflow from that base, and matching configuration
+inputs. A receipt uploaded before repository classification records the tested
+merge tree, base, head, run and attempt. The verifier independently checks GitHub's
+latest successful run/attempt and every required child job, plus receipt artifact
+identity, digest and upload timing. Receipts are limited to 24 hours. This proves
+configuration equivalence, not identical versions of floating hosted tools.
+
+Only `test`, `test-cross-platform` and `quality-coverage` may be skipped under a
+verified inheritance result; the dependent advisory shadow is also skipped.
+Security audit, builds, contracts, documentation and script validation still run,
+including main-only native release builds and CLI contracts. The aggregate rejects
+failed, cancelled or missing jobs even when inheritance is verified. There is no
+permission to bypass PR checks or substitute a different risk baseline.
+
+Absent, ambiguous, stale or invalid evidence, API/permission errors, direct pushes,
+squash/rebase merges, fork PRs and producer changes fall back to full execution.
+The first deployment therefore runs fully. Rollback removes inheritance routing
+and restores fresh execution; it does not change evidence identity or thresholds.
 
 ## 7. Project-owned validation and extension boundaries
 
