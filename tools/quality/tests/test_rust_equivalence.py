@@ -43,7 +43,7 @@ class ShadowWorkflowTests(unittest.TestCase):
         self.assertIn('needs: [classify, quality-coverage]', shadow)
         self.assertIn('actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6', shadow)
         for identity in (
-                'BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}',
+                'BASE_SHA: ${{ needs.classify.outputs.base_sha }}',
                 'HEAD_SHA: ${{ github.sha }}',
                 'RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}',
                 'name: quality-coverage-${{ github.run_id }}-${{ github.run_attempt }}'):

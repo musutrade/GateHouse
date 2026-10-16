@@ -215,3 +215,40 @@ This policy consolidates durable rules already established by accepted repositor
 - the accepted Rust generic-core authority transfer and Python retention policy.
 
 Those records remain the detailed source for measurement identities, historical acceptance evidence, migration chronology, and extension-boundary rationale.
+
+### Impact-routed PR and main checks
+
+This amendment supersedes the per-change fresh metrics and universal native-test
+requirements above. Known ordinary Rust product/source-test edits defer full
+coverage, paired Risk and critical-path matrix collection to daily CI (02:17 UTC)
+or manual full validation. Linux full tests, security, format, Clippy, Linux build,
+contracts, documentation and script checks remain required. No test assertions,
+thresholds, measurement identities or release checks change.
+
+Only `.rs` files under `tools/harness-gate/src/` and `tools/harness-gate/tests/`,
+plus pure documentation, qualify for this deferral. Runtime, process, service,
+filesystem utilities, project/scope/secrets, application/verification entry points
+and integration tests still trigger native tests (and native builds/contracts on
+main). Any other path, including Cargo inputs, quality bindings, fixtures, workflows,
+maintenance, schemas, configuration or unknown scope, triggers full checks. Renames
+include both paths. Pure-document routing remains unchanged.
+
+Daily/manual CI runs all gates regardless of changed paths and selects its Risk
+base from the most recent successful daily/manual CI run on an ancestor main
+commit whose quality collection actually succeeded. Initial lineage starts at
+`444b378e15497d852689d12721b40dab0e7fe0cd`, verified against its successful full
+main push. Later per-change pushes cannot advance periodic lineage. It never advances that lineage from a
+routed/skipped collection or a failed run. If that base cannot be identified,
+collection fails explicitly instead of substituting yesterday's last commit.
+A failed periodic run requires triage and correction before further feature
+merges; GitHub Actions failure notifications remain the notification mechanism.
+Full validation can be dispatched immediately. The target detection delay is one
+daily cycle; scheduler delays and failures can extend it and require intervention.
+
+The aggregate keeps every dependency and accepts skipped only for explicitly
+deferred jobs or previously verified PR inheritance. Failed, cancelled and missing
+jobs still block. Existing receipt inheritance remains limited to fully successful
+PR checks; a routed PR cannot claim success for unmeasured gates. A non-inherited
+main push uses its own impact routing, so fallback does not force unnecessary
+metrics for ordinary changes. No coverage candidate is fabricated for skipped
+collection, and its dependent shadow does not run.

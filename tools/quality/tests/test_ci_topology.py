@@ -75,7 +75,7 @@ class TopologyTests(unittest.TestCase):
                  if 'pull_request' in job['required_events']}
         needs['classify'] = {'result': 'success'}
         cases = [('pull_request', json.dumps(needs), 0),
-                 ('push', json.dumps(needs), 1), ('workflow_dispatch', json.dumps(needs), 1)]
+                 ('push', json.dumps(needs), 1), ('unknown', json.dumps(needs), 1)]
         cases.extend(('pull_request', value, 1)
                      for value in ('{}', 'null', '[]', 'true', '1', '"success"', '{'))
         for event, payload, expected in cases:
@@ -114,6 +114,8 @@ class TopologyTests(unittest.TestCase):
           NEEDS_JSON: ${{ toJSON(needs) }}
           REUSE_VERIFIED: ${{ needs.classify.outputs.reuse_verified }}
           RUN_FULL: ${{ needs.classify.outputs.run_full }}
+          RUN_EVIDENCE: ${{ needs.classify.outputs.run_evidence }}
+          RUN_NATIVE: ${{ needs.classify.outputs.run_native }}
         run: python3 tools/quality/ci_quality.py aggregate
 '''
         def significant_lines(value):
@@ -221,6 +223,15 @@ class SupplementalCadenceTests(unittest.TestCase):
                 if name in ('test', 'test-cross-platform', 'quality-coverage', 'quality-generic-shadow'):
                     expected['condition'] = expected['condition'].replace(
                         ' }}', " && needs.classify.outputs.reuse_verified != 'true' }}")
+                if name in ('quality-coverage', 'quality-generic-shadow'):
+                    expected['condition'] = expected['condition'].replace(
+                        "needs.classify.outputs.run_full == 'true'",
+                        "needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false'")
+                if name in ('test-cross-platform', 'build-cross-platform', 'quality-contracts-cross-platform'):
+                    expected['condition'] = expected['condition'].replace(
+                        "needs.classify.outputs.run_full == 'true'",
+                        "needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_native != 'false'").replace(
+                        "github.event_name == 'push'", "github.event_name != 'pull_request'")
                 self.assertEqual(row, expected)
         self.assertEqual(set(previous['jobs']['quality-required']['needs']) -
                          set(CONTRACT['jobs']['quality-required']['needs']),
@@ -293,6 +304,74 @@ class ClassifyAndSelectionTests(unittest.TestCase):
                     capture_output=True, text=True,
                     env={**os.environ, 'RUN_FULL': run_full})
                 self.assertEqual(result.returncode, expected, result.stderr)
+
+
+class ImpactRoutingTests(unittest.TestCase):
+    def test_periodic_workflow_forces_full_and_shares_certified_base(self):
+        workflow = (ROOT / '.github/workflows/ci.yml').read_text()
+        self.assertIn("cron: '17 2 * * *'", workflow)
+        self.assertIn('  workflow_dispatch:', workflow)
+        self.assertIn('ci_quality.py certified-base --head-sha "$HEAD"', workflow)
+        self.assertEqual(workflow.count('BASE_SHA: ${{ needs.classify.outputs.base_sha }}'), 2)
+        self.assertIn('base_sha: ${{ steps.classify.outputs.base_sha }}', workflow)
+        self.assertEqual(CONTRACT['full_validation_events'], ['schedule', 'workflow_dispatch'])
+
+    def test_known_paths_and_platform_markers(self):
+        cases = [(['tools/harness-gate/src/config/parser.rs'], False, False),
+                 (['tools/harness-gate/src/process/capture.rs'], False, True),
+                 (['tools/harness-gate/tests/failure.rs'], False, True),
+                 (['tools/quality/ci_quality.py'], True, True),
+                 (['tools/quality/ci_reuse.py'], True, True),
+                 (['.github/workflows/ci.yml'], True, True),
+                 (['tools/harness-gate/Cargo.toml'], True, True),
+                 (['tools/harness-gate/fixtures/input.json'], True, True),
+                 (['schema/flow.schema.json'], True, True),
+                 (['unknown'], True, True), ([], True, True),
+                 (['tools/harness-gate/src/config/parser.rs', 'old/unknown.rs'], True, True)]
+        for paths, evidence, native in cases:
+            with self.subTest(paths=paths), patch.object(ci_quality, 'changed_paths', return_value=paths), patch.object(ci_quality.subprocess, 'check_output', return_value='normal diff'):
+                self.assertEqual(ci_quality.impact('a'*40, 'b'*40, 'pull_request'),
+                                 {'run_evidence': evidence, 'run_native': native})
+        for marker in ('cfg(windows)', 'cfg(unix)', 'std::os', 'unsafe', 'target_os'):
+            with patch.object(ci_quality, 'changed_paths', return_value=cases[0][0]), patch.object(ci_quality.subprocess, 'check_output', return_value=marker):
+                self.assertTrue(ci_quality.impact('a'*40, 'b'*40, 'push')['run_native'])
+
+    def test_skips_are_explicit_and_periodic_runs_cannot_defer(self):
+        required = ci_quality.COMMON + ci_quality.PUSH_ONLY
+        needs = {name: {'result': 'success'} for name in required}
+        deferred = {'quality-coverage', 'test-cross-platform', *ci_quality.PUSH_ONLY}
+        for name in deferred:
+            needs[name]['result'] = 'skipped'
+        self.assertEqual(ci_quality.aggregate('push', needs, evidence=False, native=False), [])
+        for name in required:
+            for state in ('failure', 'cancelled', None):
+                bad = copy.deepcopy(needs)
+                bad[name] = {'result': state}
+                self.assertIn(name, ci_quality.aggregate('push', bad, evidence=False, native=False))
+            bad = copy.deepcopy(needs)
+            del bad[name]
+            self.assertIn(name, ci_quality.aggregate('push', bad, evidence=False, native=False))
+        bad = copy.deepcopy(needs)
+        bad['test']['result'] = 'skipped'
+        self.assertIn('test', ci_quality.aggregate('push', bad, evidence=False, native=False))
+        for event in ('schedule', 'workflow_dispatch'):
+            self.assertEqual(ci_quality.impact('a'*40, 'b'*40, event), {'run_evidence': True, 'run_native': True})
+            with self.assertRaises(ValueError):
+                ci_quality.aggregate(event, needs, evidence=False, native=False)
+            self.assertTrue(ci_quality.aggregate(event, needs))
+
+    def test_periodic_base_ignores_skipped_collection_and_failed_lookup(self):
+        runs = {'workflow_runs': [dict(id=3, run_attempt=1, event='push', head_sha='d'*40),
+                                  dict(id=2, run_attempt=1, event='schedule', head_sha='b'*40),
+                                  dict(id=1, run_attempt=1, event='schedule', head_sha='a'*40)]}
+        answers = [json.dumps(runs), json.dumps({'jobs': [{'name': 'Quality Coverage and Critical Paths', 'conclusion': 'skipped'}]}),
+                   json.dumps({'jobs': [{'name': 'Quality Coverage and Critical Paths', 'conclusion': 'success'}]})]
+        with patch.dict(os.environ, GITHUB_REPOSITORY='fixture/repo'), patch.object(ci_quality.subprocess, 'check_output', side_effect=answers), patch.object(ci_quality.subprocess, 'run') as run:
+            run.return_value.returncode = 0
+            self.assertEqual(ci_quality.certified_base('c'*40), 'a'*40)
+        with patch.dict(os.environ, GITHUB_REPOSITORY='fixture/repo'), patch.object(ci_quality.subprocess, 'check_output', return_value='{"workflow_runs": []}'):
+            with self.assertRaises(ValueError):
+                ci_quality.certified_base('c'*40)
 
 
 if __name__ == '__main__':

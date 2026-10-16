@@ -350,7 +350,7 @@ class AggregateTests(unittest.TestCase):
         self.assertEqual(gate.aggregate('pull_request', needs), [])
         self.assertEqual(set(gate.aggregate('push', needs)), set(gate.PUSH_ONLY))
         with self.assertRaises(ValueError):
-            gate.aggregate('workflow_dispatch', needs)
+            gate.aggregate('unknown', needs)
 
     def test_workflow_keeps_collection_required_and_upload_unconditional(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()
