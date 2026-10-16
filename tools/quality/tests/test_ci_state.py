@@ -160,13 +160,18 @@ class WorkflowBoundaryTests(unittest.TestCase):
         for workflow in (ROOT / '.github/workflows').glob('*.yml'):
             self.assertNotRegex(workflow.read_text(), r'cache-target:\s*[\"\x27]?true')
 
-    def test_quality_collection_has_one_owner_and_shadow_only_consumes_evidence(self):
+    def test_quality_collection_shards_are_only_owners_and_shadow_only_consumes_evidence(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()
         jobs = dict(re.findall(r'^  ([a-z][a-z-]+):\n(.*?)(?=^  [a-z][a-z-]+:|\Z)',
                                workflow, re.M | re.S))
         owners = [name for name, body in jobs.items() if 'ci_quality.py collect' in body]
-        self.assertEqual(owners, ['quality-coverage'])
-        self.assertEqual(jobs['quality-coverage'].count('ci_quality.py collect'), 1)
+        self.assertEqual(owners, ['quality-fast', 'quality-risk', 'quality-matrix'])
+        for name in owners:
+            self.assertEqual(jobs[name].count('ci_quality.py collect'), 1)
+        merge = jobs['quality-coverage']
+        self.assertEqual(merge.count('ci_quality.py collect'), 0)
+        self.assertIn('ci_quality.py verify', merge)
+        self.assertIn('needs: [classify, quality-fast, quality-risk, quality-matrix]', merge)
         consumer = jobs['quality-generic-shadow']
         self.assertIn('needs: [classify, quality-coverage]', consumer)
         self.assertIn('quality-coverage-${{ github.run_id }}-${{ github.run_attempt }}', consumer)
@@ -191,7 +196,7 @@ class WorkflowBoundaryTests(unittest.TestCase):
 
     def test_measurements_do_not_restore_compiled_state(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()
-        for name in ('quality-coverage',):
+        for name in ('quality-fast', 'quality-risk', 'quality-matrix'):
             block = re.split(r'\n  [a-z]', workflow.split(f'  {name}:\n')[1])[0]
             self.assertIn("cache-target: 'false'", block)
         trends = (ROOT / '.github/workflows/quality-trends.yml').read_text()

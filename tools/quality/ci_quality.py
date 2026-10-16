@@ -268,41 +268,18 @@ def verify(path: Path, head: str, base: str, run_id: str) -> dict:
 
 
 class Collector:
-    def __init__(self, directory: Path, base: str, head: str, run_id: str, resume=False):
-        """Initialize collector.
-        
-        Args:
-            directory: Output directory for artifacts
-            base: Base commit SHA
-            head: Head commit SHA  
-            run_id: Run identifier
-            resume: If True, resume from existing directory (for multi-job collection).
-                   If False, require fresh directory.
-        """
+    def __init__(self, directory: Path, base: str, head: str, run_id: str):
         self.directory = directory.resolve()
-        
-        if resume:
-            # Resume mode: load existing report
-            require(self.directory.exists(), 'candidate directory must exist when resuming')
-            candidate_json = self.directory / 'candidate.json'
-            require(candidate_json.exists(), 'candidate.json must exist when resuming')
-            self.report = json.loads(candidate_json.read_text())
-            require(self.report['base_sha'] == base, 'base SHA mismatch when resuming')
-            require(self.report['commit'] == head, 'head SHA mismatch when resuming')
-            require(self.report['run_id'] == run_id, 'run ID mismatch when resuming')
-        else:
-            # Fresh mode: create new directory
-            require(not self.directory.exists(), 'candidate directory already exists; choose a fresh path')
-            self.directory.mkdir(parents=True)
-            self.report = {**metadata(), 'schema_version': 1, 'candidate': True,
-                           'base_sha': base, 'commit': head, 'run_id': run_id,
-                           'stages': {}, 'commands': [], 'artifacts': {}}
-        
+        require(not self.directory.exists(), 'candidate directory already exists; choose a fresh path')
+        self.directory.mkdir(parents=True)
         self.environment = dict(os.environ)
         for key in ('LLVM_PROFILE_FILE', 'CARGO_BUILD_TARGET', 'CARGO_LLVM_COV_TARGET_DIR',
                     'RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS'):
             self.environment.pop(key, None)
         self.environment['CARGO_TARGET_DIR'] = str(self.directory / 'build')
+        self.report = {**metadata(), 'schema_version': 1, 'candidate': True,
+                       'base_sha': base, 'commit': head, 'run_id': run_id,
+                       'stages': {}, 'commands': [], 'artifacts': {}}
         self._save_lock = threading.Lock()
         self.save()
 
@@ -541,7 +518,7 @@ class Collector:
 
     def collect(self, stages=None):
         """Collect evidence for specified stages.
-        
+
         Args:
             stages: Tuple of stage names to run. If None, runs all STAGES.
                    Can be used to run a subset of stages for parallel job execution.
@@ -549,10 +526,9 @@ class Collector:
         if stages is None:
             stages = STAGES
         else:
-            # Validate that all requested stages are known
             for stage in stages:
                 require(stage in STAGES, f'unknown stage: {stage}')
-        
+
         started = time.monotonic()
         for stage in stages:
             tick = time.monotonic()
@@ -575,7 +551,10 @@ class Collector:
             if relative.parts[0] not in ('build', 'snapshots', 'candidate.json') and artifact.is_file():
                 self.report['artifacts'][str(relative)] = sha256(artifact)
         self.save()
-        verify(self.directory / 'candidate.json', self.report['commit'], self.report['base_sha'], self.report['run_id'])
+        # A partial collection is one shard of a split job; the merge job verifies
+        # the complete candidate. A full collection still verifies immediately.
+        if set(stages) == set(STAGES):
+            verify(self.directory / 'candidate.json', self.report['commit'], self.report['base_sha'], self.report['run_id'])
 
 
 def main():
@@ -625,13 +604,10 @@ def main():
             if args.operation == 'collect':
                 require(git_sha() == args.head_sha, 'head must equal checked-out commit')
                 require_committed_sources(args.head_sha)
-                # Parse stages if provided
                 stages = None
                 if args.stages:
                     stages = tuple(s.strip() for s in args.stages.split(','))
-                # Check if we're resuming (directory exists with candidate.json)
-                resume = args.output.exists() and (args.output / 'candidate.json').exists()
-                collector = Collector(args.output, args.base_sha, args.head_sha, args.run_id, resume=resume)
+                collector = Collector(args.output, args.base_sha, args.head_sha, args.run_id)
                 collector.collect(stages=stages)
             else:
                 verify(args.output / 'candidate.json', args.head_sha, args.base_sha, args.run_id)

@@ -354,10 +354,20 @@ class AggregateTests(unittest.TestCase):
 
     def test_workflow_keeps_collection_required_and_upload_unconditional(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()
-        job = workflow.split('  quality-coverage:\n')[1].split('  quality-contracts:\n')[0]
-        self.assertNotIn("github.event_name == 'push'", job)
+        shard_bodies = {
+            'quality-fast': workflow.split('  quality-fast:\n')[1].split('  quality-risk:\n')[0],
+            'quality-risk': workflow.split('  quality-risk:\n')[1].split('  quality-matrix:\n')[0],
+            'quality-matrix': workflow.split('  quality-matrix:\n')[1].split('  quality-coverage:\n')[0],
+        }
+        for name, body in shard_bodies.items():
+            with self.subTest(shard=name):
+                self.assertNotIn("github.event_name == 'push'", body)
+                self.assertIn('fetch-depth: 0', body)
+                self.assertIn('ci_quality.py collect', body)
+        job = workflow.split('  quality-coverage:\n')[1].split('  quality-generic-shadow:\n')[0]
+        self.assertIn('needs: [classify, quality-fast, quality-risk, quality-matrix]', job)
+        self.assertIn('ci_quality.py verify', job)
         self.assertIn('fetch-depth: 0', job)
-        self.assertIn('ci_quality.py collect', job)
         upload = job.split('- name: Upload quality evidence')[1]
         self.assertIn('if: ${{ always() }}', upload)
         self.assertIn('target/quality/candidate', upload)
@@ -496,6 +506,35 @@ class CollectionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 gate.Collector(Path(directory), 'b' * 40, 'a' * 40, 'test')
             self.assertEqual(marker.read_text(), 'retained')
+
+    def test_partial_stage_collection_defers_full_verify_to_the_merge_job(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'fresh'
+            with patch.object(gate, 'metadata', return_value={}), \
+                    patch.object(gate, 'git_sha', return_value='a' * 40), \
+                    patch.object(gate, 'require_committed_sources'), \
+                    patch.object(gate, 'verify') as verify_mock:
+                collector = gate.Collector(output, 'b' * 40, 'a' * 40, 'test')
+                for stage in gate.STAGES:
+                    setattr(collector, stage, lambda: None)
+                collector.collect(stages=('legacy', 'production'))
+                verify_mock.assert_not_called()
+                report = json.loads((output / 'candidate.json').read_text())
+                self.assertEqual(set(report['stages']), {'legacy', 'production'})
+                collector.collect()
+                verify_mock.assert_called_once()
+                report = json.loads((output / 'candidate.json').read_text())
+                self.assertEqual(set(report['stages']), set(gate.STAGES))
+
+    def test_unknown_partial_stage_fails_before_collection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'fresh'
+            with patch.object(gate, 'metadata', return_value={}), \
+                    patch.object(gate, 'git_sha', return_value='a' * 40), \
+                    patch.object(gate, 'require_committed_sources'):
+                collector = gate.Collector(output, 'b' * 40, 'a' * 40, 'test')
+                with self.assertRaises(ValueError):
+                    collector.collect(stages=('legacy', 'unknown'))
 
 
 class ReviewedRemovalTests(unittest.TestCase):

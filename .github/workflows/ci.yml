@@ -331,14 +331,13 @@ jobs:
       - name: Build
         run: cargo build --manifest-path tools/harness-gate/Cargo.toml --locked --release
 
-  quality-coverage:
-    name: Quality Coverage and Critical Paths
+  # Fast baseline stages (legacy + production)
+  quality-fast:
+    name: Quality Fast Stages (legacy, production)
     needs: [classify]
     if: ${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    outputs:
-      manifest-sha256: ${{ steps.seal.outputs.manifest-sha256 }}
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -357,7 +356,7 @@ jobs:
         with:
           class: quality
           profiles: 'isolated-instrumented;default'
-          cache-target: 'true'
+          cache-target: 'false'
 
       - name: Install cargo-nextest
         uses: ./.github/actions/install-ci-tool
@@ -369,7 +368,69 @@ jobs:
         with:
           tool: cargo-llvm-cov
 
-      - name: Collect and require fresh coverage, risk and matrix evidence
+      - name: Collect legacy and production stages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ needs.classify.outputs.base_sha }}
+          HEAD_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          BASE_SHA="$(python3 tools/maintenance/migration_baseline.py --base "$BASE_SHA" --head "$HEAD_SHA" --fetch)"
+          python3 tools/quality/ci_quality.py collect \
+            --stages legacy,production \
+            --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
+            --output target/quality/candidate
+
+      - name: Upload quality artifacts (fast)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quality-artifacts-fast-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            target/quality/candidate
+            !target/quality/candidate/build
+            !target/quality/candidate/snapshots
+          if-no-files-found: error
+
+  # Risk analysis stage (most expensive, parallelized internally)
+  quality-risk:
+    name: Quality Risk Stage
+    needs: [classify]
+    if: ${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+
+      - name: Restore pinned regression data
+        uses: ./.github/actions/test-data
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Configure Cargo state
+        uses: ./.github/actions/cargo-state
+        with:
+          class: quality
+          profiles: 'isolated-instrumented;default'
+          cache-target: 'false'
+
+      - name: Install cargo-nextest
+        uses: ./.github/actions/install-ci-tool
+        with:
+          tool: cargo-nextest
+
+      - name: Install cargo-llvm-cov
+        uses: ./.github/actions/install-ci-tool
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Collect risk stage
         env:
           GH_TOKEN: ${{ github.token }}
           BASE_SHA: ${{ needs.classify.outputs.base_sha }}
@@ -379,6 +440,151 @@ jobs:
         run: |
           BASE_SHA="$(python3 tools/maintenance/migration_baseline.py --base "$BASE_SHA" --head "$HEAD_SHA" --fetch)"
           python3 tools/quality/ci_quality.py collect \
+            --stages risk \
+            --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
+            --output target/quality/candidate
+
+      - name: Upload quality artifacts (risk)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quality-artifacts-risk-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            target/quality/candidate
+            !target/quality/candidate/build
+            !target/quality/candidate/snapshots
+          if-no-files-found: error
+
+  # Matrix analysis stage
+  quality-matrix:
+    name: Quality Matrix Stage
+    needs: [classify]
+    if: ${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+
+      - name: Restore pinned regression data
+        uses: ./.github/actions/test-data
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Configure Cargo state
+        uses: ./.github/actions/cargo-state
+        with:
+          class: quality
+          profiles: 'isolated-instrumented;default'
+          cache-target: 'false'
+
+      - name: Install cargo-nextest
+        uses: ./.github/actions/install-ci-tool
+        with:
+          tool: cargo-nextest
+
+      - name: Install cargo-llvm-cov
+        uses: ./.github/actions/install-ci-tool
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Collect matrix stage
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ needs.classify.outputs.base_sha }}
+          HEAD_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          BASE_SHA="$(python3 tools/maintenance/migration_baseline.py --base "$BASE_SHA" --head "$HEAD_SHA" --fetch)"
+          python3 tools/quality/ci_quality.py collect \
+            --stages matrix \
+            --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
+            --output target/quality/candidate
+
+      - name: Upload quality artifacts (matrix)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quality-artifacts-matrix-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            target/quality/candidate
+            !target/quality/candidate/build
+            !target/quality/candidate/snapshots
+          if-no-files-found: error
+
+  # Merge all stages and run verify
+  quality-coverage:
+    name: Quality Coverage (merge and verify)
+    needs: [classify, quality-fast, quality-risk, quality-matrix]
+    if: ${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      manifest-sha256: ${{ steps.seal.outputs.manifest-sha256 }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+
+      - name: Download quality artifacts (fast)
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: quality-artifacts-fast-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/quality/candidate-fast
+
+      - name: Download quality artifacts (risk)
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: quality-artifacts-risk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/quality/candidate-risk
+
+      - name: Download quality artifacts (matrix)
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: quality-artifacts-matrix-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/quality/candidate-matrix
+
+      - name: Merge artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p target/quality/candidate
+          # Copy shard files first, then write the merged candidate.json last so
+          # no shard's partial candidate.json overwrites the merged report.
+          for shard in fast risk matrix; do
+            cp -r "target/quality/candidate-$shard/." target/quality/candidate/
+          done
+          python3 - <<'MERGE'
+          import json
+          from pathlib import Path
+          shards = [json.loads(Path(f'target/quality/candidate-{n}/candidate.json').read_text())
+                    for n in ('fast', 'risk', 'matrix')]
+          identity = {(s['base_sha'], s['commit'], s['run_id']) for s in shards}
+          assert len(identity) == 1, f'shard identity mismatch: {identity}'
+          merged = shards[0]
+          for shard in shards[1:]:
+              overlap = set(merged['stages']) & set(shard['stages'])
+              assert not overlap, f'stage collected twice: {overlap}'
+              merged['stages'].update(shard['stages'])
+              merged['commands'].extend(shard['commands'])
+              merged['artifacts'].update(shard['artifacts'])
+          Path('target/quality/candidate/candidate.json').write_text(json.dumps(merged, indent=2))
+          MERGE
+
+      - name: Run verify stage
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ needs.classify.outputs.base_sha }}
+          HEAD_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          BASE_SHA="$(python3 tools/maintenance/migration_baseline.py --base "$BASE_SHA" --head "$HEAD_SHA" --fetch)"
+          python3 tools/quality/ci_quality.py verify \
             --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
             --output target/quality/candidate
 

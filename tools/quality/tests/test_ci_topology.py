@@ -218,21 +218,36 @@ class SupplementalCadenceTests(unittest.TestCase):
         previous = json.loads((ROOT / 'tools/quality/fixtures/ci-topology-pre-cadence.json').read_text())
         self.assertEqual(set(previous['jobs']) - set(CONTRACT['jobs']), {'coverage', 'quality-baseline'})
         for name, row in CONTRACT['jobs'].items():
-            if name != 'quality-required':
-                expected = copy.deepcopy(previous['jobs'][name])
-                if name in ('test', 'test-cross-platform', 'quality-coverage', 'quality-generic-shadow'):
-                    expected['condition'] = expected['condition'].replace(
-                        ' }}', " && needs.classify.outputs.reuse_verified != 'true' }}")
-                if name in ('quality-coverage', 'quality-generic-shadow'):
-                    expected['condition'] = expected['condition'].replace(
-                        "needs.classify.outputs.run_full == 'true'",
-                        "needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false'")
-                if name in ('test-cross-platform', 'build-cross-platform', 'quality-contracts-cross-platform'):
-                    expected['condition'] = expected['condition'].replace(
-                        "needs.classify.outputs.run_full == 'true'",
-                        "needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_native != 'false'").replace(
-                        "github.event_name == 'push'", "github.event_name != 'pull_request'")
-                self.assertEqual(row, expected)
+            if name == 'quality-required':
+                continue
+            if name not in previous['jobs']:
+                # Split-collection shards added after the pre-cadence fixture are
+                # never required by aggregate on their own; the merge job is the
+                # only required quality-coverage entry.
+                self.assertEqual(row['required_events'], [])
+                self.assertEqual(row['needs'], ['classify'])
+                continue
+            expected = copy.deepcopy(previous['jobs'][name])
+            if name in ('test', 'test-cross-platform', 'quality-coverage', 'quality-generic-shadow'):
+                expected['condition'] = expected['condition'].replace(
+                    ' }}', " && needs.classify.outputs.reuse_verified != 'true' }}")
+            if name in ('quality-coverage', 'quality-generic-shadow'):
+                expected['condition'] = expected['condition'].replace(
+                    "needs.classify.outputs.run_full == 'true'",
+                    "needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false'")
+            if name == 'quality-coverage':
+                expected['name'] = 'Quality Coverage (merge and verify)'
+                expected['check_names'] = ['Quality Coverage (merge and verify)']
+                expected['needs'] = ['classify', 'quality-fast', 'quality-risk', 'quality-matrix']
+                expected['outcome'] = (
+                    'Merge the fast, risk and matrix shard candidates, require the complete'
+                    ' four-stage evidence set, verify hashes, and always retain the sealed candidate.')
+            if name in ('test-cross-platform', 'build-cross-platform', 'quality-contracts-cross-platform'):
+                expected['condition'] = expected['condition'].replace(
+                    "needs.classify.outputs.run_full == 'true'",
+                    "needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_native != 'false'").replace(
+                    "github.event_name == 'push'", "github.event_name != 'pull_request'")
+            self.assertEqual(row, expected)
         self.assertEqual(set(previous['jobs']['quality-required']['needs']) -
                          set(CONTRACT['jobs']['quality-required']['needs']),
                          {'coverage', 'quality-baseline'})
@@ -312,7 +327,7 @@ class ImpactRoutingTests(unittest.TestCase):
         self.assertIn("cron: '17 2 * * *'", workflow)
         self.assertIn('  workflow_dispatch:', workflow)
         self.assertIn('ci_quality.py certified-base --head-sha "$HEAD"', workflow)
-        self.assertEqual(workflow.count('BASE_SHA: ${{ needs.classify.outputs.base_sha }}'), 2)
+        self.assertEqual(workflow.count('BASE_SHA: ${{ needs.classify.outputs.base_sha }}'), 5)
         self.assertIn('base_sha: ${{ steps.classify.outputs.base_sha }}', workflow)
         self.assertEqual(CONTRACT['full_validation_events'], ['schedule', 'workflow_dispatch'])
 
