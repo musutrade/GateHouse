@@ -287,7 +287,8 @@ class RepositorySizeTests(unittest.TestCase):
         self.assertLess(classify.index('python3 tools/maintenance/repository_size.py'),
                         classify.index('python3 tools/quality/ci_quality.py classify'))
         self.assertNotIn('continue-on-error', classify)
-        self.assertNotRegex(classify, re.compile(r'^\s+if:', re.M))
+        # The job itself must stay unconditional; step-level event guards are allowed.
+        self.assertNotRegex(classify, re.compile(r'^    if:', re.M))
         import ci_quality
         failures = ci_quality.aggregate('pull_request', {'classify': {'result': 'failure'}}, False)
         self.assertIn('classify', failures)

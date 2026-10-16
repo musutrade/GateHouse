@@ -6,6 +6,7 @@
       "tools/quality/fixtures/adapter",
       "tools/quality/fixtures/benchmark",
       "tools/quality/fixtures/capability",
+      "tools/quality/fixtures/ci-topology-pre-cadence.json",
       "tools/quality/fixtures/ci-topology.json",
       "tools/quality/fixtures/collectors",
       "tools/quality/fixtures/complexity",

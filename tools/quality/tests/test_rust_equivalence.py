@@ -66,8 +66,8 @@ class ShadowWorkflowTests(unittest.TestCase):
         self.assertIn('name: Required Quality Aggregate\n', required)
         self.assertIn('if: ${{ always() }}', required)
         expected = ['classify', 'test', 'test-cross-platform', 'security-audit', 'fmt', 'clippy', 'build',
-                    'build-cross-platform', 'coverage', 'quality-coverage', 'quality-contracts',
-                    'quality-contracts-cross-platform', 'quality-baseline', 'docs-consistency',
+                    'build-cross-platform', 'quality-coverage', 'quality-contracts',
+                    'quality-contracts-cross-platform', 'docs-consistency',
                     'release-contracts', 'quality-scripts']
         dependencies = required.split('needs:')[1].split('runs-on:')[0].strip(' []\n').replace('\n', '')
         self.assertEqual([v.strip() for v in dependencies.split(',')], expected)
