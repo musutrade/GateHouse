@@ -41,67 +41,6 @@ fn unique<'a>(
     ensure!(items.next().is_none(), "ambiguous history {description}");
     Ok(first)
 }
-fn verify_subject(quality: &Value, found: &Value) -> Result<()> {
-    let project_id = quality["inputs"]["project"]["id"]
-        .as_str()
-        .context("missing quality project ID")?;
-    ensure!(
-        harness_gate::quality::project::subject_id(project_id, &found["subject"])?
-            == found["subject"]["id"],
-        "noncanonical history subject identity"
-    );
-    let subjects = quality["inputs"]["project"]["subjects"]
-        .as_array()
-        .context("missing project subject registry")?;
-    ensure!(
-        unique(
-            subjects
-                .iter()
-                .filter(|s| s["id"] == found["subject"]["id"]),
-            "subject registry"
-        )? == Some(&found["subject"]),
-        "history subject differs from project registry"
-    );
-    Ok(())
-}
-fn evidence<'a>(quality: &'a Value, gate: &Value) -> Result<&'a Value> {
-    let record = &gate["record"];
-    let id = record
-        .pointer("/evidence_links/head/evidence_id")
-        .and_then(Value::as_str)
-        .context("selected gate has no head evidence identity")?;
-    let records = quality["evidence"]
-        .as_array()
-        .context("quality evidence must be an array")?;
-    let found = unique(
-        records.iter().filter(|item| item["id"] == id),
-        "evidence identity",
-    )?
-    .context("selected gate head evidence is missing")?;
-    harness_gate::quality::evidence::validate_series(&found["series"])?;
-    verify_subject(quality, found)?;
-    ensure!(
-        found["series"]["id"] == record["measurement_series"]["head"],
-        "gate and evidence series differ"
-    );
-    ensure!(
-        found["collector"] == found["series"]["collector"],
-        "evidence collector differs from series"
-    );
-    ensure!(
-        found["context"] == record["context"],
-        "gate and evidence context differ"
-    );
-    ensure!(
-        found["subject"] == record["subject"] && found["component"] == record["component"],
-        "gate and evidence subject/component differ"
-    );
-    ensure!(
-        found["project"] == quality["inputs"]["project"]["id"],
-        "quality project identity differs"
-    );
-    Ok(found)
-}
 fn numeric(value: &Value) -> Option<f64> {
     let number = value.as_u64()?;
     (number <= 9_007_199_254_740_991).then_some(number as f64)
@@ -156,34 +95,8 @@ fn verified_metric<'a>(
     gate: &Value,
     selection: &Selection<'_>,
 ) -> Result<&'a Value> {
-    let record = &gate["record"];
-    let evidence = evidence(quality, gate)?;
-    let metrics = evidence["metrics"]
-        .as_array()
-        .context("evidence metrics must be an array")?;
-    let metric = unique(
-        metrics.iter().filter(|m| m["name"] == selection.metric),
-        "metric",
-    )?
-    .context("claimed metric missing from evidence")?;
-    ensure!(
-        metric["value"] == record["head"],
-        "gate value differs from its evidence"
-    );
-    let contracts = evidence["series"]["metrics"]
-        .as_array()
-        .context("missing series metric contracts")?;
-    ensure!(
-        unique(
-            contracts.iter().filter(|m| m["name"] == selection.metric),
-            "series metric contract"
-        )?
-        .is_some_and(|m| m["type"] == metric["value"]["type"]),
-        "metric does not match its series contract"
-    );
-    let _: harness_gate::quality::model::MetricValue =
-        serde_json::from_value(metric["value"].clone())?;
-    Ok(evidence)
+    crate::report_evidence::Index::new(&quality["inputs"]["project"], &quality["evidence"])
+        .resolve(gate, selection.metric)
 }
 fn selected_gate<'a>(
     project_report: &'a Value,
@@ -299,16 +212,20 @@ mod tests {
             assert_eq!(exact, value.to_string());
         }
     }
+    fn resolve<'a>(quality: &'a Value, gate: &Value) -> Result<&'a Value> {
+        crate::report_evidence::Index::new(&quality["inputs"]["project"], &quality["evidence"])
+            .resolve(gate, "coverage.line")
+    }
     #[test]
     fn claimed_evidence_requires_unique_reference_and_valid_series() {
         let gate = json!({"record":{"evidence_links":{"head":{"evidence_id":"expected"}}}});
-        assert!(evidence(&json!({"evidence":[]}), &gate).is_err());
-        assert!(evidence(
+        assert!(resolve(&json!({"evidence":[]}), &gate).is_err());
+        assert!(resolve(
             &json!({"evidence":[{"id":"expected"},{"id":"expected"}]}),
             &gate
         )
         .is_err());
-        assert!(evidence(&json!({"evidence":[{"id":"expected","series":{}}]}), &gate).is_err());
-        assert!(evidence(&json!({"evidence":[]}), &json!({"record":{}})).is_err());
+        assert!(resolve(&json!({"evidence":[{"id":"expected","series":{}}]}), &gate).is_err());
+        assert!(resolve(&json!({"evidence":[]}), &json!({"record":{}})).is_err());
     }
 }
