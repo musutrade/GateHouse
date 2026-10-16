@@ -466,13 +466,18 @@ class MergeTests(unittest.TestCase):
         'matrix': ['critical-paths.json', 'critical-path-runs/bundle.json'],
     }
 
+    TOOLS = {tool: f'{tool} version-fixture' for tool in ('rustc', 'cargo', 'nextest', 'llvm-cov')}
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
 
+    def identity_json(self, digest='0' * 64):
+        return json.dumps({'schema': 1, 'tools': self.TOOLS, 'configuration_sha256': digest})
+
     def shard(self, name, *, stages=None, identity=('b' * 40, 'a' * 40, 'merge-run'),
-              tool='tool-identity-fingerprint', files=None, extra=None, tamper=None):
+              tool='valid', files=None, extra=None, tamper=None):
         directory = self.root / f'candidate-{name}'
         directory.mkdir(parents=True)
         files = self.SHARD_FILES[name] if files is None else files
@@ -492,7 +497,9 @@ class MergeTests(unittest.TestCase):
         if extra:
             report.update(extra)
         (directory / 'candidate.json').write_text(json.dumps(report))
-        if tool is not None:
+        if tool == 'valid':
+            (directory / gate.SHARD_TOOL_IDENTITY).write_text(self.identity_json())
+        elif tool != 'missing':
             (directory / gate.SHARD_TOOL_IDENTITY).write_text(tool)
         return directory
 
@@ -513,14 +520,14 @@ class MergeTests(unittest.TestCase):
         self.assertEqual(set(merged['artifacts']), set(gate.REQUIRED_ARTIFACTS))
         output = self.root / 'merged'
         gate.verify(output / 'candidate.json', 'a' * 40, 'b' * 40, 'merge-run')
-        self.assertEqual((output / gate.SHARD_TOOL_IDENTITY).read_text(),
-                         'tool-identity-fingerprint')
+        self.assertEqual(json.loads((output / gate.SHARD_TOOL_IDENTITY).read_text()),
+                         json.loads(self.identity_json()))
 
     def test_identity_tool_and_measurer_mismatches_rejected(self):
         factories = {
             'identity': lambda: self.shard('risk', identity=('c' * 40, 'a' * 40, 'merge-run')),
-            'tool-differs': lambda: self.shard('matrix', tool='other-fingerprint'),
-            'tool-missing': lambda: self.shard('fast', tool=None),
+            'tool-differs': lambda: self.shard('matrix', tool=self.identity_json('1' * 64)),
+            'tool-missing': lambda: self.shard('fast', tool='missing'),
             'measurer-conflict': lambda: self.shard('fast', extra={'measurer': {'pin': 1}}),
         }
         for label, factory in factories.items():
@@ -576,6 +583,41 @@ class MergeTests(unittest.TestCase):
         self.fresh()
         with self.assertRaises(ValueError):
             gate.merge(self.root / 'merged', {'fast': self.shard('fast')})
+
+    def test_invalid_tool_identity_content_rejected(self):
+        cases = {
+            'empty': '',
+            'not-json': 'tool-identity-fingerprint',
+            'missing-tool': json.dumps({'schema': 1, 'tools': {'rustc': 'v'},
+                                        'configuration_sha256': '0' * 64}),
+            'empty-value': json.dumps({'schema': 1, 'tools': dict(self.TOOLS, cargo=' '),
+                                       'configuration_sha256': '0' * 64}),
+            'bad-digest': json.dumps({'schema': 1, 'tools': self.TOOLS,
+                                      'configuration_sha256': 'nope'}),
+        }
+        for label, content in cases.items():
+            with self.subTest(case=label):
+                self.fresh()
+                matrix = self.shard('matrix', files=[], tool=content)
+                with self.assertRaises(ValueError):
+                    self.merge(matrix=matrix)
+
+    def test_aliased_absolute_dotdot_and_reserved_paths_rejected(self):
+        # './coverage.json' aliases 'coverage.json' but must not dodge the
+        # duplicate/ownership checks.
+        self.fresh()
+        with self.assertRaises(ValueError):
+            self.merge(fast=self.shard('fast', files=['./coverage.json']))
+        for relative in ('/etc/hostname', '../foreign.json', 'candidate.json',
+                         gate.SHARD_TOOL_IDENTITY, 'nested//double.json'):
+            with self.subTest(relative=relative):
+                self.fresh()
+                matrix = self.shard('matrix', files=[])
+                report = json.loads((matrix / 'candidate.json').read_text())
+                report['artifacts'][relative] = 'digest'
+                (matrix / 'candidate.json').write_text(json.dumps(report))
+                with self.assertRaises(ValueError):
+                    self.merge(matrix=matrix)
 
     def test_existing_output_and_wrong_shard_set_rejected(self):
         fast = self.shard('fast')

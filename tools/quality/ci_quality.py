@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import subprocess
 import sys
@@ -293,16 +293,56 @@ def tool_identity() -> dict:
     return {'schema': 1, 'tools': tools, 'configuration_sha256': configuration_hash()}
 
 
+_RESERVED_ARTIFACTS = ('candidate.json', SHARD_TOOL_IDENTITY)
+
+
+def _canonical_relative(relative: str) -> str:
+    """Require a canonical shard-relative artifact path.
+
+    Rejects absolute paths, '.', '..', backslashes, empty duplicates and the
+    names merge itself owns, so aliases cannot dodge the duplicate-path check
+    or redirect a copy outside the output directory.
+    """
+    require(isinstance(relative, str) and relative and '\\' not in relative,
+            f'invalid artifact path: {relative!r}')
+    path = PurePosixPath(relative)
+    require(not path.is_absolute(), f'absolute artifact path: {relative}')
+    require(all(part not in ('', '.', '..') for part in path.parts),
+            f'non-canonical artifact path: {relative}')
+    require(str(path) == relative, f'non-canonical artifact path: {relative}')
+    require(path.name not in _RESERVED_ARTIFACTS, f'reserved artifact path: {relative}')
+    return str(path)
+
+
+def _validated_tool_identity(name: str, path: Path) -> str:
+    """Parse and validate a shard's collected tool identity."""
+    try:
+        identity = json.loads(path.read_text())
+    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+        raise ValueError(f'{name}: invalid {SHARD_TOOL_IDENTITY}: {error}') from error
+    require(isinstance(identity, dict) and identity.get('schema') == 1,
+            f'{name}: invalid {SHARD_TOOL_IDENTITY} schema')
+    tools = identity.get('tools')
+    require(isinstance(tools, dict) and set(tools) == {'rustc', 'cargo', 'nextest', 'llvm-cov'},
+            f'{name}: {SHARD_TOOL_IDENTITY} must record exactly the four tools')
+    require(all(isinstance(value, str) and value.strip() for value in tools.values()),
+            f'{name}: empty tool identity value')
+    require(re.fullmatch('[0-9a-f]{64}', str(identity.get('configuration_sha256') or '')),
+            f'{name}: invalid configuration digest')
+    return json.dumps(identity, sort_keys=True)
+
+
 def merge(output: Path, shards: dict[str, Path]) -> dict:
     """Merge shard candidates into one fresh output without overwriting evidence.
 
     Fail-closed checks before any file is copied:
     - exactly the expected shards, each with a clean candidate.json;
     - identical base/head/run identity across shards;
-    - every shard owns exactly its expected stages;
+    - every shard owns exactly its expected stages, all successful;
+    - artifact paths are canonical and reserved names are rejected;
     - every listed artifact digest matches the shard's own bytes;
-    - no artifact path is claimed by more than one shard;
-    - all shards recorded the same collection tool identity;
+    - no canonical artifact path is claimed by more than one shard;
+    - every shard recorded a valid, identical collection tool identity;
     - at most one measurer pin, agreed by every shard that records one.
     """
     output = output.resolve()
@@ -313,6 +353,7 @@ def merge(output: Path, shards: dict[str, Path]) -> dict:
     identity = set()
     tool_identities = set()
     claimed: dict[str, str] = {}
+    copies: dict[str, list[str]] = {name: [] for name in SHARD_STAGES}
     measurer = {}
     for name, directory in shards.items():
         directory = directory.resolve()
@@ -326,17 +367,19 @@ def merge(output: Path, shards: dict[str, Path]) -> dict:
         identity.add((report['base_sha'], report['commit'], report['run_id']))
         tool_file = directory / SHARD_TOOL_IDENTITY
         require(tool_file.is_file(), f'{name}: missing {SHARD_TOOL_IDENTITY}')
-        tool_identities.add(tool_file.read_text())
+        tool_identities.add(_validated_tool_identity(name, tool_file))
         if 'measurer' in report:
             measurer[name] = report['measurer']
         for relative, digest in report['artifacts'].items():
-            artifact = (directory / relative).resolve()
+            canonical = _canonical_relative(relative)
+            artifact = (directory / canonical).resolve()
             require(artifact.is_relative_to(directory), f'{name}: artifact escapes shard: {relative}')
             require(artifact.is_file() and sha256(artifact) == digest,
                     f'{name}: stale or modified artifact: {relative}')
-            require(relative not in claimed,
-                    f'duplicate artifact path in {name} and {claimed.get(relative)}: {relative}')
-            claimed[relative] = name
+            require(canonical not in claimed,
+                    f'duplicate artifact path in {name} and {claimed.get(canonical)}: {relative}')
+            claimed[canonical] = name
+            copies[name].append(canonical)
         reports[name] = report
 
     require(len(identity) == 1, f'shard identity mismatch: {identity}')
@@ -345,14 +388,13 @@ def merge(output: Path, shards: dict[str, Path]) -> dict:
             'conflicting measurer pins across shards')
 
     output.mkdir(parents=True)
-    for name, directory in shards.items():
-        for relative in reports[name]['artifacts']:
-            source = directory.resolve() / relative
-            target = output / relative
+    for name in SHARD_STAGES:
+        for relative in copies[name]:
+            target = (output / relative).resolve()
+            require(target.is_relative_to(output), f'target escapes output: {relative}')
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(source.read_bytes())
-    tool_file = output / SHARD_TOOL_IDENTITY
-    tool_file.write_text(next(iter(tool_identities)))
+            target.write_bytes((shards[name].resolve() / relative).read_bytes())
+    (output / SHARD_TOOL_IDENTITY).write_text(next(iter(tool_identities)))
 
     base_sha, commit, run_id = next(iter(identity))
     merged = {**metadata(), 'schema_version': 1, 'candidate': True,
