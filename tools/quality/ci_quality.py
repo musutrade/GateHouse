@@ -22,6 +22,10 @@ from source_measure import SOURCE_FILES, compiler_configuration
 # Feature flag for parallel risk collection (default: disabled, experimental)
 PARALLEL_RISK = os.environ.get('CI_PARALLEL_RISK', '0') == '1'
 
+# Feature flag for CI performance monitoring (default: disabled, experimental)
+CI_MONITORING = os.environ.get('CI_MONITORING', '0') == '1'
+MONITOR_OUTPUT = Path(os.environ.get('CI_MONITOR_DIR', ROOT / 'target/ci-monitor'))
+
 COMMON = ('classify', 'test', 'test-cross-platform', 'security-audit', 'fmt', 'clippy', 'build',
           'quality-coverage', 'quality-contracts', 'docs-consistency', 'release-contracts',
           'quality-scripts')
@@ -43,6 +47,31 @@ REPLAY_RELOCATION = ('tools/harness-gate/quality-core/examples/differential_repl
 # function-level continuity between old and new sources, which are measured as
 # separate functions.
 REVIEWED_REMOVED_SOURCES = ('tools/harness-gate/src/service/postgres.rs',)
+
+
+def _monitor_mark(name: str, pid: int | None = None, context: dict | None = None):
+    """Record a timing mark if monitoring is enabled."""
+    if not CI_MONITORING:
+        return
+    try:
+        MONITOR_OUTPUT.mkdir(parents=True, exist_ok=True)
+        mark_file = MONITOR_OUTPUT / f"mark_{os.getpid()}.jsonl"
+        
+        record = {
+            'name': name,
+            'timestamp': time.time(),
+            'timestamp_utc': time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime()),
+            'monotonic': time.monotonic(),
+            'pid': pid or os.getpid(),
+        }
+        if context:
+            record['context'] = context
+        
+        with open(mark_file, 'a') as f:
+            f.write(json.dumps(record) + '\n')
+            f.flush()
+    except Exception as e:
+        print(f'Warning: monitoring mark failed: {e}', file=sys.stderr)
 
 
 def reviewed_removals(base: str, head: str) -> set[str]:
@@ -315,6 +344,17 @@ class Collector:
         binary = ensure_measurer(self.directory / 'measurer', command=command, pin=pin)
         self.report['measurer'] = pin
         self.save()
+        
+        # For CI monitoring: write measurer info to a known location
+        import hashlib
+        try:
+            measurer_sha256 = hashlib.file_digest(open(binary, 'rb'), 'sha256').hexdigest()
+            measurer_info_path = Path('target/ci-monitor/measurer_info.txt')
+            measurer_info_path.parent.mkdir(parents=True, exist_ok=True)
+            measurer_info_path.write_text(f"{binary}\n{measurer_sha256}\n")
+        except Exception:
+            pass  # Non-critical
+        
         return binary
 
     def legacy(self):
@@ -517,29 +557,38 @@ class Collector:
                     self.directory / 'critical-paths.json')
 
     def collect(self):
+        _monitor_mark('collect_start', context={'commit': self.report['commit'], 'base_sha': self.report['base_sha']})
         started = time.monotonic()
-        for stage in STAGES:
-            tick = time.monotonic()
-            self.report['stages'][stage] = {'status': 'running'}
+        try:
+            for stage in STAGES:
+                tick = time.monotonic()
+                _monitor_mark(f'stage_{stage}_start')
+                self.report['stages'][stage] = {'status': 'running'}
+                self.save()
+                try:
+                    getattr(self, stage)()
+                    result = {'status': 'success'}
+                except (ValueError, OSError, KeyError, subprocess.SubprocessError) as error:
+                    result = {'status': 'failure', 'error': str(error)}
+                    _monitor_mark(f'stage_{stage}_error', context={'error': str(error)})
+                result['seconds'] = time.monotonic() - tick
+                self.report['stages'][stage] = result
+                self.save()
+                _monitor_mark(f'stage_{stage}_end', context={'status': result['status'], 'seconds': result['seconds']})
+                print(f'{stage}: {result}', flush=True)
+            require(git_sha() == self.report['commit'], 'commit changed during collection')
+            require_committed_sources(self.report['commit'])
+            self.report['collection_seconds'] = time.monotonic() - started
+            for artifact in self.directory.rglob('*'):
+                relative = artifact.relative_to(self.directory)
+                if relative.parts[0] not in ('build', 'snapshots', 'candidate.json') and artifact.is_file():
+                    self.report['artifacts'][str(relative)] = sha256(artifact)
             self.save()
-            try:
-                getattr(self, stage)()
-                result = {'status': 'success'}
-            except (ValueError, OSError, KeyError, subprocess.SubprocessError) as error:
-                result = {'status': 'failure', 'error': str(error)}
-            result['seconds'] = time.monotonic() - tick
-            self.report['stages'][stage] = result
-            self.save()
-            print(f'{stage}: {result}', flush=True)
-        require(git_sha() == self.report['commit'], 'commit changed during collection')
-        require_committed_sources(self.report['commit'])
-        self.report['collection_seconds'] = time.monotonic() - started
-        for artifact in self.directory.rglob('*'):
-            relative = artifact.relative_to(self.directory)
-            if relative.parts[0] not in ('build', 'snapshots', 'candidate.json') and artifact.is_file():
-                self.report['artifacts'][str(relative)] = sha256(artifact)
-        self.save()
-        verify(self.directory / 'candidate.json', self.report['commit'], self.report['base_sha'], self.report['run_id'])
+            verify(self.directory / 'candidate.json', self.report['commit'], self.report['base_sha'], self.report['run_id'])
+            _monitor_mark('collect_success', context={'collection_seconds': self.report['collection_seconds']})
+        except Exception as e:
+            _monitor_mark('collect_error', context={'error': str(e)})
+            raise
 
 
 def main():

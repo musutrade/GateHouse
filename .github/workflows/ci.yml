@@ -9,6 +9,12 @@ on:
   schedule:
     - cron: '17 2 * * *'
   workflow_dispatch:
+    inputs:
+      enable_monitoring:
+        description: 'Enable CI performance monitoring (experimental)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -337,6 +343,10 @@ jobs:
     if: ${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      CI_MONITORING: ${{ github.event.inputs.enable_monitoring == 'true' && '1' || '0' }}
+      CI_MONITOR_DIR: 'target/ci-monitor'
+      CI_PARALLEL_RISK: '1'
     outputs:
       manifest-sha256: ${{ steps.seal.outputs.manifest-sha256 }}
     steps:
@@ -369,18 +379,80 @@ jobs:
         with:
           tool: cargo-llvm-cov
 
+      - name: Start resource monitoring
+        if: ${{ env.CI_MONITORING == '1' }}
+        continue-on-error: true
+        run: |
+          mkdir -p target/ci-monitor
+          bash tools/quality/ci_monitor_sampler.sh &
+          echo $! > target/ci-monitor/sampler.pid
+          echo "Started resource sampler with PID $(cat target/ci-monitor/sampler.pid)"
+
       - name: Collect and require fresh coverage, risk and matrix evidence
+        id: collect
         env:
           GH_TOKEN: ${{ github.token }}
           BASE_SHA: ${{ needs.classify.outputs.base_sha }}
           HEAD_SHA: ${{ github.sha }}
           RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
-          CI_PARALLEL_RISK: '1'
         run: |
           BASE_SHA="$(python3 tools/maintenance/migration_baseline.py --base "$BASE_SHA" --head "$HEAD_SHA" --fetch)"
+          echo "base_sha=$BASE_SHA" >> $GITHUB_OUTPUT
+          echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
           python3 tools/quality/ci_quality.py collect \
             --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
             --output target/quality/candidate
+
+      - name: Record CI environment metadata
+        if: ${{ always() && env.CI_MONITORING == '1' }}
+        continue-on-error: true
+        env:
+          BASE_SHA: ${{ steps.collect.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.collect.outputs.head_sha }}
+        run: |
+          python3 tools/quality/ci_monitor.py --output-dir target/ci-monitor --command env
+
+      - name: Stop resource monitoring
+        if: ${{ always() && env.CI_MONITORING == '1' }}
+        continue-on-error: true
+        run: |
+          if [ -f target/ci-monitor/sampler.pid ]; then
+            pid=$(cat target/ci-monitor/sampler.pid)
+            if kill -0 "$pid" 2>/dev/null; then
+              echo "Stopping sampler PID $pid and its children"
+              # Send SIGTERM to the sampler process
+              kill "$pid" 2>/dev/null || true
+              
+              # Wait up to 5 seconds for graceful exit
+              for i in {1..10}; do
+                if ! kill -0 "$pid" 2>/dev/null; then
+                  echo "Sampler stopped gracefully"
+                  break
+                fi
+                sleep 0.5
+              done
+              
+              # Force kill the entire process group if still running
+              if kill -0 "$pid" 2>/dev/null; then
+                echo "Force killing sampler and children"
+                # Kill process group (negative PID)
+                kill -9 -"$pid" 2>/dev/null || true
+                kill -9 "$pid" 2>/dev/null || true
+                
+                # Final verification
+                sleep 0.5
+                if kill -0 "$pid" 2>/dev/null; then
+                  echo "Warning: Could not stop sampler PID $pid"
+                else
+                  echo "Sampler forcefully stopped"
+                fi
+              fi
+            fi
+            rm -f target/ci-monitor/sampler.pid
+          fi
+          # Wait for file system to flush writes
+          sync
+          sleep 1
 
       - name: Seal immutable quality evidence
         id: seal
@@ -396,6 +468,15 @@ jobs:
             target/quality/candidate
             !target/quality/candidate/build
             !target/quality/candidate/snapshots
+          if-no-files-found: warn
+
+      - name: Upload monitoring data
+        if: ${{ always() && env.CI_MONITORING == '1' }}
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: ci-monitoring-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/ci-monitor
           if-no-files-found: warn
 
   quality-generic-shadow:
