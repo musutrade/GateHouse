@@ -260,25 +260,29 @@ fn select_preset(
     if let Some(recommendation) = recommendation {
         writeln!(output, "Suggested preset: {} (catalog marker match: {}). Type d to select it; this is not a compatibility guarantee.", recommendation.name.escape_debug(), recommendation.markers.join(", "))?;
     }
-    write!(output, "Preset number (empty or q cancels): ")?;
-    output.flush()?;
-    let value = answer(reader)?.unwrap_or_default();
-    let value = value.trim();
-    if value.is_empty() || value == "q" {
-        return Ok(None);
+    loop {
+        write!(output, "Preset number (empty or q cancels): ")?;
+        output.flush()?;
+        let value = answer(reader)?.unwrap_or_default();
+        let value = value.trim();
+        if value.is_empty() || value == "q" {
+            return Ok(None);
+        }
+        let selected = if value == "d" {
+            recommendation.map(|suggestion| suggestion.name.as_str())
+        } else {
+            value
+                .parse::<usize>()
+                .ok()
+                .and_then(|number| number.checked_sub(1))
+                .and_then(|index| choices.get(index))
+                .map(|(name, _)| name.as_str())
+        };
+        if let Some(name) = selected {
+            return Ok(Some(name.to_owned()));
+        }
+        writeln!(output, "Invalid preset selection; choose a listed number or d only when a suggestion is shown.")?;
     }
-    if value == "d" {
-        return recommendation
-            .map(|suggestion| Some(suggestion.name.clone()))
-            .context("no unique catalog recommendation; choose a preset number");
-    }
-    let selected = value
-        .parse::<usize>()
-        .ok()
-        .and_then(|number| number.checked_sub(1))
-        .and_then(|index| choices.get(index))
-        .context("invalid preset number; no configuration written")?;
-    Ok(Some(selected.0.clone()))
 }
 
 fn select_project_name(
@@ -286,22 +290,26 @@ fn select_project_name(
     reader: &mut impl std::io::BufRead,
     output: &mut impl std::io::Write,
 ) -> Result<Option<String>> {
-    write!(
-        output,
-        "Project name [{}] (empty uses default, EOF cancels): ",
-        default_name.escape_debug()
-    )?;
-    output.flush()?;
-    let Some(value) = read_answer(reader, 4096)? else {
-        return Ok(None);
-    };
-    let name = if value.is_empty() {
-        default_name.to_owned()
-    } else {
-        value
-    };
-    validate_project_name(&name)?;
-    Ok(Some(name))
+    loop {
+        write!(
+            output,
+            "Project name [{}] (empty uses default, EOF cancels): ",
+            default_name.escape_debug()
+        )?;
+        output.flush()?;
+        let Some(value) = read_answer(reader, 4096)? else {
+            return Ok(None);
+        };
+        let name = if value.is_empty() {
+            default_name.to_owned()
+        } else {
+            value
+        };
+        if validate_project_name(&name).is_ok() {
+            return Ok(Some(name));
+        }
+        writeln!(output, "Invalid project name; use a nonempty name containing only lowercase letters, digits, dots, underscores or hyphens.")?;
+    }
 }
 
 #[cfg(test)]
@@ -373,9 +381,63 @@ mod interactive_tests {
         }
         for input in ["UPPER\n", " bad\n", "bad/name\n"] {
             assert!(
-                select_project_name("default", &mut input.as_bytes(), &mut Vec::new()).is_err()
+                select_project_name("default", &mut input.as_bytes(), &mut Vec::new())
+                    .unwrap()
+                    .is_none()
             );
         }
+    }
+
+    #[test]
+    fn retries_invalid_input_but_not_reader_failures() {
+        let choices = vec![("generic".into(), "Default".into())];
+        let mut output = Vec::new();
+        assert_eq!(
+            select_preset(
+                &choices,
+                None,
+                &mut "0\nd\n999999999999999999999999\n1\n".as_bytes(),
+                &mut output
+            )
+            .unwrap()
+            .as_deref(),
+            Some("generic")
+        );
+        for (input, expected) in [
+            ("bad name\nq\n", Some("q")),
+            ("BAD\n\n", Some("default")),
+            ("BAD\n", None),
+        ] {
+            assert_eq!(
+                select_project_name("default", &mut input.as_bytes(), &mut output)
+                    .unwrap()
+                    .as_deref(),
+                expected
+            );
+        }
+        assert!(select_preset(
+            &choices,
+            None,
+            &mut format!("{}\n1\n", "x".repeat(128)).as_bytes(),
+            &mut output
+        )
+        .is_err());
+        assert!(select_project_name(
+            "default",
+            &mut format!("{}\nvalid\n", "x".repeat(4096)).as_bytes(),
+            &mut output
+        )
+        .is_err());
+        struct Broken;
+        impl std::io::Read for Broken {
+            fn read(&mut self, _: &mut [u8]) -> std::io::Result<usize> {
+                Err(std::io::Error::other("injected input failure"))
+            }
+        }
+        let mut broken = std::io::BufReader::new(Broken);
+        assert!(select_preset(&choices, None, &mut broken, &mut output).is_err());
+        let mut broken = std::io::BufReader::new(Broken);
+        assert!(select_project_name("default", &mut broken, &mut output).is_err());
     }
 
     #[test]
@@ -424,7 +486,11 @@ mod interactive_tests {
             .unwrap()
             .is_none());
         }
-        assert!(select_preset(&choices, None, &mut "d\n".as_bytes(), &mut Vec::new()).is_err());
+        assert!(
+            select_preset(&choices, None, &mut "d\n".as_bytes(), &mut Vec::new())
+                .unwrap()
+                .is_none()
+        );
     }
 
     #[test]
@@ -453,7 +519,8 @@ mod interactive_tests {
                 &mut input.as_bytes(),
                 &mut Vec::new()
             )
-            .is_err());
+            .unwrap()
+            .is_none());
         }
         let mut output = Vec::new();
         assert_eq!(

@@ -202,21 +202,27 @@ mod terminal {
     fn terminal_init_confirmation_cancel_and_overwrite_boundary() {
         let root = tempfile::tempdir().unwrap();
         let missing = root.path().join("not-created");
-        assert!(!run(&missing, b"q\n", false));
-        assert!(!missing.exists());
+        for answer in [b"q\n".as_slice(), b"0\nq\n", b"0\n\x04", b"1\nUPPER\n\x04"] {
+            assert!(!run(&missing, answer, false));
+            assert!(!missing.exists());
+        }
         for answer in [
             b"q\n".as_slice(),
             b"1\n\nn\n",
             b"\x04",
             b"1\n\x04",
-            b"2\ny\n",
+            b"2\ny\n\x04",
         ] {
             assert!(!run(root.path(), answer, false));
             assert!(!root.path().join(".harness-gate").exists());
         }
-        assert!(!run(root.path(), b"1\nUPPER\ny\n", false));
+        assert!(!run(root.path(), b"1\nUPPER\n\x04", false));
         assert!(!root.path().join(".harness-gate").exists());
-        assert!(run(root.path(), b"1\nchosen-name\ny\n", false));
+        assert!(run(
+            root.path(),
+            b"0\nunknown\nd\n1\nUPPER\nchosen-name\ny\n",
+            false
+        ));
         let checked = Command::new(env!("CARGO_BIN_EXE_harness-gate"))
             .arg("--project-root")
             .arg(root.path())
@@ -301,7 +307,7 @@ mod terminal {
         let project = tempfile::tempdir().unwrap();
         assert!(!run_catalog(
             project.path(),
-            b"d\n",
+            b"d\n\x04",
             false,
             None,
             Some(catalog.path())
