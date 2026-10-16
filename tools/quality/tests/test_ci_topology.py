@@ -112,6 +112,7 @@ class TopologyTests(unittest.TestCase):
         env:
           EVENT_NAME: ${{ github.event_name }}
           NEEDS_JSON: ${{ toJSON(needs) }}
+          REUSE_VERIFIED: ${{ needs.classify.outputs.reuse_verified }}
           RUN_FULL: ${{ needs.classify.outputs.run_full }}
         run: python3 tools/quality/ci_quality.py aggregate
 '''
@@ -119,6 +120,26 @@ class TopologyTests(unittest.TestCase):
             return [line for line in value.splitlines()
                     if line.strip() and not line.lstrip().startswith('#')]
         self.assertEqual(significant_lines(steps), significant_lines(expected))
+
+    def test_inheritance_receipt_precedes_repository_classification(self):
+        workflow = (ROOT / '.github/workflows/ci.yml').read_text()
+        classify = workflow.split('  classify:\n', 1)[1].split('  test:\n', 1)[0]
+        names = re.findall(r'^      - name: (.+)$', classify, re.M)
+        self.assertEqual(names, ['Install Python', 'Record PR equivalence receipt',
+                                'Upload PR equivalence receipt',
+                                'Verify prior PR checks for equivalent push',
+                                'Classify changed paths'])
+        self.assertIn('actions: read', classify)
+        self.assertIn('pull-requests: read', classify)
+        self.assertNotRegex(classify, r': write')
+        self.assertIn('python3 -I tools/quality/ci_reuse.py record', classify)
+        self.assertIn('python3 -I tools/quality/ci_reuse.py probe', classify)
+        self.assertIn("steps.reuse.outputs.reuse_verified || 'false'", classify)
+        record, probe = classify.split('      - name: Verify prior PR checks for equivalent push')
+        self.assertEqual(record.count("if: github.event_name == 'pull_request'"), 2)
+        self.assertIn("if: github.event_name == 'push'", probe)
+        self.assertIn('retention-days: 3', record)
+        self.assertEqual(re.findall(r'^        run: (.+)$', record, re.M), ['>-'])
 
     def test_cross_platform_pr_failure_blocks_cli(self):
         needs = {key: {'result': 'success'} for key, job in CONTRACT['jobs'].items()
@@ -166,6 +187,44 @@ class TopologyTests(unittest.TestCase):
         self.assertIn('EVENT_NAME: ${{ github.event_name }}', aggregate)
         self.assertIn('NEEDS_JSON: ${{ toJSON(needs) }}', aggregate)
         self.assertIn('RUN_FULL: ${{ needs.classify.outputs.run_full }}', aggregate)
+
+
+class SupplementalCadenceTests(unittest.TestCase):
+    def test_daily_manual_workflow_preserves_measurement_contract(self):
+        workflow = (ROOT / '.github/workflows/quality-trends.yml').read_text()
+        self.assertIn("cron: '43 2 * * *'", workflow)
+        self.assertIn('  workflow_dispatch:', workflow)
+        self.assertNotRegex(workflow, re.compile(r'^  (push|pull_request):', re.M))
+        self.assertIn('contents: read', workflow)
+        self.assertNotRegex(workflow, r'contents: write|pull-requests: write|continue-on-error:')
+        self.assertIn('os: [ubuntu-latest, macos-latest, windows-latest]', workflow)
+        self.assertIn('python tools/quality/benchmarks.py --output target/quality/benchmarks.json --samples 5', workflow)
+        self.assertIn('cargo tarpaulin --manifest-path tools/harness-gate/Cargo.toml --locked --engine llvm --timeout 300 --out Xml', workflow)
+        self.assertEqual(workflow.count("cache-target: 'false'"), 2)
+        self.assertIn("profiles: 'release-small,test;default;cold'", workflow)
+        self.assertIn('fail-fast: false', workflow)
+        self.assertNotRegex(workflow, r'\|\|\s*true|baseline_delivery.py|create-pull-request')
+        jobs = re.split(r'^  ([a-z][a-z-]+):\n', workflow.split('jobs:\n')[1], flags=re.M)
+        jobs = dict(zip(jobs[1::2], jobs[2::2]))
+        self.assertEqual(set(jobs), {'coverage', 'quality-baseline'})
+        for body in jobs.values():
+            # Capture must run and fail normally; only artifact retention uses always().
+            before_upload = body.split('      - name: Upload')[0]
+            self.assertNotIn('if:', before_upload)
+
+    def test_supplemental_jobs_are_separate_from_per_change_required_checks(self):
+        previous = json.loads((ROOT / 'tools/quality/fixtures/ci-topology-pre-cadence.json').read_text())
+        self.assertEqual(set(previous['jobs']) - set(CONTRACT['jobs']), {'coverage', 'quality-baseline'})
+        for name, row in CONTRACT['jobs'].items():
+            if name != 'quality-required':
+                expected = copy.deepcopy(previous['jobs'][name])
+                if name in ('test', 'test-cross-platform', 'quality-coverage', 'quality-generic-shadow'):
+                    expected['condition'] = expected['condition'].replace(
+                        ' }}', " && needs.classify.outputs.reuse_verified != 'true' }}")
+                self.assertEqual(row, expected)
+        self.assertEqual(set(previous['jobs']['quality-required']['needs']) -
+                         set(CONTRACT['jobs']['quality-required']['needs']),
+                         {'coverage', 'quality-baseline'})
 
 
 class ClassifyAndSelectionTests(unittest.TestCase):

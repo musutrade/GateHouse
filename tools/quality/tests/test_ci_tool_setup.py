@@ -74,7 +74,7 @@ class ToolSetupTests(unittest.TestCase):
         self.assertIn('tool.sh" verify "$CI_TOOL"', action)
         self.assertNotIn('continue-on-error', action)
         self.assertNotIn('if:', action)
-        for name, count in [('ci.yml', 7), ('release.yml', 1), ('quality-baseline-refresh.yml', 1)]:
+        for name, count in [('ci.yml', 5), ('quality-trends.yml', 2), ('release.yml', 1), ('quality-baseline-refresh.yml', 1)]:
             workflow = (ROOT / '.github/workflows' / name).read_text()
             self.assertEqual(workflow.count('uses: ./.github/actions/install-ci-tool'), count)
             self.assertNotRegex(workflow, r'cargo install cargo-(nextest|llvm-cov|audit|tarpaulin)')
@@ -103,9 +103,11 @@ class ToolSetupTests(unittest.TestCase):
             self.assertNotRegex(step, r'\bif:|continue-on-error|\|\|\s*true')
 
     def test_tarpaulin_setup_preserves_coverage_execution(self):
-        ci = (ROOT / '.github/workflows/ci.yml').read_text()
-        body = ci.split('  coverage:\n', 1)[1].split('  quality-coverage:\n', 1)[0]
-        self.assertIn("if: ${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}", body)
+        ci = (ROOT / '.github/workflows/quality-trends.yml').read_text()
+        body = ci.split('  coverage:\n', 1)[1].split('  quality-baseline:\n', 1)[0]
+        self.assertIn('  schedule:', ci)
+        self.assertIn('  workflow_dispatch:', ci)
+        self.assertNotIn('continue-on-error', body)
         self.assertIn('runs-on: ubuntu-latest', body)
         self.assertIn('class: tarpaulin', body)
         self.assertIn("profiles: 'instrumented;default'", body)

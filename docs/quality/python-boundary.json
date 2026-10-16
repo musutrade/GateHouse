@@ -910,6 +910,21 @@
       "authoritative_status": "Non-authoritative repository orchestration/test transport; Rust retains generic decision authority.",
       "final_disposition": "Retain as Core-owned repository tooling with fail-closed checks and explicit regression coverage.",
       "sha256": "76f612d587448e5b75ec6492bea64caa136f696418f6ebcb881bc943446b70cc"
+    },
+    {
+      "authoritative_status": "Non-authoritative CI cost tooling; proofs only bind prior PR conclusions and never grant release authority.",
+      "callers": [
+        ".github/workflows/ci.yml",
+        "tools/quality/tests/test_ci_reuse.py"
+      ],
+      "category": "A",
+      "ci_role": "Optional push check inheritance for test/test-cross-platform/quality-coverage; any missing or non-equivalent proof falls back to full checking.",
+      "final_disposition": "Retain maintained Python CI tooling; no authority transfer.",
+      "module": "tools/quality/ci_reuse.py",
+      "notes": "",
+      "purpose": "Record PR equivalence receipts and verify tree-equivalent main merges before inheriting three job conclusions.",
+      "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
+      "sha256": "6d5e9a209d417367d2978c51fa9ebbc7ab0b5c41714a90c81674fa41a9cc13c7"
     }
   ],
   "schema": "python-product-boundary/v1",

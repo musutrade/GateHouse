@@ -314,6 +314,28 @@ class AggregateTests(unittest.TestCase):
                 del missing[name]
                 self.assertIn(name, gate.aggregate(event, missing))
 
+    def test_verified_push_reuse_is_narrow_and_still_requires_real_classification(self):
+        needs = {name: {'result': 'success'} for name in gate.COMMON + gate.PUSH_ONLY}
+        for name in gate.REUSABLE:
+            needs[name]['result'] = 'skipped'
+        self.assertEqual(gate.aggregate('push', needs, reuse=True), [])
+        self.assertEqual(set(gate.aggregate('push', needs)), set(gate.REUSABLE))
+        for event, full in [('pull_request', True), ('push', False)]:
+            with self.assertRaises(ValueError):
+                gate.aggregate(event, needs, full=full, reuse=True)
+        for name in gate.COMMON + gate.PUSH_ONLY:
+            for state in ['failure', 'cancelled', None, 'unknown']:
+                bad = copy.deepcopy(needs)
+                bad[name]['result'] = state
+                self.assertIn(name, gate.aggregate('push', bad, reuse=True))
+            bad = copy.deepcopy(needs)
+            del bad[name]
+            self.assertIn(name, gate.aggregate('push', bad, reuse=True))
+            if name not in gate.REUSABLE:
+                bad = copy.deepcopy(needs)
+                bad[name]['result'] = 'skipped'
+                self.assertIn(name, gate.aggregate('push', bad, reuse=True))
+
     def test_cli_rejects_negative_fixtures(self):
         for result in ('failure', 'cancelled', 'skipped'):
             needs = {name: {'result': 'success'} for name in gate.COMMON}

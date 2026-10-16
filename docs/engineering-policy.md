@@ -73,6 +73,59 @@ Quality is continuous, but not every measurement belongs in every latency tier.
 - Expensive cross-platform or ecosystem-certification work should be risk-driven by affected capabilities/paths when that can be done without weakening required assurance.
 - CI performance regressions are engineering regressions. New required work must state its expected profile/critical-path cost and avoid unnecessary recollection of equivalent evidence.
 
+### CI cadence amendment
+
+The CI cost reduction separates supplemental trend collection from per-change
+acceptance. This explicitly replaces the previous push-required cadence for the
+three-platform performance baseline and the independent tarpaulin/Codecov series.
+They run daily and on manual dispatch in `quality-trends.yml`, with the same
+platforms, five samples, cold build isolation and measurement commands. Measurement failure
+remains a failed workflow; the existing non-blocking Codecov upload error policy
+remains unchanged. Results never automatically adopt a baseline.
+
+Every full PR and unmatched main push requires fresh production/legacy coverage,
+paired exact risk/CRAP, critical-path evidence, native Linux/macOS/Windows tests,
+and applicable contracts/security/build checks. Thresholds, measurement series,
+requiredness within these gates, debt and release authority are unchanged.
+The tarpaulin series is not substituted with LLVM quality measurements or mixed
+with that series. The tradeoff is explicit: supplemental performance and Codecov
+trend regressions may be discovered at the next daily run rather than every push.
+Release-specific validation remains governed by the release workflow. The existing
+weekly baseline candidate workflow still requires review before baseline adoption.
+
+Rollback restores the two jobs and aggregate dependencies to every full push;
+it does not reset history or adopt a worse measurement baseline. Validate both
+routing and failure propagation when changing this cadence.
+
+### Equivalent main push check inheritance
+
+A main push may inherit successful Linux/macOS/Windows tests and quality coverage
+checks from its accepted PR instead of repeating them. This explicitly amends the
+fresh-per-push requirement above; every full PR still collects fresh evidence.
+The original evidence retains its synthetic merge commit identity and is never
+presented as a fresh measurement of the main commit.
+
+Inheritance requires a normal two-parent merge, identical tested and pushed Git
+trees, the same risk base (the push's previous commit), same-repository PR head,
+unchanged receipt producer and workflow from that base, and matching configuration
+inputs. A receipt uploaded before repository classification records the tested
+merge tree, base, head, run and attempt. The verifier independently checks GitHub's
+latest successful run/attempt and every required child job, plus receipt artifact
+identity, digest and upload timing. Receipts are limited to 24 hours. This proves
+configuration equivalence, not identical versions of floating hosted tools.
+
+Only `test`, `test-cross-platform` and `quality-coverage` may be skipped under a
+verified inheritance result; the dependent advisory shadow is also skipped.
+Security audit, builds, contracts, documentation and script validation still run,
+including main-only native release builds and CLI contracts. The aggregate rejects
+failed, cancelled or missing jobs even when inheritance is verified. There is no
+permission to bypass PR checks or substitute a different risk baseline.
+
+Absent, ambiguous, stale or invalid evidence, API/permission errors, direct pushes,
+squash/rebase merges, fork PRs and producer changes fall back to full execution.
+The first deployment therefore runs fully. Rollback removes inheritance routing
+and restores fresh execution; it does not change evidence identity or thresholds.
+
 ## 7. Project-owned validation and extension boundaries
 
 Application- and repository-specific validation logic belongs to the project being verified. Harness-Gate orchestrates, ingests and decides at generic boundaries; it does not become the implementation home for every API, E2E, integration, smoke, migration, load, generation or framework-specific test system.

@@ -59,6 +59,11 @@
       "owner": "gatehouse",
       "disposition": "core-retained",
       "note": "Rust reference equivalence shadow; stays in core (5.5)."
+    },
+    ".github/workflows/quality-trends.yml": {
+      "owner": "gatehouse",
+      "disposition": "core-retained",
+      "note": "Daily/manual supplemental Codecov and cold benchmark trends; removed from the required push path by the documented cadence amendment."
     }
   },
   "shared_copy_rule": "Gatehouse owns the single editable source. When GateProbes is created it carries generated copies of these files from a pinned GateHouse revision; it never edits its own copy independently.",

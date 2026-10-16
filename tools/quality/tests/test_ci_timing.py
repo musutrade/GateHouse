@@ -17,7 +17,7 @@ class HostedTimingTests(unittest.TestCase):
         directory = ROOT / 'docs/quality/ci-topology'
         cls.raw = (directory / 'hosted-input.json').read_bytes()
         cls.source = json.loads(cls.raw)
-        cls.contract = json.loads((ROOT / 'tools/quality/fixtures/ci-topology.json').read_text())
+        cls.contract = json.loads((ROOT / 'tools/quality/fixtures/ci-topology-pre-cadence.json').read_text())
         cls.baseline = json.loads((directory / 'hosted-baseline.json').read_text())
 
     def test_retained_baseline_reproduces_from_hosted_timestamps(self):

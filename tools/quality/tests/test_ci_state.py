@@ -191,7 +191,11 @@ class WorkflowBoundaryTests(unittest.TestCase):
 
     def test_measurements_do_not_restore_compiled_state(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()
-        for name in ('coverage', 'quality-coverage', 'quality-baseline'):
+        for name in ('quality-coverage',):
             block = re.split(r'\n  [a-z]', workflow.split(f'  {name}:\n')[1])[0]
+            self.assertIn("cache-target: 'false'", block)
+        trends = (ROOT / '.github/workflows/quality-trends.yml').read_text()
+        for name in ('coverage', 'quality-baseline'):
+            block = re.split(r'\n  [a-z]', trends.split(f'  {name}:\n')[1])[0]
             self.assertIn("cache-target: 'false'", block)
         self.assertIn('matrix:\n        os: [macos-latest, windows-latest]', workflow)
