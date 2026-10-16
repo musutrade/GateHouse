@@ -434,7 +434,13 @@ collectors and baselines, and invokes the released Rust evaluator for policy,
 ratchets, contracts and project reports. Its combined status blocks on any
 required execution or quality failure. Collectors measure; Rust decides. The
 Required Quality Aggregate checks required CI children and retains release
-responsibility. `quality evaluate` and `adapter run` remain advanced replay,
+responsibility. Failed `quality evaluate` commands print up to five blockers from
+the completed report, with bounded, redacted policy/subject/state and available
+reasons. Optional failing gates are not reported as blockers unless the aggregate
+lists them. The full report remains authoritative; its JSON and exit status do not
+change. Engineering-policy semantics are unchanged.
+
+`quality evaluate` and `adapter run` remain advanced replay,
 debugging and integration interfaces. Python generic modules are
 [frozen reference code](docs/quality/python-retention.md).
 

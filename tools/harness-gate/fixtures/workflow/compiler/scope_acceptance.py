@@ -105,6 +105,15 @@ def main():
                 assert {gate['state'] for gate in gates} == {'pass', 'fail'}
                 failing = next(gate for gate in gates if gate['state'] == 'fail')
                 assert failing['record']['component'] == 'failing'
+                blocker = report['aggregate']['blockers'][0]
+                assert f"policy={blocker['policy']}; subject={blocker['subject']}; state={blocker['state']}" in result.stderr, result.stderr
+                matching = next(gate for gate in report['gates'].values()
+                                if gate['policy'] == blocker['policy']
+                                and gate['subject'] == blocker['subject']
+                                and gate['state'] == blocker['state'])
+                assert f"reason={matching['reason']}" in result.stderr, result.stderr
+                assert result.stderr.count('  = blocker:') == len(report['aggregate']['blockers'])
+                assert not result.stdout, result.stdout
             else:
                 assert not result.stderr, result.stderr
         results.append(dict(case=name, exit=result.returncode))

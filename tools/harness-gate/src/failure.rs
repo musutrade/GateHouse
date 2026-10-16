@@ -1,5 +1,5 @@
 mod terminal;
-pub(crate) use terminal::render as render_terminal;
+pub(crate) use terminal::{quality_blockers, render as render_terminal};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
