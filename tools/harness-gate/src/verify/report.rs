@@ -4377,6 +4377,137 @@ mod tests {
         let html = std::fs::read_to_string(invocation.root.join("test_result.html")).unwrap();
         assert!(html.contains("No executed steps were reported."));
         assert!(html.contains("No skipped steps were reported."));
+        assert!(
+            html.contains("Quality was not collected in this report. No quality pass is claimed.")
+        );
         assert!(!html.contains("<tr data-row"));
+    }
+    #[test]
+    fn offline_html_quality_view_publishes_supplied_states_and_typed_metrics() {
+        let mut retained = serde_json::Map::new();
+        for case in [
+            "pass",
+            "fail",
+            "measurement_error",
+            "not_collected",
+            "unknown_quality_schema",
+            "unknown_project_schema",
+        ] {
+            let status = if case.starts_with("unknown_") {
+                "pass"
+            } else {
+                case
+            };
+            let (workspace, _project, invocation, mut project, mut current) =
+                complete_invocation_fixture("offline-quality-preview");
+            let templates = workspace.root.join("templates");
+            std::fs::create_dir_all(&templates).unwrap();
+            std::fs::write(
+                templates.join("verification.html"),
+                include_str!("../../templates/verification.html"),
+            )
+            .unwrap();
+            project.config.report_templates.root = Some("templates".into());
+            project.config.report_templates.template = Some("templates/verification.html".into());
+            let mut gates = serde_json::Map::new();
+            for (index, metric) in [
+                serde_json::json!({"type":"count","value":0}),
+                serde_json::json!({"type":"boolean","value":false}),
+                serde_json::json!({"type":"ratio","covered":0,"total":10}),
+                serde_json::json!({"type":"rational","numerator":1,"denominator":3}),
+                serde_json::json!({"type":"decimal","value":"0.125"}),
+                serde_json::json!({"type":"duration","value":7,"unit":"nanoseconds"}),
+                serde_json::json!({"type":"size","value":9,"unit":"bytes"}),
+                serde_json::json!({"type":"future","payload":"DO-NOT-DUMP"}),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                gates.insert(format!("gate-{index}"), serde_json::json!({"policy":format!("optional-{index}"),"subject":"函数 café <img src=x onerror=window.pwned=1>","state":"fail","reason":"token=quality-secret </script><script>window.pwned=2</script>","record":{"metric":"example.metric","base":null,"head":metric,"policy":{"limit":metric},"evidence_links":{"secret":"DO-NOT-DUMP"}}}));
+            }
+            gates.insert("missing".into(), serde_json::json!({"policy":"missing","subject":null,"state":"measurement_error","reason":"measurement unavailable","record":{"metric":{"secret":"DO-NOT-DUMP"},"head":null,"base":null,"policy":{"limit":null}}}));
+            let blockers = if status == "fail" {
+                serde_json::json!([{"policy":"required","subject":"subject","state":"fail"},{"state":"measurement_error","reason":"invalid exception metadata","errors":["DO-NOT-DUMP"]}])
+            } else {
+                serde_json::json!([])
+            };
+            let mut project_report = if matches!(status, "not_collected" | "measurement_error") {
+                serde_json::Value::Null
+            } else {
+                serde_json::json!({"schema":"harness-project-report/v1","aggregate":{"state":status,"blockers":blockers},"gates":gates})
+            };
+            if case == "unknown_project_schema" {
+                project_report["schema"] = serde_json::json!("future-project-report/v9");
+            }
+            current.passed = matches!(status, "pass" | "not_collected");
+            current.quality = Some(crate::verify::quality::QualityResult {
+                schema: if case == "unknown_quality_schema" {
+                    "future-quality/v9"
+                } else {
+                    "quality-verification/v1"
+                },
+                status,
+                phase: if status == "measurement_error" {
+                    "preparation"
+                } else {
+                    "complete"
+                },
+                error: (status == "measurement_error")
+                    .then(|| "token=quality-secret <unavailable>".into()),
+                selection: serde_json::Value::Null,
+                inputs: serde_json::Value::Null,
+                evidence: serde_json::json!([]),
+                baseline: serde_json::Value::Null,
+                project_report,
+                project_report_path: None,
+                output: None,
+                formats: Default::default(),
+                evaluation_time: None,
+                participation: serde_json::Value::Null,
+                full_quality_status: if status == "pass" {
+                    "not_collected"
+                } else {
+                    status
+                },
+                producers: serde_json::Value::Null,
+            });
+            write(&current, &project).expect("publish quality HTML");
+            verify_manifest(&project).expect("quality HTML manifest");
+            let html_path = invocation.root.join("test_result.html");
+            let html = std::fs::read_to_string(&html_path).unwrap();
+            assert!(html.contains(&format!("<dt>Quality status</dt><dd>{status}</dd>")));
+            if status == "pass" {
+                assert!(html.contains("<dt>Full quality status</dt><dd>not_collected</dd>"));
+            }
+            assert!(!html.contains("quality-secret") && !html.contains("DO-NOT-DUMP"));
+            assert_eq!(html.matches("<script>").count(), 1);
+            if matches!(status, "pass" | "fail") && !case.starts_with("unknown_") {
+                for value in [
+                    "count: 0",
+                    "boolean: false",
+                    "ratio: 0 / 10",
+                    "rational: 1 / 3",
+                    "decimal: 0.125",
+                    "duration: 7 nanoseconds",
+                    "size: 9 bytes",
+                    "unsupported metric type",
+                    "not available",
+                ] {
+                    assert!(html.contains(value), "missing {value}");
+                }
+                assert!(html.contains("[REDACTED]") && html.contains("&lt;img"));
+                let count = if status == "pass" { 0 } else { 2 };
+                assert!(html.contains(&format!("Authoritative aggregate blockers: {count}.")));
+            } else {
+                assert!(html.contains("Quality gate details: not available"));
+            }
+            if std::env::var_os("HG_HTML_QUALITY_PREVIEW_PATHS").is_some() {
+                retained.insert(case.into(), serde_json::json!(html_path));
+                std::mem::forget(workspace);
+            }
+        }
+        if let Some(path) = std::env::var_os("HG_HTML_QUALITY_PREVIEW_PATHS") {
+            std::fs::write(path, serde_json::to_vec_pretty(&retained).unwrap()).unwrap();
+        }
     }
 }
