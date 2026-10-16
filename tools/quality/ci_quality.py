@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import subprocess
 import sys
@@ -21,6 +21,14 @@ from source_measure import SOURCE_FILES, compiler_configuration
 
 # Feature flag for parallel risk collection (default: disabled, experimental)
 PARALLEL_RISK = os.environ.get('CI_PARALLEL_RISK', '0') == '1'
+
+# The required check name verified by baseline discovery and PR-reuse probes.
+# The merge job keeps this display name even when collection is split into
+# shards, so certified-base lineage and reuse receipts keep matching.
+COVERAGE_JOB = 'Quality Coverage and Critical Paths'
+# Split-collection shards: job name -> stages that shard owns.
+SHARD_STAGES = {'fast': ('legacy', 'production'), 'risk': ('risk',), 'matrix': ('matrix',)}
+SHARD_TOOL_IDENTITY = 'tool-identity.json'
 
 COMMON = ('classify', 'test', 'test-cross-platform', 'security-audit', 'fmt', 'clippy', 'build',
           'quality-coverage', 'quality-contracts', 'docs-consistency', 'release-contracts',
@@ -191,7 +199,7 @@ def certified_base(head: str) -> str:
                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
             continue
         jobs = api(f"/actions/runs/{run['id']}/attempts/{run['run_attempt']}/jobs?per_page=100")['jobs']
-        measured = [job for job in jobs if job['name'] == 'Quality Coverage and Critical Paths']
+        measured = [job for job in jobs if job['name'] == COVERAGE_JOB]
         if len(measured) == 1 and measured[0]['conclusion'] == 'success':
             return sha
     raise ValueError('no certified main collection in recent runs; restore lineage before collecting')
@@ -265,6 +273,142 @@ def verify(path: Path, head: str, base: str, run_id: str) -> dict:
         require(artifact.is_relative_to(path.parent.resolve()), 'artifact escapes candidate')
         require(sha256(artifact) == digest, f'stale or modified artifact: {relative}')
     return report
+
+
+def tool_identity() -> dict:
+    """Record collection-side tool versions and build configuration.
+
+    Shards record this identity next to their candidate; merge requires all
+    shards to agree. The sealed manifest separately records the merge runner's
+    tools as the sealing identity, which is a different claim.
+    """
+    from ci_cargo import configuration_hash
+    from quality_common import command_output
+    tools = {tool: command_output(command) for tool, command in {
+        'rustc': ['rustc', '-vV'], 'cargo': ['cargo', '--version'],
+        'nextest': ['cargo', 'nextest', '--version'],
+        'llvm-cov': ['cargo', 'llvm-cov', '--version'],
+    }.items()}
+    require(all(tools.values()), 'missing tool identity')
+    return {'schema': 1, 'tools': tools, 'configuration_sha256': configuration_hash()}
+
+
+_RESERVED_ARTIFACTS = ('candidate.json', SHARD_TOOL_IDENTITY)
+
+
+def _canonical_relative(relative: str) -> str:
+    """Require a canonical shard-relative artifact path.
+
+    Rejects absolute paths, '.', '..', backslashes, empty duplicates and the
+    names merge itself owns, so aliases cannot dodge the duplicate-path check
+    or redirect a copy outside the output directory.
+    """
+    require(isinstance(relative, str) and relative and '\\' not in relative,
+            f'invalid artifact path: {relative!r}')
+    path = PurePosixPath(relative)
+    require(not path.is_absolute(), f'absolute artifact path: {relative}')
+    require(all(part not in ('', '.', '..') for part in path.parts),
+            f'non-canonical artifact path: {relative}')
+    require(str(path) == relative, f'non-canonical artifact path: {relative}')
+    require(path.name not in _RESERVED_ARTIFACTS, f'reserved artifact path: {relative}')
+    return str(path)
+
+
+def _validated_tool_identity(name: str, path: Path) -> str:
+    """Parse and validate a shard's collected tool identity."""
+    try:
+        identity = json.loads(path.read_text())
+    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+        raise ValueError(f'{name}: invalid {SHARD_TOOL_IDENTITY}: {error}') from error
+    require(isinstance(identity, dict) and identity.get('schema') == 1,
+            f'{name}: invalid {SHARD_TOOL_IDENTITY} schema')
+    tools = identity.get('tools')
+    require(isinstance(tools, dict) and set(tools) == {'rustc', 'cargo', 'nextest', 'llvm-cov'},
+            f'{name}: {SHARD_TOOL_IDENTITY} must record exactly the four tools')
+    require(all(isinstance(value, str) and value.strip() for value in tools.values()),
+            f'{name}: empty tool identity value')
+    require(re.fullmatch('[0-9a-f]{64}', str(identity.get('configuration_sha256') or '')),
+            f'{name}: invalid configuration digest')
+    return json.dumps(identity, sort_keys=True)
+
+
+def merge(output: Path, shards: dict[str, Path]) -> dict:
+    """Merge shard candidates into one fresh output without overwriting evidence.
+
+    Fail-closed checks before any file is copied:
+    - exactly the expected shards, each with a clean candidate.json;
+    - identical base/head/run identity across shards;
+    - every shard owns exactly its expected stages, all successful;
+    - artifact paths are canonical and reserved names are rejected;
+    - every listed artifact digest matches the shard's own bytes;
+    - no canonical artifact path is claimed by more than one shard;
+    - every shard recorded a valid, identical collection tool identity;
+    - at most one measurer pin, agreed by every shard that records one.
+    """
+    output = output.resolve()
+    require(not output.exists(), 'candidate directory already exists; choose a fresh path')
+    require(set(shards) == set(SHARD_STAGES), f'shards must be exactly {sorted(SHARD_STAGES)}')
+
+    reports = {}
+    identity = set()
+    tool_identities = set()
+    claimed: dict[str, str] = {}
+    copies: dict[str, list[str]] = {name: [] for name in SHARD_STAGES}
+    measurer = {}
+    for name, directory in shards.items():
+        directory = directory.resolve()
+        report = json.loads((directory / 'candidate.json').read_text())
+        require(report['schema_version'] == 1 and report['candidate'] is True,
+                f'{name}: invalid candidate schema')
+        require(set(report['stages']) == set(SHARD_STAGES[name]),
+                f'{name}: stages must be exactly {sorted(SHARD_STAGES[name])}')
+        require(all(s['status'] == 'success' for s in report['stages'].values()),
+                f'{name}: failed or incomplete stages')
+        identity.add((report['base_sha'], report['commit'], report['run_id']))
+        tool_file = directory / SHARD_TOOL_IDENTITY
+        require(tool_file.is_file(), f'{name}: missing {SHARD_TOOL_IDENTITY}')
+        tool_identities.add(_validated_tool_identity(name, tool_file))
+        if 'measurer' in report:
+            measurer[name] = report['measurer']
+        for relative, digest in report['artifacts'].items():
+            canonical = _canonical_relative(relative)
+            artifact = (directory / canonical).resolve()
+            require(artifact.is_relative_to(directory), f'{name}: artifact escapes shard: {relative}')
+            require(artifact.is_file() and sha256(artifact) == digest,
+                    f'{name}: stale or modified artifact: {relative}')
+            require(canonical not in claimed,
+                    f'duplicate artifact path in {name} and {claimed.get(canonical)}: {relative}')
+            claimed[canonical] = name
+            copies[name].append(canonical)
+        reports[name] = report
+
+    require(len(identity) == 1, f'shard identity mismatch: {identity}')
+    require(len(tool_identities) == 1, 'shard tool identity mismatch')
+    require(len(set(json.dumps(v, sort_keys=True) for v in measurer.values())) <= 1,
+            'conflicting measurer pins across shards')
+
+    output.mkdir(parents=True)
+    for name in SHARD_STAGES:
+        for relative in copies[name]:
+            target = (output / relative).resolve()
+            require(target.is_relative_to(output), f'target escapes output: {relative}')
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes((shards[name].resolve() / relative).read_bytes())
+    (output / SHARD_TOOL_IDENTITY).write_text(next(iter(tool_identities)))
+
+    base_sha, commit, run_id = next(iter(identity))
+    merged = {**metadata(), 'schema_version': 1, 'candidate': True,
+              'base_sha': base_sha, 'commit': commit, 'run_id': run_id,
+              'stages': {}, 'commands': [], 'artifacts': {}}
+    if measurer:
+        merged['measurer'] = next(iter(measurer.values()))
+    for name in SHARD_STAGES:
+        report = reports[name]
+        merged['stages'].update(report['stages'])
+        merged['commands'].extend(report['commands'])
+        merged['artifacts'].update(report['artifacts'])
+    write_json(output / 'candidate.json', merged)
+    return merged
 
 
 class Collector:
@@ -516,9 +660,24 @@ class Collector:
                     self.directory / 'critical-path-runs/bundle.json', '--output',
                     self.directory / 'critical-paths.json')
 
-    def collect(self):
+    def collect(self, stages=None):
+        """Collect evidence for specified stages.
+
+        Args:
+            stages: Tuple of stage names to run. If None, runs all STAGES.
+                   Can be used to run a subset of stages for parallel job execution.
+        """
+        if stages is None:
+            stages = STAGES
+        else:
+            require(len(stages) == len(set(stages)), f'duplicate stages: {stages}')
+            for stage in stages:
+                require(stage in STAGES, f'unknown stage: {stage}')
+            if 'production' in stages:
+                require('legacy' in stages, 'production coverage requires the legacy stage')
+
         started = time.monotonic()
-        for stage in STAGES:
+        for stage in stages:
             tick = time.monotonic()
             self.report['stages'][stage] = {'status': 'running'}
             self.save()
@@ -539,12 +698,20 @@ class Collector:
             if relative.parts[0] not in ('build', 'snapshots', 'candidate.json') and artifact.is_file():
                 self.report['artifacts'][str(relative)] = sha256(artifact)
         self.save()
-        verify(self.directory / 'candidate.json', self.report['commit'], self.report['base_sha'], self.report['run_id'])
+        # A partial collection is one shard of a split job; a failed shard must
+        # exit non-zero here so the merge job is skipped rather than fed failure
+        # evidence. Full collections keep the historical verify() failure path.
+        if set(stages) == set(STAGES):
+            verify(self.directory / 'candidate.json', self.report['commit'], self.report['base_sha'], self.report['run_id'])
+        else:
+            require(all(self.report['stages'][stage]['status'] == 'success' for stage in stages),
+                    'failed, cancelled, skipped or incomplete collection')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('aggregate', 'classify', 'collect', 'verify', 'certified-base'))
+    parser.add_argument('operation', choices=('aggregate', 'classify', 'collect', 'verify',
+                                              'certified-base', 'merge', 'tool-identity'))
     parser.add_argument('--event', default=os.environ.get('EVENT_NAME'))
     parser.add_argument('--needs', default=os.environ.get('NEEDS_JSON'))
     parser.add_argument('--base-sha')
@@ -552,9 +719,22 @@ def main():
     parser.add_argument('--run-id', default=str(uuid.uuid4()))
     parser.add_argument('--output', type=Path, default=ROOT / 'target/quality/candidate')
     parser.add_argument('--github-output', type=Path)
+    parser.add_argument('--stages', type=str, help='Comma-separated list of stages to run (default: all)')
+    parser.add_argument('--shard', action='append', default=[],
+                        help='name=path shard for merge; repeat once per expected shard')
     args = parser.parse_args()
     try:
-        if args.operation == 'certified-base':
+        if args.operation == 'tool-identity':
+            write_json(args.output, tool_identity())
+        elif args.operation == 'merge':
+            shards = {}
+            for item in args.shard:
+                name, _, path = item.partition('=')
+                require(name in SHARD_STAGES and path and name not in shards,
+                        f'invalid --shard argument: {item}')
+                shards[name] = Path(path)
+            merge(args.output, shards)
+        elif args.operation == 'certified-base':
             require(bool(re.fullmatch('[0-9a-f]{40}', args.head_sha or '')), 'full head SHA required')
             print(certified_base(args.head_sha))
         elif args.operation == 'aggregate':
@@ -588,7 +768,11 @@ def main():
             if args.operation == 'collect':
                 require(git_sha() == args.head_sha, 'head must equal checked-out commit')
                 require_committed_sources(args.head_sha)
-                Collector(args.output, args.base_sha, args.head_sha, args.run_id).collect()
+                stages = None
+                if args.stages:
+                    stages = tuple(s.strip() for s in args.stages.split(','))
+                collector = Collector(args.output, args.base_sha, args.head_sha, args.run_id)
+                collector.collect(stages=stages)
             else:
                 verify(args.output / 'candidate.json', args.head_sha, args.base_sha, args.run_id)
         return 0

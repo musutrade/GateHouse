@@ -1,6 +1,7 @@
 import copy
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -354,10 +355,20 @@ class AggregateTests(unittest.TestCase):
 
     def test_workflow_keeps_collection_required_and_upload_unconditional(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()
-        job = workflow.split('  quality-coverage:\n')[1].split('  quality-contracts:\n')[0]
-        self.assertNotIn("github.event_name == 'push'", job)
+        shard_bodies = {
+            'quality-fast': workflow.split('  quality-fast:\n')[1].split('  quality-risk:\n')[0],
+            'quality-risk': workflow.split('  quality-risk:\n')[1].split('  quality-matrix:\n')[0],
+            'quality-matrix': workflow.split('  quality-matrix:\n')[1].split('  quality-coverage:\n')[0],
+        }
+        for name, body in shard_bodies.items():
+            with self.subTest(shard=name):
+                self.assertNotIn("github.event_name == 'push'", body)
+                self.assertIn('fetch-depth: 0', body)
+                self.assertIn('ci_quality.py collect', body)
+        job = workflow.split('  quality-coverage:\n')[1].split('  quality-generic-shadow:\n')[0]
+        self.assertIn('needs: [classify, quality-fast, quality-risk, quality-matrix]', job)
+        self.assertIn('ci_quality.py verify', job)
         self.assertIn('fetch-depth: 0', job)
-        self.assertIn('ci_quality.py collect', job)
         upload = job.split('- name: Upload quality evidence')[1]
         self.assertIn('if: ${{ always() }}', upload)
         self.assertIn('target/quality/candidate', upload)
@@ -368,6 +379,14 @@ class AggregateTests(unittest.TestCase):
         needs = aggregate.split('needs:')[1].split('runs-on:')[0]
         for name in gate.COMMON + gate.PUSH_ONLY:
             self.assertIn(name, needs)
+
+    def test_coverage_display_name_matches_baseline_and_reuse_consumers(self):
+        workflow = (ROOT / '.github/workflows/ci.yml').read_text()
+        job = workflow.split('  quality-coverage:\n')[1].split('  quality-generic-shadow:\n')[0]
+        name = re.search(r'^    name: (.+)$', job, re.M)[1]
+        import ci_reuse
+        self.assertEqual(name, gate.COVERAGE_JOB)
+        self.assertIn(name, ci_reuse.REQUIRED_JOBS)
 
 
 class CandidateTests(unittest.TestCase):
@@ -434,6 +453,182 @@ class CandidateTests(unittest.TestCase):
             self.verify()
 
 
+class MergeTests(unittest.TestCase):
+    """Shard merge must reject any evidence substitution before copying."""
+
+    SHARD_FILES = {
+        'fast': ['coverage.json', 'coverage.raw.json', 'coverage.lcov',
+                 'coverage.cobertura.xml', 'production.json', 'base-source.tar',
+                 'base-manifest.json', 'head-source.tar', 'head-manifest.json'],
+        'risk': ['base-coverage.json', 'base-coverage.lcov', 'base-coverage.cobertura.xml',
+                 'base-risk.json', 'head-coverage.json', 'head-coverage.lcov',
+                 'head-coverage.cobertura.xml', 'head-risk.json', 'risk.json'],
+        'matrix': ['critical-paths.json', 'critical-path-runs/bundle.json'],
+    }
+
+    TOOLS = {tool: f'{tool} version-fixture' for tool in ('rustc', 'cargo', 'nextest', 'llvm-cov')}
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+
+    def identity_json(self, digest='0' * 64):
+        return json.dumps({'schema': 1, 'tools': self.TOOLS, 'configuration_sha256': digest})
+
+    def shard(self, name, *, stages=None, identity=('b' * 40, 'a' * 40, 'merge-run'),
+              tool='valid', files=None, extra=None, tamper=None):
+        directory = self.root / f'candidate-{name}'
+        directory.mkdir(parents=True)
+        files = self.SHARD_FILES[name] if files is None else files
+        stages = list(gate.SHARD_STAGES[name]) if stages is None else stages
+        artifacts = {}
+        for relative in files:
+            path = directory / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(f'{name} raw evidence')
+            artifacts[relative] = sha256(path)
+        if tamper:
+            (directory / tamper).write_text('tampered bytes')
+        base, head, run_id = identity
+        report = {'schema_version': 1, 'candidate': True, 'base_sha': base, 'commit': head,
+                  'run_id': run_id, 'stages': {stage: {'status': 'success'} for stage in stages},
+                  'commands': [{'name': f'{name}-cmd'}], 'artifacts': artifacts}
+        if extra:
+            report.update(extra)
+        (directory / 'candidate.json').write_text(json.dumps(report))
+        if tool == 'valid':
+            (directory / gate.SHARD_TOOL_IDENTITY).write_text(self.identity_json())
+        elif tool != 'missing':
+            (directory / gate.SHARD_TOOL_IDENTITY).write_text(tool)
+        return directory
+
+    def fresh(self):
+        self.temp.cleanup()
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        return self.root
+
+    def merge(self, **overrides):
+        shards = {name: overrides.get(name) or self.shard(name) for name in gate.SHARD_STAGES}
+        return gate.merge(self.root / 'merged', shards)
+
+    def test_complete_shards_merge_into_a_verified_candidate(self):
+        merged = self.merge()
+        self.assertEqual(set(merged['stages']), set(gate.STAGES))
+        self.assertEqual(set(merged['artifacts']), set(gate.REQUIRED_ARTIFACTS))
+        output = self.root / 'merged'
+        gate.verify(output / 'candidate.json', 'a' * 40, 'b' * 40, 'merge-run')
+        self.assertEqual(json.loads((output / gate.SHARD_TOOL_IDENTITY).read_text()),
+                         json.loads(self.identity_json()))
+
+    def test_identity_tool_and_measurer_mismatches_rejected(self):
+        factories = {
+            'identity': lambda: self.shard('risk', identity=('c' * 40, 'a' * 40, 'merge-run')),
+            'tool-differs': lambda: self.shard('matrix', tool=self.identity_json('1' * 64)),
+            'tool-missing': lambda: self.shard('fast', tool='missing'),
+            'measurer-conflict': lambda: self.shard('fast', extra={'measurer': {'pin': 1}}),
+        }
+        for label, factory in factories.items():
+            with self.subTest(case=label):
+                self.fresh()
+                overrides = {'risk': factory()} if label == 'identity' else {}
+                if label == 'tool-differs':
+                    overrides = {'matrix': factory()}
+                elif label == 'tool-missing':
+                    overrides = {'fast': factory()}
+                elif label == 'measurer-conflict':
+                    overrides = {'fast': factory(),
+                                 'risk': self.shard('risk', extra={'measurer': {'pin': 2}})}
+                with self.assertRaises(ValueError):
+                    self.merge(**overrides)
+
+    def test_missing_extra_or_failed_stages_rejected(self):
+        for name, stages in (('fast', ('legacy',)), ('risk', ()), ('matrix', ('matrix', 'risk'))):
+            with self.subTest(shard=name, stages=stages):
+                self.fresh()
+                with self.assertRaises(ValueError):
+                    self.merge(**{name: self.shard(name, stages=stages)})
+        # A shard that recorded a failed stage cannot be merged even with its
+        # full stage set present.
+        self.fresh()
+        directory = self.shard('matrix')
+        report = json.loads((directory / 'candidate.json').read_text())
+        report['stages']['matrix'] = {'status': 'failure', 'error': 'fixture'}
+        (directory / 'candidate.json').write_text(json.dumps(report))
+        with self.assertRaises(ValueError):
+            self.merge(matrix=directory)
+
+    def test_tampered_digest_duplicate_path_and_escape_rejected(self):
+        self.fresh()
+        tampered = self.shard('risk', tamper='risk.json')
+        with self.assertRaises(ValueError):
+            self.merge(risk=tampered)
+
+        self.fresh()
+        shared = list(self.SHARD_FILES['risk']) + ['coverage.json']
+        with self.assertRaises(ValueError):
+            self.merge(fast=self.shard('fast'), risk=self.shard('risk', files=shared))
+
+        self.fresh()
+        escape = self.shard('matrix', files=[])
+        report = json.loads((escape / 'candidate.json').read_text())
+        report['artifacts']['../foreign.json'] = 'digest'
+        (escape / 'candidate.json').write_text(json.dumps(report))
+        with self.assertRaises(ValueError):
+            self.merge(matrix=escape)
+
+    def test_partial_shard_set_rejected(self):
+        self.fresh()
+        with self.assertRaises(ValueError):
+            gate.merge(self.root / 'merged', {'fast': self.shard('fast')})
+
+    def test_invalid_tool_identity_content_rejected(self):
+        cases = {
+            'empty': '',
+            'not-json': 'tool-identity-fingerprint',
+            'missing-tool': json.dumps({'schema': 1, 'tools': {'rustc': 'v'},
+                                        'configuration_sha256': '0' * 64}),
+            'empty-value': json.dumps({'schema': 1, 'tools': dict(self.TOOLS, cargo=' '),
+                                       'configuration_sha256': '0' * 64}),
+            'bad-digest': json.dumps({'schema': 1, 'tools': self.TOOLS,
+                                      'configuration_sha256': 'nope'}),
+        }
+        for label, content in cases.items():
+            with self.subTest(case=label):
+                self.fresh()
+                matrix = self.shard('matrix', files=[], tool=content)
+                with self.assertRaises(ValueError):
+                    self.merge(matrix=matrix)
+
+    def test_aliased_absolute_dotdot_and_reserved_paths_rejected(self):
+        # './coverage.json' aliases 'coverage.json' but must not dodge the
+        # duplicate/ownership checks.
+        self.fresh()
+        with self.assertRaises(ValueError):
+            self.merge(fast=self.shard('fast', files=['./coverage.json']))
+        for relative in ('/etc/hostname', '../foreign.json', 'candidate.json',
+                         gate.SHARD_TOOL_IDENTITY, 'nested//double.json'):
+            with self.subTest(relative=relative):
+                self.fresh()
+                matrix = self.shard('matrix', files=[])
+                report = json.loads((matrix / 'candidate.json').read_text())
+                report['artifacts'][relative] = 'digest'
+                (matrix / 'candidate.json').write_text(json.dumps(report))
+                with self.assertRaises(ValueError):
+                    self.merge(matrix=matrix)
+
+    def test_existing_output_and_wrong_shard_set_rejected(self):
+        fast = self.shard('fast')
+        existing = self.root / 'merged'
+        existing.mkdir()
+        with self.assertRaises(ValueError):
+            gate.merge(existing, {'fast': fast})
+        with self.assertRaises(ValueError):
+            gate.merge(self.root / 'other', {'fast': fast})
+
+
 class CollectionTests(unittest.TestCase):
     def test_replay_relocation_requires_an_exact_move_in_git(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -496,6 +691,64 @@ class CollectionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 gate.Collector(Path(directory), 'b' * 40, 'a' * 40, 'test')
             self.assertEqual(marker.read_text(), 'retained')
+
+    def test_partial_stage_collection_defers_full_verify_to_the_merge_job(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'fresh'
+            with patch.object(gate, 'metadata', return_value={}), \
+                    patch.object(gate, 'git_sha', return_value='a' * 40), \
+                    patch.object(gate, 'require_committed_sources'), \
+                    patch.object(gate, 'verify') as verify_mock:
+                collector = gate.Collector(output, 'b' * 40, 'a' * 40, 'test')
+                for stage in gate.STAGES:
+                    setattr(collector, stage, lambda: None)
+                collector.collect(stages=('legacy', 'production'))
+                verify_mock.assert_not_called()
+                report = json.loads((output / 'candidate.json').read_text())
+                self.assertEqual(set(report['stages']), {'legacy', 'production'})
+                collector.collect()
+                verify_mock.assert_called_once()
+                report = json.loads((output / 'candidate.json').read_text())
+                self.assertEqual(set(report['stages']), set(gate.STAGES))
+
+    def test_unknown_partial_stage_fails_before_collection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'fresh'
+            with patch.object(gate, 'metadata', return_value={}), \
+                    patch.object(gate, 'git_sha', return_value='a' * 40), \
+                    patch.object(gate, 'require_committed_sources'):
+                collector = gate.Collector(output, 'b' * 40, 'a' * 40, 'test')
+                with self.assertRaises(ValueError):
+                    collector.collect(stages=('legacy', 'unknown'))
+
+    def test_duplicate_and_dependent_partial_stages_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'fresh'
+            with patch.object(gate, 'metadata', return_value={}), \
+                    patch.object(gate, 'git_sha', return_value='a' * 40), \
+                    patch.object(gate, 'require_committed_sources'):
+                collector = gate.Collector(output, 'b' * 40, 'a' * 40, 'test')
+                with self.assertRaises(ValueError):
+                    collector.collect(stages=('legacy', 'legacy'))
+                with self.assertRaises(ValueError):
+                    collector.collect(stages=('production',))
+
+    def test_failed_partial_stage_exits_nonzero_for_the_shard_job(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'fresh'
+            with patch.object(gate, 'metadata', return_value={}), \
+                    patch.object(gate, 'git_sha', return_value='a' * 40), \
+                    patch.object(gate, 'require_committed_sources'):
+                collector = gate.Collector(output, 'b' * 40, 'a' * 40, 'test')
+
+                def fail():
+                    raise ValueError('negative gate fixture')
+
+                collector.matrix = fail
+                with self.assertRaises(ValueError):
+                    collector.collect(stages=('matrix',))
+                report = json.loads((output / 'candidate.json').read_text())
+                self.assertEqual(report['stages']['matrix']['status'], 'failure')
 
 
 class ReviewedRemovalTests(unittest.TestCase):
