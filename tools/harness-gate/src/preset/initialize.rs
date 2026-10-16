@@ -105,3 +105,147 @@ pub(super) fn project_id(root: &Path) -> String {
         id.into()
     }
 }
+
+/// Terminal-only, numbered preset selection; existing initialization owns all writes.
+pub fn interactive(target: &Path, force: bool, directory: Option<&Path>) -> Result<Option<String>> {
+    use std::io::{self, IsTerminal};
+    anyhow::ensure!(io::stdin().is_terminal() && io::stderr().is_terminal(),
+        "interactive initialization requires terminal input and stderr; use init --preset NAME for automation");
+    let choices = catalog::choices(directory)?;
+    select(
+        &choices,
+        target,
+        force,
+        &mut io::stdin().lock(),
+        &mut io::stderr().lock(),
+    )
+}
+
+fn answer(reader: &mut impl std::io::BufRead) -> Result<String> {
+    use std::io::{BufRead, Read};
+    let mut answer = String::new();
+    reader.take(128).read_line(&mut answer)?;
+    anyhow::ensure!(answer.len() < 128, "initialization response is too long");
+    Ok(answer.trim().to_owned())
+}
+
+fn select(
+    choices: &[(String, String)],
+    target: &Path,
+    force: bool,
+    reader: &mut impl std::io::BufRead,
+    output: &mut impl std::io::Write,
+) -> Result<Option<String>> {
+    for (index, (name, description)) in choices.iter().enumerate() {
+        writeln!(
+            output,
+            "{}: {} — {}",
+            index + 1,
+            name.escape_debug(),
+            description.escape_debug()
+        )?;
+    }
+    write!(output, "Preset number (empty or q cancels): ")?;
+    output.flush()?;
+    let value = answer(reader)?;
+    if value.is_empty() || value == "q" {
+        return Ok(None);
+    }
+    let selected = value
+        .parse::<usize>()
+        .ok()
+        .and_then(|number| number.checked_sub(1))
+        .and_then(|index| choices.get(index))
+        .context("invalid preset number; no configuration written")?;
+    writeln!(
+        output,
+        "Initialize {:?} in {} (replace existing files: {})?",
+        selected.0,
+        target.display().to_string().escape_debug(),
+        force
+    )?;
+    write!(output, "Confirm [y/N]: ")?;
+    output.flush()?;
+    if !matches!(answer(reader)?.as_str(), "y" | "Y" | "yes" | "YES") {
+        return Ok(None);
+    }
+    Ok(Some(selected.0.clone()))
+}
+
+#[cfg(test)]
+mod interactive_tests {
+    use super::*;
+    #[test]
+    fn selected_external_catalog_is_validated_and_initialized() {
+        let catalog_dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            catalog_dir.path().join("flow.toml"),
+            include_str!("../../presets/generic.flow.toml"),
+        )
+        .unwrap();
+        std::fs::write(catalog_dir.path().join("catalog.json"), r#"{"schema":"harness-preset-catalog/v1","presets":{"custom":{"description":"Reviewed external preset","flow":"flow.toml"}},"packs":{}}"#).unwrap();
+        let choices = catalog::choices(Some(catalog_dir.path())).unwrap();
+        assert_eq!(choices.len(), 2);
+        let root = tempfile::tempdir().unwrap();
+        let name = select(
+            &choices,
+            root.path(),
+            false,
+            &mut "2\ny\n".as_bytes(),
+            &mut Vec::new(),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(name, "custom");
+        init_from(root.path(), &name, false, Some(catalog_dir.path())).unwrap();
+        FlowConfig::from_source(
+            &std::fs::read_to_string(root.path().join(DEFAULT_CONFIG_PATH)).unwrap(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
+        std::fs::write(catalog_dir.path().join("catalog.json"), "{}").unwrap();
+        assert!(catalog::choices(Some(catalog_dir.path())).is_err());
+    }
+
+    #[test]
+    fn selection_requires_number_and_explicit_confirmation() {
+        let choices = vec![("generic".into(), "safe\x1b[2J".into())];
+        for input in ["", "\n", "q\n", "1\n", "1\nn\n"] {
+            assert!(select(
+                &choices,
+                Path::new("project"),
+                false,
+                &mut input.as_bytes(),
+                &mut Vec::new()
+            )
+            .unwrap()
+            .is_none());
+        }
+        for input in ["0\ny\n", "2\ny\n", "text\ny\n"] {
+            assert!(select(
+                &choices,
+                Path::new("project"),
+                false,
+                &mut input.as_bytes(),
+                &mut Vec::new()
+            )
+            .is_err());
+        }
+        let mut output = Vec::new();
+        assert_eq!(
+            select(
+                &choices,
+                Path::new("project"),
+                false,
+                &mut "1\ny\n".as_bytes(),
+                &mut output
+            )
+            .unwrap()
+            .as_deref(),
+            Some("generic")
+        );
+        assert!(!output.contains(&27));
+        assert!(answer(&mut "x".repeat(128).as_bytes()).is_err());
+    }
+}

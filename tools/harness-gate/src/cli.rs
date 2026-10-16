@@ -183,6 +183,9 @@ pub(crate) enum Commands {
     },
     /// Initialize flow and reference quality packs; provision trusted inputs before verify.
     Init {
+        /// Choose a preset and confirm initialization in a terminal.
+        #[arg(long, conflicts_with = "preset")]
+        interactive: bool,
         /// Select a locked data-only plugin as the preset catalog.
         #[arg(long, conflicts_with = "presets_dir")]
         plugin: Option<String>,

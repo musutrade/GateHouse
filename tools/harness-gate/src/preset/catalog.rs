@@ -170,3 +170,18 @@ pub(super) fn find(name: &str, directory: Option<&Path>) -> Result<Preset> {
         packs,
     })
 }
+
+/// List only built-in and explicitly selected catalog entries.
+pub(super) fn choices(directory: Option<&Path>) -> Result<Vec<(String, String)>> {
+    let external = directory.map(load).transpose()?;
+    let mut choices = vec![("generic".into(), GENERIC_DESCRIPTION.into())];
+    if let Some((_, catalog)) = external {
+        choices.extend(
+            catalog
+                .presets
+                .into_iter()
+                .map(|(name, entry)| (name, entry.description)),
+        );
+    }
+    Ok(choices)
+}

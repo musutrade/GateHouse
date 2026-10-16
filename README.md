@@ -297,6 +297,7 @@ Presets are starting points, not runtime branches. After initialization is compl
 | ------------------------------------------------------------ | ----------------------------------------- |
 | `harness-gate presets`                                       | List generic and the explicitly selected external catalog             |
 | `harness-gate init --preset <name>`                          | Generate execution configuration and reference quality packs |
+| `harness-gate init --interactive`                           | Select an available preset by number and confirm initialization |
 | `harness-gate doctor [--strict] [--json]`                    | Execute environment checks declared in config |
 | `harness-gate cleanup [--dry-run] [--json]`                 | Inspect or reclaim stale resource leases  |
 | `harness-gate scope [--staged\|--base REF\|--all] [--json]`  | List changes and selected components      |
@@ -705,3 +706,21 @@ Generated baselines remain review-only candidates; adoption policy is
 [ADR-0039](docs/adr/0039-required-risk-and-traceability-gates.md).
 
 Full regression data is fetched explicitly and cached by digest; ordinary source builds need no evidence download. See [test data](test-data/README.md).
+
+### Interactive initialization
+
+Run `harness-gate --project-root /path/to/project init --interactive` in a terminal.
+Choose a numbered preset, inspect the target and replacement warning, then confirm
+with `y`. Empty input, `q` at selection, EOF or a declined confirmation changes
+no project files. Existing configuration is preserved unless `--force` is explicitly given
+and confirmed. Piped input is rejected; automation should use `init --preset NAME`.
+The two selection modes cannot be combined.
+
+The menu includes built-in `generic` and only an explicitly selected external
+catalog (`--presets-dir`, `HARNESS_GATE_PRESETS_DIR`, or locked `--plugin NAME`).
+Locked plugins retain their existing verification and explicit selection rules.
+Project names continue to derive from the target directory. This initial interface
+uses numbered line input, without arrow navigation, project-name overrides or
+project-type detection. It does not install plugins, start services or run verify.
+Generated security configuration, preset validation and engineering-policy
+semantics are unchanged. Review the generated files and run `config check` next.
