@@ -331,7 +331,7 @@ pub(super) fn path(root: &Path, value: &str, label: &str, exists: bool) -> Resul
     resolve_repo_path(root, Path::new(value), label, exists)
 }
 
-fn identifier(value: &str) -> Result<()> {
+pub(crate) fn identifier(value: &str) -> Result<()> {
     if value.is_empty()
         || !value.bytes().enumerate().all(|(i, c)| {
             c.is_ascii_lowercase() || (i > 0 && (c.is_ascii_digit() || b"._-".contains(&c)))

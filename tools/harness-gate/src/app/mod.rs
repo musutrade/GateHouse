@@ -47,10 +47,18 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
         }
         Commands::Init {
             interactive,
+            project_name,
             preset,
             force,
             plugin,
-        } => run_init_dispatch(&cli, preset, *force, plugin.as_deref(), *interactive),
+        } => run_init_dispatch(
+            &cli,
+            preset,
+            *force,
+            plugin.as_deref(),
+            *interactive,
+            project_name.as_deref(),
+        ),
         Commands::Presets => run_presets(cli.presets_dir.clone()),
         Commands::Adapter { action } => run_adapter(action, cli.replay_state_dir.as_deref()),
         Commands::Compat {
@@ -192,13 +200,19 @@ fn run_plugin_check(
     Ok(report["valid"] == true)
 }
 
-fn run_init(cli: &Cli, preset: &str, force: bool, plugin: Option<&str>) -> Result<bool, CliError> {
+fn run_init(
+    cli: &Cli,
+    preset: &str,
+    force: bool,
+    plugin: Option<&str>,
+    project_name: Option<&str>,
+) -> Result<bool, CliError> {
     let root = standalone_root(cli)?;
     let prepared = crate::plugins::check(&root, &cli.plugins)?;
     if let Some(name) = plugin {
         let prepared = prepared.as_ref().context("HGPLUGIN-LOCK: init --plugin requires .harness-gate/plugins.lock.json; explicitly prepare and lock the product first")?;
         let catalog = prepared.catalogs.get(name).context("HGPLUGIN-SELECTION: selected plugin is absent from lock; review and explicitly add the exact pin")?;
-        crate::preset::init_from(&root, preset, force, Some(catalog))?;
+        crate::preset::init_named(&root, preset, force, Some(catalog), project_name)?;
         return Ok(true);
     }
     if prepared.is_some() && preset != "generic" {
@@ -212,9 +226,9 @@ fn run_init(cli: &Cli, preset: &str, force: bool, plugin: Option<&str>) -> Resul
         .clone()
         .or_else(|| std::env::var_os("HARNESS_GATE_PRESETS_DIR").map(std::path::PathBuf::from));
     if let Some(directory) = directory {
-        crate::preset::init_from(&root, preset, force, Some(&directory))?;
+        crate::preset::init_named(&root, preset, force, Some(&directory), project_name)?;
     } else {
-        crate::preset::init(&root, preset, force)?;
+        crate::preset::init_named(&root, preset, force, None, project_name)?;
     }
     Ok(true)
 }
@@ -225,17 +239,23 @@ fn run_init_dispatch(
     force: bool,
     plugin: Option<&str>,
     interactive: bool,
+    project_name: Option<&str>,
 ) -> Result<bool, CliError> {
     if interactive {
-        run_init_interactive(cli, force, plugin)
+        run_init_interactive(cli, force, plugin, project_name)
     } else {
-        run_init(cli, preset, force, plugin)
+        run_init(cli, preset, force, plugin, project_name)
     }
 }
 
 /// Interactive selection keeps `run_init`'s execution path unchanged after a
 /// preset is chosen; decomposition keeps both sides of the added mode simple.
-fn run_init_interactive(cli: &Cli, force: bool, plugin: Option<&str>) -> Result<bool, CliError> {
+fn run_init_interactive(
+    cli: &Cli,
+    force: bool,
+    plugin: Option<&str>,
+    project_name: Option<&str>,
+) -> Result<bool, CliError> {
     let root = standalone_root(cli)?;
     let prepared = crate::plugins::check(&root, &cli.plugins)?;
     let catalog = match plugin {
@@ -262,8 +282,14 @@ fn run_init_interactive(cli: &Cli, force: bool, plugin: Option<&str>) -> Result<
             directory
         }
     };
-    match crate::preset::interactive(&root, force, catalog.as_deref())? {
-        Some(name) => run_init(cli, &name, force, plugin),
+    match crate::preset::interactive(&root, force, catalog.as_deref(), project_name)? {
+        Some(selection) => run_init(
+            cli,
+            &selection.preset,
+            force,
+            plugin,
+            Some(&selection.project_name),
+        ),
         None => Ok(false),
     }
 }

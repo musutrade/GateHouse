@@ -716,8 +716,8 @@ Full regression data is fetched explicitly and cached by digest; ordinary source
 ### Interactive initialization
 
 Run `harness-gate --project-root /path/to/project init --interactive` in a terminal.
-Choose a numbered preset, inspect the target and replacement warning, then confirm
-with `y`. Empty input, `q` at selection, EOF or a declined confirmation changes
+Choose a numbered preset and project name, inspect the target and replacement warning, then confirm
+with `y`. Empty preset selection, `q` at preset selection, EOF or a declined confirmation changes
 no project files. Existing configuration is preserved unless `--force` is explicitly given
 and confirmed. Piped input is rejected; automation should use `init --preset NAME`.
 The two selection modes cannot be combined.
@@ -725,8 +725,19 @@ The two selection modes cannot be combined.
 The menu includes built-in `generic` and only an explicitly selected external
 catalog (`--presets-dir`, `HARNESS_GATE_PRESETS_DIR`, or locked `--plugin NAME`).
 Locked plugins retain their existing verification and explicit selection rules.
-Project names continue to derive from the target directory. This initial interface
-uses numbered line input, without arrow navigation, project-name overrides or
-project-type detection. It does not install plugins, start services or run verify.
+Project names default to the target directory. Override that default with
+`init --project-name NAME`, including alongside `--preset NAME`. Identifiers use
+the existing configuration rule: nonempty lowercase ASCII letters, digits, dots,
+underscores and hyphens. Explicit names are checked against the flow identifier rule before creating the target.
+In interactive mode, an empty project-name line accepts the displayed default;
+EOF cancels. `--project-name NAME` supplies an editable interactive default, and
+`q` is a valid project name. The name prompt accepts fewer than 4096 input bytes
+including the newline; longer names can be supplied explicitly. The confirmation
+shows the final name, which is shared by flow and composed quality configuration.
+Quality presets also retain their existing project-ID rule: a generated quality
+identifier must begin with a lowercase letter; incompatible names fail without
+publishing configuration (an empty target directory may remain).
+This interface uses numbered line input, without arrow navigation or project-type
+detection. It does not install plugins, start services or run verify.
 Generated security configuration, preset validation and engineering-policy
 semantics are unchanged. Review the generated files and run `config check` next.

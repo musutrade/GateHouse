@@ -455,3 +455,39 @@ fn external_catalog_rejects_symlink_files_and_directories() {
         assert!(catalog::find("future", Some(&source)).is_err());
     }
 }
+
+#[test]
+fn named_external_preset_keeps_flow_and_quality_project_identity_equal() {
+    let root = TestWorkspace::new("named-preset");
+    super::initialize::init_named(
+        &root,
+        "rust-api",
+        false,
+        Some(&external()),
+        Some("my.custom_id"),
+    )
+    .unwrap();
+    let project = crate::project::Project::discover(Some(root.root.clone()), None).unwrap();
+    let quality = crate::config::quality::QualityConfig::load_optional(&root, &project.config)
+        .unwrap()
+        .unwrap();
+    assert_eq!(project.config.project.name, "my.custom_id");
+    assert_eq!(quality.project.name, "my.custom_id");
+}
+
+#[test]
+fn invalid_composed_quality_identifier_does_not_publish_configuration() {
+    let root = TestWorkspace::new("invalid-quality-name");
+    let error = super::initialize::init_named(
+        &root,
+        "rust-api",
+        false,
+        Some(&external()),
+        Some("7.custom_id"),
+    )
+    .unwrap_err();
+    assert!(error.to_string().contains("invalid quality identifier"));
+    assert!(!root.join(".harness-gate/flow.toml").exists());
+    assert!(!root.join(".harness-gate/quality.toml").exists());
+    assert!(!root.join(".harness-gate/secrets.toml").exists());
+}
