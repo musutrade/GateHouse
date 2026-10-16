@@ -12,6 +12,8 @@ mod validation;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod toml_fuzz;
 
 pub(crate) use diagnostic::{report_for_error, ConfigDiagnostics, MINIMAL_CONFIG_SNIPPET};
 #[cfg(test)]

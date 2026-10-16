@@ -32,7 +32,7 @@ rules = [{ patterns = ["**"], components = ["project"] }]
 id = "project.diff-check"
 label = "Git whitespace check"
 component = "project"
-profiles = ["full"]
+profiles = ["full", "hook"]
 program = "git"
 args = ["diff", "--check"]
 cwd = "{root}"

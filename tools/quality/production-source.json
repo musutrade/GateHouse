@@ -349,6 +349,11 @@
       "path": "src/verify/parser_fuzz.rs",
       "kind": "test",
       "reason": "Bounded mutation harness included only by the cfg(test) parser module; no production implementation."
+    },
+    {
+      "path": "src/config/toml_fuzz.rs",
+      "kind": "test",
+      "reason": "Bounded TOML loader mutation harness compiled only under cfg(test); no production implementation."
     }
   ],
   "external_exclusions": [
@@ -386,7 +391,7 @@
     {
       "path": "src/config/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "8ebf6d2a8d6fc41eee5c9ff12b898aeab525d13bb5993c18a0154614ecdec7f2"
+      "sha256": "6fc5ff455b49e26c6ab2a07203d41a6f6922424b077e95f15477d634fa8b7817"
     },
     {
       "path": "src/doctor/mod.rs",
