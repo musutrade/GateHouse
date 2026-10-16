@@ -357,7 +357,7 @@ jobs:
         with:
           class: quality
           profiles: 'isolated-instrumented;default'
-          cache-target: 'false'
+          cache-target: 'true'
 
       - name: Install cargo-nextest
         uses: ./.github/actions/install-ci-tool
