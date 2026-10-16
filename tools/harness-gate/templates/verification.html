@@ -40,6 +40,8 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 .coverage-cell { display:block; padding:.5rem; border:1px solid currentColor; color:#101010; background:hsl(210 65% calc(98% - var(--coverage) * .3%)); max-width:13rem; overflow-wrap:anywhere; }
 .coverage-cell span { display:block; }
 .quality-group > summary { cursor:pointer; font-weight:bold; padding:.5rem; overflow-wrap:anywhere; }
+.distribution-panel { overflow-wrap:anywhere; }
+.histogram-bar { height:0.6rem; background:#3576a5; width:var(--bar); }
 .coverage-panel h3, .coverage-panel p, .ranking-panel h3, .ranking-panel p, .ranking-panel li { overflow-wrap:anywhere; }
 </style>
 </head>
@@ -59,6 +61,8 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 <label for="status">Reported row status<select id="status"><option value="">All statuses</option></select></label>
 <label for="component">Quality component<select id="component"><option value="">All components</option></select></label>
 <label for="rank-panel">Complexity range panel<select id="rank-panel"><option value="">No numeric range filter</option>{% if quality_view is defined %}{% for panel in quality_view.rankings %}<option value="{{ panel.id }}">{{ panel.component }} / {{ panel.policy }} / {{ panel.series }}</option>{% endfor %}{% endif %}</select></label>
+<label for="crap-panel">CRAP distribution panel<select id="crap-panel"><option value="">No CRAP bin filter</option>{% if quality_view is defined %}{% for panel in quality_view.distributions %}<option value="{{ panel.id }}">{{ panel.component }} / {{ panel.policy }} / {{ panel.series }} / {{ panel.value_type }}</option>{% endfor %}{% endif %}</select></label>
+<label for="crap-bin">CRAP interval<select id="crap-bin"><option value="">All intervals</option><option value="0">[0, 10)</option><option value="1">[10, 20)</option><option value="2">[20, 40)</option><option value="3">[40, 80)</option><option value="4">[80, +infinity)</option><option value="5">Not plotted</option></select></label>
 <label for="range-min">Minimum count<input id="range-min" type="text" inputmode="numeric" maxlength="40" aria-describedby="range-message" pattern="[0-9]*" autocomplete="off"></label>
 <label for="range-max">Maximum count<input id="range-max" type="text" inputmode="numeric" maxlength="40" aria-describedby="range-message" pattern="[0-9]*" autocomplete="off"></label>
 <button id="reset" type="button">Reset filters</button>
@@ -116,7 +120,12 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 {% for cell in panel.cells %}<a class="coverage-cell" data-map-target="{{ cell.anchor }}" href="#{{ cell.anchor }}" style="--coverage:{{ cell.shade }}"><span>{{ cell.label }}</span><span>{{ cell.covered }} / {{ cell.total }}</span></a>{% endfor %}
 </div></section>
 {% else %}<p>No comparable coverage map is available.</p>{% endfor %}
-<h3>Complexity Top 10 by measurement panel</h3>
+
+<h3>CRAP distribution</h3>
+<p class="note">Exact display intervals, not policy thresholds. Counts are original reported gates, not distinct functions; filtering does not recalculate these totals. Each panel separates component, policy, series and value type. Bin filtering affects only its selected panel. Not plotted rows remain available with their reason.</p>
+{% for panel in quality_view.distributions %}<section class="distribution-panel" data-distribution-panel="{{ panel.id }}"><h4>{{ panel.component }} — {{ panel.policy }}</h4><p>{{ panel.series }} · risk.crap / {{ panel.value_type }} / unit: none · {{ panel.total_gates }} reported gates</p>
+<ul>{% for bin in panel.bins %}<li><span>{{ bin.label }}: {{ bin.count }}</span><div class="histogram-bar" style="--bar:{{ bin.width }}%" aria-hidden="true"></div></li>{% endfor %}</ul></section>{% else %}<p>No CRAP observations supplied.</p>{% endfor %}
+<h3>Complexity Top 10</h3>
 <p class="note">Descending exact non-negative integer counts for complexity.cyclomatic. Each panel separates component, policy and series; observations are reported gates, not distinct functions. Ties use source path, subject name, subject identity and gate identity. Filters hide entries from the original Top 10; they do not promote lower-ranked observations. Numeric range filtering affects only eligible rows in the selected panel; other metrics and panels remain unchanged.</p>
 {% for panel in quality_view.rankings %}
 <section class="ranking-panel" data-ranking-panel="{{ panel.id }}"><h3>{{ panel.component }} — {{ panel.policy }}</h3><p>Series: {{ panel.series }} · {{ panel.metric }} / {{ panel.value_type }} / unit: {{ panel.unit }} · {{ panel.total_gates }} eligible reported gates</p>
@@ -129,7 +138,7 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 <div class="table-region" tabindex="0" role="region" aria-label="Quality gates table; scroll horizontally if needed">
 <table><caption>{{ group.component }} / {{ group.path }}</caption><thead><tr><th scope="col">Subject / policy</th><th scope="col">State / reason</th><th scope="col">Metric</th><th scope="col">Base</th><th scope="col">Head</th><th scope="col">Limit</th></tr></thead><tbody>
 {% for row in group.rows %}
-<tr id="{{ row.anchor }}" tabindex="-1" data-row data-component="{{ group.component }}" data-path="{{ group.path }}"{% if row.range %} data-rank-panel="{{ row.range.panel }}" data-integer="{{ row.range.value }}"{% endif %} data-status="{{ self::scalar(v=row.state) }}"><th scope="row">{{ row.name }}<span class="id">{{ row.kind }} · {{ row.span }}</span><span class="id">{{ self::scalar(v=row.policy) }}</span><span class="id">{{ self::scalar(v=row.subject) }}</span></th><td>{{ self::scalar(v=row.state) }}<div class="detail">{{ self::scalar(v=row.reason) }}</div></td><td>{{ self::scalar(v=row.metric) }}<span class="id">{{ row.visual_note }}</span></td><td>{{ self::metric(v=row.base) }}</td><td>{% if row.range %}count: {{ row.range.value }}{% else %}{{ self::metric(v=row.head) }}{% endif %}</td><td>{{ self::metric(v=row.limit) }}</td></tr>
+<tr id="{{ row.anchor }}" tabindex="-1" data-row data-component="{{ group.component }}" data-path="{{ group.path }}"{% if row.range %} data-rank-panel="{{ row.range.panel }}" data-integer="{{ row.range.value }}"{% endif %} {% if row.distribution %} data-crap-panel="{{ row.distribution.panel }}" data-crap-bin="{{ row.distribution.bin }}"{% endif %} data-status="{{ self::scalar(v=row.state) }}"><th scope="row">{{ row.name }}<span class="id">{{ row.kind }} · {{ row.span }}</span><span class="id">{{ self::scalar(v=row.policy) }}</span><span class="id">{{ self::scalar(v=row.subject) }}</span></th><td>{{ self::scalar(v=row.state) }}<div class="detail">{{ self::scalar(v=row.reason) }}</div><div class="detail">Supplied ratchet: debt {{ self::scalar(v=row.ratchet.debt | default(value="not available")) }}; trend {{ self::scalar(v=row.ratchet.trend | default(value="not available")) }}; remaining debt {{ self::scalar(v=row.ratchet.remaining_debt | default(value="not available")) }}; regression {{ self::scalar(v=row.ratchet.regression | default(value="not available")) }}; legacy debt allowed {{ self::scalar(v=row.ratchet.legacy_debt_allowed | default(value="not available")) }}; absolute compliant {{ self::scalar(v=row.ratchet.absolute_compliant | default(value="not available")) }}; base absolute compliant {{ self::scalar(v=row.ratchet.base_absolute_compliant | default(value="not available")) }}</div></td><td>{{ self::scalar(v=row.metric) }}<span class="id">{{ row.visual_note }}</span>{% if row.distribution %}<span class="id">{{ row.distribution.note }}</span>{% endif %}</td><td>{{ self::metric(v=row.base) }}</td><td>{% if row.range %}count: {{ row.range.value }}{% else %}{{ self::metric(v=row.head) }}{% endif %}</td><td>{{ self::metric(v=row.limit) }}</td></tr>
 {% endfor %}
 </tbody></table></div></details>
 {% else %}<p>No quality gates were reported.</p>{% endfor %}
@@ -151,12 +160,14 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
   const status = document.getElementById('status');
   const component = document.getElementById('component');
   const rankPanel = document.getElementById('rank-panel');
+  const crapPanel = document.getElementById('crap-panel');
+  const crapBin = document.getElementById('crap-bin');
   const minimum = document.getElementById('range-min');
   const maximum = document.getElementById('range-max');
   const rangeMessage = document.getElementById('range-message');
   const count = document.getElementById('count');
   const rows = Array.from(document.querySelectorAll('[data-row]'));
-  const entries = rows.map(row => ({ row, text: `${row.dataset.component || ''} ${row.dataset.path || ''} ${row.textContent}`.toLocaleLowerCase(), status: row.dataset.status, component: row.dataset.component, panel: row.dataset.rankPanel, integer: row.dataset.integer }));
+  const entries = rows.map(row => ({ row, text: `${row.dataset.component || ''} ${row.dataset.path || ''} ${row.textContent}`.toLocaleLowerCase(), status: row.dataset.status, component: row.dataset.component, panel: row.dataset.rankPanel, integer: row.dataset.integer, crapPanel: row.dataset.crapPanel, crapBin: row.dataset.crapBin }));
   Array.from(new Set(entries.map(entry => entry.status))).sort().forEach(value => {
     const option = document.createElement('option');
     option.value = value;
@@ -203,7 +214,7 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
     const range = bounds();
     let visible = 0;
     entries.forEach(entry => {
-      const shown = (!status.value || entry.status === status.value) && entry.text.includes(query) && (!component.value || !entry.component || component.value === entry.component) && inRange(entry, range);
+      const shown = (!status.value || entry.status === status.value) && entry.text.includes(query) && (!component.value || !entry.component || component.value === entry.component) && inRange(entry, range) && (!crapPanel.value || entry.crapPanel !== crapPanel.value || !crapBin.value || entry.crapBin === crapBin.value);
       entry.row.hidden = !shown;
       if (shown) visible += 1;
     });
@@ -217,6 +228,8 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
   status.addEventListener('change', filter);
   component.addEventListener('change', filter);
   rankPanel.addEventListener('change', filter);
+  crapPanel.addEventListener('change', filter);
+  crapBin.addEventListener('change', filter);
   minimum.addEventListener('input', filter);
   maximum.addEventListener('input', filter);
   document.getElementById('reset').addEventListener('click', () => {
@@ -224,6 +237,8 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
     status.value = '';
     component.value = '';
     rankPanel.value = '';
+    crapPanel.value = '';
+    crapBin.value = '';
     minimum.value = '';
     maximum.value = '';
     filter();

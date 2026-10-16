@@ -4759,4 +4759,56 @@ mod tests {
             std::mem::forget(workspace);
         }
     }
+    #[test]
+    fn crap_distribution_publishes_exact_bins_and_supplied_debt() {
+        let (workspace, _project, _invocation, mut project, mut current) =
+            complete_invocation_fixture("crap-distribution");
+        let templates = project.root.join("templates");
+        std::fs::create_dir_all(&templates).unwrap();
+        std::fs::write(
+            templates.join("verification.html"),
+            include_str!("../../templates/verification.html"),
+        )
+        .unwrap();
+        project.config.report_templates.root = Some("templates".into());
+        project.config.report_templates.template = Some("templates/verification.html".into());
+        current.quality = Some(super::quality_view::tests::distribution_fixture());
+        let started = std::time::Instant::now();
+        write(&current, &project).unwrap();
+        verify_manifest(&project).unwrap();
+        let elapsed = started.elapsed().as_secs_f64();
+        let html_path = project.reports.join("test_result.html");
+        let html = std::fs::read_to_string(&html_path).unwrap();
+        assert_eq!(html.matches("data-crap-bin=").count(), 24);
+        assert_eq!(html.matches("data-crap-bin=\"5\"").count(), 4);
+        assert!(html.contains("Authoritative aggregate blockers: 0."));
+        for state in [
+            "none",
+            "new",
+            "improved",
+            "regressed",
+            "unchanged",
+            "resolved",
+        ] {
+            assert!(html.contains(&format!("debt {state};")));
+        }
+        assert!(html.contains("debt not available;"));
+        for status in ["measurement_error", "not_collected"] {
+            current.quality.as_mut().unwrap().status = status;
+            let unavailable = configured_html(&current, &project).unwrap().unwrap();
+            assert_eq!(unavailable.matches("data-crap-bin=\"5\"").count(), 24);
+            assert_eq!(
+                unavailable
+                    .matches("Not plotted: quality measurement unavailable")
+                    .count(),
+                24
+            );
+            assert!(unavailable.contains("debt resolved;"));
+        }
+        eprintln!("CRAP publication: {elapsed:.3}s, {} bytes", html.len());
+        if let Some(path) = std::env::var_os("HG_DISTRIBUTION_PREVIEW") {
+            std::fs::write(path, serde_json::to_vec_pretty(&serde_json::json!({"html":html_path,"gates":121,"crap_gates":24,"publication_seconds_debug":elapsed,"html_bytes":html.len()})).unwrap()).unwrap();
+            std::mem::forget(workspace);
+        }
+    }
 }

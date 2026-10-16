@@ -1,4 +1,5 @@
 //! Presentation-only grouping; eligibility never changes supplied gate decisions.
+mod distribution;
 mod ranking;
 use crate::report_evidence;
 use crate::verify::quality::QualityResult;
@@ -11,6 +12,7 @@ pub(super) struct View<'a> {
     pub groups: Vec<Group<'a>>,
     pub panels: Vec<Panel>,
     rankings: Vec<ranking::Panel>,
+    distributions: Vec<distribution::Panel>,
 }
 #[derive(Serialize)]
 pub(super) struct Group<'a> {
@@ -34,6 +36,8 @@ struct Row<'a> {
     limit: &'a Value,
     visual_note: &'static str,
     range: Option<ranking::Range>,
+    distribution: Option<distribution::Selection>,
+    ratchet: &'a Value,
 }
 #[derive(Serialize)]
 pub(super) struct Panel {
@@ -88,18 +92,26 @@ fn row(gate: &Value, index: usize) -> Row<'_> {
         limit: &record["policy"]["limit"],
         visual_note: "No comparable coverage visual",
         range: None,
+        distribution: None,
+        ratchet: &record["ratchet"],
     }
 }
 pub(super) fn project(quality: &QualityResult) -> View<'_> {
     let mut groups: BTreeMap<(String, String), Vec<Row<'_>>> = BTreeMap::new();
     let mut panels: BTreeMap<(String, String, String), Vec<Cell>> = BTreeMap::new();
     let mut rankings = ranking::Builder::default();
+    let mut distributions = distribution::Builder::default();
     let index = report_evidence::Index::new(&quality.inputs["project"], &quality.evidence);
     if let Some(gates) = quality.project_report["gates"].as_object() {
         for (position, (gate_id, gate)) in gates.iter().enumerate() {
             let component = text(&gate["record"]["component"]);
             let path = text(&gate["record"]["subject"]["path"]);
             let mut row = row(gate, position);
+            row.distribution = distributions.push(
+                gate,
+                !matches!(quality.status, "measurement_error" | "not_collected"),
+                &index,
+            );
             if !matches!(quality.status, "measurement_error" | "not_collected")
                 && display_identity(gate)
             {
@@ -128,6 +140,7 @@ pub(super) fn project(quality: &QualityResult) -> View<'_> {
     }
     View {
         rankings: rankings.finish(),
+        distributions: distributions.finish(),
         groups: groups
             .into_iter()
             .map(|((component, path), rows)| Group {
@@ -224,6 +237,91 @@ pub(super) mod tests {
             participation: json!({}),
             full_quality_status: "pass",
             producers: json!({}),
+        }
+    }
+    pub(crate) fn distribution_fixture() -> QualityResult {
+        let mut quality = ranking_fixture();
+        let rule = json!({"operator":"le","limit":{"type":"decimal","value":"30"},"ratchet":{"allow_legacy_debt":true,"deny_regression":true},"on_violation":"fail"});
+        let pairs = [
+            ("10", "10"),
+            ("40", "10"),
+            ("40", "50"),
+            ("50", "40"),
+            ("40", "40"),
+            ("10", "40"),
+        ];
+        for i in 0..24 {
+            let (head, base) = pairs[i % pairs.len()];
+            let decimal = json!({"type":"decimal","value":head});
+            let prior = json!({"type":"decimal","value":base});
+            let (_, ratchet) =
+                harness_gate::quality::ratchet::decision(&rule, &decimal, Some(&prior)).unwrap();
+            let value = match i {
+                20 => json!({"type":"rational","numerator":1,"denominator":0}),
+                21 => json!({"type":"decimal","value":"9".repeat(4097)}),
+                22 => json!({"type":"count","value":50}),
+                _ if i >= 12 => {
+                    json!({"type":"rational","numerator":head.parse::<u32>().unwrap(),"denominator":1})
+                }
+                _ => decimal,
+            };
+            let evidence = &mut quality.evidence[i];
+            evidence["series"]["metrics"] = json!([{"name":"risk.crap","type":value["type"]}]);
+            evidence["series"]["id"] =
+                json!(harness_gate::quality::evidence::series_id(&evidence["series"]).unwrap());
+            evidence["metrics"] = json!([{"name":"risk.crap","value":value}]);
+            let gate = &mut quality.project_report["gates"][format!("g{i:04}")];
+            gate["record"]["metric"] = json!("risk.crap");
+            gate["record"]["head"] = value;
+            gate["record"]["measurement_series"]["head"] = evidence["series"]["id"].clone();
+            gate["record"]["ratchet"] = ratchet;
+        }
+        quality.project_report["gates"]["g0023"]["record"]["evidence_links"]["head"]
+            ["evidence_id"] = json!("missing");
+        quality
+    }
+    #[test]
+    fn distribution_keeps_unplotted_and_supplied_ratchets() {
+        let mut quality = distribution_fixture();
+        let view = project(&quality);
+        assert_eq!(
+            view.distributions
+                .iter()
+                .map(|p| p.total_gates)
+                .sum::<usize>(),
+            24
+        );
+        assert_eq!(
+            view.distributions
+                .iter()
+                .map(|p| p.bins[5].count)
+                .sum::<usize>(),
+            4
+        );
+        for state in [
+            "none",
+            "new",
+            "improved",
+            "regressed",
+            "unchanged",
+            "resolved",
+        ] {
+            assert!(view
+                .groups
+                .iter()
+                .flat_map(|g| &g.rows)
+                .any(|r| r.ratchet["debt"] == state));
+        }
+        for status in ["measurement_error", "not_collected"] {
+            quality.status = status;
+            let view = project(&quality);
+            assert_eq!(
+                view.distributions
+                    .iter()
+                    .map(|p| p.bins[5].count)
+                    .sum::<usize>(),
+                24
+            );
         }
     }
     pub(crate) fn ranking_fixture() -> QualityResult {

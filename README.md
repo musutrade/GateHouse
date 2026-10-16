@@ -823,7 +823,23 @@ rows and other panels are unaffected by the range; search, status and component
 filters still compose. Reset clears every filter. Filtering hides entries from the
 original Top 10 without promoting other entries, and never changes blockers or
 reported outcomes. Without JavaScript, all rankings and exact details remain visible.
-History, trends and additional quality charts are outside this template.
+The CRAP histogram separates component, policy, canonical measurement series and
+value type for `risk.crap`. Its fixed intervals `[0,10)`, `[10,20)`, `[20,40)`,
+`[40,80)` and `[80,+infinity)` are display categories, not policy thresholds.
+Decimal and rational values use the Core's exact comparator against small interval
+boundaries. Each numeric field is limited to 4096 characters before parsing or
+comparison. Unsupported, invalid, oversized, unavailable or inconsistent observations
+remain as **Not plotted** rows with a reason and count. Original panel totals count
+reported gates and do not change when filtering; no cross-series aggregation occurs.
+Choose a CRAP panel and interval to filter only that panel, together with the other
+filters. Reset clears both numeric-range and interval selections. Counts and exact
+rows remain readable without JavaScript.
+
+Details show supplied ratchet debt, trend, remaining-debt, regression, legacy-debt
+and absolute-compliance annotations. Missing annotations are `not available`, not
+zero debt. These fields are not recalculated, and resolved debt is not called
+outstanding debt. No new debt amount, quality decision or blocker is derived.
+History and trends use the separate explicit history command below.
 
 ### Explicit offline metric history
 
