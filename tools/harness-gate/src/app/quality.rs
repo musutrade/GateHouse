@@ -319,6 +319,10 @@ fn evaluate(args: &EvaluateArgs) -> Result<bool> {
                 Some(&args.output.to_string_lossy()),
             )
         );
+        let blockers = crate::failure::quality_blockers(&report);
+        if !blockers.is_empty() {
+            eprintln!("{blockers}");
+        }
     }
     Ok(passed)
 }
