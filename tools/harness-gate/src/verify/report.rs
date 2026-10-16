@@ -4716,4 +4716,47 @@ mod tests {
             std::mem::forget(workspace);
         }
     }
+    #[test]
+    fn complexity_ranking_publishes_exact_integer_values() {
+        let (workspace, _project, _invocation, mut project, mut current) =
+            complete_invocation_fixture("complexity-ranking");
+        let templates = project.root.join("templates");
+        std::fs::create_dir_all(&templates).unwrap();
+        std::fs::write(
+            templates.join("verification.html"),
+            include_str!("../../templates/verification.html"),
+        )
+        .unwrap();
+        project.config.report_templates.root = Some("templates".into());
+        project.config.report_templates.template = Some("templates/verification.html".into());
+        current.quality = Some(super::quality_view::tests::ranking_fixture());
+        let started = std::time::Instant::now();
+        write(&current, &project).unwrap();
+        verify_manifest(&project).unwrap();
+        let elapsed = started.elapsed().as_secs_f64();
+        let html_path = project.reports.join("test_result.html");
+        let html = std::fs::read_to_string(&html_path).unwrap();
+        assert_eq!(html.matches("data-component=").count(), 121);
+        assert_eq!(html.matches("data-integer=").count(), 118);
+        for value in [
+            "9007199254740992",
+            "9007199254740993",
+            "18446744073709551615",
+            "18446744073709551616",
+            "99999999999999999999999999999999999999999999999999",
+        ] {
+            assert!(html.contains(&format!("data-integer=\"{value}\"")));
+            assert!(html.contains(&format!("count: {value}")));
+        }
+        assert!(html.contains("Authoritative aggregate blockers: 0."));
+        assert!(html.contains("duplicate-policy"));
+        eprintln!(
+            "complexity-ranking:121 gates,{elapsed:.3}s publication+manifest,{} HTMLbytes",
+            html.len()
+        );
+        if let Some(path) = std::env::var_os("HG_RANKING_PREVIEW") {
+            std::fs::write(path,serde_json::to_vec_pretty(&serde_json::json!({"html":html_path,"gates":121,"eligible":118,"publication_seconds_debug":elapsed,"html_bytes":html.len()})).unwrap()).unwrap();
+            std::mem::forget(workspace);
+        }
+    }
 }

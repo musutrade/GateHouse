@@ -1,4 +1,5 @@
 //! Presentation-only grouping; eligibility never changes supplied gate decisions.
+mod ranking;
 use crate::report_evidence;
 use crate::verify::quality::QualityResult;
 use serde::Serialize;
@@ -9,6 +10,7 @@ use std::collections::BTreeMap;
 pub(super) struct View<'a> {
     pub groups: Vec<Group<'a>>,
     pub panels: Vec<Panel>,
+    rankings: Vec<ranking::Panel>,
 }
 #[derive(Serialize)]
 pub(super) struct Group<'a> {
@@ -31,6 +33,7 @@ struct Row<'a> {
     head: &'a Value,
     limit: &'a Value,
     visual_note: &'static str,
+    range: Option<ranking::Range>,
 }
 #[derive(Serialize)]
 pub(super) struct Panel {
@@ -84,17 +87,24 @@ fn row(gate: &Value, index: usize) -> Row<'_> {
         head: &record["head"],
         limit: &record["policy"]["limit"],
         visual_note: "No comparable coverage visual",
+        range: None,
     }
 }
 pub(super) fn project(quality: &QualityResult) -> View<'_> {
     let mut groups: BTreeMap<(String, String), Vec<Row<'_>>> = BTreeMap::new();
     let mut panels: BTreeMap<(String, String, String), Vec<Cell>> = BTreeMap::new();
+    let mut rankings = ranking::Builder::default();
     let index = report_evidence::Index::new(&quality.inputs["project"], &quality.evidence);
     if let Some(gates) = quality.project_report["gates"].as_object() {
-        for (position, gate) in gates.values().enumerate() {
+        for (position, (gate_id, gate)) in gates.iter().enumerate() {
             let component = text(&gate["record"]["component"]);
             let path = text(&gate["record"]["subject"]["path"]);
             let mut row = row(gate, position);
+            if !matches!(quality.status, "measurement_error" | "not_collected")
+                && display_identity(gate)
+            {
+                row.range = rankings.push(gate_id, gate, &row.anchor, &index);
+            }
             if let Some((covered, total)) = visual(quality, gate, &index) {
                 let cell = Cell {
                     anchor: row.anchor.clone(),
@@ -117,6 +127,7 @@ pub(super) fn project(quality: &QualityResult) -> View<'_> {
         }
     }
     View {
+        rankings: rankings.finish(),
         groups: groups
             .into_iter()
             .map(|((component, path), rows)| Group {
@@ -214,6 +225,73 @@ pub(super) mod tests {
             full_quality_status: "pass",
             producers: json!({}),
         }
+    }
+    pub(crate) fn ranking_fixture() -> QualityResult {
+        let mut quality = fixture(120);
+        let values = [
+            "0",
+            "10",
+            "9007199254740992",
+            "9007199254740993",
+            "18446744073709551615",
+            "18446744073709551616",
+            "99999999999999999999999999999999999999999999999999",
+        ];
+        for i in 0..120 {
+            let evidence = &mut quality.evidence[i];
+            let raw = match i {
+                1 => "1.5",
+                2 => "1e20",
+                3 => "-1",
+                _ => values[i % values.len()],
+            };
+            let value = serde_json::json!({"type":"count","value":serde_json::from_str::<Value>(raw).unwrap()});
+            evidence["series"]["metrics"] =
+                serde_json::json!([{"name":"complexity.cyclomatic","type":"count"}]);
+            evidence["series"]["id"] = serde_json::json!(
+                harness_gate::quality::evidence::series_id(&evidence["series"]).unwrap()
+            );
+            evidence["metrics"] =
+                serde_json::json!([{"name":"complexity.cyclomatic","value":value}]);
+            let gate = &mut quality.project_report["gates"][format!("g{i:04}")];
+            gate["record"]["metric"] = serde_json::json!("complexity.cyclomatic");
+            gate["record"]["head"] = value;
+            gate["record"]["measurement_series"]["head"] = evidence["series"]["id"].clone();
+        }
+        let mut duplicate = quality.project_report["gates"]["g0000"].clone();
+        duplicate["policy"] = json!("duplicate-policy");
+        duplicate["record"]["policy"]["id"] = json!("duplicate-policy");
+        quality.project_report["gates"]["duplicate-policy-gate"] = duplicate;
+        quality
+    }
+    #[test]
+    fn ranking_keeps_exact_values_and_separate_policy_observations() {
+        let quality = ranking_fixture();
+        let view = project(&quality);
+        assert_eq!(view.groups.iter().map(|g| g.rows.len()).sum::<usize>(), 121);
+        assert_eq!(
+            view.groups
+                .iter()
+                .flat_map(|g| &g.rows)
+                .filter(|r| r.range.is_some())
+                .count(),
+            118
+        );
+        assert_eq!(
+            view.rankings.iter().map(|p| p.total_gates).sum::<usize>(),
+            118
+        );
+        assert!(view
+            .rankings
+            .iter()
+            .any(|p| p.total_gates > 10 && p.rows.len() == 10));
+        assert!(view.rankings.iter().any(|p| p.policy == "duplicate-policy"));
+        assert!(view
+            .rankings
+            .iter()
+            .flat_map(|p| &p.rows)
+            .any(|r| r.value == "99999999999999999999999999999999999999999999999999"));
+        assert_eq!(quality.project_report["aggregate"]["blockers"], json!([]));
     }
     #[test]
     fn eligibility_retains_every_gate_without_mixing_series_or_rejudging_states() {
