@@ -49,14 +49,13 @@
         "push"
       ],
       "required_events": [
-        "pull_request",
         "push"
       ],
       "needs": [
         "classify"
       ],
       "outcome": "Full locked native macOS and Windows nextest suites with --no-fail-fast; both PR-required.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' }}"
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}"
     },
     "security-audit": {
       "name": "Security Audit",
@@ -137,14 +136,13 @@
         "push"
       ],
       "required_events": [
-        "pull_request",
         "push"
       ],
       "needs": [
         "classify"
       ],
       "outcome": "Locked Linux release build; artifact absence retains existing ignore policy.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' }}"
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}"
     },
     "build-cross-platform": {
       "name": "Build (${{ matrix.os }})",
@@ -201,14 +199,13 @@
         "push"
       ],
       "required_events": [
-        "pull_request",
         "push"
       ],
       "needs": [
         "classify"
       ],
       "outcome": "Fresh legacy coverage, production coverage, base/head exact risk and isolated critical-path evidence; all four stages required; always retain available candidate evidence.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' }}"
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}"
     },
     "quality-generic-shadow": {
       "name": "Generic Quality Shadow",

@@ -123,12 +123,12 @@ class TopologyTests(unittest.TestCase):
     def test_cross_platform_pr_failure_blocks_cli(self):
         needs = {key: {'result': 'success'} for key, job in CONTRACT['jobs'].items()
                  if 'pull_request' in job['required_events']}
-        needs['test-cross-platform']['result'] = 'failure'
+        needs['test']['result'] = 'failure'
         result = subprocess.run([sys.executable, str(Path(ci_quality.__file__)),
                                  'aggregate', '--event', 'pull_request', '--needs',
                                  json.dumps(needs)], capture_output=True, text=True)
         self.assertEqual(result.returncode, 1)
-        self.assertIn('test-cross-platform', result.stderr)
+        self.assertIn('test', result.stderr)
 
     def test_workflow_matches_frozen_event_and_check_contract(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()

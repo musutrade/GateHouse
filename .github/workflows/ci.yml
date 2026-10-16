@@ -140,7 +140,7 @@ jobs:
   test-cross-platform:
     name: Test (${{ matrix.os }})
     needs: [classify]
-    if: ${{ needs.classify.outputs.run_full == 'true' }}
+    if: ${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}
     strategy:
       fail-fast: false
       matrix:
@@ -236,7 +236,7 @@ jobs:
   build:
     name: Build
     needs: [classify]
-    if: ${{ needs.classify.outputs.run_full == 'true' }}
+    if: ${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -330,7 +330,7 @@ jobs:
   quality-coverage:
     name: Quality Coverage and Critical Paths
     needs: [classify]
-    if: ${{ needs.classify.outputs.run_full == 'true' }}
+    if: ${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     outputs:
@@ -677,9 +677,8 @@ jobs:
     # Keep this check name stable because it is required by the main ruleset.
     # Evaluation only: no product compilation, tests, coverage/risk collection,
     # or heavy Rust tool setup. The step allowlist is tested in test_ci_topology.py.
-    # PRs and pushes require coverage, risk and isolated traceability evidence.
-    # Full macOS/Windows tests are required on PRs and pushes. Additional
-    # cross-platform builds/contracts and performance collection are push-only.
+    # PRs run fast validation: Ubuntu tests, lint, security audit.
+    # Pushes run full validation: coverage, risk analysis, cross-platform tests/builds.
     needs:
       [classify, test, test-cross-platform, security-audit, fmt, clippy, build, build-cross-platform,
        coverage, quality-coverage, quality-contracts, quality-contracts-cross-platform,

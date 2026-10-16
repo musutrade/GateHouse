@@ -22,11 +22,11 @@ from source_measure import SOURCE_FILES, compiler_configuration
 # Feature flag for parallel risk collection (default: disabled, experimental)
 PARALLEL_RISK = os.environ.get('CI_PARALLEL_RISK', '0') == '1'
 
-COMMON = ('classify', 'test', 'test-cross-platform', 'security-audit', 'fmt', 'clippy', 'build',
-          'quality-coverage', 'quality-contracts', 'docs-consistency', 'release-contracts',
+COMMON = ('classify', 'test', 'security-audit', 'fmt', 'clippy',
+          'quality-contracts', 'docs-consistency', 'release-contracts',
           'quality-scripts')
-PUSH_ONLY = ('build-cross-platform', 'coverage',
-             'quality-contracts-cross-platform', 'quality-baseline')
+PUSH_ONLY = ('test-cross-platform', 'build', 'build-cross-platform', 'coverage',
+             'quality-coverage', 'quality-contracts-cross-platform', 'quality-baseline')
 STAGES = ('legacy', 'production', 'risk', 'matrix')
 # Rust integration tests and their Python oracles read these repository trees.
 # Historical reports under docs/quality are not test inputs: archiving that
