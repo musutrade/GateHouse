@@ -6,6 +6,7 @@ mod policy;
 #[cfg(test)]
 mod tests;
 mod validation;
+pub(crate) use validation::identifier as validate_project_identifier;
 
 use super::{ConfigDiagnostics, FlowConfig};
 use anyhow::{Context, Result};

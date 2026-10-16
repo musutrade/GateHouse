@@ -186,6 +186,9 @@ pub(crate) enum Commands {
         /// Choose a preset and confirm initialization in a terminal.
         #[arg(long, conflicts_with = "preset")]
         interactive: bool,
+        /// Override the directory-derived project identifier.
+        #[arg(long, value_name = "NAME")]
+        project_name: Option<String>,
         /// Select a locked data-only plugin as the preset catalog.
         #[arg(long, conflicts_with = "presets_dir")]
         plugin: Option<String>,

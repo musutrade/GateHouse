@@ -10,6 +10,33 @@ pub fn init(target: &Path, name: &str, force: bool) -> Result<()> {
 }
 
 pub fn init_from(target: &Path, name: &str, force: bool, directory: Option<&Path>) -> Result<()> {
+    initialize(target, name, force, directory, None)
+}
+
+pub fn init_named(
+    target: &Path,
+    name: &str,
+    force: bool,
+    directory: Option<&Path>,
+    project_name: Option<&str>,
+) -> Result<()> {
+    match (directory, project_name) {
+        (None, None) => init(target, name, force),
+        (Some(directory), None) => init_from(target, name, force, Some(directory)),
+        (_, Some(_)) => initialize(target, name, force, directory, project_name),
+    }
+}
+
+fn initialize(
+    target: &Path,
+    name: &str,
+    force: bool,
+    directory: Option<&Path>,
+    project_name: Option<&str>,
+) -> Result<()> {
+    if let Some(name) = project_name {
+        validate_project_name(name)?;
+    }
     let preset = catalog::find(name, directory)?;
     fs::create_dir_all(target)
         .with_context(|| format!("create project directory {}", target.display()))?;
@@ -24,7 +51,9 @@ pub fn init_from(target: &Path, name: &str, force: bool, directory: Option<&Path
     ensure_writable(&secrets_path, force)?;
 
     let mut config = FlowConfig::from_source(&preset.flow)?;
-    config.project.name = project_id(&root);
+    config.project.name = project_name
+        .map(str::to_owned)
+        .unwrap_or_else(|| project_id(&root));
     config.validate()?;
     let directory = flow_path.parent().context("flow config has no parent")?;
     let flow_content = toml::to_string_pretty(&config)?;
@@ -39,6 +68,7 @@ pub fn init_from(target: &Path, name: &str, force: bool, directory: Option<&Path
                 .collect::<Vec<_>>(),
             &config.project.name,
         )?;
+        crate::config::quality::validate_project_identifier(&composition.quality.project.id)?;
         let mut files = composition.files;
         files.insert(
             crate::config::quality::QUALITY_CONFIG_PATH.into(),
@@ -106,33 +136,99 @@ pub(super) fn project_id(root: &Path) -> String {
     }
 }
 
+fn validate_project_name(name: &str) -> Result<()> {
+    let mut config = FlowConfig::from_source(include_str!("../../presets/generic.flow.toml"))?;
+    config.project.name = name.into();
+    config.validate()
+}
+
+pub struct InitSelection {
+    pub preset: String,
+    pub project_name: String,
+}
+
 /// Terminal-only, numbered preset selection; existing initialization owns all writes.
-pub fn interactive(target: &Path, force: bool, directory: Option<&Path>) -> Result<Option<String>> {
+pub fn interactive(
+    target: &Path,
+    force: bool,
+    directory: Option<&Path>,
+    project_name: Option<&str>,
+) -> Result<Option<InitSelection>> {
     use std::io::{self, IsTerminal};
     anyhow::ensure!(io::stdin().is_terminal() && io::stderr().is_terminal(),
         "interactive initialization requires terminal input and stderr; use init --preset NAME for automation");
+    let default_name = project_name.map(str::to_owned).unwrap_or_else(|| {
+        project_id(
+            &target
+                .canonicalize()
+                .unwrap_or_else(|_| target.to_path_buf()),
+        )
+    });
+    validate_project_name(&default_name)?;
     let choices = catalog::choices(directory)?;
     select(
         &choices,
         target,
         force,
+        &default_name,
         &mut io::stdin().lock(),
         &mut io::stderr().lock(),
     )
 }
 
-fn answer(reader: &mut impl std::io::BufRead) -> Result<String> {
+fn answer(reader: &mut impl std::io::BufRead) -> Result<Option<String>> {
+    read_answer(reader, 128)
+}
+
+fn read_answer(reader: &mut impl std::io::BufRead, limit: u64) -> Result<Option<String>> {
     use std::io::{BufRead, Read};
     let mut answer = String::new();
-    reader.take(128).read_line(&mut answer)?;
-    anyhow::ensure!(answer.len() < 128, "initialization response is too long");
-    Ok(answer.trim().to_owned())
+    let read = reader.take(limit).read_line(&mut answer)?;
+    anyhow::ensure!(
+        (answer.len() as u64) < limit,
+        "initialization response is too long"
+    );
+    Ok((read != 0).then(|| answer.trim_end_matches(['\r', '\n']).to_owned()))
 }
 
 fn select(
     choices: &[(String, String)],
     target: &Path,
     force: bool,
+    default_name: &str,
+    reader: &mut impl std::io::BufRead,
+    output: &mut impl std::io::Write,
+) -> Result<Option<InitSelection>> {
+    let Some(preset) = select_preset(choices, reader, output)? else {
+        return Ok(None);
+    };
+    let Some(project_name) = select_project_name(default_name, reader, output)? else {
+        return Ok(None);
+    };
+    writeln!(
+        output,
+        "Project {}: initialize {:?} in {} (replace existing files: {})?",
+        project_name.escape_debug(),
+        preset,
+        target.display().to_string().escape_debug(),
+        force
+    )?;
+    write!(output, "Confirm [y/N]: ")?;
+    output.flush()?;
+    if !matches!(
+        answer(reader)?.unwrap_or_default().trim(),
+        "y" | "Y" | "yes" | "YES"
+    ) {
+        return Ok(None);
+    }
+    Ok(Some(InitSelection {
+        preset,
+        project_name,
+    }))
+}
+
+fn select_preset(
+    choices: &[(String, String)],
     reader: &mut impl std::io::BufRead,
     output: &mut impl std::io::Write,
 ) -> Result<Option<String>> {
@@ -147,7 +243,8 @@ fn select(
     }
     write!(output, "Preset number (empty or q cancels): ")?;
     output.flush()?;
-    let value = answer(reader)?;
+    let value = answer(reader)?.unwrap_or_default();
+    let value = value.trim();
     if value.is_empty() || value == "q" {
         return Ok(None);
     }
@@ -157,19 +254,30 @@ fn select(
         .and_then(|number| number.checked_sub(1))
         .and_then(|index| choices.get(index))
         .context("invalid preset number; no configuration written")?;
-    writeln!(
-        output,
-        "Initialize {:?} in {} (replace existing files: {})?",
-        selected.0,
-        target.display().to_string().escape_debug(),
-        force
-    )?;
-    write!(output, "Confirm [y/N]: ")?;
-    output.flush()?;
-    if !matches!(answer(reader)?.as_str(), "y" | "Y" | "yes" | "YES") {
-        return Ok(None);
-    }
     Ok(Some(selected.0.clone()))
+}
+
+fn select_project_name(
+    default_name: &str,
+    reader: &mut impl std::io::BufRead,
+    output: &mut impl std::io::Write,
+) -> Result<Option<String>> {
+    write!(
+        output,
+        "Project name [{}] (empty uses default, EOF cancels): ",
+        default_name.escape_debug()
+    )?;
+    output.flush()?;
+    let Some(value) = read_answer(reader, 4096)? else {
+        return Ok(None);
+    };
+    let name = if value.is_empty() {
+        default_name.to_owned()
+    } else {
+        value
+    };
+    validate_project_name(&name)?;
+    Ok(Some(name))
 }
 
 #[cfg(test)]
@@ -191,13 +299,22 @@ mod interactive_tests {
             &choices,
             root.path(),
             false,
-            &mut "2\ny\n".as_bytes(),
+            "project",
+            &mut "2\ncustom-name\ny\n".as_bytes(),
             &mut Vec::new(),
         )
         .unwrap()
         .unwrap();
-        assert_eq!(name, "custom");
-        init_from(root.path(), &name, false, Some(catalog_dir.path())).unwrap();
+        assert_eq!(name.preset, "custom");
+        assert_eq!(name.project_name, "custom-name");
+        init_named(
+            root.path(),
+            &name.preset,
+            false,
+            Some(catalog_dir.path()),
+            Some(&name.project_name),
+        )
+        .unwrap();
         FlowConfig::from_source(
             &std::fs::read_to_string(root.path().join(DEFAULT_CONFIG_PATH)).unwrap(),
         )
@@ -209,6 +326,32 @@ mod interactive_tests {
     }
 
     #[test]
+    fn project_name_prompt_distinguishes_empty_from_eof_and_preserves_valid_ids() {
+        assert!(
+            select_project_name("default", &mut "".as_bytes(), &mut Vec::new())
+                .unwrap()
+                .is_none()
+        );
+        for (input, expected) in [
+            ("\n", "default"),
+            ("q\n", "q"),
+            ("7.valid_id-\n", "7.valid_id-"),
+        ] {
+            assert_eq!(
+                select_project_name("default", &mut input.as_bytes(), &mut Vec::new())
+                    .unwrap()
+                    .as_deref(),
+                Some(expected)
+            );
+        }
+        for input in ["UPPER\n", " bad\n", "bad/name\n"] {
+            assert!(
+                select_project_name("default", &mut input.as_bytes(), &mut Vec::new()).is_err()
+            );
+        }
+    }
+
+    #[test]
     fn selection_requires_number_and_explicit_confirmation() {
         let choices = vec![("generic".into(), "safe\x1b[2J".into())];
         for input in ["", "\n", "q\n", "1\n", "1\nn\n"] {
@@ -216,17 +359,19 @@ mod interactive_tests {
                 &choices,
                 Path::new("project"),
                 false,
+                "project",
                 &mut input.as_bytes(),
                 &mut Vec::new()
             )
             .unwrap()
             .is_none());
         }
-        for input in ["0\ny\n", "2\ny\n", "text\ny\n"] {
+        for input in ["0\ny\n", "2\ncustom-name\ny\n", "text\ny\n"] {
             assert!(select(
                 &choices,
                 Path::new("project"),
                 false,
+                "project",
                 &mut input.as_bytes(),
                 &mut Vec::new()
             )
@@ -238,12 +383,13 @@ mod interactive_tests {
                 &choices,
                 Path::new("project"),
                 false,
-                &mut "1\ny\n".as_bytes(),
+                "project",
+                &mut "1\n\ny\n".as_bytes(),
                 &mut output
             )
             .unwrap()
-            .as_deref(),
-            Some("generic")
+            .map(|selection| selection.preset),
+            Some("generic".into())
         );
         assert!(!output.contains(&27));
         assert!(answer(&mut "x".repeat(128).as_bytes()).is_err());
