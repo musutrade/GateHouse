@@ -169,8 +169,8 @@ mod tests {
             subject: "subject".into(),
             gate: gate.into(),
         };
-        let mut a = vec![item("b", "z.rs"), item("c", "a.rs"), item("a", "a.rs")];
-        let mut b = vec![item("a", "a.rs"), item("c", "a.rs"), item("b", "z.rs")];
+        let mut a = [item("b", "z.rs"), item("c", "a.rs"), item("a", "a.rs")];
+        let mut b = [item("a", "a.rs"), item("c", "a.rs"), item("b", "z.rs")];
         a.sort_by(order);
         b.sort_by(order);
         assert_eq!(
