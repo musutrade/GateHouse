@@ -18,7 +18,12 @@
         "src/findings/sarif.rs",
         "src/hooks/filesystem.rs",
         "src/hooks/mod.rs",
-        "src/hooks/paths.rs"
+        "src/hooks/paths.rs",
+        "src/report_history/input.rs",
+        "src/report_history/mod.rs",
+        "src/report_history/projection.rs",
+        "src/report_history/publication.rs",
+        "src/report_history/render.rs"
       ]
     },
     "audit": {

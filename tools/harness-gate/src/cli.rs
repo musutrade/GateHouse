@@ -43,6 +43,20 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
+    /// Render one metric's history from explicitly pinned completed reports, offline.
+    ReportHistory {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        policy: String,
+        #[arg(long)]
+        subject: String,
+        #[arg(long)]
+        metric: String,
+    },
+
     /// Explain a registered machine failure, CLI error or configuration diagnostic code without loading a project.
     Explain {
         /// Stable code, for example QUALITY_BLOCKED, E1401 or HGCFG-TOML-PARSE.

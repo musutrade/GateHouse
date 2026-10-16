@@ -1808,7 +1808,11 @@ fn sha256_file(path: &Path) -> Result<String> {
 }
 
 fn verify_manifest_without_result(project: &Project) -> Result<()> {
-    let path = project.reports.join(MANIFEST_FILE);
+    verify_manifest_without_result_at(&project.reports)
+}
+
+fn verify_manifest_without_result_at(reports: &Path) -> Result<()> {
+    let path = reports.join(MANIFEST_FILE);
     let bytes =
         fs::read(&path).with_context(|| format!("read artifact manifest {}", path.display()))?;
     let manifest: ArtifactManifest =
@@ -1819,7 +1823,7 @@ fn verify_manifest_without_result(project: &Project) -> Result<()> {
             manifest.schema_version
         );
     }
-    let registry_path = project.reports.join(ARTIFACT_REGISTRY_FILE);
+    let registry_path = reports.join(ARTIFACT_REGISTRY_FILE);
     let registry: ArtifactRegistry = serde_json::from_slice(
         &fs::read(&registry_path)
             .with_context(|| format!("read artifact registry {}", registry_path.display()))?,
@@ -1850,10 +1854,9 @@ fn verify_manifest_without_result(project: &Project) -> Result<()> {
     if registry_manifest != manifest.artifacts {
         bail!("artifact registry and manifest entries differ");
     }
-    let report_root = project
-        .reports
+    let report_root = reports
         .canonicalize()
-        .with_context(|| format!("resolve invocation directory {}", project.reports.display()))?;
+        .with_context(|| format!("resolve invocation directory {}", reports.display()))?;
     let mut failures = Vec::new();
     let disk = collect_publishable_files(&report_root, &report_root, &mut failures)?;
     if !failures.is_empty() {
@@ -1897,8 +1900,12 @@ fn verify_manifest_without_result(project: &Project) -> Result<()> {
 }
 
 fn verify_manifest(project: &Project) -> Result<()> {
-    verify_manifest_without_result(project)?;
-    let result_path = project.reports.join(MACHINE_RESULT_FILE);
+    verify_manifest_at(&project.reports)
+}
+
+pub(crate) fn verify_manifest_at(reports: &Path) -> Result<()> {
+    verify_manifest_without_result_at(reports)?;
+    let result_path = reports.join(MACHINE_RESULT_FILE);
     let result_bytes = fs::read(&result_path)
         .with_context(|| format!("read machine result {}", result_path.display()))?;
     let result: MachineResultEvidence =
@@ -1910,7 +1917,7 @@ fn verify_manifest(project: &Project) -> Result<()> {
         );
     }
     let manifest: ArtifactManifest = serde_json::from_slice(
-        &fs::read(project.reports.join(MANIFEST_FILE)).context("read final artifact manifest")?,
+        &fs::read(reports.join(MANIFEST_FILE)).context("read final artifact manifest")?,
     )
     .context("parse final artifact manifest")?;
     if result.invocation_id != manifest.invocation_id {
@@ -4508,6 +4515,159 @@ mod tests {
         }
         if let Some(path) = std::env::var_os("HG_HTML_QUALITY_PREVIEW_PATHS") {
             std::fs::write(path, serde_json::to_vec_pretty(&retained).unwrap()).unwrap();
+        }
+    }
+    #[test]
+    fn completed_history_preserves_values_and_breaks_incompatible_series() {
+        use serde_json::json;
+        let (workspace, project, first, mut invocation_project, mut current) =
+            complete_invocation_fixture("history-publication");
+        let mut subject = json!({"id":format!("subject-identity/v1:{}", "0".repeat(64)), "identity_version":"subject-identity/v1", "component":"core", "target":"linux", "boundary":"src", "kind":"function/v1", "path":"src/lib.rs", "discriminator":"example", "source_sha256":"a".repeat(64), "metadata":{}});
+        // Canonical subject identity includes the source fingerprint: changed subjects are gaps.
+        subject["id"] =
+            json!(harness_gate::quality::project::subject_id("demo", &subject).unwrap());
+        let subject_id = subject["id"].as_str().unwrap().to_owned();
+        let version = json!({"name":"test", "version":"1"});
+        let mut series = json!({"id":"placeholder", "name":"coverage", "collector":version, "tool":version, "rule":version, "runtime":version, "target":"linux", "source_identity":version, "normalization":version, "metrics":[{"name":"coverage.line","type":"ratio"}]});
+        series["id"] = json!(harness_gate::quality::evidence::series_id(&series).unwrap());
+        let mut samples = Vec::new();
+        let mut keep = vec![first];
+        for index in 0..4 {
+            if index > 0 {
+                let invocation = allocate_invocation(&project).unwrap();
+                write_invocation_metadata(&invocation, &project, "full", false).unwrap();
+                invocation_project.reports = invocation.root.clone();
+                current.invocation_id = invocation.id.clone();
+                current.report_directory = invocation.root.to_string_lossy().into_owned();
+                current.steps[0].invocation_id = Some(invocation.id.clone());
+                std::fs::write(invocation.root.join("logs/unit.log"), "complete\n").unwrap();
+                keep.push(invocation);
+            }
+            let mut sample_series = series.clone();
+            if index == 2 {
+                sample_series["tool"]["version"] = json!("2");
+                sample_series["id"] =
+                    json!(harness_gate::quality::evidence::series_id(&sample_series).unwrap());
+            }
+            let value =
+                json!({"type":"ratio", "covered":index * 2, "total":if index==3 {0} else {10}});
+            let context = json!({"commit":format!("{index:040x}"),"base_commit":"0".repeat(40),"target":"linux","run":current.invocation_id});
+            let rule = json!({"id":"coverage"});
+            let quality_project = json!({"id":"demo","subjects":[subject]});
+            let record = json!({"component":"core","subject":subject,"metric":"coverage.line","head":value,"context":context,"policy":rule,"measurement_series":{"head":sample_series["id"]},"evidence_links":{"head":{"evidence_id":"e1"}}});
+            current.quality = Some(crate::verify::quality::QualityResult {
+                schema: "quality-verification/v1",
+                status: "pass",
+                phase: "complete",
+                error: None,
+                selection: json!({}),
+                inputs: json!({"project":quality_project,"policy":{"rules":[rule]}}),
+                evidence: json!([{"id":"e1","project":"demo","component":"core","collector":sample_series["collector"],"series":sample_series,"subject":subject,"context":context,"metrics":[{"name":"coverage.line","value":value}]}]),
+                baseline: json!({}),
+                project_report: json!({"schema":"harness-project-report/v1","aggregate":{"state":"pass","blockers":[]},"gates":{"g":{"policy":"coverage","subject":subject_id,"state":"pass","reason":"<img src=x> token=history-secret","record":record}}}),
+                project_report_path: None,
+                output: None,
+                formats: Default::default(),
+                evaluation_time: None,
+                participation: json!({}),
+                full_quality_status: "pass",
+                producers: json!({}),
+            });
+            write(&current, &invocation_project).unwrap();
+            verify_manifest(&invocation_project).unwrap();
+            samples.push(json!({"directory":invocation_project.reports.strip_prefix(&project.reports).unwrap().to_string_lossy().replace('\\', "/"),"machine_sha256":super::sha256_file(&invocation_project.reports.join(MACHINE_RESULT_FILE)).unwrap(),"manifest_sha256":super::sha256_file(&invocation_project.reports.join(MANIFEST_FILE)).unwrap()}));
+        }
+        let input = project.reports.join("history-index.json");
+        std::fs::write(
+            &input,
+            serde_json::to_vec(&json!({"schema":"harness-report-history/v1","samples":samples}))
+                .unwrap(),
+        )
+        .unwrap();
+        let output = workspace.root.join("history-display");
+        assert!(crate::report_history::run(
+            &input,
+            &output,
+            "coverage",
+            &subject_id,
+            "coverage.line"
+        )
+        .unwrap());
+        let html = std::fs::read_to_string(output.join("history.html")).unwrap();
+        assert_eq!(html.matches("<circle ").count(), 2);
+        assert!(html.contains("comparison break") && html.contains("zero total"));
+        assert!(html.contains("&quot;covered&quot;:0") && html.contains("&quot;total&quot;:10"));
+        assert!(!html.contains("history-secret") && !html.contains("<script"));
+        let provenance: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(output.join("provenance.json")).unwrap())
+                .unwrap();
+        assert_eq!(provenance["samples"].as_array().unwrap().len(), 4);
+        assert_eq!(
+            provenance["html_sha256"],
+            super::sha256_file(&output.join("history.html")).unwrap()
+        );
+        assert!(crate::report_history::run(
+            &input,
+            &output,
+            "coverage",
+            &subject_id,
+            "coverage.line"
+        )
+        .is_err());
+        // The machine result is not self-hashed by its manifest: the explicit caller pin catches edits.
+        let original_machine = std::fs::read(keep[0].root.join(MACHINE_RESULT_FILE)).unwrap();
+        std::fs::write(keep[0].root.join(MACHINE_RESULT_FILE), b"{}").unwrap();
+        let refused = workspace.root.join("refused-history");
+        assert!(crate::report_history::run(
+            &input,
+            &refused,
+            "coverage",
+            &subject_id,
+            "coverage.line"
+        )
+        .is_err());
+        assert!(!refused.exists());
+        std::fs::write(keep[0].root.join(MACHINE_RESULT_FILE), &original_machine).unwrap();
+        let manifest_path = keep[0].root.join(MANIFEST_FILE);
+        let original_manifest = std::fs::read(&manifest_path).unwrap();
+        std::fs::write(&manifest_path, b"{}").unwrap();
+        assert!(crate::report_history::run(
+            &input,
+            &refused,
+            "coverage",
+            &subject_id,
+            "coverage.line"
+        )
+        .is_err());
+        assert!(!refused.exists());
+        std::fs::write(&manifest_path, original_manifest).unwrap();
+        let original_index = std::fs::read(&input).unwrap();
+        // Even a freshly supplied machine pin cannot override the manifested quality artifact.
+        let mut changed: serde_json::Value = serde_json::from_slice(&original_machine).unwrap();
+        changed["quality"]["project_report"]["gates"]["g"]["state"] = json!("fail");
+        std::fs::write(
+            keep[0].root.join(MACHINE_RESULT_FILE),
+            serde_json::to_vec(&changed).unwrap(),
+        )
+        .unwrap();
+        let mut changed_index: serde_json::Value = serde_json::from_slice(&original_index).unwrap();
+        changed_index["samples"][0]["machine_sha256"] =
+            json!(super::sha256_file(&keep[0].root.join(MACHINE_RESULT_FILE)).unwrap());
+        std::fs::write(&input, serde_json::to_vec(&changed_index).unwrap()).unwrap();
+        let mismatch =
+            crate::report_history::run(&input, &refused, "coverage", &subject_id, "coverage.line")
+                .unwrap_err();
+        assert!(format!("{mismatch:#}").contains("manifested project report"));
+        assert!(!refused.exists());
+        std::fs::write(keep[0].root.join(MACHINE_RESULT_FILE), original_machine).unwrap();
+        std::fs::write(&input, original_index).unwrap();
+        if let Some(path) = std::env::var_os("HG_HISTORY_PREVIEW_PATH") {
+            std::fs::write(
+                path,
+                output.join("history.html").to_string_lossy().as_bytes(),
+            )
+            .unwrap();
+            std::mem::forget(workspace);
         }
     }
 }
