@@ -33,6 +33,8 @@ struct Entry {
     description: String,
     flow: String,
     recipe: Option<String>,
+    #[serde(default)]
+    detect_files: Vec<String>,
 }
 
 fn identifier(value: &str) -> bool {
@@ -82,10 +84,14 @@ fn load(directory: &Path) -> Result<(std::path::PathBuf, Catalog)> {
         .context("resolve external presets directory")?;
     let source = read(&root, "catalog.json").context("read external preset catalog")?;
     let value = harness_gate::quality::parse(&source)?;
+    validate_detection_metadata(&value)?;
     let catalog: Catalog =
         serde_json::from_value(value).context("decode external preset catalog")?;
     ensure!(
-        catalog.schema == "harness-preset-catalog/v1",
+        matches!(
+            catalog.schema.as_str(),
+            "harness-preset-catalog/v1" | "harness-preset-catalog/v2"
+        ),
         "unsupported preset catalog schema"
     );
     ensure!(
@@ -124,6 +130,7 @@ pub fn print_presets(directory: Option<&Path>) -> Result<()> {
 /// Validate every reference against the verified private file inventory.
 pub(crate) fn validate(directory: &Path) -> Result<()> {
     let (root, catalog) = load(directory)?;
+    ensure!(catalog.schema == "harness-preset-catalog/v1", "locked plugin catalogs require harness-preset-catalog/v1; v2 recommendation metadata is supported only by explicitly selected external directories");
     for entry in catalog.presets.values() {
         crate::config::FlowConfig::from_source(&read(&root, &entry.flow)?)?;
         if let Some(recipe) = &entry.recipe {
@@ -171,17 +178,86 @@ pub(super) fn find(name: &str, directory: Option<&Path>) -> Result<Preset> {
     })
 }
 
-/// List only built-in and explicitly selected catalog entries.
-pub(super) fn choices(directory: Option<&Path>) -> Result<Vec<(String, String)>> {
+pub(super) struct Recommendation {
+    pub(super) name: String,
+    pub(super) markers: Vec<String>,
+}
+
+pub(super) struct Menu {
+    pub(super) choices: Vec<(String, String)>,
+    pub(super) recommendation: Option<Recommendation>,
+}
+
+/// Only an explicitly selected external catalog may supply recommendations.
+pub(super) fn choices(directory: Option<&Path>, target: Option<&Path>) -> Result<Menu> {
     let external = directory.map(load).transpose()?;
-    let mut choices = vec![("generic".into(), GENERIC_DESCRIPTION.into())];
+    let mut menu = Menu {
+        choices: vec![("generic".into(), GENERIC_DESCRIPTION.into())],
+        recommendation: None,
+    };
     if let Some((_, catalog)) = external {
-        choices.extend(
+        menu.recommendation = target.and_then(|target| recommend(&catalog, target));
+        menu.choices.extend(
             catalog
                 .presets
                 .into_iter()
                 .map(|(name, entry)| (name, entry.description)),
         );
     }
-    Ok(choices)
+    Ok(menu)
+}
+
+fn recommend(catalog: &Catalog, target: &Path) -> Option<Recommendation> {
+    let mut matches = catalog.presets.iter().filter(|(_, entry)| {
+        !entry.detect_files.is_empty()
+            && entry.detect_files.iter().all(|name| {
+                fs::symlink_metadata(target.join(name))
+                    .is_ok_and(|metadata| metadata.file_type().is_file())
+            })
+    });
+    let (name, entry) = matches.next()?;
+    if matches.next().is_some() {
+        return None;
+    }
+    Some(Recommendation {
+        name: name.clone(),
+        markers: entry.detect_files.clone(),
+    })
+}
+
+fn validate_detection_metadata(value: &serde_json::Value) -> Result<()> {
+    let Some(entries) = value["presets"].as_object() else {
+        return Ok(());
+    };
+    for entry in entries.values() {
+        let Some(markers) = entry.get("detect_files") else {
+            continue;
+        };
+        ensure!(
+            value["schema"] == "harness-preset-catalog/v2",
+            "detect_files requires harness-preset-catalog/v2"
+        );
+        let markers = markers
+            .as_array()
+            .context("detect_files must be a nonempty list of known root marker files")?;
+        ensure!(
+            !markers.is_empty() && markers.len() <= 4,
+            "detect_files must contain 1 to 4 unique known root markers"
+        );
+        let mut unique = std::collections::BTreeSet::new();
+        for marker in markers {
+            let name = marker
+                .as_str()
+                .context("detect_files entries must be strings")?;
+            ensure!(
+                matches!(
+                    name,
+                    "Cargo.toml" | "package.json" | "pyproject.toml" | "tsconfig.json"
+                ),
+                "unsupported project marker: {name:?}"
+            );
+            ensure!(unique.insert(name), "duplicate project marker: {name}");
+        }
+    }
+    Ok(())
 }

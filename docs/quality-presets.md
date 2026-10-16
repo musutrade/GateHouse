@@ -45,6 +45,43 @@ The loader does not download, install or discover packages. Listing without an
 external directory shows only `generic`. Released Core 0.4.8 predates this loader;
 use a Core build containing the migration when following these instructions.
 
+## Opt-in project marker recommendations
+
+An explicitly selected external directory may use `harness-preset-catalog/v2`
+to add optional `detect_files` metadata to a preset. This requires a Core build
+containing this feature; older clients reject v2. Version 1 remains unchanged
+and rejects `detect_files`, even null or empty. Locked plugin manifests and
+catalogs remain v1-only: a signed v1 plugin cannot carry a v2 catalog. This
+extension does not add plugin installation or new trust authority.
+
+```json
+{
+  "schema": "harness-preset-catalog/v2",
+  "presets": {
+    "project-checks": {
+      "description": "Checks selected by the project owner",
+      "flow": "flow.toml",
+      "detect_files": ["Cargo.toml"]
+    }
+  },
+  "packs": {}
+}
+```
+
+When present, `detect_files` must contain one to four unique names from
+`Cargo.toml`, `package.json`, `pyproject.toml`, and `tsconfig.json`. Every listed
+marker must be a regular file directly in the selected project root. Marker
+symlinks and directories do not match. Core does not read marker contents, walk
+subdirectories, execute tools, or infer frameworks from a filename or preset name.
+
+Only a single matching preset is suggested during `init --interactive`.
+Multiple matches, missing markers, and catalogs without detection metadata keep
+manual selection. Type `d` to explicitly select the suggestion, or enter another
+preset number. Empty input, `q`, and EOF still cancel; final confirmation is still
+required. The prompt lists matched markers and does not claim compatibility or
+quality certification. Existing security defaults, policy thresholds, publication
+boundaries and engineering-policy semantics remain unchanged.
+
 ## Reference UX and pack composition
 
 Reference combinations are UX, not core architecture. The generic quality schema,

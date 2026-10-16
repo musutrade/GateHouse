@@ -725,6 +725,11 @@ The two selection modes cannot be combined.
 The menu includes built-in `generic` and only an explicitly selected external
 catalog (`--presets-dir`, `HARNESS_GATE_PRESETS_DIR`, or locked `--plugin NAME`).
 Locked plugins retain their existing verification and explicit selection rules.
+An explicitly selected v2 external catalog can suggest one preset from declared
+root-file markers. Type `d` to accept that suggestion or choose a number; empty
+input still cancels. No framework is inferred and no files are executed. See
+[the catalog recommendation contract](docs/quality-presets.md#opt-in-project-marker-recommendations).
+Locked plugin catalogs remain v1-only.
 Project names default to the target directory. Override that default with
 `init --project-name NAME`, including alongside `--preset NAME`. Identifiers use
 the existing configuration rule: nonempty lowercase ASCII letters, digits, dots,
@@ -737,8 +742,7 @@ shows the final name, which is shared by flow and composed quality configuration
 Quality presets also retain their existing project-ID rule: a generated quality
 identifier must begin with a lowercase letter; incompatible names fail without
 publishing configuration (an empty target directory may remain).
-This interface uses numbered line input, without arrow navigation or project-type
-detection. It does not install plugins, start services or run verify.
+This interface uses numbered line input, without arrow navigation or automatic framework inference. It does not install plugins, start services or run verify.
 Generated security configuration, preset validation and engineering-policy
 semantics are unchanged. Review the generated files and run `config check` next.
 

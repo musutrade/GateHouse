@@ -367,7 +367,7 @@ fn invalid_external_catalogs_fail_before_configuration_publication() {
     let path = source.join("catalog.json");
     let original = fs::read_to_string(&path).unwrap();
     for invalid in [
-        original.replace("harness-preset-catalog/v1", "harness-preset-catalog/v2"),
+        original.replace("harness-preset-catalog/v1", "harness-preset-catalog/v99"),
         original.replace("\"future\"", "\"generic\""),
         original.replace("\"future\"", "\"../escape\""),
         original.replace("\"future\"", "\"\""),
@@ -490,4 +490,113 @@ fn invalid_composed_quality_identifier_does_not_publish_configuration() {
     assert!(!root.join(".harness-gate/flow.toml").exists());
     assert!(!root.join(".harness-gate/quality.toml").exists());
     assert!(!root.join(".harness-gate/secrets.toml").exists());
+}
+
+#[test]
+fn catalog_recommendations_require_v2_unique_all_regular_markers() {
+    let source = TestWorkspace::new("recommendation-catalog");
+    let project = TestWorkspace::new("recommendation-target");
+    let entry = serde_json::json!({"description":"Project-owned checks", "flow":"flow.toml", "detect_files":["Cargo.toml", "package.json"]});
+    custom_catalog(&source, entry);
+    let path = source.join("catalog.json");
+    let mut value: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+    assert!(catalog::choices(Some(&source), Some(&project)).is_err());
+    value["schema"] = serde_json::json!("harness-preset-catalog/v2");
+    fs::write(&path, value.to_string()).unwrap();
+    assert!(catalog::choices(Some(&source), Some(&project))
+        .unwrap()
+        .recommendation
+        .is_none());
+    fs::write(project.join("Cargo.toml"), "not parsed or executed").unwrap();
+    assert!(catalog::choices(Some(&source), Some(&project))
+        .unwrap()
+        .recommendation
+        .is_none());
+    fs::create_dir(project.join("package.json")).unwrap();
+    assert!(catalog::choices(Some(&source), Some(&project))
+        .unwrap()
+        .recommendation
+        .is_none());
+    fs::remove_dir(project.join("package.json")).unwrap();
+    fs::write(project.join("package.json"), "not parsed").unwrap();
+    let menu = catalog::choices(Some(&source), Some(&project)).unwrap();
+    let recommendation = menu.recommendation.unwrap();
+    assert_eq!(recommendation.name, "future");
+    assert_eq!(recommendation.markers, ["Cargo.toml", "package.json"]);
+    assert!(catalog::choices(None, Some(&project))
+        .unwrap()
+        .recommendation
+        .is_none());
+    assert!(
+        catalog::choices(Some(&source), Some(&project.join("missing")))
+            .unwrap()
+            .recommendation
+            .is_none()
+    );
+    value["presets"]["another"] = value["presets"]["future"].clone();
+    fs::write(&path, value.to_string()).unwrap();
+    assert!(catalog::choices(Some(&source), Some(&project))
+        .unwrap()
+        .recommendation
+        .is_none());
+    assert!(!project.join(".harness-gate").exists());
+}
+
+#[test]
+fn detection_metadata_rejects_invalid_or_v1_fields() {
+    let source = TestWorkspace::new("invalid-detection");
+    for schema in ["harness-preset-catalog/v1", "harness-preset-catalog/v2"] {
+        for markers in [
+            serde_json::Value::Null,
+            serde_json::json!([]),
+            serde_json::json!(["Cargo.toml", "Cargo.toml"]),
+            serde_json::json!(["../Cargo.toml"]),
+            serde_json::json!(["unknown.toml"]),
+            serde_json::json!("Cargo.toml"),
+            serde_json::json!([false]),
+            serde_json::json!([
+                "Cargo.toml",
+                "package.json",
+                "pyproject.toml",
+                "tsconfig.json",
+                "Cargo.toml"
+            ]),
+        ] {
+            custom_catalog(
+                &source,
+                serde_json::json!({"description":"Explicit", "flow":"flow.toml", "detect_files":markers}),
+            );
+            let path = source.join("catalog.json");
+            let mut value: serde_json::Value =
+                serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+            value["schema"] = serde_json::json!(schema);
+            fs::write(path, value.to_string()).unwrap();
+            assert!(
+                catalog::choices(Some(&source), Some(&source)).is_err(),
+                "{schema}: {markers}"
+            );
+        }
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn recommendation_does_not_follow_marker_symlinks() {
+    let source = TestWorkspace::new("symlink-detection");
+    let project = TestWorkspace::new("symlink-project");
+    custom_catalog(
+        &source,
+        serde_json::json!({"description":"Explicit", "flow":"flow.toml", "detect_files":["Cargo.toml"]}),
+    );
+    let path = source.join("catalog.json");
+    let value = fs::read_to_string(&path)
+        .unwrap()
+        .replace("harness-preset-catalog/v1", "harness-preset-catalog/v2");
+    fs::write(path, value).unwrap();
+    std::os::unix::fs::symlink(source.join("flow.toml"), project.join("Cargo.toml")).unwrap();
+    assert!(catalog::choices(Some(&source), Some(&project))
+        .unwrap()
+        .recommendation
+        .is_none());
 }

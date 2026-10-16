@@ -454,3 +454,30 @@ fn malformed_keys_limits_catalogs_and_operator_selection_are_diagnosed() {
         "HGPLUGIN-LOCK",
     );
 }
+
+#[test]
+fn signed_v1_plugin_cannot_smuggle_a_v2_catalog() {
+    let mut fixture = Fixture::new();
+    let path = fixture
+        .temp
+        .path()
+        .join("store/unknown-ecosystem/1.2.3/presets/catalog.json");
+    let catalog = fs::read_to_string(&path)
+        .unwrap()
+        .replace("harness-preset-catalog/v1", "harness-preset-catalog/v2");
+    write(&path, catalog.as_bytes());
+    fixture.manifest["files"]["presets/catalog.json"] = json!(hash(catalog.as_bytes()));
+    fixture.seal();
+    failure(&fixture.check(), "HGPLUGIN-CATALOG");
+    failure(
+        &fixture.run(&[
+            "init",
+            "--plugin",
+            "unknown-ecosystem",
+            "--preset",
+            "strange-ecosystem",
+        ]),
+        "HGPLUGIN-CATALOG",
+    );
+    assert!(!fixture.root().join(".harness-gate/flow.toml").exists());
+}
