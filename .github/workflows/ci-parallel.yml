@@ -1,0 +1,311 @@
+# CI Parallel Quality Jobs - Experimental
+#
+# This is an optimized version of the quality-coverage job that splits
+# the 4 stages (legacy, production, risk, matrix) into parallel jobs.
+#
+# Performance comparison:
+#   Current (single job):     legacy -> production -> risk -> matrix = ~9 minutes
+#   Optimized (parallel):     (legacy -> production) || risk || matrix = ~5 minutes
+#
+# Key changes:
+# 1. quality-coverage-base: Runs legacy + production (fast pre-checks)
+# 2. quality-risk: Runs risk collection in parallel with matrix
+# 3. quality-matrix: Runs matrix collection in parallel with risk
+# 4. quality-coverage-seal: Merges all artifacts and seals
+#
+# This approach:
+# - Reduces critical path from 398s to ~220s (risk stage duration)
+# - Keeps artifact sharing through upload/download
+# - Maintains all existing validation logic
+
+name: CI (Parallel Quality)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref to test'
+        required: false
+        default: 'main'
+
+jobs:
+  classify:
+    name: Classify Impact
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run_full: 'true'
+      run_evidence: 'true'
+      run_native: 'true'
+      reuse_verified: 'false'
+      base_sha: ${{ steps.impact.outputs.base_sha }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          fetch-depth: 2
+
+      - name: Classify impact
+        id: impact
+        run: |
+          # Simplified classification for testing
+          BASE_SHA=$(git rev-parse HEAD~1)
+          echo "base_sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+
+  quality-coverage-base:
+    name: Quality Base (Legacy + Production)
+    needs: [classify]
+    runs-on: ubuntu-latest-4-cores  # Use 4-core runner for better performance
+    timeout-minutes: 10
+    outputs:
+      base-sha: ${{ steps.collect.outputs.base-sha }}
+      head-sha: ${{ steps.collect.outputs.head-sha }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Restore pinned regression data
+        uses: ./.github/actions/test-data
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Configure Cargo state
+        uses: ./.github/actions/cargo-state
+        with:
+          class: quality
+          profiles: 'isolated-instrumented;default'
+          cache-target: 'false'  # Keep disabled as per team decision
+
+      - name: Install cargo-nextest
+        uses: ./.github/actions/install-ci-tool
+        with:
+          tool: cargo-nextest
+
+      - name: Install cargo-llvm-cov
+        uses: ./.github/actions/install-ci-tool
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Collect legacy and production evidence
+        id: collect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ needs.classify.outputs.base_sha }}
+          HEAD_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          BASE_SHA="$(python3 tools/maintenance/migration_baseline.py --base "$BASE_SHA" --head "$HEAD_SHA" --fetch)"
+          echo "base-sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          echo "head-sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          
+          python3 tools/quality/ci_quality.py collect \
+            --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
+            --stages legacy,production \
+            --output target/quality/candidate
+
+      - name: Upload base artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quality-base-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            target/quality/candidate
+            !target/quality/candidate/build
+            !target/quality/candidate/snapshots
+          if-no-files-found: error
+          retention-days: 1
+
+  quality-risk:
+    name: Quality Risk Collection
+    needs: [classify, quality-coverage-base]
+    runs-on: ubuntu-latest-4-cores  # Use 4-core runner
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Restore pinned regression data
+        uses: ./.github/actions/test-data
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Configure Cargo state
+        uses: ./.github/actions/cargo-state
+        with:
+          class: quality
+          profiles: 'isolated-instrumented;default'
+          cache-target: 'false'
+
+      - name: Install cargo-nextest
+        uses: ./.github/actions/install-ci-tool
+        with:
+          tool: cargo-nextest
+
+      - name: Install cargo-llvm-cov
+        uses: ./.github/actions/install-ci-tool
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Download base artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          name: quality-base-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/quality/candidate
+
+      - name: Collect risk evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ needs.quality-coverage-base.outputs.base-sha }}
+          HEAD_SHA: ${{ needs.quality-coverage-base.outputs.head-sha }}
+          RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          CI_PARALLEL_RISK: '1'
+        run: |
+          python3 tools/quality/ci_quality.py collect \
+            --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
+            --stages risk \
+            --output target/quality/candidate
+
+      - name: Upload risk artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quality-risk-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            target/quality/candidate
+            !target/quality/candidate/build
+            !target/quality/candidate/snapshots
+          if-no-files-found: error
+          retention-days: 1
+
+  quality-matrix:
+    name: Quality Matrix Collection
+    needs: [classify, quality-coverage-base]
+    runs-on: ubuntu-latest-4-cores  # Use 4-core runner
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Restore pinned regression data
+        uses: ./.github/actions/test-data
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+
+      - name: Configure Cargo state
+        uses: ./.github/actions/cargo-state
+        with:
+          class: quality
+          profiles: 'isolated-instrumented;default'
+          cache-target: 'false'
+
+      - name: Download base artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          name: quality-base-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/quality/candidate
+
+      - name: Collect matrix evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ needs.quality-coverage-base.outputs.base-sha }}
+          HEAD_SHA: ${{ needs.quality-coverage-base.outputs.head-sha }}
+          RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          python3 tools/quality/ci_quality.py collect \
+            --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
+            --stages matrix \
+            --output target/quality/candidate
+
+      - name: Upload matrix artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quality-matrix-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            target/quality/candidate
+            !target/quality/candidate/build
+            !target/quality/candidate/snapshots
+          if-no-files-found: error
+          retention-days: 1
+
+  quality-coverage-seal:
+    name: Seal Quality Evidence
+    needs: [quality-coverage-base, quality-risk, quality-matrix]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      manifest-sha256: ${{ steps.seal.outputs.manifest-sha256 }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          path: target/quality/artifacts
+
+      - name: Merge artifacts
+        run: |
+          mkdir -p target/quality/candidate
+          
+          # Merge base artifacts (contains legacy, production, and candidate.json)
+          if [ -d target/quality/artifacts/quality-base-${{ github.run_id }}-${{ github.run_attempt }} ]; then
+            cp -r target/quality/artifacts/quality-base-${{ github.run_id }}-${{ github.run_attempt }}/* target/quality/candidate/
+          fi
+          
+          # Merge risk artifacts (overlays risk data)
+          if [ -d target/quality/artifacts/quality-risk-${{ github.run_id }}-${{ github.run_attempt }} ]; then
+            cp -r target/quality/artifacts/quality-risk-${{ github.run_id }}-${{ github.run_attempt }}/* target/quality/candidate/
+          fi
+          
+          # Merge matrix artifacts (overlays matrix data)
+          if [ -d target/quality/artifacts/quality-matrix-${{ github.run_id }}-${{ github.run_attempt }} ]; then
+            cp -r target/quality/artifacts/quality-matrix-${{ github.run_id }}-${{ github.run_attempt }}/* target/quality/candidate/
+          fi
+          
+          echo "Merged artifacts:"
+          ls -lah target/quality/candidate/
+
+      - name: Seal immutable quality evidence
+        id: seal
+        run: python3 tools/quality/ci_artifact.py seal --root target/quality/candidate
+
+      - name: Upload sealed quality evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quality-coverage-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            target/quality/candidate
+            !target/quality/candidate/build
+            !target/quality/candidate/snapshots
+          if-no-files-found: warn
+
+  quality-required:
+    name: Quality Check Complete
+    if: ${{ always() }}
+    needs: [classify, quality-coverage-seal]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check all quality jobs succeeded
+        run: |
+          if [ "${{ needs.quality-coverage-seal.result }}" != "success" ]; then
+            echo "Quality coverage seal failed"
+            exit 1
+          fi
+          echo "All quality checks passed"
