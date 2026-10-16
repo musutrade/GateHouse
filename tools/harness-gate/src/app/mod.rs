@@ -50,7 +50,7 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             preset,
             force,
             plugin,
-        } => run_init(&cli, preset, *force, plugin.as_deref(), *interactive),
+        } => run_init_dispatch(&cli, preset, *force, plugin.as_deref(), *interactive),
         Commands::Presets => run_presets(cli.presets_dir.clone()),
         Commands::Adapter { action } => run_adapter(action, cli.replay_state_dir.as_deref()),
         Commands::Compat {
@@ -192,25 +192,12 @@ fn run_plugin_check(
     Ok(report["valid"] == true)
 }
 
-fn run_init(
-    cli: &Cli,
-    preset: &str,
-    force: bool,
-    plugin: Option<&str>,
-    interactive: bool,
-) -> Result<bool, CliError> {
+fn run_init(cli: &Cli, preset: &str, force: bool, plugin: Option<&str>) -> Result<bool, CliError> {
     let root = standalone_root(cli)?;
     let prepared = crate::plugins::check(&root, &cli.plugins)?;
     if let Some(name) = plugin {
         let prepared = prepared.as_ref().context("HGPLUGIN-LOCK: init --plugin requires .harness-gate/plugins.lock.json; explicitly prepare and lock the product first")?;
         let catalog = prepared.catalogs.get(name).context("HGPLUGIN-SELECTION: selected plugin is absent from lock; review and explicitly add the exact pin")?;
-        if interactive {
-            let selected = crate::preset::interactive(&root, force, Some(catalog))?;
-            return match selected {
-                Some(name) => run_init(cli, &name, force, plugin, false),
-                None => Ok(false),
-            };
-        }
         crate::preset::init_from(&root, preset, force, Some(catalog))?;
         return Ok(true);
     }
@@ -224,25 +211,61 @@ fn run_init(
         .presets_dir
         .clone()
         .or_else(|| std::env::var_os("HARNESS_GATE_PRESETS_DIR").map(std::path::PathBuf::from));
-    if interactive {
-        if prepared.is_some() && directory.is_some() {
-            return Err(anyhow::anyhow!(
-                "HGPLUGIN-SELECTION: select a locked catalog with init --plugin NAME"
-            )
-            .into());
-        }
-        let selected = crate::preset::interactive(&root, force, directory.as_deref())?;
-        return match selected {
-            Some(name) => run_init(cli, &name, force, plugin, false),
-            None => Ok(false),
-        };
-    }
     if let Some(directory) = directory {
         crate::preset::init_from(&root, preset, force, Some(&directory))?;
     } else {
         crate::preset::init(&root, preset, force)?;
     }
     Ok(true)
+}
+
+fn run_init_dispatch(
+    cli: &Cli,
+    preset: &str,
+    force: bool,
+    plugin: Option<&str>,
+    interactive: bool,
+) -> Result<bool, CliError> {
+    if interactive {
+        run_init_interactive(cli, force, plugin)
+    } else {
+        run_init(cli, preset, force, plugin)
+    }
+}
+
+/// Interactive selection keeps `run_init`'s execution path unchanged after a
+/// preset is chosen; decomposition keeps both sides of the added mode simple.
+fn run_init_interactive(cli: &Cli, force: bool, plugin: Option<&str>) -> Result<bool, CliError> {
+    let root = standalone_root(cli)?;
+    let prepared = crate::plugins::check(&root, &cli.plugins)?;
+    let catalog = match plugin {
+        Some(name) => {
+            let prepared = prepared.as_ref().context("HGPLUGIN-LOCK: init --plugin requires .harness-gate/plugins.lock.json; explicitly prepare and lock the product first")?;
+            Some(
+                prepared
+                    .catalogs
+                    .get(name)
+                    .context("HGPLUGIN-SELECTION: selected plugin is absent from lock; review and explicitly add the exact pin")?
+                    .clone(),
+            )
+        }
+        None => {
+            let directory = cli.presets_dir.clone().or_else(|| {
+                std::env::var_os("HARNESS_GATE_PRESETS_DIR").map(std::path::PathBuf::from)
+            });
+            if prepared.is_some() && directory.is_some() {
+                return Err(anyhow::anyhow!(
+                    "HGPLUGIN-SELECTION: select a locked catalog with init --plugin NAME"
+                )
+                .into());
+            }
+            directory
+        }
+    };
+    match crate::preset::interactive(&root, force, catalog.as_deref())? {
+        Some(name) => run_init(cli, &name, force, plugin),
+        None => Ok(false),
+    }
 }
 
 fn standalone_root(cli: &Cli) -> Result<std::path::PathBuf, CliError> {
