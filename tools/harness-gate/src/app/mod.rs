@@ -28,19 +28,8 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
         }
         .map_err(Into::into),
         Commands::Findings { action } => crate::findings::run(action).map_err(Into::into),
-        Commands::CacheClear { json } => {
-            let path = cli
-                .step_cache_dir
-                .as_deref()
-                .context("cache-clear requires --step-cache-dir")?;
-            let report = crate::verify::cache::clear(path)?;
-            if *json {
-                println!("{}", report);
-            } else {
-                println!("Step cache: {}", report);
-            }
-            Ok(report["retained"] == 0)
-        }
+        Commands::CacheClear { json } => run_cache_clear(&cli, *json),
+        Commands::Hooks { action } => run_hooks(&cli, *action),
         Commands::Plugins { lock, json } => run_plugin_check(lock, *json, &cli.plugins),
         Commands::Quality { action } => {
             quality::run(action, cli.replay_state_dir.as_deref()).map_err(Into::into)
@@ -155,6 +144,30 @@ fn run_suggestions(cli: &Cli, format: &ConfigFormat, apply: bool) -> Result<bool
         apply,
     )
     .map_err(Into::into)
+}
+
+fn run_cache_clear(cli: &Cli, json: bool) -> Result<bool, CliError> {
+    let path = cli
+        .step_cache_dir
+        .as_deref()
+        .context("cache-clear requires --step-cache-dir")?;
+    let report = crate::verify::cache::clear(path)?;
+    if json {
+        println!("{}", report);
+    } else {
+        println!("Step cache: {}", report);
+    }
+    Ok(report["retained"] == 0)
+}
+
+fn run_hooks(cli: &Cli, action: crate::hooks::HookAction) -> Result<bool, CliError> {
+    if cli.config.is_some() {
+        return Err(anyhow::anyhow!(
+            "hooks use the default project configuration; --config is unsupported"
+        )
+        .into());
+    }
+    crate::hooks::run(&standalone_root(cli)?, action).map_err(Into::into)
 }
 
 fn run_presets(directory: Option<std::path::PathBuf>) -> Result<bool, CliError> {

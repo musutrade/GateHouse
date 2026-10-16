@@ -159,6 +159,11 @@ pub(crate) enum Commands {
     },
     /// Run the staged, fast verification profile used by pre-commit.
     Hook,
+    /// Explicitly manage thin repository hooks without running verification.
+    Hooks {
+        #[command(subcommand)]
+        action: crate::hooks::HookAction,
+    },
     /// Extract one trace's error context from JSON Lines logs.
     ParseLogs {
         #[arg(short, long)]

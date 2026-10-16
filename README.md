@@ -793,3 +793,38 @@ size) are displayed, including zero and false; values are not converted or score
 Missing values are marked not available, and absent quality never implies a pass.
 Raw records, exception error arrays and evidence objects are not displayed.
 History, trends and additional quality charts are outside this template.
+
+### Explicit repository hooks
+
+Run `harness-gate hooks install` from an initialized Git project to install
+`pre-commit` (`harness-gate hook`) and `pre-push` (`harness-gate verify --all`).
+These are POSIX shell wrappers for Git, including Git for Windows. The executable
+must be available on Git's `PATH`. They use the current worktree's default config;
+custom `--config` is not supported. Installation checks that the configured hook
+profile has participating steps; it never runs hooks, gates, downloads or services.
+
+`harness-gate hooks status` is read-only. Exit 0 means both exact current scripts
+are present and executable on Unix; absent, partial, modified, foreign, unsafe or
+busy states return 1. Configuration readiness is reported separately. Installation
+is idempotent and never overwrites foreign or edited scripts. An exact script
+without Unix executable permissions must have its permissions restored manually.
+`harness-gate hooks uninstall` removes only exact owned scripts; already absent
+scripts are successful. No force, third-party chaining or global install is provided.
+
+Only Git's default common-directory `hooks` path is supported, including linked
+worktrees (which share hooks). A different `core.hooksPath` is refused; keep your
+existing hook manager. The default directory must already exist as a real,
+non-symlink directory. Targets must be absent or regular non-symlink files.
+A marker alone does not prove ownership: modified or older-version script contents
+are retained for manual review. Neither init nor verify installs these hooks.
+
+Mutations use an exclusive `.harness-gate-hooks.lock` and no-overwrite publication.
+All targets are inspected before changes. Failure rolls back only files created
+by that operation whose identity and exact contents still match; changed files
+are retained and reported. This is not a cross-file atomic transaction. Crashes
+can leave a partial installation or lock: inspect `status`, confirm no lifecycle
+command is running, then explicitly remove a stale lock before retrying. The lock
+coordinates this tool only; do not edit hooks concurrently. Content/identity
+rechecks are not atomic conditional deletion against external editors (tracked
+separately). Windows uses conservative file timestamps and size for identity;
+missing identity metadata is refused. Engineering-policy semantics are unchanged.
