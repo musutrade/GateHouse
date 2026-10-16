@@ -56,7 +56,7 @@
         "classify"
       ],
       "outcome": "Full locked native macOS and Windows nextest suites with --no-fail-fast; both PR-required.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.reuse_verified != 'true' }}"
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_native != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "security-audit": {
       "name": "Security Audit",
@@ -166,7 +166,7 @@
         "classify"
       ],
       "outcome": "Locked native macOS and Windows release builds.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}"
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_native != 'false' && github.event_name != 'pull_request' }}"
     },
     "quality-coverage": {
       "name": "Quality Coverage and Critical Paths",
@@ -188,7 +188,7 @@
         "classify"
       ],
       "outcome": "Fresh legacy coverage, production coverage, base/head exact risk and isolated critical-path evidence; all four stages required; always retain available candidate evidence.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.reuse_verified != 'true' }}"
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "quality-generic-shadow": {
       "name": "Generic Quality Shadow",
@@ -208,7 +208,7 @@
         "quality-coverage"
       ],
       "outcome": "Advisory projection of retained candidate with identity/hash validation; no aggregate dependency or release authority.",
-      "condition": "${{ always() && needs.classify.outputs.run_full == 'true' && needs.classify.outputs.reuse_verified != 'true' }}"
+      "condition": "${{ always() && needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "quality-contracts": {
       "name": "Quality CLI Contracts",
@@ -252,7 +252,7 @@
         "classify"
       ],
       "outcome": "Native macOS/Windows structured CLI contracts.",
-      "condition": "${{ needs.classify.outputs.run_full == 'true' && github.event_name == 'push' }}"
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_native != 'false' && github.event_name != 'pull_request' }}"
     },
     "docs-consistency": {
       "name": "Documentation Consistency",
@@ -348,7 +348,7 @@
         "release-contracts",
         "quality-scripts"
       ],
-      "outcome": "Always evaluate event-applicable needs; only exact success passes. Stable ruleset check name; no collection or product compilation.",
+      "outcome": "Evaluate all dependencies; explicit impact deferral or verified inheritance may skip only selected jobs. Missing, failed or cancelled dependencies block.",
       "condition": "${{ always() }}"
     },
     "classify": {
@@ -371,5 +371,10 @@
   },
   "observed_pre_change_aggregate_gap": "test-cross-platform ran on both events but was mistakenly in ci_quality.PUSH_ONLY. GH-164 enforces the already specified PR requirement; no scheduling change.",
   "cadence_amendment": "docs/engineering-policy.md#ci-cadence-amendment",
-  "inheritance_amendment": "docs/engineering-policy.md#equivalent-main-push-check-inheritance"
+  "inheritance_amendment": "docs/engineering-policy.md#equivalent-main-push-check-inheritance",
+  "impact_amendment": "docs/engineering-policy.md#impact-routed-pr-and-main-checks",
+  "full_validation_events": [
+    "schedule",
+    "workflow_dispatch"
+  ]
 }

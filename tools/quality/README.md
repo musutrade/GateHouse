@@ -367,3 +367,13 @@ reuse or full execution. Missing or mismatched proof runs all checks normally.
 PR checks always retain their normal routing. Producer changes, including first
 deployment, cannot inherit results. The aggregate accepts only these explicitly
 authorized skips; all failures and missing dependencies still block.
+
+## Impact routing
+
+Ordinary Rust source/test edits defer full metrics to daily CI; Linux full tests
+and lightweight gates remain required. Runtime paths, integration tests and
+platform-specific diff markers retain native validation. Unknown paths and quality,
+build or workflow inputs run fully. CI also supports manual full dispatch.
+See the [impact routing policy](../../docs/engineering-policy.md#impact-routed-pr-and-main-checks)
+for the accepted delayed-detection tradeoff and certified-main baseline lineage.
+Skipped collection creates no candidate and is not a fresh measurement.

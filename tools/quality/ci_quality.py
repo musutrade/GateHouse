@@ -159,16 +159,86 @@ def classify(base: str, head: str) -> dict:
     return {'docs_only': docs_only, 'run_full': not docs_only, 'files': len(paths)}
 
 
-def aggregate(event: str, needs: dict, full: bool = True, reuse: bool = False) -> list[str]:
+# Known product/test changes defer full metrics to the daily run. Everything
+# outside this allowlist, including measurement bindings/configuration, stays full.
+ORDINARY_PREFIXES = ('tools/harness-gate/src/', 'tools/harness-gate/tests/')
+NATIVE_PREFIXES = tuple('tools/harness-gate/src/' + name for name in
+                        ('process/', 'service/', 'utils/', 'scope/', 'project/',
+                         'secrets/', 'app/', 'verify/', 'ui.rs', 'main.rs', 'lib.rs'))
+
+
+# Last full main validation before impact routing; later routed pushes must not
+# advance the periodic lineage merely because their own short delta was checked.
+PERIODIC_BOOTSTRAP = '444b378e15497d852689d12721b40dab0e7fe0cd'
+
+
+def certified_base(head: str) -> str:
+    """Use an actually successful full main collection, never yesterday's HEAD."""
+    repo = os.environ.get('GITHUB_REPOSITORY', '')
+    require(bool(re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo)), 'missing repository')
+    def api(path):
+        return json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}{path}'],
+                                                 text=True, timeout=30))
+    runs = api('/actions/workflows/ci.yml/runs?branch=main&status=success&per_page=100')['workflow_runs']
+    for run in runs:
+        sha = run['head_sha']
+        if run['event'] not in ('schedule', 'workflow_dispatch') and not (
+                run['event'] == 'push' and sha == PERIODIC_BOOTSTRAP):
+            continue
+        if not re.fullmatch('[0-9a-f]{40}', sha):
+            continue
+        if subprocess.run(['git', 'merge-base', '--is-ancestor', sha, head], cwd=ROOT,
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
+            continue
+        jobs = api(f"/actions/runs/{run['id']}/attempts/{run['run_attempt']}/jobs?per_page=100")['jobs']
+        measured = [job for job in jobs if job['name'] == 'Quality Coverage and Critical Paths']
+        if len(measured) == 1 and measured[0]['conclusion'] == 'success':
+            return sha
+    raise ValueError('no certified main collection in recent runs; restore lineage before collecting')
+
+
+def impact(base: str, head: str, event: str) -> dict:
+    if event not in ('push', 'pull_request'):
+        return {'run_evidence': True, 'run_native': True}
+    try:
+        paths = changed_paths(base, head) if base and head and set(base) != {'0'} else []
+    except (OSError, subprocess.SubprocessError):
+        paths = []
+    if not paths:
+        return {'run_evidence': True, 'run_native': True}
+    ordinary = all(is_pure_document(p) or
+                   (p.startswith(ORDINARY_PREFIXES) and p.endswith('.rs')) for p in paths)
+    native = not ordinary or any(p.startswith(NATIVE_PREFIXES) or
+                                p.startswith('tools/harness-gate/tests/') for p in paths)
+    if ordinary and not native:
+        try:
+            diff = subprocess.check_output(['git', 'diff', '--no-ext-diff', '--unified=0',
+                                            base, head, '--', *ORDINARY_PREFIXES],
+                                           cwd=ROOT, text=True, stderr=subprocess.PIPE)
+            native = bool(re.search(r'windows|unix|target_os|target_family|std::os|std::process|\bunsafe\b|\bextern\b', diff))
+        except (OSError, subprocess.SubprocessError):
+            native = True
+    return {'run_evidence': not ordinary, 'run_native': native}
+
+
+def aggregate(event: str, needs: dict, full: bool = True, reuse: bool = False,
+              evidence: bool = True, native: bool = True) -> list[str]:
     """Evaluate child outcomes only; never collect evidence or launch tools here."""
-    require(event in ('push', 'pull_request'), 'unsupported CI event')
+    require(event in ('push', 'pull_request', 'schedule', 'workflow_dispatch'), 'unsupported CI event')
+    require(event in ('push', 'pull_request') or (full and evidence and native and not reuse),
+            'periodic/manual runs require all gates')
     require(isinstance(needs, dict), 'CI needs must be an object')
     require(not reuse or (event == 'push' and full), 'reuse requires a full push')
-    required = COMMON + (PUSH_ONLY if event == 'push' else ())
+    required = COMMON + (PUSH_ONLY if event != 'pull_request' else ())
+    deferred = set()
+    if not evidence:
+        deferred.add('quality-coverage')
+    if not native:
+        deferred.update(('test-cross-platform', *PUSH_ONLY))
     if full:
         return [name for name in required
                 if not isinstance(needs.get(name), dict) or needs[name].get('result') not in
-                (('success', 'skipped') if reuse and name in REUSABLE else ('success',))]
+                (('success', 'skipped') if (reuse and name in REUSABLE) or name in deferred else ('success',))]
     failures = []
     for name in required:
         entry = needs.get(name)
@@ -474,7 +544,7 @@ class Collector:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('aggregate', 'classify', 'collect', 'verify'))
+    parser.add_argument('operation', choices=('aggregate', 'classify', 'collect', 'verify', 'certified-base'))
     parser.add_argument('--event', default=os.environ.get('EVENT_NAME'))
     parser.add_argument('--needs', default=os.environ.get('NEEDS_JSON'))
     parser.add_argument('--base-sha')
@@ -484,21 +554,33 @@ def main():
     parser.add_argument('--github-output', type=Path)
     args = parser.parse_args()
     try:
-        if args.operation == 'aggregate':
+        if args.operation == 'certified-base':
+            require(bool(re.fullmatch('[0-9a-f]{40}', args.head_sha or '')), 'full head SHA required')
+            print(certified_base(args.head_sha))
+        elif args.operation == 'aggregate':
             full = os.environ.get('RUN_FULL', 'true').strip().lower() != 'false'
             reuse_value = os.environ.get('REUSE_VERIFIED', 'false')
             require(reuse_value in ('true', 'false'), 'invalid reuse decision')
+            decisions = {key: os.environ.get(key, 'true') for key in ('RUN_EVIDENCE', 'RUN_NATIVE')}
+            require(all(value in ('true', 'false') for value in decisions.values()), 'invalid impact decision')
             failures = aggregate(args.event, json.loads(args.needs or '{}'), full=full,
-                                 reuse=reuse_value == 'true')
+                                 reuse=reuse_value == 'true', evidence=decisions['RUN_EVIDENCE'] == 'true',
+                                 native=decisions['RUN_NATIVE'] == 'true')
             require(not failures, f'required jobs did not succeed: {failures}')
         elif args.operation == 'classify':
             result = classify(args.base_sha or '', args.head_sha or '')
+            if args.event in ('schedule', 'workflow_dispatch'):
+                result.update(docs_only=False, run_full=True)
+            result.update(impact(args.base_sha or '', args.head_sha or '', args.event))
             print('classify: ' + json.dumps(result, sort_keys=True))
             if args.github_output:
                 args.github_output.write_text(
+                    f"base_sha={args.base_sha}\n"
                     f"run_full={'true' if result['run_full'] else 'false'}\n"
                     f"docs_only={'true' if result['docs_only'] else 'false'}\n"
-                    f"files={result['files']}\n")
+                    f"files={result['files']}\n"
+                    f"run_evidence={str(result['run_evidence']).lower()}\n"
+                    f"run_native={str(result['run_native']).lower()}\n")
         else:
             for commit in (args.base_sha, args.head_sha):
                 require(bool(re.fullmatch('[0-9a-f]{40}', commit or '')), 'full base/head SHAs required')
