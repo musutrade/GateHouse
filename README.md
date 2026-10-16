@@ -751,3 +751,29 @@ configuration and prerequisites, run `harness-gate verify --all` yourself.
 Initialization only prints these suggestions; it does not run checks, install
 hooks, download plugins or claim verification passed. Quality opt-in and signed
 workflow prerequisites remain unchanged, as do engineering-policy semantics.
+
+### Optional offline verification HTML
+
+Copy [`tools/harness-gate/templates/verification.html`](tools/harness-gate/templates/verification.html)
+from this source repository to `templates/verification.html` in your project, then
+add this to its `.harness-gate/flow.toml`:
+
+```toml
+[report_templates]
+root = "templates"
+template = "templates/verification.html"
+```
+
+The template root and selected file must remain inside the project. The existing
+verification publisher emits `test_result.html` alongside the other invocation
+artifacts and includes it in the publication manifest. Open that file locally;
+no server, external assets or network access is needed. Search and the reported
+status selector filter executed and skipped rows; Reset restores all rows.
+Without JavaScript, every row remains visible and browser Find still works.
+
+This optional view displays existing report statuses, profile and invocation
+metadata. Filtering does not change verification or quality decisions, and
+skipped does not mean passed. Consult the machine report and manifest for evidence
+completeness. The view includes step details, not raw logs or arbitrary evidence
+objects. Existing publication redaction and engineering-policy semantics are
+unchanged. History, trends and additional quality charts are outside this template.

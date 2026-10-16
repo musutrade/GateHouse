@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verification report — {{ report.status }}</title>
+<style>
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; line-height: 1.5; }
+body { margin: 0 auto; max-width: 76rem; padding: clamp(.75rem, 3vw, 2rem); }
+h1, h2 { line-height: 1.2; }
+.metadata { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .3rem 1rem; }
+dt { font-weight: 600; } dd { margin: 0; overflow-wrap: anywhere; }
+.controls { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; margin-block: 1.5rem; }
+label { display: grid; grid-template-columns: minmax(0, 1fr); gap: .3rem; min-width: 0; max-width: 100%; }
+label:first-child { flex: 1 1 20rem; max-width: 24rem; }
+input, select, button { font: inherit; padding: .5rem; min-height: 2.75rem; max-width: 100%; box-sizing: border-box; }
+input { width: 100%; min-width: 0; } button { cursor: pointer; }
+:focus-visible { outline: 3px solid #2684ff; outline-offset: 3px; }
+.table-region { overflow-x: auto; margin-bottom: 1.5rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; min-width: 36rem; }
+caption { text-align: left; padding-block: .5rem; }
+th, td { text-align: left; vertical-align: top; padding: .65rem; border-bottom: 1px solid #888; overflow-wrap: anywhere; }
+th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .duration { width: 14%; }
+.detail { white-space: pre-wrap; } .id { display: block; font-size: .9em; }
+[hidden] { display: none !important; }
+.note { max-width: 65ch; }
+</style>
+</head>
+<body>
+<header>
+<h1>Verification report</h1>
+<dl class="metadata">
+<dt>Report status</dt><dd>{{ report.status }}</dd>
+<dt>Profile</dt><dd>{{ report.profile }}</dd>
+<dt>Invocation</dt><dd>{{ report.invocation_id }}</dd>
+<dt>Timestamp</dt><dd>{{ report.timestamp }}</dd>
+</dl>
+<p class="note">Statuses are supplied by the report. Filtering changes only the rows shown, not the verification decision. Use the published machine report and manifest to inspect evidence completeness.</p>
+</header>
+<div class="controls" id="controls" hidden>
+<label for="search">Search labels, identifiers and details<input id="search" type="search" autocomplete="off"></label>
+<label for="status">Reported row status<select id="status"><option value="">All statuses</option></select></label>
+<button id="reset" type="button">Reset filters</button>
+</div>
+<p id="count" role="status" aria-live="polite">All report rows are shown.</p>
+<noscript><p>JavaScript is unavailable. All rows remain visible; use your browser’s Find command to search.</p></noscript>
+<section aria-labelledby="executed-heading">
+<h2 id="executed-heading">Executed steps</h2>
+<div class="table-region" tabindex="0" role="region" aria-label="Executed steps table; scroll horizontally if needed">
+<table><caption>Reported execution results</caption><thead><tr><th class="identity" scope="col">Step</th><th class="state" scope="col">Status</th><th class="duration" scope="col">Duration (ms)</th><th scope="col">Details</th></tr></thead>
+<tbody>
+{% for step in report.steps %}
+<tr data-row data-status="{{ step.status }}"><th scope="row">{{ step.label }}<span class="id">{{ step.step_id | default(value="") }}</span></th><td>{{ step.status }}</td><td>{{ step.duration_ms }}</td><td class="detail">{% if step.failure_code %}{{ step.failure_code }}: {% endif %}{{ step.detail | default(value="") }}</td></tr>
+{% else %}<tr><td colspan="4">No executed steps were reported.</td></tr>{% endfor %}
+</tbody></table></div>
+</section>
+<section aria-labelledby="skipped-heading">
+<h2 id="skipped-heading">Skipped steps</h2>
+<div class="table-region" tabindex="0" role="region" aria-label="Skipped steps table; scroll horizontally if needed">
+<table><caption>Not executed; skipped does not mean passed</caption><thead><tr><th class="identity" scope="col">Step</th><th class="state" scope="col">Status</th><th scope="col">Reason</th></tr></thead>
+<tbody>
+{% for step in report.skipped_steps %}
+<tr data-row data-status="{{ step.status }}"><th scope="row">{{ step.label }}<span class="id">{{ step.id }}</span></th><td>{{ step.status }}</td><td class="detail">{{ step.reason }}</td></tr>
+{% else %}<tr><td colspan="3">No skipped steps were reported.</td></tr>{% endfor %}
+</tbody></table></div>
+</section>
+<script>
+(() => {
+  'use strict';
+  const search = document.getElementById('search');
+  const status = document.getElementById('status');
+  const count = document.getElementById('count');
+  const rows = Array.from(document.querySelectorAll('[data-row]'));
+  const entries = rows.map(row => ({ row, text: row.textContent.toLocaleLowerCase(), status: row.dataset.status }));
+  Array.from(new Set(entries.map(entry => entry.status))).sort().forEach(value => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    status.appendChild(option);
+  });
+  function filter() {
+    const query = search.value.toLocaleLowerCase();
+    let visible = 0;
+    entries.forEach(entry => {
+      const shown = (!status.value || entry.status === status.value) && entry.text.includes(query);
+      entry.row.hidden = !shown;
+      if (shown) visible += 1;
+    });
+    count.textContent = `${visible} of ${rows.length} rows shown`;
+  }
+  search.addEventListener('input', filter);
+  status.addEventListener('change', filter);
+  document.getElementById('reset').addEventListener('click', () => {
+    search.value = '';
+    status.value = '';
+    filter();
+    search.focus();
+  });
+  document.getElementById('controls').hidden = false;
+  filter();
+})();
+</script>
+</body>
+</html>
