@@ -776,4 +776,12 @@ metadata. Filtering does not change verification or quality decisions, and
 skipped does not mean passed. Consult the machine report and manifest for evidence
 completeness. The view includes step details, not raw logs or arbitrary evidence
 objects. Existing publication redaction and engineering-policy semantics are
-unchanged. History, trends and additional quality charts are outside this template.
+unchanged. The current-run quality section shows supplied quality/full-quality statuses,
+phase, authoritative aggregate blockers and gate rows. Gate failures are not
+assumed to be blockers. Search and status filtering include these quality rows;
+the authoritative blocker list remains visible. Only named scalar fields and
+supported typed metric values (count, boolean, ratio, rational, decimal, duration,
+size) are displayed, including zero and false; values are not converted or scored.
+Missing values are marked not available, and absent quality never implies a pass.
+Raw records, exception error arrays and evidence objects are not displayed.
+History, trends and additional quality charts are outside this template.
