@@ -123,7 +123,7 @@ impl<'a> Index<'a> {
             "metric does not match series contract"
         );
         let _: harness_gate::quality::model::MetricValue =
-            serde_json::from_value(metric["value"].clone())?;
+            serde_json::from_str(&metric["value"].to_string())?;
         Ok(())
     }
 }

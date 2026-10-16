@@ -40,7 +40,7 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 .coverage-cell { display:block; padding:.5rem; border:1px solid currentColor; color:#101010; background:hsl(210 65% calc(98% - var(--coverage) * .3%)); max-width:13rem; overflow-wrap:anywhere; }
 .coverage-cell span { display:block; }
 .quality-group > summary { cursor:pointer; font-weight:bold; padding:.5rem; overflow-wrap:anywhere; }
-.coverage-panel h3, .coverage-panel p { overflow-wrap:anywhere; }
+.coverage-panel h3, .coverage-panel p, .ranking-panel h3, .ranking-panel p, .ranking-panel li { overflow-wrap:anywhere; }
 </style>
 </head>
 <body>
@@ -58,8 +58,12 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 <label for="search">Search labels, identifiers and details<input id="search" type="search" autocomplete="off"></label>
 <label for="status">Reported row status<select id="status"><option value="">All statuses</option></select></label>
 <label for="component">Quality component<select id="component"><option value="">All components</option></select></label>
+<label for="rank-panel">Complexity range panel<select id="rank-panel"><option value="">No numeric range filter</option>{% if quality_view is defined %}{% for panel in quality_view.rankings %}<option value="{{ panel.id }}">{{ panel.component }} / {{ panel.policy }} / {{ panel.series }}</option>{% endfor %}{% endif %}</select></label>
+<label for="range-min">Minimum count<input id="range-min" type="text" inputmode="numeric" maxlength="40" aria-describedby="range-message" pattern="[0-9]*" autocomplete="off"></label>
+<label for="range-max">Maximum count<input id="range-max" type="text" inputmode="numeric" maxlength="40" aria-describedby="range-message" pattern="[0-9]*" autocomplete="off"></label>
 <button id="reset" type="button">Reset filters</button>
 </div>
+<p id="range-message" role="status" aria-live="polite"></p>
 <p id="count" role="status" aria-live="polite">All report rows are shown.</p>
 <noscript><p>JavaScript is unavailable. All rows remain visible; use your browser’s Find command to search.</p></noscript>
 <section aria-labelledby="executed-heading">
@@ -112,13 +116,20 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 {% for cell in panel.cells %}<a class="coverage-cell" data-map-target="{{ cell.anchor }}" href="#{{ cell.anchor }}" style="--coverage:{{ cell.shade }}"><span>{{ cell.label }}</span><span>{{ cell.covered }} / {{ cell.total }}</span></a>{% endfor %}
 </div></section>
 {% else %}<p>No comparable coverage map is available.</p>{% endfor %}
+<h3>Complexity Top 10 by measurement panel</h3>
+<p class="note">Descending exact non-negative integer counts for complexity.cyclomatic. Each panel separates component, policy and series; observations are reported gates, not distinct functions. Ties use source path, subject name, subject identity and gate identity. Filters hide entries from the original Top 10; they do not promote lower-ranked observations. Numeric range filtering affects only eligible rows in the selected panel; other metrics and panels remain unchanged.</p>
+{% for panel in quality_view.rankings %}
+<section class="ranking-panel" data-ranking-panel="{{ panel.id }}"><h3>{{ panel.component }} — {{ panel.policy }}</h3><p>Series: {{ panel.series }} · {{ panel.metric }} / {{ panel.value_type }} / unit: {{ panel.unit }} · {{ panel.total_gates }} eligible reported gates</p>
+<ol>{% for item in panel.rows %}<li value="{{ loop.index }}" data-ranking-item data-map-target="{{ item.anchor }}"><a href="#{{ item.anchor }}">{{ item.path }}: {{ item.name }} — count: {{ item.value }}</a></li>{% endfor %}</ol>
+</section>
+{% else %}<p>No comparable integer complexity ranking is available.</p>{% endfor %}
 <h3>Details by component and source file</h3>
 {% for group in quality_view.groups %}
 <details class="quality-group" open><summary>{{ group.component }} — {{ group.path }} · {{ group.rows | length }} reported gates</summary>
 <div class="table-region" tabindex="0" role="region" aria-label="Quality gates table; scroll horizontally if needed">
 <table><caption>{{ group.component }} / {{ group.path }}</caption><thead><tr><th scope="col">Subject / policy</th><th scope="col">State / reason</th><th scope="col">Metric</th><th scope="col">Base</th><th scope="col">Head</th><th scope="col">Limit</th></tr></thead><tbody>
 {% for row in group.rows %}
-<tr id="{{ row.anchor }}" tabindex="-1" data-row data-component="{{ group.component }}" data-path="{{ group.path }}" data-status="{{ self::scalar(v=row.state) }}"><th scope="row">{{ row.name }}<span class="id">{{ row.kind }} · {{ row.span }}</span><span class="id">{{ self::scalar(v=row.policy) }}</span><span class="id">{{ self::scalar(v=row.subject) }}</span></th><td>{{ self::scalar(v=row.state) }}<div class="detail">{{ self::scalar(v=row.reason) }}</div></td><td>{{ self::scalar(v=row.metric) }}<span class="id">{{ row.visual_note }}</span></td><td>{{ self::metric(v=row.base) }}</td><td>{{ self::metric(v=row.head) }}</td><td>{{ self::metric(v=row.limit) }}</td></tr>
+<tr id="{{ row.anchor }}" tabindex="-1" data-row data-component="{{ group.component }}" data-path="{{ group.path }}"{% if row.range %} data-rank-panel="{{ row.range.panel }}" data-integer="{{ row.range.value }}"{% endif %} data-status="{{ self::scalar(v=row.state) }}"><th scope="row">{{ row.name }}<span class="id">{{ row.kind }} · {{ row.span }}</span><span class="id">{{ self::scalar(v=row.policy) }}</span><span class="id">{{ self::scalar(v=row.subject) }}</span></th><td>{{ self::scalar(v=row.state) }}<div class="detail">{{ self::scalar(v=row.reason) }}</div></td><td>{{ self::scalar(v=row.metric) }}<span class="id">{{ row.visual_note }}</span></td><td>{{ self::metric(v=row.base) }}</td><td>{% if row.range %}count: {{ row.range.value }}{% else %}{{ self::metric(v=row.head) }}{% endif %}</td><td>{{ self::metric(v=row.limit) }}</td></tr>
 {% endfor %}
 </tbody></table></div></details>
 {% else %}<p>No quality gates were reported.</p>{% endfor %}
@@ -139,9 +150,13 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
   const search = document.getElementById('search');
   const status = document.getElementById('status');
   const component = document.getElementById('component');
+  const rankPanel = document.getElementById('rank-panel');
+  const minimum = document.getElementById('range-min');
+  const maximum = document.getElementById('range-max');
+  const rangeMessage = document.getElementById('range-message');
   const count = document.getElementById('count');
   const rows = Array.from(document.querySelectorAll('[data-row]'));
-  const entries = rows.map(row => ({ row, text: `${row.dataset.component || ''} ${row.dataset.path || ''} ${row.textContent}`.toLocaleLowerCase(), status: row.dataset.status, component: row.dataset.component }));
+  const entries = rows.map(row => ({ row, text: `${row.dataset.component || ''} ${row.dataset.path || ''} ${row.textContent}`.toLocaleLowerCase(), status: row.dataset.status, component: row.dataset.component, panel: row.dataset.rankPanel, integer: row.dataset.integer }));
   Array.from(new Set(entries.map(entry => entry.status))).sort().forEach(value => {
     const option = document.createElement('option');
     option.value = value;
@@ -160,15 +175,40 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
     if (group) group.open = true;
     target.focus();
   }));
+  function compareIntegers(a, b) {
+    if (a.length !== b.length) return a.length < b.length ? -1 : 1;
+    return a === b ? 0 : (a < b ? -1 : 1);
+  }
+  function normalizeBound(value) {
+    if (!value) return null;
+    if (!/^[0-9]{1,40}$/.test(value)) return undefined;
+    return value.replace(/^0+/, '') || '0';
+  }
+  function bounds() {
+    const min = normalizeBound(minimum.value);
+    const max = normalizeBound(maximum.value);
+    const reversed = min != null && max != null && compareIntegers(min, max) > 0;
+    const invalid = min === undefined || max === undefined || reversed;
+    minimum.setAttribute('aria-invalid', String(min === undefined || reversed));
+    maximum.setAttribute('aria-invalid', String(max === undefined || reversed));
+    rangeMessage.textContent = invalid ? 'Numeric range ignored: use at most 40 decimal digits and minimum no greater than maximum.' : '';
+    return { min, max, invalid };
+  }
+  function inRange(entry, range) {
+    if (!rankPanel.value || entry.panel !== rankPanel.value || range.invalid) return true;
+    return (range.min === null || compareIntegers(entry.integer, range.min) >= 0) && (range.max === null || compareIntegers(entry.integer, range.max) <= 0);
+  }
   function filter() {
     const query = search.value.toLocaleLowerCase();
+    const range = bounds();
     let visible = 0;
     entries.forEach(entry => {
-      const shown = (!status.value || entry.status === status.value) && entry.text.includes(query) && (!component.value || !entry.component || component.value === entry.component);
+      const shown = (!status.value || entry.status === status.value) && entry.text.includes(query) && (!component.value || !entry.component || component.value === entry.component) && inRange(entry, range);
       entry.row.hidden = !shown;
       if (shown) visible += 1;
     });
     cells.forEach(({cell, target}) => { cell.hidden = target.hidden; });
+    document.querySelectorAll('.ranking-panel').forEach(panel => { panel.hidden = !Array.from(panel.querySelectorAll('[data-ranking-item]')).some(item => !item.hidden); });
     document.querySelectorAll('.coverage-panel').forEach(panel => { panel.hidden = !Array.from(panel.querySelectorAll('[data-map-target]')).some(cell => !cell.hidden); });
     document.querySelectorAll('.quality-group').forEach(group => { group.hidden = !Array.from(group.querySelectorAll('[data-row]')).some(row => !row.hidden); });
     count.textContent = `${visible} of ${rows.length} rows shown`;
@@ -176,10 +216,16 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
   search.addEventListener('input', filter);
   status.addEventListener('change', filter);
   component.addEventListener('change', filter);
+  rankPanel.addEventListener('change', filter);
+  minimum.addEventListener('input', filter);
+  maximum.addEventListener('input', filter);
   document.getElementById('reset').addEventListener('click', () => {
     search.value = '';
     status.value = '';
     component.value = '';
+    rankPanel.value = '';
+    minimum.value = '';
+    maximum.value = '';
     filter();
     search.focus();
   });

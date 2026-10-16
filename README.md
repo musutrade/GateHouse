@@ -808,6 +808,21 @@ unsafe numeric precision and inconsistent evidence have no colored cell; their
 gate rows remain visible. No component coverage average or new blocker is computed.
 No JavaScript is required to read the map or expand the component/file sections.
 Source paths are display text, not automatically constructed external links.
+The complexity section shows the original Top 10 reported gates within each
+component/policy/measurement-series panel for `complexity.cyclomatic` integer
+counts. Ranking compares exact non-negative decimal digit strings, including values
+larger than 64 bits; decimal, exponent and negative forms remain in the details
+without an integer rank. Ties use source path, subject name, subject identity and
+gate identity. Multiple policies on one subject remain separate gate observations.
+
+Select a complexity panel to apply inclusive minimum/maximum bounds of at most
+40 digits. Empty bounds are open-ended. Values and bounds are compared as exact
+integer strings, with no floating-point conversion. Invalid input or reversed
+bounds displays a message and disables only the numeric range filter. Other metric
+rows and other panels are unaffected by the range; search, status and component
+filters still compose. Reset clears every filter. Filtering hides entries from the
+original Top 10 without promoting other entries, and never changes blockers or
+reported outcomes. Without JavaScript, all rankings and exact details remain visible.
 History, trends and additional quality charts are outside this template.
 
 ### Explicit offline metric history
