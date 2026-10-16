@@ -129,6 +129,16 @@ mod terminal {
     }
 
     fn run_named(root: &std::path::Path, answer: &[u8], force: bool, name: Option<&str>) -> bool {
+        run_catalog(root, answer, force, name, None)
+    }
+
+    fn run_catalog(
+        root: &std::path::Path,
+        answer: &[u8],
+        force: bool,
+        name: Option<&str>,
+        catalog: Option<&std::path::Path>,
+    ) -> bool {
         let (mut master, slave) = terminals();
         let mut cmd = Command::new(env!("CARGO_BIN_EXE_harness-gate"));
         cmd.arg("--project-root")
@@ -136,6 +146,9 @@ mod terminal {
             .args(["init", "--interactive"]);
         if let Some(name) = name {
             cmd.args(["--project-name", name]);
+        }
+        if let Some(catalog) = catalog {
+            cmd.arg("--presets-dir").arg(catalog);
         }
         if force {
             cmd.arg("--force");
@@ -240,6 +253,60 @@ mod terminal {
             let config: toml::Value = toml::from_str(&source).unwrap();
             assert_eq!(config["project"]["name"].as_str(), Some(expected));
         }
+    }
+    #[test]
+    fn catalog_suggestion_is_explicit_overridable_and_cancellable() {
+        let catalog = tempfile::tempdir().unwrap();
+        fs::write(
+            catalog.path().join("flow.toml"),
+            include_str!("../presets/generic.flow.toml")
+                .replace("Git whitespace check", "Catalog-selected checks"),
+        )
+        .unwrap();
+        fs::write(catalog.path().join("catalog.json"), r#"{"schema":"harness-preset-catalog/v2","presets":{"custom":{"description":"Owner-reviewed checks","flow":"flow.toml","detect_files":["Cargo.toml"]}},"packs":{}}"#).unwrap();
+        for (answer, expected) in [
+            (b"d\n\ny\n".as_slice(), Some("Catalog-selected checks")),
+            (b"1\n\ny\n", Some("Git whitespace check")),
+            (b"\n", None),
+            (b"q\n", None),
+            (b"\x04", None),
+        ] {
+            let project = tempfile::tempdir().unwrap();
+            fs::write(
+                project.path().join("Cargo.toml"),
+                "contents are not evaluated",
+            )
+            .unwrap();
+            assert_eq!(
+                run_catalog(project.path(), answer, false, None, Some(catalog.path())),
+                expected.is_some()
+            );
+            let path = project.path().join(".harness-gate/flow.toml");
+            if let Some(expected) = expected {
+                let config: toml::Value =
+                    toml::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+                assert_eq!(config["steps"][0]["label"].as_str(), Some(expected));
+                assert!(Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+                    .arg("--project-root")
+                    .arg(project.path())
+                    .args(["config", "check"])
+                    .output()
+                    .unwrap()
+                    .status
+                    .success());
+            } else {
+                assert!(!path.exists());
+            }
+        }
+        let project = tempfile::tempdir().unwrap();
+        assert!(!run_catalog(
+            project.path(),
+            b"d\n",
+            false,
+            None,
+            Some(catalog.path())
+        ));
+        assert!(!project.path().join(".harness-gate").exists());
     }
 }
 

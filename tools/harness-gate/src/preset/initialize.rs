@@ -178,9 +178,10 @@ pub fn interactive(
         )
     });
     validate_project_name(&default_name)?;
-    let choices = catalog::choices(directory)?;
+    let menu = catalog::choices(directory, Some(target))?;
     select(
-        &choices,
+        &menu.choices,
+        menu.recommendation.as_ref(),
         target,
         force,
         &default_name,
@@ -206,13 +207,14 @@ fn read_answer(reader: &mut impl std::io::BufRead, limit: u64) -> Result<Option<
 
 fn select(
     choices: &[(String, String)],
+    recommendation: Option<&catalog::Recommendation>,
     target: &Path,
     force: bool,
     default_name: &str,
     reader: &mut impl std::io::BufRead,
     output: &mut impl std::io::Write,
 ) -> Result<Option<InitSelection>> {
-    let Some(preset) = select_preset(choices, reader, output)? else {
+    let Some(preset) = select_preset(choices, recommendation, reader, output)? else {
         return Ok(None);
     };
     let Some(project_name) = select_project_name(default_name, reader, output)? else {
@@ -242,6 +244,7 @@ fn select(
 
 fn select_preset(
     choices: &[(String, String)],
+    recommendation: Option<&catalog::Recommendation>,
     reader: &mut impl std::io::BufRead,
     output: &mut impl std::io::Write,
 ) -> Result<Option<String>> {
@@ -254,12 +257,20 @@ fn select_preset(
             description.escape_debug()
         )?;
     }
+    if let Some(recommendation) = recommendation {
+        writeln!(output, "Suggested preset: {} (catalog marker match: {}). Type d to select it; this is not a compatibility guarantee.", recommendation.name.escape_debug(), recommendation.markers.join(", "))?;
+    }
     write!(output, "Preset number (empty or q cancels): ")?;
     output.flush()?;
     let value = answer(reader)?.unwrap_or_default();
     let value = value.trim();
     if value.is_empty() || value == "q" {
         return Ok(None);
+    }
+    if value == "d" {
+        return recommendation
+            .map(|suggestion| Some(suggestion.name.clone()))
+            .context("no unique catalog recommendation; choose a preset number");
     }
     let selected = value
         .parse::<usize>()
@@ -305,11 +316,14 @@ mod interactive_tests {
         )
         .unwrap();
         std::fs::write(catalog_dir.path().join("catalog.json"), r#"{"schema":"harness-preset-catalog/v1","presets":{"custom":{"description":"Reviewed external preset","flow":"flow.toml"}},"packs":{}}"#).unwrap();
-        let choices = catalog::choices(Some(catalog_dir.path())).unwrap();
+        let choices = catalog::choices(Some(catalog_dir.path()), None)
+            .unwrap()
+            .choices;
         assert_eq!(choices.len(), 2);
         let root = tempfile::tempdir().unwrap();
         let name = select(
             &choices,
+            None,
             root.path(),
             false,
             "project",
@@ -335,7 +349,7 @@ mod interactive_tests {
         .validate()
         .unwrap();
         std::fs::write(catalog_dir.path().join("catalog.json"), "{}").unwrap();
-        assert!(catalog::choices(Some(catalog_dir.path())).is_err());
+        assert!(catalog::choices(Some(catalog_dir.path()), None).is_err());
     }
 
     #[test]
@@ -365,11 +379,61 @@ mod interactive_tests {
     }
 
     #[test]
+    fn suggested_preset_requires_explicit_choice() {
+        let choices = vec![
+            ("generic".into(), "Default".into()),
+            ("custom".into(), "Explicit".into()),
+        ];
+        let suggestion = catalog::Recommendation {
+            name: "custom".into(),
+            markers: vec!["Cargo.toml".into()],
+        };
+        let mut output = Vec::new();
+        assert_eq!(
+            select_preset(
+                &choices,
+                Some(&suggestion),
+                &mut "d\n".as_bytes(),
+                &mut output
+            )
+            .unwrap()
+            .as_deref(),
+            Some("custom")
+        );
+        assert!(String::from_utf8(output)
+            .unwrap()
+            .contains("catalog marker match: Cargo.toml"));
+        assert_eq!(
+            select_preset(
+                &choices,
+                Some(&suggestion),
+                &mut "1\n".as_bytes(),
+                &mut Vec::new()
+            )
+            .unwrap()
+            .as_deref(),
+            Some("generic")
+        );
+        for input in ["\n", "q\n", ""] {
+            assert!(select_preset(
+                &choices,
+                Some(&suggestion),
+                &mut input.as_bytes(),
+                &mut Vec::new()
+            )
+            .unwrap()
+            .is_none());
+        }
+        assert!(select_preset(&choices, None, &mut "d\n".as_bytes(), &mut Vec::new()).is_err());
+    }
+
+    #[test]
     fn selection_requires_number_and_explicit_confirmation() {
         let choices = vec![("generic".into(), "safe\x1b[2J".into())];
         for input in ["", "\n", "q\n", "1\n", "1\nn\n"] {
             assert!(select(
                 &choices,
+                None,
                 Path::new("project"),
                 false,
                 "project",
@@ -382,6 +446,7 @@ mod interactive_tests {
         for input in ["0\ny\n", "2\ncustom-name\ny\n", "text\ny\n"] {
             assert!(select(
                 &choices,
+                None,
                 Path::new("project"),
                 false,
                 "project",
@@ -394,6 +459,7 @@ mod interactive_tests {
         assert_eq!(
             select(
                 &choices,
+                None,
                 Path::new("project"),
                 false,
                 "project",

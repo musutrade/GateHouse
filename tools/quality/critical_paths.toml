@@ -490,7 +490,7 @@ path = "tests/plugin_lock_test.rs"
 symbol = "invalid_signature_blocks_execution"
 start = 351
 end = 374
-sha256 = "c7098b24a1309a1f9e1017102bc73fbef2c29ca0e2badb246d1049fb2dced157"
+sha256 = "28e33e552b20df2e79bde074090d86a8d840ffa1663b576ef83ccc48ccfe3ce5"
 
 [[paths.probes]]
 line = 321
