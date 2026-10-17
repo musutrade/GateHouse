@@ -9,6 +9,38 @@ pub(super) fn escape(text: &str) -> String {
         .replace('"', "&quot;")
         .replace('\'', "&#39;")
 }
+fn has_gap(points: &[Point]) -> bool {
+    points
+        .iter()
+        .any(|point| point.value.is_none() && point.crap_grid.is_none())
+}
+fn gap_summary(points: &[Point]) -> String {
+    if !has_gap(points) {
+        return String::new();
+    }
+    let mut html = String::from("<aside class=\"history-gaps\" aria-label=\"Samples not plotted\" style=\"border:2px solid currentColor;padding:.75rem;margin-block:1rem\"><p><strong>Samples not plotted</strong></p><p>Shaded columns and × marks identify gaps, not zero values. The line stops at each gap.</p><ul>");
+    for (index, point) in points.iter().enumerate() {
+        if point.value.is_none() && point.crap_grid.is_none() {
+            html.push_str(&format!(
+                "<li><strong>Sample {}</strong> — {}: {}</li>",
+                index + 1,
+                escape(&point.timestamp),
+                escape(&point.reason)
+            ));
+        }
+    }
+    html.push_str("</ul></aside>");
+    html
+}
+fn gap_marker(x: f64, bottom: u16, sample: usize, reason: &str) -> String {
+    format!(
+        "<g data-gap-sample=\"{sample}\"><title>Sample {sample} not plotted: {}</title><rect x=\"{:.3}\" y=\"10\" width=\"16\" height=\"{}\" fill=\"currentColor\" opacity=\"0.15\"/><path d=\"M{x:.3} 10V{bottom}\" fill=\"none\" stroke=\"currentColor\" stroke-dasharray=\"4 4\"/><text x=\"{x:.3}\" y=\"{}\" text-anchor=\"middle\" font-size=\"24\" font-weight=\"bold\">×</text></g>",
+        escape(reason),
+        x - 8.0,
+        bottom - 10,
+        bottom + 48
+    )
+}
 fn chart(points: &[Point]) -> String {
     let max = points
         .iter()
@@ -16,7 +48,9 @@ fn chart(points: &[Point]) -> String {
         .fold(0.0_f64, f64::max)
         .max(1.0);
     let count = points.len().saturating_sub(1).max(1) as f64;
-    let mut svg = String::from("<svg viewBox=\"0 0 640 220\" role=\"img\" aria-label=\"Selected metric in input order; gaps are not connected\"><path d=\"M30 10V190H620\" fill=\"none\" stroke=\"currentColor\"/>");
+    let height = if has_gap(points) { 252 } else { 220 };
+    let mut svg = gap_summary(points);
+    svg.push_str(&format!("<svg viewBox=\"0 0 640 {height}\" role=\"img\" aria-label=\"Selected metric in input order; gaps are not connected\"><path d=\"M30 10V190H620\" fill=\"none\" stroke=\"currentColor\"/>"));
     svg.push_str(&format!(
         "<text x=\"32\" y=\"16\">{max}</text><text x=\"10\" y=\"195\">0</text>"
     ));
@@ -40,6 +74,7 @@ fn chart(points: &[Point]) -> String {
             ));
             previous = Some((x, y));
         } else {
+            svg.push_str(&gap_marker(x, 190, i + 1, &point.reason));
             previous = None;
         }
     }
@@ -52,9 +87,10 @@ fn crap_chart(points: &[Point]) -> String {
         .find(|p| p.crap_grid.is_some())
         .map(|p| p.crap_ceiling)
     else {
-        return "<p>No comparable CRAP values within the supported chart range. Exact supplied values and gap reasons remain below.</p>".into();
+        return format!("{}<p>No comparable CRAP values within the supported chart range. Exact supplied values and gap reasons remain below.</p>", gap_summary(points));
     };
-    let mut svg=format!("<p>CRAP display scale: 0 to {ceiling}, divided into 200 floor-quantized positions. These are display coordinates, not policy thresholds. Coincident pixels do not imply equal values; a tiny positive value may share the zero coordinate. Exact values remain in the table. Sample order is chronological for queries and input order otherwise, never severity order.</p><svg viewBox=\"0 0 640 240\" role=\"img\" aria-label=\"Exact CRAP values quantized to 200 display positions; gaps are not connected\"><path d=\"M30 10V210H620\" fill=\"none\" stroke=\"currentColor\"/><text x=\"32\" y=\"16\">{ceiling}</text><text x=\"10\" y=\"215\">0</text>");
+    let height = if has_gap(points) { 272 } else { 240 };
+    let mut svg=format!("<p>CRAP display scale: 0 to {ceiling}, divided into 200 floor-quantized positions. These are display coordinates, not policy thresholds. Coincident pixels do not imply equal values; a tiny positive value may share the zero coordinate. Exact values remain in the table. Sample order is chronological for queries and input order otherwise, never severity order.</p>{}<svg viewBox=\"0 0 640 {height}\" role=\"img\" aria-label=\"Exact CRAP values quantized to 200 display positions; gaps are not connected\"><path d=\"M30 10V210H620\" fill=\"none\" stroke=\"currentColor\"/><text x=\"32\" y=\"16\">{ceiling}</text><text x=\"10\" y=\"215\">0</text>", gap_summary(points));
     let count = points.len().saturating_sub(1).max(1);
     let mut previous = None;
     for (i, point) in points.iter().enumerate() {
@@ -77,6 +113,7 @@ fn crap_chart(points: &[Point]) -> String {
             ));
             previous = Some((x, y));
         } else {
+            svg.push_str(&gap_marker(x as f64, 210, i + 1, &point.reason));
             previous = None;
         }
     }
@@ -199,6 +236,83 @@ pub(super) fn queried_html(
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn sample(value: Option<f64>, crap: bool, reason: &str) -> Point {
+        Point {
+            invocation: "one".into(),
+            timestamp: "2026-01-02T00:00:00Z".into(),
+            commit: "commit".into(),
+            status: "fail".into(),
+            exact: "supplied exact value".into(),
+            value: if crap { None } else { value },
+            crap: None,
+            crap_grid: if crap { value.map(|_| 0) } else { None },
+            crap_ceiling: 1,
+            reason: reason.into(),
+            compatibility: None,
+            ratchet: vec![],
+        }
+    }
+    #[test]
+    fn missing_samples_are_marked_without_values_or_bridging_lines() {
+        for crap in [false, true] {
+            let points = [
+                sample(Some(0.0), crap, ""),
+                sample(None, crap, "quality unavailable or not collected"),
+                sample(Some(0.0), crap, ""),
+                sample(Some(0.0), crap, ""),
+            ];
+            let output = if crap {
+                crap_chart(&points)
+            } else {
+                chart(&points)
+            };
+            assert!(output.contains("<strong>Sample 2</strong>"));
+            assert!(output.contains("quality unavailable or not collected"));
+            assert!(output.contains("gaps, not zero values"));
+            assert_eq!(output.matches("data-gap-sample=").count(), 1);
+            assert_eq!(output.matches("<circle ").count(), 3);
+            // One axis path and only the segment between the final adjacent samples.
+            assert_eq!(
+                output
+                    .matches("fill=\"none\" stroke=\"currentColor\"/>")
+                    .count(),
+                2
+            );
+            let ordinary = if crap {
+                crap_chart(&points[2..])
+            } else {
+                chart(&points[2..])
+            };
+            assert!(!ordinary.contains("history-gaps"));
+            assert!(!ordinary.contains("data-gap-sample"));
+            assert_eq!(ordinary.matches("<circle ").count(), 2);
+        }
+    }
+    #[test]
+    fn all_gap_reasons_remain_readable_and_safe_without_hover() {
+        for crap in [false, true] {
+            let points: Vec<_> = (0..30)
+                .map(|_| sample(None, crap, "comparison break: <img src=x> token=gap-secret"))
+                .collect();
+            let output = if crap {
+                crap_chart(&points)
+            } else {
+                chart(&points)
+            };
+            assert_eq!(output.matches("<li><strong>Sample ").count(), 30);
+            assert!(output.contains("<strong>Sample 1</strong>"));
+            assert!(output.contains("<strong>Sample 30</strong>"));
+            assert!(output.contains("comparison break: &lt;img"));
+            assert!(output.contains("[REDACTED]"));
+            assert!(!output.contains("<img") && !output.contains("gap-secret"));
+            assert!(!output.contains("<circle "));
+            if crap {
+                assert!(!output.contains("<svg"));
+            } else {
+                assert_eq!(output.matches("data-gap-sample=").count(), 30);
+            }
+        }
+    }
     #[test]
     fn unqueried_html_matches_pre_query_bytes() {
         // SHA-256 independently derived from base130c9d93 renderer with this fixed empty selection.
