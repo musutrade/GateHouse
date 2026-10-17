@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has twelve files:
-the importer, Core builder and preservation library, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has thirteen files:
+the importer, Core builder, preservation and volume libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -665,7 +665,7 @@ unchanged. Sixteen new bootstrap regressions bring the focused suite to 196 test
 ### Candidate fixed-659 preservation
 
 The authenticated importer offers an administrator-only `preserve-pilot` action;
-`preserve-pilot-state.py` is the twelfth helper resource. This candidate retains
+`preserve-pilot-state.py` was added as the twelfth helper resource. This candidate retains
 private state without revoking a run, retiring source, changing installed code or
 issuing a quality verdict. It requires the fixed accepted 659 head/run/release,
 matching acceptance/configuration/marker, the sole idle pending publication slot,
@@ -709,6 +709,51 @@ or the complete fixed-659 upgrade acceptance. A reviewed bounded destination,
 actual host backup/restore, replacement Core capture before revoke/retire, guarded
 installation/recovery and full verification acceptance remain pending. Existing
 659 files, stages, volume, source, journal and services remain untouched.
+
+### Candidate separate Linux staging storage
+
+`prepare-linux-volume.py` is the thirteenth authenticated helper resource; the
+administrator-only `prepare-volume` entry prepares separate staging storage.
+It does not resize, replace or remount the accepted pilot volume. The fixed
+candidate is a 16 GiB image, an independent private registration and a separate
+mountpoint. The controller lease, accepted 659 outstanding slot, stopped trusted
+units and idle UID995 are required throughout. A pinned Root-protected recipe
+identifies the seven actual resolved management programs, including `mke2fs` and
+`e2fsck`; imported code/data link restrictions remain unchanged.
+
+A durable private intent precedes exclusive image creation. The registered image
+device/inode, size, UUID, helper/recipe pins and phase must match on every retry.
+Unknown images, occupied targets, unregistered mounts, ambiguous signatures or
+loop associations are retained for reconciliation. Allocation uses `fallocate`
+with 2 GiB host free-space headroom. Physical blocks must cover the full image
+before and after formatting and at mount admission. Formatting explicitly selects
+ext4 with `nodiscard` and disables lazy metadata/journal initialization. A known
+interrupted format with the expected UUID requires a successful readonly
+`e2fsck -f -n`; it is never blindly reformatted. An image created before its inode
+was sealed is not automatically adopted. Cleanup never detaches or unmounts.
+
+Mounting uses the internal mount implementation with loop, nodev, nosuid and
+noatime. Admission checks the exact mountpoint, ext4 UUID, whole-filesystem root,
+required options, expected loop block device, image backing device/inode/path,
+zero offset, full size and writable mode. Submounts and other aliases of the same
+image are rejected, and host headroom is rechecked. Unknown backing metadata is rejection.
+The mounted filesystem size must match the capacity range; its Root-owned root is
+made private only after identity checks. A valid mounted retry performs no format,
+allocation or remount. A known unmounted filesystem is checked before mounting.
+
+Nineteen new regressions bring the focused suite to 232 tests. The lifecycle
+fixtures replace Root ownership/authentication, management commands and kernel
+mount/loop observations; their small file allocation, registration, inode checks
+and exclusive locks are real. A separate ordinary-user 16 MiB file experiment
+executes the actual allocation, nondiscard ext4 formatting, readonly filesystem
+check and UUID probe, retaining full physical allocation. No real 16 GiB image,
+loop attachment, privileged mount, persistent mount unit or live host preparation
+is performed. Capacity and reservation are admission checks, not completed
+workload/quota acceptance; live full-disk, periodic trim/reservation drift, resource
+and recovery scenarios remain pending. The complete guarded upgrade must still
+stage reviewed candidate source separately, preserve 659, capture the replacement
+Core before revoke/retire, install only reviewed files and define startup/recovery
+ordering. This helper does not install code, alter Apps/rules or enable production.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
