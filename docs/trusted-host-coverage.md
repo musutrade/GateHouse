@@ -350,6 +350,38 @@ ordinary-user observations do not provide Root/systemd/UID995 acceptance.
 Engineering-policy authority, thresholds, required coverage and ratchets remain
 unchanged.
 
+`deploy/linux-tools.lock.json` fixes eight Linux x86-64 tool archives: Rust
+1.99.1 compiler, Cargo, native standard library, rustfmt, Clippy and LLVM tools;
+nextest 0.9.143; and Node 24.18.0. The pins were independently obtained from the
+official dated Rust channel manifest with its matching same-origin SHA-256,
+nextest's official GitHub release asset digest, and Node's official SHASUMS256
+file. Source metadata URLs and digests are recorded in the lock. This is HTTPS
+metadata/checksum verification, not a signature or Sigstore attestation. The six
+selected Rust component pins match the operator's stored manifest, whose full
+serialized bytes differ from the independently acquired upstream manifest.
+
+`deploy/acquire-linux-tools.py` is an unprivileged archive acquisition candidate.
+It requires the separately reviewed lock SHA-256, exact versions/target/archive
+inventory and fixed official URLs. HTTPS redirects are restricted to the original
+host or GitHub's release-assets host. Downloads stream into private partial files
+with checksum, declared/actual size, socket/deadline and combined-byte limits;
+there is no automatic retry, extraction, tool execution or installation. Completed
+archives become readonly. A fresh destination and acquisition record are required;
+failure retains partial/completed files and a blocked record without serializing
+exception text that could contain signed redirect or proxy URLs. Operator network
+settings are never copied into a lock, report or deployment. Root execution is
+rejected; a future protected bootstrap must separately review its environment.
+
+Actual acquisition matched all eight official archive digests: 218,817,177 bytes
+in 46.174 seconds, with tool-lock SHA-256
+`6a1ee8a6fb5fa23c9fe9d8835d2c2f0ab7fcea2fa9e33493dd4b958432f4e1cf`.
+Nine focused acquisition regressions and all 128 trusted-host tests passed. This
+does not prove installed sysroot equivalence, platform ABI compatibility, full
+workload parity or protected-worker acceptance. Before any future import, Root
+must verify archive bytes against the protected reviewed pins before unpacking or
+executing them; an existing operator sysroot is not promoted by chown/copy.
+The existing installer/package inventory and accepted pilot remain unchanged.
+
 The accepted `659803a` pilot remains on its existing 2 GiB volume. Neither this
 preparation helper nor its ordinary-user observations install inputs or modify
 that filesystem. A future reviewed upgrade must preserve its outstanding source,
