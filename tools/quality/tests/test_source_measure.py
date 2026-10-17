@@ -1998,5 +1998,14 @@ class StepCacheRiskSelectionTests(unittest.TestCase):
         self.assertTrue({f"findings/{name}.rs" for name in ("mod", "model", "history", "sarif")} <= set(SOURCE_FILES))
 
 
+class SourceLinksRiskSelectionTests(unittest.TestCase):
+    def test_source_links_is_additive_and_preserves_selection_and_threshold(self):
+        self.assertIn('source_links.rs', SOURCE_FILES)
+        inventory = json.loads((ROOT / 'tools/quality/production-source.json').read_text(encoding='utf-8'))
+        self.assertIn('src/source_links.rs', inventory['boundaries']['verify']['files'])
+        self.assertEqual(inventory['threshold'], 80)
+        self.assertEqual(SERIES['selection'], 'gh33-findings/1')
+
+
 if __name__ == "__main__":
     unittest.main()
