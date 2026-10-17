@@ -382,6 +382,52 @@ must verify archive bytes against the protected reviewed pins before unpacking o
 executing them; an existing operator sysroot is not promoted by chown/copy.
 The existing installer/package inventory and accepted pilot remain unchanged.
 
+After acquisition, an ordinary user namespace reconstructed all eight official
+archives with the standard Rust component installers and exact Node/nextest
+binary reads. The resulting tool directory contains 185 files, 1,020,204,078
+bytes and no links; reconstruction took 23.247 seconds. At exact `4e4477b`, the
+complete Linux Test adapter then passed all ten stages with a fresh empty
+compiled target: 724 Rust tests, zero skipped, both Node suites, HTML/workflow
+acceptance, schemas, 29 onboarding steps and post-validation of 1,628 tracked
+files plus 1,480 restored inputs, in 322.014 seconds. Original homes and external
+networking were hidden, with inputs mounted readonly. This is UID1000 namespace
+evidence for Linux Test only; it does not supply Root/systemd/UID995 acceptance,
+other matrix cells or trusted import of the operator's registry metadata.
+
+`deploy/prepare-locked-directory.py` is a separate unprivileged preparation
+candidate for Cargo's directory-source replacement. It consumes only the frozen
+lock and selected `.crate` archives, never an existing extracted tree or index.
+Archives are streamed into private copies, checked against locked SHA-256 values
+and validated with the existing archive/source contract before standard-library
+extraction. Original input changes after the verified copy cannot replace that
+snapshot. The complete source inventory, including `.gitignore` and other hidden
+files, is independently compared after extraction. Cargo checksum metadata is
+derived from those archive facts, then checked independently alongside all source
+bytes, executable flags and directories; supplied cache metadata is never trusted.
+
+The output contains readonly source directories, copied archives, the frozen lock
+and a canonical inventory. Verification derives the facts again from the locked
+archives, rejecting forged checksum/inventory metadata, changed source, missing
+or extra packages/files/directories, cache markers, links and writable inputs.
+The combined archive/source payload is bounded to 2 GiB, with the existing
+128-MiB file, 256-MiB package, 100,000-source-file and 4-MiB checksum metadata
+limits, plus a 64-MiB inventory limit. Old/partial output is retained and refused;
+failures record blocked preparation. Root execution, network access, Cargo/tool
+execution, installation and quality authorization are outside this preparer.
+
+The actual preparer rebuilt 205 packages and 8,720 archive source files totaling
+194,025,034 bytes, plus 29,855,126 bytes of copied archives, in 24.462 seconds.
+An independent offline Cargo metadata run against this prepared directory and an
+initially empty Cargo home resolved all 205 registry packages plus two local
+packages in 0.215 seconds. Cargo created only `registry/CACHEDIR.TAG`, with no
+registry index. All 138 trusted-host tests passed, including ten new directory
+preparation regressions. This proves preparation and dependency resolution only;
+complete workload parity with this new source replacement remains pending.
+Cargo's generated checksum file is not a malicious-change security boundary:
+protected immutable inputs and independently trusted archive/lock pins are still
+required before a future Root bootstrap may import or execute anything. The
+engineering-policy authority, thresholds, coverage and ratchets are unchanged.
+
 The accepted `659803a` pilot remains on its existing 2 GiB volume. Neither this
 preparation helper nor its ordinary-user observations install inputs or modify
 that filesystem. A future reviewed upgrade must preserve its outstanding source,
