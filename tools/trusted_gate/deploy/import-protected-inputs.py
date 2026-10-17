@@ -1,5 +1,5 @@
 #!/usr/bin/python3 -I
-"""Administrator-only archive import; never install, build or authorize quality."""
+"""Administrator-only input import and isolated Core bootstrap; never install."""
 from __future__ import annotations
 
 import argparse
@@ -13,13 +13,14 @@ import stat
 import subprocess
 import sys
 import tarfile
+from types import SimpleNamespace
 
 ENTRY = 'tools/trusted_gate/deploy/import-protected-inputs.py'
 FILES = {ENTRY, 'tools/maintenance/restore_evidence.py', *(
     'tools/trusted_gate/deploy/' + name for name in (
         'prepare-official-tools.py', 'acquire-linux-tools.py', 'verify-locked-crates.py',
         'stage-linux-inputs.py', 'run-linux-test.py', 'prepare-linux-workspace.py',
-        'prepare-locked-directory.py', 'linux-tools.lock.json'))}
+        'prepare-locked-directory.py', 'linux-tools.lock.json', 'build-protected-core.py'))}
 ENV = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'GIT_CONFIG_NOSYSTEM': '1',
        'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_TERMINAL_PROMPT': '0', 'GIT_OPTIONAL_LOCKS': '0'}
 
@@ -304,7 +305,11 @@ def import_inputs(root, manifest, manifest_pin, source, head, base, tool_archive
         authenticate(root, manifest, manifest_pin)
         status.update(state='imported', tool_files=len(tools['files']), tool_bytes=tools['bytes'],
                       dependency_packages=len(dependencies['packages']), dependency_files=dependencies['files'],
-                      dependency_bytes=dependencies['bytes'])
+                      dependency_bytes=dependencies['bytes'],
+                      tool_inventory_sha256=hashlib.sha256(read(destination / 'tools/inventory.json',
+                                                               official.MAX_INVENTORY)).hexdigest(),
+                      dependency_inventory_sha256=hashlib.sha256(read(destination / 'dependencies/inventory.json',
+                                                                     directory.MAX_INVENTORY)).hexdigest())
         write(destination / 'binding.json', canonical(status))
         readonly(destination)
         record(state, status)
@@ -317,6 +322,25 @@ def import_inputs(root, manifest, manifest_pin, source, head, base, tool_archive
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    if sys.argv[1:2] == ['build-core']:
+        for name in ('helper-root', 'manifest', 'source', 'inputs', 'host-recipe', 'destination'):
+            parser.add_argument('--' + name, type=Path, required=True)
+        for name in ('manifest-sha256', 'head', 'base', 'inputs-sha256', 'host-recipe-sha256'):
+            parser.add_argument('--' + name, required=True)
+        args = parser.parse_args(sys.argv[2:])
+        try:
+            authenticate(args.helper_root, args.manifest, args.manifest_sha256)
+            builder = load(args.helper_root, 'build-protected-core.py')
+            context = SimpleNamespace(**{name: globals()[name] for name in (
+                'need', 'owned', 'path_operand', 'read', 'write', 'record', 'canonical', 'unique',
+                'git', 'frozen_lock', 'load', 'authenticate', 'readonly', 'ENV')})
+            result = builder.build(context, args.helper_root, args.manifest, args.manifest_sha256,
+                args.source, args.head, args.base, args.inputs, args.inputs_sha256,
+                args.host_recipe, args.host_recipe_sha256, args.destination)
+        except Exception as error:
+            parser.exit(1, 'Core bootstrap blocked (' + type(error).__name__ + '); retain private state\n')
+        print(json.dumps(result, sort_keys=True))
+        return
     for name in ('helper-root', 'manifest', 'source', 'tool-archives', 'crate-archives', 'destination'):
         parser.add_argument('--' + name, type=Path, required=True)
     for name in ('manifest-sha256', 'head', 'base'):

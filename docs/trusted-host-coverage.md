@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has ten files:
-the new importer, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has eleven files:
+the importer and Core builder, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps

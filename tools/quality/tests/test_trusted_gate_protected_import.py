@@ -122,6 +122,9 @@ class ProtectedImportTests(unittest.TestCase):
         self.assertEqual((result['tool_files'], result['dependency_packages'], result['dependency_files']), (9, 1, 3))
         self.assertEqual(result['lock_sha256'], self.crate_fixture.pin)
         self.assertEqual(result['head'], self.head)
+        for field, path in (('tool_inventory_sha256', 'tools/inventory.json'),
+                            ('dependency_inventory_sha256', 'dependencies/inventory.json')):
+            self.assertEqual(result[field], hashlib.sha256((self.destination / path).read_bytes()).hexdigest())
         self.assertEqual(json.loads((self.destination / 'binding.json').read_text()), result)
         self.assertEqual(json.loads(self.destination.with_name('imported-import.json').read_text()), result)
         self.assertEqual((self.destination / 'dependencies/sources/fixture-1.2.3/.gitignore').read_bytes(), b'/target\n')
