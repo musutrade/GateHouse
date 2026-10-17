@@ -4812,6 +4812,40 @@ mod tests {
         }
     }
     #[test]
+    fn debt_categories_publish_manifested_counts_with_inert_annotations() {
+        let (workspace, _project, _invocation, mut project, mut current) =
+            complete_invocation_fixture("debt-categories");
+        let templates = project.root.join("templates");
+        std::fs::create_dir_all(&templates).unwrap();
+        std::fs::write(
+            templates.join("verification.html"),
+            include_str!("../../templates/verification.html"),
+        )
+        .unwrap();
+        project.config.report_templates.root = Some("templates".into());
+        project.config.report_templates.template = Some("templates/verification.html".into());
+        current.quality = Some(super::quality_view::debt::tests::fixture());
+        let started = std::time::Instant::now();
+        write(&current, &project).unwrap();
+        verify_manifest(&project).unwrap();
+        let elapsed = started.elapsed().as_secs_f64();
+        let html_path = project.reports.join("test_result.html");
+        let html = std::fs::read_to_string(&html_path).unwrap();
+        assert_eq!(html.matches("data-debt-category=").count(), 11);
+        assert_eq!(html.matches("data-debt-category=\"6\"").count(), 2);
+        assert_eq!(html.matches("data-debt-category=\"7\"").count(), 2);
+        assert!(html.contains("Authoritative aggregate blockers: 1."));
+        assert!(html.contains("visible-blocker"));
+        assert!(html.contains("&lt;script&gt;alert(1)&lt;&#x2F;script&gt;"));
+        assert!(html.contains("[REDACTED]") && !html.contains("debt-secret"));
+        assert!(!html.contains("<script>alert(1)</script>"));
+        assert!(html.contains("debt resolved;") && html.contains("debt none;"));
+        if let Some(path) = std::env::var_os("HG_DEBT_PREVIEW") {
+            std::fs::write(path, serde_json::to_vec_pretty(&serde_json::json!({"html":html_path,"gates":11,"publication_seconds_debug":elapsed,"html_bytes":html.len()})).unwrap()).unwrap();
+            std::mem::forget(workspace);
+        }
+    }
+    #[test]
     fn history_query_selects_verified_archive_and_rejects_excluded_tampering() {
         use serde_json::json;
         let started = std::time::Instant::now();

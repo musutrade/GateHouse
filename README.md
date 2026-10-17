@@ -839,6 +839,18 @@ Details show supplied ratchet debt, trend, remaining-debt, regression, legacy-de
 and absolute-compliance annotations. Missing annotations are `not available`, not
 zero debt. These fields are not recalculated, and resolved debt is not called
 outstanding debt. No new debt amount, quality decision or blocker is derived.
+The supplied-debt histogram counts these original gate annotations by component,
+policy, series, metric, value type and unit: `none`, `new`, `improved`, `regressed`,
+`unchanged` and `resolved`. It requires agreement between the gate's measurement
+and its evidence/identity; missing annotations, unavailable quality or inconsistent
+evidence count as **Not available**. Other labels count as **Unrecognized annotation**;
+the original annotation remains in the escaped, redacted details. No ratchet is
+re-evaluated and no outstanding total or amount is inferred. In particular, `none`
+is not a gate PASS and `resolved` is separate from remaining debt. Counts are gates,
+not distinct functions, and remain fixed when filtering. Select a debt panel and
+category to filter its rows; search, status, component, range and CRAP-bin filters
+compose, and Reset clears all of them. Without JavaScript all counts and rows remain
+readable. Engineering Policy, Core decisions and authoritative blockers are unchanged.
 History and trends use the separate explicit history command below.
 
 ### Explicit offline metric history

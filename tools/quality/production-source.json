@@ -226,6 +226,7 @@
         "src/verify/report/quality_view.rs",
         "src/verify/report/quality_view/ranking.rs",
         "src/verify/report/quality_view/distribution.rs",
+        "src/verify/report/quality_view/debt.rs",
         "src/verify/report/rendering.rs",
         "src/verify/scheduler.rs",
         "src/verify/steps.rs",
