@@ -167,10 +167,10 @@ class PilotUpgradeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             backup = root / 'backup'
-            backup.mkdir()
+            backup.mkdir(mode=0o700)
             run_id = str(uuid.uuid4())
             publication = root / run_id / 'publication'
-            publication.mkdir(parents=True)
+            publication.mkdir(parents=True, mode=0o700)
             evidence = {}
             for name, key in (('test_result.json', 'machine_sha256'), ('manifest.json', 'manifest_sha256'),
                               ('artifact-registry.json', 'registry_sha256')):
@@ -182,9 +182,14 @@ class PilotUpgradeTests(unittest.TestCase):
             self.addCleanup(journal.close)
             journal.event(run_id, 'retired', {})
             run = {'id': run_id, 'remote': 'revoked', 'evidence': evidence}
-            with patch.object(UPGRADE, 'owned', side_effect=lambda p, private=False: Path(p)):
+            def fixture_owned(path, private=False):
+                path = Path(path)
+                if private and path.stat().st_mode & 0o077:
+                    raise ValueError('private fixture path exposed')
+                return path
+            with patch.object(UPGRADE, 'owned', side_effect=fixture_owned):
                 expected = UPGRADE.publication_inventory(publication)
-                (backup / 'publication-inventory.json').write_text(json.dumps(expected))
+                UPGRADE.write_json(backup / 'publication-inventory.json', expected)
                 UPGRADE.retained(journal, run, root, backup)
                 artifact.unlink()
                 with self.assertRaisesRegex(ValueError, 'incomplete or changed'):

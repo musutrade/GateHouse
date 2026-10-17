@@ -148,7 +148,7 @@ def retained(journal, run, records, backup):
          'retained prior publication is incomplete or changed')
     for name, key in (('test_result.json', 'machine_sha256'), ('manifest.json', 'manifest_sha256'),
                       ('artifact-registry.json', 'registry_sha256')):
-        data = bounded(records / run['id'] / 'publication' / name, 32 * 1024 * 1024)
+        data = bounded(records / run['id'] / 'publication' / name, 32 * 1024 * 1024, private=False)
         need(hashlib.sha256(data).hexdigest() == run['evidence'][key], 'retained prior evidence differs')
 
 
