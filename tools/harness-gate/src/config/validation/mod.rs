@@ -432,6 +432,7 @@ impl FlowConfig {
         self.validate_scope()?;
         self.validate_steps()?;
         self.validate_report_templates()?;
+        self.validate_history_archive()?;
         self.validate_execution()?;
         self.validate_notifications()?;
         self.validate_policy()?;
@@ -574,6 +575,18 @@ impl FlowConfig {
             }
         }
         Ok(())
+    }
+
+    fn validate_history_archive(&self) -> Result<()> {
+        let Some(path) = &self.report_history.archive else {
+            return Ok(());
+        };
+        validate_repo_path("report_history.archive", path)?;
+        crate::report_history::archive_path(
+            path,
+            &self.paths.reports,
+            self.report_templates.root.as_deref(),
+        )
     }
 
     fn validate_report_templates(&self) -> Result<()> {
@@ -1392,6 +1405,13 @@ fn collect_report_template_diagnostics(
             related: Vec::new(),
         });
     };
+    if config.validate_history_archive().is_err() {
+        add(
+            diagnostics,
+            "report_history.archive",
+            ConfigIssueKind::InvalidPath,
+        );
+    }
     let templates = &config.report_templates;
     if templates
         .source_repository

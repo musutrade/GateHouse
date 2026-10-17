@@ -152,6 +152,7 @@ version = 2
 | `[[scope.rules]]`   | 是   | 变更路径到 component 的映射 |
 | `[[steps]]`         | 是   | 实际执行的命令步骤          |
 | `[report_templates]` | 否  | 可选 HTML 模板和 JUnit 输出配置 |
+| `[report_history]` | 否 | 本地不可变报告自动归档，`archive` 指定仓库相对路径；见[自动归档](../README.zh-CN.md#自动归档已完成的本地报告) |
 | `[notifications]`   | 否   | 可选 HTTP Webhook 通知         |
 
 未知字段会直接导致解析失败，避免拼写错误被静默忽略。

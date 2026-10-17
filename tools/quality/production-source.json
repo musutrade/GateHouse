@@ -27,7 +27,9 @@
         "src/report_history/export.rs",
         "src/report_history/projection.rs",
         "src/report_history/publication.rs",
-        "src/report_history/render.rs"
+        "src/report_history/render.rs",
+        "src/report_history/archive.rs",
+        "src/report_history/archive/filesystem.rs"
       ]
     },
     "audit": {

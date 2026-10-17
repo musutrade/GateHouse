@@ -1039,6 +1039,54 @@ total is calculated, and resolved debt is not labelled outstanding. Sample order
 follows the selected history sequence, never severity. Existing subject identity
 rules still apply, including source fingerprint and span.
 
+### Automatically archive completed local reports
+
+History remains opt-in. To keep independent copies after normal invocation
+retention removes older report directories, add this to `flow.toml`:
+
+```toml
+[report_history]
+archive = ".harness-gate/history"
+```
+
+The archive must be a canonical repository-relative directory, separate from both
+reports and template roots. Each completed PASS or FAIL publication is fully
+verified, copied privately, verified again, then published as an immutable snapshot.
+An automatically maintained `index.json` uses the existing `harness-report-history/v2`
+contract: pass `--input .harness-gate/history/index.json` to the query command
+below. No additional JSONL
+format, score, inferred transition, baseline or ratchet state is introduced.
+Unfinished evidence is not archived. Original report bytes and identities survive
+relocation; archived files are independent copies, not hard links to originals.
+
+The directory contains an archive/project marker, a `snapshots/` directory of
+content-pinned publications and entry records, and the generated index. A local
+`.gitignore` excludes the archive contents. It is local evidence storage, not the
+HTML-only upload directory; no Action uploads this archive automatically. Treat
+its logs and evidence as local data. Removing the configuration disables future
+archiving without deleting existing snapshots or changing report retention.
+
+Each update validates all existing snapshots and previous index pins. Index
+replacement is atomic; repeating the same publication is idempotent. Complete
+snapshots left by an interruption before index replacement are recovered on the
+next update. Changed or missing indexed snapshots, duplicate invocation identities,
+corrupt indexes, foreign files, symlinks and mixed project identities fail closed.
+A cooperative exclusive lock serializes writers; a busy or stale lock is an
+explicit error and is never stolen. After a crash, inspect the owner and any
+`.pending-*` directory before manually clearing abandoned state. Unknown or
+partial files are preserved for diagnosis. Do not edit an archive concurrently;
+the lock is not an isolation boundary against external filesystem writers.
+
+Limits are 300 snapshots, 1 GiB of snapshot files and 64 MiB of combined machine
+reports. Each snapshot allows 256 MiB, 8192 filesystem entries and 32 levels of
+nesting; existing report/control/index limits still apply. Full archives fail
+with a request to select a new directory: this increment never deletes history
+or resets authoritative baselines. Each update reads existing archive evidence,
+so its IO cost grows within these bounds; no five-second claim is made for full
+archives. An archive error returns a report-delivery error while preserving the
+already completed report and its original Core decision. It does not turn a
+failed gate into success. Engineering Policy and required gates are unchanged.
+
 ### Query a verified history archive
 
 Use `harness-report-history/v2` with the same sample entries for an explicit archive
@@ -1046,7 +1094,8 @@ of up to 300 invocations (256 KiB index). Per-report and combined limits remain
 32 MiB and 64 MiB. Version 2 requires a query; version 1 without query options keeps
 its original input order and output format. All listed publications are validated,
 including entries outside the selected window. Nothing is fetched from Git or
-scanned automatically, and no history or baseline is updated.
+scanned automatically by the query command, and it updates no history or baseline.
+The separate opt-in archive writer above maintains its local input index.
 
 ```bash
 harness-gate report-history --input archive/catalog.json --output last-30 \

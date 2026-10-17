@@ -2094,3 +2094,30 @@ fn report_source_repository_is_opt_in_and_validated_without_echoing_secrets() {
         .iter()
         .any(|d| d.path == "report_templates.source_repository" && d.id == "HGCFG-INVALID-FIELD"));
 }
+
+#[test]
+fn history_archive_is_opt_in_and_rejects_unsafe_or_overlapping_paths() {
+    let mut config = repository_config();
+    assert!(config.report_history.archive.is_none());
+    config.report_history.archive = Some(".harness-gate/history".into());
+    assert!(config.validate().is_ok());
+    for path in [
+        "",
+        "../history",
+        "/history",
+        ".git/history",
+        ".harness-gate",
+        ".harness-gate/reports/archive",
+        "archive/../history",
+    ] {
+        config.report_history.archive = Some(path.into());
+        assert!(config.validate().is_err(), "{path}");
+        assert!(diagnostics_for(&config)
+            .iter()
+            .any(|d| d.path == "report_history.archive"));
+    }
+    config.report_templates.root = Some("templates".into());
+    config.report_templates.template = Some("templates/report.html".into());
+    config.report_history.archive = Some("templates/history".into());
+    assert!(config.validate().is_err());
+}

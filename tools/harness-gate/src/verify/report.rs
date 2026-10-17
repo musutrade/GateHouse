@@ -820,6 +820,8 @@ pub(super) fn write(report: &VerificationReport, project: &Project) -> Result<()
         let _ = write_machine_result(report, project, &failure, true);
         return Err(error);
     }
+    crate::report_history::record(project)
+        .context("completed report preserved; automatic history archive failed")?;
     prune_old_invocations(project, &report.invocation_id)?;
     Ok(())
 }
@@ -5444,6 +5446,111 @@ mod tests {
                 path,
                 serde_json::to_vec_pretty(
                     &json!({"html":html_path,"commit":commit,"links":1,"passed":false}),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+            std::mem::forget(workspace);
+        }
+    }
+    #[test]
+    fn automatic_history_archive_survives_original_retention_and_recovers_index() {
+        use serde_json::json;
+        let (workspace, mut project, invocation, mut publication, mut current) =
+            complete_invocation_fixture("automatic-history");
+        project.config.report_history.archive = Some(".harness-gate/history".into());
+        publication.config.report_history = project.config.report_history.clone();
+        project.invocation_input.commit = "a".repeat(40);
+        publication.invocation_input.commit = project.invocation_input.commit.clone();
+        let metadata_path = invocation.root.join("invocation.json");
+        let mut metadata: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&metadata_path).unwrap()).unwrap();
+        metadata["commit"] = json!(project.invocation_input.commit);
+        std::fs::write(&metadata_path, serde_json::to_vec(&metadata).unwrap()).unwrap();
+        current.passed = false;
+        current.quality = Some(super::quality_view::tests::fixture(1));
+        let subject = current.quality.as_ref().unwrap().project_report["gates"]["g0000"]["subject"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        write(&current, &publication).unwrap();
+        let archive = workspace.join(".harness-gate/history");
+        let index = archive.join("index.json");
+        let original_index = std::fs::read(&index).unwrap();
+        let ignored = crate::utils::git::capture_readonly(
+            &workspace.root,
+            ["check-ignore", ".harness-gate/history/index.json"],
+        )
+        .unwrap();
+        assert!(ignored.status.success());
+        crate::report_history::record(&publication).unwrap();
+        assert_eq!(std::fs::read(&index).unwrap(), original_index);
+        let entries: serde_json::Value = serde_json::from_slice(&original_index).unwrap();
+        assert_eq!(entries["samples"].as_array().unwrap().len(), 1);
+        let copy = archive.join(entries["samples"][0]["directory"].as_str().unwrap());
+        assert_eq!(
+            std::fs::read(copy.join(MACHINE_RESULT_FILE)).unwrap(),
+            std::fs::read(publication.reports.join(MACHINE_RESULT_FILE)).unwrap()
+        );
+        let archived: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(copy.join(MACHINE_RESULT_FILE)).unwrap())
+                .unwrap();
+        assert_eq!(archived["passed"], false);
+        assert_eq!(archived["evidence_complete"], true);
+        // Simulate the original invocation being removed by its normal retention owner.
+        std::fs::remove_dir_all(&invocation.root).unwrap();
+        let next = allocate_invocation(&project).unwrap();
+        write_invocation_metadata(&next, &project, "full", false).unwrap();
+        publication.reports = next.root.clone();
+        current.invocation_id = next.id.clone();
+        current.report_directory = next.root.to_string_lossy().into_owned();
+        current.steps[0].invocation_id = Some(next.id.clone());
+        std::fs::write(next.root.join("logs/unit.log"), b"second\n").unwrap();
+        write(&current, &publication).unwrap();
+        let both = std::fs::read(&index).unwrap();
+        assert_eq!(
+            serde_json::from_slice::<serde_json::Value>(&both).unwrap()["samples"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
+        // A complete snapshot published before an index interruption is recovered.
+        std::fs::write(&index, &original_index).unwrap();
+        crate::report_history::record(&publication).unwrap();
+        assert_eq!(std::fs::read(&index).unwrap(), both);
+        let output = workspace.join("archive-view");
+        crate::report_history::run_query(
+            &index,
+            &output,
+            "required",
+            &subject,
+            "coverage.line",
+            &crate::report_history::Query {
+                last_commits: Some(30),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert!(std::fs::read_to_string(output.join("history.html"))
+            .unwrap()
+            .contains("<td>fail</td>"));
+        // A corrupt prior snapshot cannot be silently re-pinned or dropped.
+        std::fs::write(copy.join("logs/unit.log"), b"tampered").unwrap();
+        assert!(crate::report_history::record(&publication).is_err());
+        assert_eq!(std::fs::read(&index).unwrap(), both);
+        std::fs::write(copy.join("logs/unit.log"), b"complete\n").unwrap();
+        // Rewriting a previously indexed invocation is a conflict, even if complete.
+        current.passed = true;
+        let error = write(&current, &publication).unwrap_err();
+        assert!(format!("{error:#}").contains("invocation changed"));
+        assert_eq!(std::fs::read(&index).unwrap(), both);
+        verify_manifest(&publication).unwrap();
+        if let Some(path) = std::env::var_os("HG_ARCHIVE_PREVIEW") {
+            std::fs::write(
+                path,
+                serde_json::to_vec_pretty(
+                    &json!({"index":index,"html":output.join("history.html"),"snapshots":2}),
                 )
                 .unwrap(),
             )

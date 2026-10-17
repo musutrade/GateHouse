@@ -27,6 +27,8 @@ pub struct FlowConfig {
     #[serde(default)]
     pub report_templates: ReportTemplatesConfig,
     #[serde(default)]
+    pub report_history: ReportHistoryConfig,
+    #[serde(default)]
     pub execution: ExecutionConfig,
     #[serde(default)]
     pub notifications: NotificationsConfig,
@@ -61,6 +63,14 @@ impl ExecutionConfig {
             .unwrap_or(Self::DEFAULT_MAX_PARALLEL)
             .clamp(1, Self::MAX_ALLOWED_PARALLEL)
     }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ReportHistoryConfig {
+    /// Opt-in local archive directory, relative to the repository and separate from reports/templates.
+    #[serde(default)]
+    pub archive: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]

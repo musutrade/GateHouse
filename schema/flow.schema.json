@@ -67,6 +67,16 @@
     "project": {
       "$ref": "#/definitions/ProjectConfig"
     },
+    "report_history": {
+      "default": {
+        "archive": null
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/ReportHistoryConfig"
+        }
+      ]
+    },
     "report_templates": {
       "default": {
         "junit": null,
@@ -702,6 +712,20 @@
         },
         "name": {
           "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReportHistoryConfig": {
+      "type": "object",
+      "properties": {
+        "archive": {
+          "description": "Opt-in local archive directory, relative to the repository and separate from reports/templates.",
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "additionalProperties": false

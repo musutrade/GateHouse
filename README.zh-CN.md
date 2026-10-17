@@ -831,3 +831,36 @@ Linux Test job 的下载样例是经真实发布器生成的 **1000 个 subject 
 `test_result.html`。Action 另返回 `artifact-id` 与 `artifact-url`；需要仓库读取权限，
 链接随保留期或删除失效，不是在线托管网页。上传/校验失败会使该集成步骤失败，
 Core 原有 required gates 与退出状态仍保持权威；移除显式上传步骤即可关闭交付。
+
+### 自动归档已完成的本地报告
+
+在 `flow.toml` 中配置即可启用，默认关闭：
+
+```toml
+[report_history]
+archive = ".harness-gate/history"
+```
+
+目录必须是规范仓库相对路径，与 reports/template 根互不包含。已完成的 PASS/FAIL publication
+先完整校验、私下复制、再次校验，再保存为不可变快照；自动生成现有
+`harness-report-history/v2` 格式的 `index.json`，可通过
+`report-history --input .harness-gate/history/index.json` 配合既有 policy/subject/metric 与
+时间窗口参数查询。不完整证据
+不归档；副本与原 invocation 文件独立，正常报告清理后仍可查询。不增加 JSONL 格式、新评分、
+推断债务变化或 Core baseline/ratchet 重算。
+
+归档含 project 标记、`snapshots/` 中的完整报告与 pin 记录、自动索引，以及排除全部归档内容的
+本地 `.gitignore`。它保存本地原始证据，不是 HTML artifact 上传目录；不会自动上传。
+删除配置只关闭后续归档，不删除已保存快照、不改变原报告保留策略。
+
+每次更新验证所有已有快照和旧索引 pin，再原子替换索引；同一 publication 重试幂等。
+快照完成、索引更新前发生中断时，下次更新会恢复该完整快照。已索引内容被改动/删除、重复
+invocation、坏索引、外来文件、符号链接或项目身份混合均拒绝，不重新计算 pin 掩盖问题。
+协作锁繁忙或崩溃后遗留锁会明确报错，不抢锁；请核实进程与 `.pending-*` 后再人工清理
+遗留状态，未知/未完成内容保留供诊断。不要并发手工编辑归档；这不是对抗外部写入者的隔离边界。
+
+最多 300 个快照、快照文件共 1 GiB、machine reports 共 64 MiB；单快照最多 256 MiB、8192 个
+文件系统条目、32 层目录，并保留现有报告/控制文件/索引上限。满额提示换新目录，不自动删除历史。
+更新读取既有归档证据，IO 成本随有界数据量增长，不宣称满额归档也满足 5 秒目标。
+归档失败返回报告交付错误，保留已完成的原始报告和 Core 决策；不会把失败门禁变成功。
+Engineering Policy 和 required gates 不变。
