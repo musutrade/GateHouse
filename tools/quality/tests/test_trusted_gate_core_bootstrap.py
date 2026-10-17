@@ -40,7 +40,7 @@ class CoreBootstrapTests(unittest.TestCase):
         self.B.git = lambda *args: BUILD.CORE_TREE.encode()
         self.lock = b'exact frozen lock'
         self.binding = {'lock_sha256': hashlib.sha256(self.lock).hexdigest()}
-        self.host = {'cc': '/usr/bin/reviewed-cc', 'ar': '/usr/bin/reviewed-ar'}
+        self.host = {'cc': '/usr/bin/reviewed-cc', 'ar': '/usr/bin/reviewed-ar', 'env': '/usr/bin/reviewed-env'}
         self.destination = self.root / 'build'
         self.order = []
 
@@ -179,9 +179,10 @@ class CoreBootstrapTests(unittest.TestCase):
         for arg in ('--property=User=995', '--property=Group=981', '--property=NoNewPrivileges=yes',
                     '--property=PrivateNetwork=yes', '--property=KillMode=control-group',
                     '--property=CapabilityBoundingSet=', '--property=ReadWritePaths=/work/output',
-                    '--property=WorkingDirectory=/work/source', '--property=TemporaryFileSystem=/work'):
+                    '--property=WorkingDirectory=/work/source',
+                    '--property=TemporaryFileSystem=/work:mode=0755,nosuid,nodev'):
             self.assertIn(arg, command)
-        self.assertEqual(command[command.index('--')+1:command.index('--')+4], ['/usr/bin/env', '-i',
+        self.assertEqual(command[command.index('--')+1:command.index('--')+4], ['/usr/bin/reviewed-env', '-i',
                          'PATH=/opt/gatehouse/toolchain/bin:/usr/bin:/bin'])
         self.assertEqual(command[-9:], ['/opt/gatehouse/toolchain/bin/cargo', 'build',
             '--release', '--locked', '--offline', '--manifest-path', '/work/source/Cargo.toml', '--bin', 'harness-gate'])
@@ -310,13 +311,13 @@ class CoreBootstrapTests(unittest.TestCase):
             with patch.object(BUILD.grp,'getgrall',return_value=[group,privileged]), self.assertRaises(ValueError):
                 BUILD.worker_identity(self.B)
         files={'/usr/bin/'+name:hashlib.sha256(b'reviewed').hexdigest() for name in
-               ('git','env','systemd-run','systemctl','pgrep','reviewed-cc','reviewed-ar')}
+               ('git','systemd-run','systemctl','pgrep','reviewed-cc','reviewed-ar','reviewed-env')}
         value={'schema':'gatehouse-core-build-host/v1','files':files,**self.host}
         raw=BOOT.canonical(value)
-        self.B.read=lambda path,limit:raw if str(path)=='/host.json' else b'reviewed'
-        self.assertEqual(BUILD.host_inputs(self.B,'/host.json',hashlib.sha256(raw).hexdigest()),value)
-        self.B.read=lambda path,limit:raw if str(path)=='/host.json' else b'changed'
-        with self.assertRaisesRegex(ValueError,'host build input differs'):
+        self.B.read=lambda path,limit:raw
+        with patch.object(BUILD,'host_file',return_value=b'reviewed'):
+            self.assertEqual(BUILD.host_inputs(self.B,'/host.json',hashlib.sha256(raw).hexdigest()),value)
+        with patch.object(BUILD,'host_file',return_value=b'changed'), self.assertRaisesRegex(ValueError,'host build input differs'):
             BUILD.host_inputs(self.B,'/host.json',hashlib.sha256(raw).hexdigest())
 
     def test_core_cli_rejects_actual_nonroot_before_creating_worker_state(self):
@@ -330,6 +331,16 @@ class CoreBootstrapTests(unittest.TestCase):
         self.assertEqual(result.returncode,1)
         self.assertIn('Core bootstrap blocked (ValueError)',result.stderr)
         self.assertFalse(self.destination.exists())
+
+    def test_host_tools_require_protected_ownership_but_accept_real_system_binaries(self):
+        self.assertTrue(BUILD.host_file('/usr/bin/git'))
+        path=self.root/'untrusted-tool';path.write_bytes(b'untrusted')
+        original=Path.lstat
+        def untrusted(item):
+            values=list(original(item));values[4]=1000
+            return os.stat_result(values)
+        with patch.object(Path,'lstat',untrusted), self.assertRaisesRegex(ValueError,'not Root-protected'):
+            BUILD.host_file(path)
 
 
 if __name__ == '__main__':

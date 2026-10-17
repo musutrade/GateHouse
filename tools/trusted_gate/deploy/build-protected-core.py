@@ -30,19 +30,38 @@ def json_pin(B, path, expected, limit=1024 * 1024):
     return value
 
 
+def host_file(path):
+    """OS-managed command hardlinks are allowed; input/code hardlinks are not."""
+    path = Path(path)
+    for item in (path, *path.parents):
+        info = item.lstat()
+        if info.st_uid != 0 or stat.S_ISLNK(info.st_mode) or info.st_mode & 0o022:
+            raise ValueError('host build file is not Root-protected')
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), 'rb') as source:
+        before = os.fstat(source.fileno())
+        if not stat.S_ISREG(before.st_mode) or before.st_size > MAX_BINARY:
+            raise ValueError('host build file exceeds budget or type')
+        raw = source.read(MAX_BINARY + 1)
+        fields = lambda info: (info.st_dev, info.st_ino, info.st_uid, info.st_gid, info.st_mode,
+                              info.st_nlink, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+        if len(raw) != before.st_size or fields(before) != fields(os.fstat(source.fileno())) or fields(before) != fields(path.lstat()):
+            raise ValueError('host build file changed while reading')
+    return raw
+
+
 def host_inputs(B, path, pin):
     value = json_pin(B, path, pin)
-    B.need(set(value) == {'schema', 'files', 'cc', 'ar'} and value['schema'] == 'gatehouse-core-build-host/v1',
+    B.need(set(value) == {'schema', 'files', 'cc', 'ar', 'env'} and value['schema'] == 'gatehouse-core-build-host/v1',
            'unsupported Core build host recipe')
     files = value['files']
-    required = {'/usr/bin/git', '/usr/bin/env', '/usr/bin/systemd-run', '/usr/bin/systemctl', '/usr/bin/pgrep',
-                str(B.path_operand(value['cc'])), str(B.path_operand(value['ar']))}
+    required = {'/usr/bin/git', '/usr/bin/systemd-run', '/usr/bin/systemctl', '/usr/bin/pgrep',
+                *(str(B.path_operand(value[name])) for name in ('cc', 'ar', 'env'))}
     B.need(isinstance(files, dict) and required <= files.keys() and len(files) <= 64,
            'pin reviewed host compiler and management tools')
     total = 0
     for name, expected in files.items():
         B.path_operand(name)
-        raw = B.read(name, MAX_BINARY)
+        raw = host_file(name)
         total += len(raw)
         B.need(total <= 512 * 1024 * 1024 and isinstance(expected, str)
                and hashlib.sha256(raw).hexdigest() == expected, 'host build input differs from reviewed pin')
@@ -228,7 +247,7 @@ def command(B, source, inputs, worker, cargo_config, unit, host):
         'ProtectProc': 'invisible', 'ProcSubset': 'pid', 'KillMode': 'control-group',
         'RuntimeMaxSec': str(TIMEOUT), 'TimeoutStopSec': '15', 'MemoryMax': str(8 * 1024**3),
         'TasksMax': '512', 'LimitFSIZE': str(1024**3), 'WorkingDirectory': '/work/source',
-        'TemporaryFileSystem': '/work', 'UnsetEnvironment': 'LD_PRELOAD LD_LIBRARY_PATH',
+        'TemporaryFileSystem': '/work:mode=0755,nosuid,nodev', 'UnsetEnvironment': 'LD_PRELOAD LD_LIBRARY_PATH',
         'BindReadOnlyPaths': str(source) + ':/work/source ' + str(inputs / 'tools/toolchain') +
             ':/opt/gatehouse/toolchain ' + str(inputs / 'dependencies/sources') + ':/work/dependencies/sources ' +
             str(cargo_config) + ':/work/output/cargo-home/config.toml',
@@ -241,7 +260,7 @@ def command(B, source, inputs, worker, cargo_config, unit, host):
         'CC': host['cc'], 'AR': host['ar'], 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER': host['cc']}
     argv = ['/usr/bin/systemd-run', '--quiet', '--wait', '--pipe', '--collect', '--unit=' + unit]
     argv += ['--property=' + key + '=' + value for key, value in properties.items()]
-    return [*argv, '--', '/usr/bin/env', '-i', *[key + '=' + value for key, value in environment.items()],
+    return [*argv, '--', host['env'], '-i', *[key + '=' + value for key, value in environment.items()],
             '/opt/gatehouse/toolchain/bin/cargo', 'build', '--release', '--locked', '--offline',
             '--manifest-path', '/work/source/Cargo.toml', '--bin', 'harness-gate'], environment
 
