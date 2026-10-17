@@ -329,21 +329,20 @@ mod tests {
     #[test]
     fn consumed_metadata_matches_pinned_manifest_bytes() {
         let root = tempfile::tempdir().unwrap();
+        // Production passes the canonicalized invocation directory; macOS temp
+        // roots contain a /var symlink ancestor, so mirror that shape here.
+        let path = root.path().canonicalize().unwrap();
         let bytes = br#"{"commit":"original"}"#;
-        fs::write(root.path().join("invocation.json"), bytes).unwrap();
+        fs::write(path.join("invocation.json"), bytes).unwrap();
         let manifest=serde_json::to_vec(&serde_json::json!({"artifacts":[{"path":"invocation.json","size_bytes":bytes.len(),"sha256":digest(bytes)}]})).unwrap();
         assert_eq!(
-            bound_metadata(root.path(), &manifest).unwrap()["commit"],
+            bound_metadata(&path, &manifest).unwrap()["commit"],
             "original"
         );
-        fs::write(
-            root.path().join("invocation.json"),
-            br#"{"commit":"modified"}"#,
-        )
-        .unwrap();
-        assert!(bound_metadata(root.path(), &manifest).is_err());
-        fs::write(root.path().join("invocation.json"), b"{}").unwrap();
-        assert!(bound_metadata(root.path(), &manifest).is_err());
+        fs::write(path.join("invocation.json"), br#"{"commit":"modified"}"#).unwrap();
+        assert!(bound_metadata(&path, &manifest).is_err());
+        fs::write(path.join("invocation.json"), b"{}").unwrap();
+        assert!(bound_metadata(&path, &manifest).is_err());
     }
     #[test]
     fn schema_specific_index_byte_and_sample_bounds() {
