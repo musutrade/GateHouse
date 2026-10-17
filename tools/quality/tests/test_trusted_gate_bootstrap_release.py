@@ -50,7 +50,10 @@ class BootstrapReleaseTests(unittest.TestCase):
         for name in R.old_sources():self.payload['before/'+name]=('old:'+name).encode()
         for name in R.source_map():
             old=self.payload.get('before/'+name)
-            self.payload['files/'+name]=old if R.source_map()[name][2]=='retain' else ('new:'+name).encode()
+            self.payload['files/'+name]=old if R.source_map()[name][2]=='retain' else (
+                self.payload['helpers/'+name] if name in BOOT.FILES else ('new:'+name).encode())
+        self.payload['files/'+R.LINUX.FLOW]=(ROOT/R.LINUX.FLOW).read_bytes()
+        self.payload['files/'+R.LINUX.INVENTORY]=(ROOT/R.LINUX.INVENTORY).read_bytes()
         old={name:self.payload['before/'+name] for name in R.old_sources()}
         pin=hashlib.sha256(BOOT.canonical(R.rows(old))).hexdigest()
         guard=patch.object(R,'OLD_INPUTS',pin);guard.start();self.addCleanup(guard.stop)
@@ -101,7 +104,7 @@ class BootstrapReleaseTests(unittest.TestCase):
 
     def test_exact_source_release_is_inspected_without_extraction_or_core(self):
         payload,result=self.decode()
-        self.assertEqual(result['members'],49+len(BOOT.FILES))
+        self.assertEqual(result['members'],4+len(R.old_sources())+len(R.source_map())+len(BOOT.FILES))
         self.assertFalse(result['administrator_ready']);self.assertTrue(result['source_binding_required'])
         self.assertFalse(any(name.endswith('/harness-gate') for name in payload))
         self.assertFalse((self.root/'files').exists())

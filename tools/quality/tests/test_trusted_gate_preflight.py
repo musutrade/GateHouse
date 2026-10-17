@@ -52,13 +52,13 @@ class PreflightTests(unittest.TestCase):
         self.B.git = lambda source,*args: b'f'*40+b'\n' if args[0]=='rev-parse' else b''
         self.B.frozen_lock = lambda *args: b'locked fixture'
         self.payload = {P.member_name(row[0]): ('source:'+name).encode()
-                        for name,row in R.source_map(R.OLD_MODULES).items()}
+                        for name,row in R.old_source_map().items()}
         self.payload.update({'source.bundle': b'accepted bundle', 'bin/harness-gate': b'accepted release binary'})
         self.payload['metadata.json'] = BOOT.canonical({'repository': P.REPOSITORY, 'head': P.HEAD,
             'base_at_packaging': R.BASE, 'coverage_acceptance': 'transition', 'core_profile': 'release',
             'release_incremental': False, 'worker_git_history_probe': True,
             'core_build': {'sha256': P.digest(self.payload['bin/harness-gate'])}})
-        references = {name: self.payload[P.member_name(row[0])] for name,row in R.source_map(R.OLD_MODULES).items()}
+        references = {name: self.payload[P.member_name(row[0])] for name,row in R.old_source_map().items()}
         for name in ('install-pilot.py', 'upgrade-history-pilot.py'):
             raw = b'raise AssertionError("old script must never execute")\n'
             (self.stage / name).write_bytes(raw); references[R.DEPLOY+name]=raw
@@ -67,12 +67,12 @@ class PreflightTests(unittest.TestCase):
         release_pin = patch.object(P, 'RELEASE', P.digest(self.archive))
         release_pin.start(); self.addCleanup(release_pin.stop)
         (self.stage / 'release.tar').write_bytes(self.archive)
-        for name,row in R.source_map(R.OLD_MODULES).items():
+        for name,row in R.old_source_map().items():
             self.put(row[0], self.payload[P.member_name(row[0])], row[1])
         self.put('/opt/gatehouse/bin/harness-gate', self.payload['bin/harness-gate'], 0o755)
         self.put('/etc/gatehouse/pilot.sudoers', self.payload['sudoers'], 0o440)
         self.pins = {path:P.digest(raw) for path,raw in {
-            **{row[0]:self.payload[P.member_name(row[0])] for row in R.source_map(R.OLD_MODULES).values()
+            **{row[0]:self.payload[P.member_name(row[0])] for row in R.old_source_map().values()
                if row[0].startswith(('/opt/gatehouse/', '/etc/gatehouse/policy/'))},
             '/opt/gatehouse/bin/harness-gate':self.payload['bin/harness-gate'],
             '/usr/bin/python3.14':b'host:/usr/bin/python3.14', '/usr/bin/git':b'host:/usr/bin/git'}.items()}

@@ -22,7 +22,7 @@ FILES = {ENTRY, 'tools/maintenance/restore_evidence.py', *(
         'stage-linux-inputs.py', 'run-linux-test.py', 'prepare-linux-workspace.py',
         'prepare-locked-directory.py', 'linux-tools.lock.json', 'build-protected-core.py',
         'preserve-pilot-state.py', 'prepare-linux-volume.py', 'stage-protected-source.py', 'bootstrap-release.py',
-        'preflight-history-pilot.py'))}
+        'preflight-history-pilot.py', 'linux-transition-policy.py'))}
 ENV = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'GIT_CONFIG_NOSYSTEM': '1',
        'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_TERMINAL_PROMPT': '0', 'GIT_OPTIONAL_LOCKS': '0'}
 

@@ -1,0 +1,48 @@
+version = 2
+[project]
+name = "gatehouse-linux-test-transition"
+default_profile = "full"
+hook_profile = "hook"
+[paths]
+reports = ".gatehouse-host/reports"
+audit_config = ".gatehouse-host/audit.toml"
+secrets_config = ".gatehouse-host/secrets.toml"
+[execution]
+parallel = false
+[policy]
+required_steps = ["pilot-boundary", "pilot-host-contracts", "linux-test"]
+[scope]
+unmatched = "all"
+[[scope.rules]]
+patterns = ["**"]
+components = ["pilot", "linux-test"]
+[[steps]]
+id = "pilot-boundary"
+label = "Live restricted worker boundary; transition only"
+component = "pilot"
+profiles = ["full", "hook"]
+program = "gatehouse-step"
+args = ["pilot-boundary"]
+cwd = "{root}"
+log = "pilot-boundary.log"
+timeout_secs = 60
+[[steps]]
+id = "pilot-host-contracts"
+label = "Host transport contracts; transition only"
+component = "pilot"
+profiles = ["full", "hook"]
+program = "gatehouse-step"
+args = ["pilot-host-contracts"]
+cwd = "{root}"
+log = "pilot-host-contracts.log"
+timeout_secs = 120
+[[steps]]
+id = "linux-test"
+label = "Complete Linux Test workload; remaining project coverage pending"
+component = "linux-test"
+profiles = ["full", "hook"]
+program = "gatehouse-step"
+args = ["linux-test"]
+cwd = "{root}"
+log = "linux-test.log"
+timeout_secs = 1320

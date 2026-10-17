@@ -64,7 +64,7 @@ def accepted_release(B, contract):
         references[contract.DEPLOY + name] = raw
     raw = B.read(B.owned(STAGE / 'release.tar', private=True), 256 * 1024**2)
     B.need(digest(raw) == RELEASE, 'accepted stage release changed')
-    mapping = contract.source_map(contract.OLD_MODULES)
+    mapping = contract.old_source_map()
     names = {member_name(row[0]) for row in mapping.values()} | {
         'bin/harness-gate', 'source.bundle', 'metadata.json'}
     payload = {}
@@ -90,7 +90,7 @@ def accepted_release(B, contract):
 
 def installed(B, contract, payload, builder):
     expected, pins = {}, {}
-    for source, (destination, mode, action) in contract.source_map(contract.OLD_MODULES).items():
+    for source, (destination, mode, action) in contract.old_source_map().items():
         expected[destination] = (payload[member_name(destination)], mode)
     expected['/opt/gatehouse/bin/harness-gate'] = (payload['bin/harness-gate'], 0o755)
     expected['/etc/gatehouse/pilot.sudoers'] = (payload['sudoers'], 0o440)

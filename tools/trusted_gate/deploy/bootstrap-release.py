@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -29,14 +30,18 @@ ORDER = ['authenticate-release-and-fixed659', 'verify-current-repository-and-bas
          'accept-transition-workload-and-recovery']
 EXTERNAL = ['official_archives', 'locked_crate_archives', 'test_data_archives',
             'onboarding_source', 'host_build_recipe', 'volume_tool_recipe']
+SPEC = importlib.util.spec_from_file_location('bootstrap_linux_transition_policy',
+    Path(__file__).with_name('linux-transition-policy.py'))
+LINUX = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(LINUX)
 
 
-def source_map(modules=MODULES):
+def _source_map(modules, policy):
     values = {'tools/trusted_gate/' + name + '.py': ('/opt/gatehouse/trusted_gate/' + name + '.py', 0o644, 'replace')
               for name in modules}
     values.update({DEPLOY + name: ('/opt/gatehouse/bin/' + name, 0o755, 'replace')
                    for name in ('gatehouse-control', 'pilot-probe.py')})
-    values.update({DEPLOY + 'pilot.flow.toml': ('/etc/gatehouse/policy/flow.toml', 0o644, 'replace'),
+    values.update({DEPLOY + policy: ('/etc/gatehouse/policy/flow.toml', 0o644, 'replace'),
                    DEPLOY + 'gatehouse-step': ('/etc/gatehouse/policy/gatehouse-step', 0o755, 'replace'),
                    'tools/harness-gate/presets/empty.audit.toml': ('/etc/gatehouse/policy/audit.toml', 0o644, 'replace'),
                    'tools/harness-gate/presets/default.secrets.toml': ('/etc/gatehouse/policy/secrets.toml', 0o644, 'replace'),
@@ -45,8 +50,20 @@ def source_map(modules=MODULES):
     return values
 
 
+def old_source_map():
+    return _source_map(OLD_MODULES, 'pilot.flow.toml')
+
+
+def source_map():
+    values = _source_map(MODULES, 'linux-transition.flow.toml')
+    values[LINUX.INVENTORY] = ('/etc/gatehouse/policy/linux-transition.json', 0o644, 'replace')
+    for name in ('run-linux-test.py', 'prepare-linux-workspace.py'):
+        values[DEPLOY + name] = ('/opt/gatehouse/linux-test/' + name, 0o644, 'replace')
+    return values
+
+
 def old_sources():
-    return set(source_map(OLD_MODULES)) | {DEPLOY + 'install-pilot.py', DEPLOY + 'upgrade-history-pilot.py'}
+    return set(old_source_map()) | {DEPLOY + 'install-pilot.py', DEPLOY + 'upgrade-history-pilot.py'}
 
 
 def metadata(head):
@@ -55,7 +72,7 @@ def metadata(head):
             'old_release_sha256': OLD_RELEASE, 'core_tree': CORE_TREE,
             'core_provenance': 'protected-worker-build-required', 'core_binary_included': False,
             'core_destination': '/opt/gatehouse/bin/harness-gate', 'coverage_acceptance': 'transition',
-            'policy_template': 'pilot-only-not-full-project', 'external_inputs_required': EXTERNAL,
+            'policy_template': 'linux-test-transition-not-full-project', 'external_inputs_required': EXTERNAL,
             'required_migration_order': ORDER, 'current_remote_base_verified': False,
             'captured_core_policy_checked': False, 'administrator_ready': False,
             'production_gate_enabled': False}
@@ -66,11 +83,15 @@ def rows(payload):
 
 
 def plan(payload):
+    before = {destination: name for name, (destination, mode, action) in old_source_map().items()}
+    current = source_map()
+    if len(before) != len(old_source_map()) or len({row[0] for row in current.values()}) != len(current):
+        raise ValueError('ambiguous installed destination')
     return {name: {'destination': destination, 'mode': mode, 'action': action,
-                   'before_sha256': hashlib.sha256(payload['before/' + name]).hexdigest()
-                   if name in source_map(OLD_MODULES) else None,
+                   'before_sha256': hashlib.sha256(payload['before/' + before[destination]]).hexdigest()
+                   if destination in before else None,
                    'after_sha256': hashlib.sha256(payload['files/' + name]).hexdigest()}
-            for name, (destination, mode, action) in source_map().items()}
+            for name, (destination, mode, action) in current.items()}
 
 
 def json_value(B, raw):
@@ -98,6 +119,7 @@ def validate(B, payload, code, manifest_raw):
            'accepted659 source inventory differs')
     B.need(all(action != 'retain' or payload['files/' + name] == payload['before/' + name]
                for name, (destination, mode, action) in source_map().items()), 'retained mount/delegation template changed')
+    LINUX.validate(B, payload['files/' + LINUX.FLOW], payload['files/' + LINUX.INVENTORY])
     manifest = json_value(B, payload['payload-manifest.json'])
     expected = {'schema': 'gatehouse-bootstrap-payload/v1',
                 'files': rows({name: raw for name, raw in payload.items() if name != 'payload-manifest.json'}),

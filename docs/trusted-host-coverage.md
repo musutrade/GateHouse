@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has sixteen files:
-the importer, Core builder, preservation, volume, source-staging, release-contract and preflight libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has seventeen files:
+the importer, Core builder, preservation, volume, source-staging, release-contract, preflight and Linux-policy libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -829,8 +829,9 @@ every proposed new file and helper byte to the protected staged Git revision.
 Rehashing an operator payload cannot satisfy that Git binding. The archive records
 the required preservation/build/capture/reverification-before-revoke/retire order;
 the executable transaction/recovery implementation remains separate work. Its
-policy is explicitly a pilot-only template, with external archive/data/host-recipe
-inputs still required, remote-base and captured-Core policy checks pending,
+first policy was explicitly a pilot-only template. The Linux transition template
+below replaces that candidate input; external archive/data/host-recipe inputs
+and captured-Core policy checks remain required, with
 `administrator_ready=false` and production disabled.
 
 Fifteen new release-contract regressions bring the focused suite to 264 tests.
@@ -885,11 +886,62 @@ mutation detection and lease ownership; Root ownership, accounts, credentials,
 kernel and remote responses are replaced. Separately, the retained actual 659
 release's 24 members and fixed source-reference aggregate parsed successfully as
 UID1000 with Root ownership replaced. Neither experiment is live Root preflight
-or App acceptance. The current helper closure gives the source archive 65 members;
-it still contains no Core binary. Explicit Linux transition policy, complete
+or App acceptance. At `0b8d27e`, the helper closure gave the source archive 65 members;
+it contained no Core binary. The Linux template below is a separate candidate;
+complete
 ingress/storage/transaction composition, installation/startup/recovery and live
 acceptance remain required before an administrator offer. Installed 659, existing
 Apps/rules and the normal pilot package are unchanged.
+
+### Candidate Linux transition policy
+
+`linux-transition.flow.toml` adds the complete Linux Test adapter to both `full`
+and `hook`, alongside the two existing pilot steps. All three external steps
+remain required, use the pinned `gatehouse-step` launcher, and run serially;
+the normal Core secret scan and architecture audit remain mandatory. This is one
+candidate coverage cell, with other Linux quality jobs and native macOS/Windows
+coverage still pending. Neither the profile name nor a completed Linux workload
+can promote `coverage_acceptance` from transition or authorize publication.
+
+`linux-transition-policy.py` is the seventeenth authenticated helper. Its pure
+contract validates the flow and canonical `linux-transition.policy.json` together,
+including requiredness, profiles, launcher, report paths and the flow digest.
+The inventory specifies fixed history/head/base/receipt/input-manifest arguments,
+the existing 85 named capture paths, and required readonly runtime, directory
+source, Cargo configuration, test-data archive and onboarding bindings. It never
+enumerates onboarding scratch or captures disposable keys. Cache input templates
+cover the lockfile, Cargo/nextest configuration, workflow and test-data manifest;
+actual toolchain pins, cache identity, verified host bindings and full host
+configuration must still be composed from reviewed inputs. The proposed 1,800 s
+outer, 1,260 s worker, 8 GiB memory, 1 GiB file and 16 GiB storage bounds are
+candidate limits, not measured host resource acceptance. Publication stays blocked,
+`host_configuration_complete=false`, `administrator_ready=false` and production
+disabled. A policy template cannot be used as a complete host configuration.
+
+The bootstrap source map keeps the immutable 659 source map and 23-source
+aggregate separate. The new flow's source name differs from `pilot.flow.toml`,
+but its before hash is resolved by the same installed destination. This preserves
+the old-file proof during template replacement. Duplicate old/new destinations
+are rejected. The candidate has 25 proposed file inputs: the new flow and policy
+inventory, the two Linux worker libraries, the current controller and existing
+wrappers/presets. Old mount and sudo delegation templates remain byte-identical.
+With seventeen helpers, 23 old references and four metadata/bundle entries, the
+source-only archive has 69 members and still no Core binary. The normal 25-file
+pilot package and accepted 659 installation remain unchanged.
+
+Twelve new policy/mapping regressions bring the focused suite to 297 tests.
+They reject weakened requirements, profiles, builtins, launchers, paths, capture
+or input bindings, rehashed policy changes, authority promotion and ambiguous
+destinations. The already built ordinary-user release Core accepted the actual
+new flow and produced both `full --all` and `hook --all` plans with the same five
+selected nodes: two builtins and all three external steps. Those commands only
+validated configuration and planned execution. The 85 selected names match the
+earlier complete transport selection, rather than reducing retained evidence.
+No Linux workload was rerun and no Root/systemd/UID995 acceptance, deployment,
+App/rule migration or performance improvement is inferred. Protected input
+bindings, complete configuration, captured-Core checks, ingress/storage,
+transaction/startup/recovery and the remaining coverage still precede any
+administrator offer or issue closure.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
