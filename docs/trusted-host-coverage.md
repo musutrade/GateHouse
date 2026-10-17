@@ -121,6 +121,46 @@ The adapter is not installed or selected by the pilot policy, is not included in
 the fixed fa18 upgrade, and does not close the complete Linux Test row. The other
 tests, onboarding, fixture/toolchain preparation and native cells remain pending.
 
+### Candidate disposable Linux workspace
+
+[prepare-linux-workspace.py](../tools/trusted_gate/deploy/prepare-linux-workspace.py)
+is an unprivileged input-preparation adapter. It accepts the frozen source and
+the sanitized history view, exact candidate/base identities, a reviewed manifest
+digest and an already populated archive cache. A root invocation is rejected.
+The protected caller supplies the pins and mounts; Agent-selected arguments are
+not protected configuration or deployment acceptance.
+
+It creates a fresh Git working copy outside those inputs, with an empty template,
+no remotes/alternates, disabled hooks and no forwarded Agent Git environment.
+Only the fixed candidate/base objects come from the sanitized local history.
+Before writing, it checks source modes/count/size and the restoration budget.
+It then reuses the existing project-owned `tools/maintenance/test_data.py` with
+`--offline`, restoring every manifest group in the disposable copy. It does not
+replace the existing archive validator or acquire missing archives implicitly.
+The adapter independently hashes every restored member and every tracked file
+against the original Git blob/mode inventory. A worker-writable Git index and
+`skip-worktree` flags cannot hide changed source bytes. Core retains final quality
+authority; engineering-policy semantics are unchanged.
+
+Missing/corrupt needed cached data, changed pins/input, unsafe history configuration,
+linked paths, oversized restoration or an existing/partial workspace blocks
+preparation. Failure records remain outside the copy; no cleanup, resume or old
+PASS reuse occurs. A `prepared` record is only an input inventory. A future
+complete-job adapter must execute every applicable command, verify its complete
+outputs and revalidate the tracked blob/mode inventory after the job.
+
+The operator-domain input experiment at `f555690` restored and verified all three
+existing manifest groups: 1,480 files, 49,853,339 unpacked bytes, from 36,845,164
+archive bytes. Its initial missing `quality-history` cache entry remained an
+explicit offline failure. The exact pinned release asset was then separately
+downloaded and checked before repeating offline restoration; the worker flow has
+no download fallback. Both Node integration suites and locked offline Cargo
+`metadata --no-deps` also completed in that disposable operator workspace. These
+are readiness measurements, not full Rust tests, onboarding, protected worker
+execution or accepted Linux coverage. The installed `659803a` pilot, package
+inventory, policy, required rules and workflow triggers are unchanged. This
+candidate adapter still needs its own protected deployment review.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the
