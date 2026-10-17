@@ -484,6 +484,59 @@ persistent cache and evidence remain separate; capacity availability alone is no
 quota approval or protected-worker acceptance. No old installer/fa18 upgrader is
 valid for this transition. All matrix owners remain unassigned until live checks.
 
+### Candidate protected runtime bindings
+
+The controller candidate accepts an optional reviewed `runtime` object with
+`root`, `inventory` and `tool_lock_sha256`, plus an optional pinned `cargo_config`
+file. Every path and parent must be Root-owned, free of links and outside writable
+source, scratch, cache and submission domains. Mount operands reject whitespace,
+relative traversal, colons and systemd escape/specifier characters. Raw registry
+or Git input mounts cannot be combined with the readonly Cargo configuration.
+Without these fields the pilot's existing input selection remains unchanged.
+
+The runtime inventory must be pinned in `protected_files` and match the official
+payload schema, exact canonical metadata, file/directory inventory and reviewed
+tool-lock digest. `runtime.py` streams every actual payload file to compare its
+size, SHA-256, readonly mode, single-link inode and identity before/after reading.
+Unexpected or missing files, directories, links, special files, writable modes,
+malformed rows and changed metadata block execution. Separate runtime limits are
+512 MiB per file, 6 GiB total, 150,000 files/directories and 64 MiB metadata; the
+ordinary trusted-file limit remains 128 MiB. Policy applicability rechecks the
+payload before validation and publication/reconciliation; the worker launcher
+also verifies it before selecting a cache or starting a command. A protected
+inventory is a reviewed input pin, not archive provenance by itself: a future
+Root importer must independently validate the official archives and payload
+before establishing ownership and approving these pins.
+
+The approved runtime mounts readonly at `/opt/gatehouse/toolchain`, using the
+existing fixed worker PATH. The approved Cargo config mounts readonly at
+`/work/output/cargo-home/config.toml`. PATH, loader, Cargo-home and Git overrides
+remain forbidden. A step can explicitly opt into `run_arguments = true` to
+replace only whole `@gatehouse:head@`, `@gatehouse:base@` and
+`@gatehouse:receipt@` tokens. The receipt is the positive decimal value of the
+canonical journal UUIDv4, never an Actions-run claim. An additional
+`@gatehouse:test-data-sha256@` token reads only the fixed frozen
+`test-data/manifest.json`. Unknown/embedded tokens, malformed UUIDs and mixed
+journal/input heads block execution. Cache compatibility is selected from the
+stable reviewed argument template and actual tool/dependency/configuration
+inputs before per-run substitution; changing the head or UUID alone does not
+discard compatible compiled artifacts. Every invocation still requires fresh
+quality execution and evidence.
+
+Fifteen new regressions bring the focused suite to 165 passing tests, including
+stream mutation, payloads above 128 MiB, publication invalidation, mount guards
+and cache/render ordering. At code `23e062c`, an ordinary UID1000 probe streamed
+all 175 files / 1,020,148,204 bytes in 3.601 seconds and launched all six tools
+at the fixed mount location with networking limited to loopback and original
+homes hidden. Chmod on the runtime and Cargo config returned EROFS; the rendered
+head/base/receipt/manifest arguments matched the journal fixture. This probe
+replaces Root-ownership checks only for developer fixtures and provides no
+Root/systemd/UID995 or full-workload acceptance. The release package explicitly
+includes and pins the new runtime module. The
+installed `659803a` pilot and its outstanding evidence remain untouched, and its
+old fa18 upgrader is still unsuitable for this candidate. Engineering-policy
+authority, thresholds, coverage requiredness and evidence budgets are unchanged.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the
