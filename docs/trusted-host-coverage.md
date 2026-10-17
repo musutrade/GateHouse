@@ -598,6 +598,70 @@ storage, protected import, isolated Core build and actual UID995 execution.
 Engineering-policy authority, requiredness, thresholds and evidence limits remain
 unchanged.
 
+### Candidate isolated Core bootstrap
+
+The authenticated importer now offers a separate `build-core` action and includes
+`build-protected-core.py` in its eleven-file helper closure. Import completion
+also seals the tool and dependency inventory digests in the binding/control
+records. The builder requires these pins, matching retained source/head/base,
+the reviewed tool lock and a complete import record. Before and after a build it
+streams the actual tools, dependency sources/checksums and retained archives;
+rewriting an inventory cannot conceal modified inputs.
+
+Only the independently reviewed Core tree
+`a6918d6a7ff7fadc04170ff54aaac0db771763db` is eligible. The builder verifies tree
+and blob object identities and materializes a new readonly crate-only snapshot,
+with no parent repository Cargo configuration. The actual snapshot contains 316
+files / 2,748,319 bytes. Source content, readonly modes and complete inventory are
+checked again before binary capture. An explicit host recipe pins the resolved
+compiler, archiver, environment-cleaning program and management tools. OS-managed
+hardlinks are permitted only by the separate host-file reader, with Root-owned
+non-writable parents/inodes, stable file identity and reviewed byte hashes;
+links in imported data, helper code and source snapshots remain forbidden.
+
+The fixed command is `cargo build --release --locked --offline --bin harness-gate`
+with a fresh target, four build jobs and release incremental compilation disabled.
+It runs under UID995/GID981 with no privileged groups, capabilities, namespace
+creation or network access beyond loopback. `/work` is a fresh Root-owned tmpfs;
+source, tools, dependencies and Cargo config are readonly mounts, and only worker
+scratch is writable. An explicit `env -i` clears inherited variables before Cargo;
+the root-level Cargo configuration and operator homes/control paths are hidden.
+Candidate limits are 1,200 seconds, 8 GiB memory and 1 GiB per generated file;
+these are build-specific settings awaiting actual protected-worker measurement.
+
+The builder holds the existing controller lease and supports retaining a caller's
+already-held descriptor. This fixed migration requires the accepted 659 run and
+frozen slot to remain outstanding and idle throughout bootstrap. The upgrade must
+build and capture the replacement before revoking or retiring 659; a failed or
+interrupted bootstrap does not release its old source. Previous Core, worker and
+bootstrap units must be stopped before another build starts. Capture requires
+the build unit inactive/collected, an empty cgroup when present and no UID995
+processes. Timeout, nonzero exit, unknown stop state, source/tool/config drift or
+unsafe generated files retain blocked evidence and export no binary. Only after
+fresh checks does Root retain the fixed release binary with its source, host,
+input, command, profile and digest record. Generated Cargo binary hardlinks are
+accepted only at this capture boundary. Build completion grants no quality verdict.
+
+This is candidate code and ordinary-user compatibility work. No Root service,
+actual UID995 build, installer, accepted pilot, App or repository rule is changed.
+The fixed 659 preservation/upgrade, bounded filesystem, actual process/resource
+probes and full verification migration remain separate acceptance work.
+
+At producer code `27ac413`, the ordinary full-data input fixture completed in
+189.916 seconds and sealed both new inventory digests. At builder code `1f00a39`,
+the crate-only readonly snapshot compiled successfully in an ordinary UID1000
+namespace from a fresh target in 214.484 seconds, with release incremental disabled,
+the official tool prefix, directory sources and a readonly Cargo config. Pre/post
+checks of source, host recipe, tools, sources and retained archives took 10.538 /
+10.602 seconds and passed. The resulting 17,106,920-byte ordinary artifact has
+SHA-256 `1e7a342f45cbe5c82a915fc31f2a1c2441b01e8ad3e91bfc162da38916e66c95`;
+its version is `harness-gate 0.5.0` and the existing pilot full/hook configuration
+check passed. This is compilation compatibility, not Root/Systemd/UID995 capture
+or full Linux Test acceptance. Wrapper RSS is not a cgroup memory measurement and
+does not certify the candidate memory limit. The later fixed-659 slot/unit guards
+are covered separately by lifecycle regressions; the measured compile recipe is
+unchanged. Sixteen new bootstrap regressions bring the focused suite to 196 tests.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the

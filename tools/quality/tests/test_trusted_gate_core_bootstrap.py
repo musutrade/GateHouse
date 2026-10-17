@@ -3,6 +3,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import sqlite3
 from pathlib import Path
 import subprocess
 import sys
@@ -87,7 +88,7 @@ class CoreBootstrapTests(unittest.TestCase):
     def stopped(self, *args):
         self.order.append('stopped')
 
-    def build(self, lock_fd=None, process=None, stopping=None, checking=None):
+    def build(self, lock_fd=None, process=None, stopping=None, checking=None, slots=None):
         capture = BUILD.capture
         def captured(*args):
             self.order.append('capture')
@@ -95,6 +96,7 @@ class CoreBootstrapTests(unittest.TestCase):
         with patch.object(BUILD, 'CONTROL', self.control), patch.object(BUILD, 'UID', os.getuid()), \
              patch.object(BUILD, 'GID', os.getgid()), patch.object(BUILD.os, 'geteuid', return_value=0), \
              patch.object(BUILD, 'worker_identity'), patch.object(BUILD, 'idle'), \
+             patch.object(BUILD, 'pilot_slot',side_effect=slots), patch.object(BUILD, 'quiet_units'), \
              patch.object(BUILD, 'host_inputs', return_value=self.host), \
              patch.object(BUILD, 'imported_inputs', side_effect=checking or self.inputs), \
              patch.object(BUILD, 'source_snapshot', side_effect=self.snapshot), \
@@ -157,6 +159,13 @@ class CoreBootstrapTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'input changed'):
             self.build(checking=changed)
         self.assertNotIn('capture', self.order)
+        self.assertFalse((self.destination/'harness-gate').exists())
+
+    def test_retired_old_slot_after_build_blocks_binary_capture(self):
+        with self.assertRaisesRegex(ValueError,'old slot changed'):
+            self.build(slots=[None,ValueError('old slot changed')])
+        self.assertIn('stopped',self.order)
+        self.assertNotIn('capture',self.order)
         self.assertFalse((self.destination/'harness-gate').exists())
 
     def test_inherited_controller_lease_remains_open_and_wrong_descriptor_is_rejected(self):
@@ -341,6 +350,19 @@ class CoreBootstrapTests(unittest.TestCase):
             return os.stat_result(values)
         with patch.object(Path,'lstat',untrusted), self.assertRaisesRegex(ValueError,'not Root-protected'):
             BUILD.host_file(path)
+
+    def test_accepted_pilot_slot_is_retained_until_bootstrap_capture(self):
+        database=sqlite3.connect(self.control/'journal.sqlite3')
+        database.execute('CREATE TABLE runs(id TEXT,head TEXT,local TEXT,remote TEXT)')
+        database.execute('INSERT INTO runs VALUES(?,?,?,?)',(BUILD.PILOT_RUN,BUILD.PILOT_HEAD,'failed','pending'))
+        database.commit()
+        with patch.object(BUILD,'CONTROL',self.control):
+            BUILD.pilot_slot(self.B)
+            for local,remote in (('running','pending'),('passed','revoked'),('passed','merged')):
+                database.execute('UPDATE runs SET local=?,remote=?',(local,remote));database.commit()
+                with self.subTest(local=local,remote=remote), self.assertRaisesRegex(ValueError,'pilot slot'):
+                    BUILD.pilot_slot(self.B)
+        database.close()
 
 
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ import os
 from pathlib import Path, PurePosixPath
 import pwd
 import re
+import sqlite3
 import stat
 import subprocess
 import time
@@ -16,6 +17,8 @@ import uuid
 
 CORE_TREE = 'a6918d6a7ff7fadc04170ff54aaac0db771763db'
 CONTROL = Path('/srv/gatehouse/pilot/control')
+PILOT_HEAD = '659803a2f144926997e56d072c7fe8760d6ed176'
+PILOT_RUN = 'ce86a2a4-ff18-435f-bb5d-aafc313ceca6'
 UID, GID = 995, 981
 TIMEOUT = 1200
 MAX_BINARY = 128 * 1024 * 1024
@@ -220,6 +223,28 @@ def idle(B):
     B.need(result.returncode == 1 and not result.stdout and not result.stderr, 'executor still has active or unknown processes')
 
 
+def pilot_slot(B):
+    """Build before revocation: a crash must leave the old ingress slot occupied."""
+    journal = B.owned(CONTROL / 'journal.sqlite3', private=True)
+    database = sqlite3.connect('file:' + str(journal) + '?mode=ro', uri=True)
+    try:
+        rows = database.execute("SELECT id,head,local FROM runs WHERE remote NOT IN ('merged','revoked')").fetchall()
+    finally:
+        database.close()
+    B.need(len(rows) == 1 and rows[0][0] == PILOT_RUN and rows[0][1] == PILOT_HEAD
+           and rows[0][2] in ('passed', 'failed'), 'retain the accepted idle 659 pilot slot until Core capture completes')
+
+
+def quiet_units(B):
+    result = subprocess.run(['/usr/bin/systemctl', 'list-units', '--all', '--plain', '--no-legend', '--no-pager',
+        'gatehouse-core-*', 'gatehouse-step-*', 'gatehouse-bootstrap-*'],
+        env=B.ENV, capture_output=True, check=True, timeout=10)
+    for line in result.stdout.decode().splitlines():
+        fields = line.split()
+        B.need(len(fields) >= 4 and fields[2] in ('inactive', 'failed'), 'a previous trusted host unit is active or unknown')
+        stopped(B, fields[0])
+
+
 def stopped(B, unit):
     result = subprocess.run(['/usr/bin/systemctl', 'list-units', '--all', '--plain', '--no-legend',
         '--no-pager', unit], env=B.ENV, capture_output=True, check=True, timeout=10)
@@ -311,7 +336,9 @@ def build(B, helpers, manifest, manifest_pin, source, head, base, inputs, input_
                'Core bootstrap lease descriptor differs')
         fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         host = host_inputs(B, host_path, host_pin)
+        pilot_slot(B)
         worker_identity(B)
+        quiet_units(B)
         idle(B)
         binding = imported_inputs(B, inputs, input_pin, source, head, base, helpers)
         destination.mkdir(mode=0o700)
@@ -364,6 +391,7 @@ def build(B, helpers, manifest, manifest_pin, source, head, base, inputs, input_
             record['worker_stop_proven'] = True
             record.update(worker_seconds=time.monotonic() - started, exit_code=result.returncode)
             B.need(result.returncode == 0, 'Core release build failed')
+            pilot_slot(B)
             B.authenticate(helpers, manifest, manifest_pin)
             host_inputs(B, host_path, host_pin)
             imported_inputs(B, inputs, input_pin, source, head, base, helpers)
