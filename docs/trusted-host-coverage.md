@@ -579,6 +579,17 @@ safe archive filenames are treated as data and may contain spaces, brackets,
 at signs and percent signs. The original archive containment/link/type budgets
 remain unchanged. Fifteen new focused regressions bring the suite to 180 tests.
 
+At code `cb02c4e`, a full-data ordinary UID1000 fixture reconstructed all 175
+tool files / 1,020,148,204 bytes and 205 locked dependency packages / 8,720 files /
+194,025,034 bytes in 190.455 seconds. This fixture replaced the Root UID/ownership
+checks; archive hashes, private copies, extraction, full byte/mode inventories,
+Git-object comparisons and final source/code rechecks executed normally. It is
+not a real Root import, a worker test or quality acceptance. An earlier failed
+fixture is retained separately with its blocked record. The final candidate also
+rejects double-leading-slash entry/mount paths; its exact helper authentication,
+frozen-source lock binding and actual non-Root CLI denial were checked separately.
+No new full Linux Test run is claimed by this input-import observation.
+
 This candidate does not install a release, change the accepted `659803a` pilot,
 build the trusted Core, start a privileged worker or authorize delivery. The
 fixed 659 upgrade must still preserve and verify its complete source, journal and
