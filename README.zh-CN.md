@@ -775,3 +775,15 @@ python3 tools/quality/docs_consistency.py
 本地质量脚本测试和 CI 使用的精确采集命令见 [tools/quality/README.md](tools/quality/README.md)。覆盖率、函数风险和隔离的关键路径证据共同构成 PR 和 push 上的 `Required Quality Aggregate`。关键路径采集器现在每次采集只构建一次插桩二进制，默认最多并发运行两个隔离测试；`--jobs 1` 选择串行执行，`--jobs N` 接受 1 到 8 个 worker。基准数据见[采集基准](docs/benchmarks/critical-path-collection/README.md)。生成的 baseline 仍只是待审候选；采纳策略见 [ADR-0039](docs/adr/0039-required-risk-and-traceability-gates.md)。
 
 完整回归数据按需下载并按摘要缓存；基础源码构建无需下载证据。见[测试数据准备](test-data/README.md)。
+
+### 离线 HTML 的债务类别分布
+
+[现有 HTML 模板](tools/harness-gate/templates/verification.html)按组件、策略、测量系列、
+指标、值类型和单位，统计报告提供的 `ratchet.debt`：`none`、`new`、`improved`、
+`regressed`、`unchanged`、`resolved`。计数单位是报告门数，同一函数的不同策略分别计数。
+测量与证据/身份必须一致；缺失标注、测量不可用或证据不一致计入 **Not available**，
+未知标注计入 **Unrecognized annotation**，原始标注仍以转义、脱敏后的明细保留。
+不重新计算 ratchet、债务金额或现存债务总数；`none` 不代表门禁通过，`resolved` 与
+剩余债务分开。选择债务 panel 和类别可与搜索、状态、组件、复杂度范围及 CRAP 区间
+组合筛选；Reset 清除全部筛选。原始类别计数和权威 blockers 不随筛选变化。
+禁用 JavaScript 仍可读取所有计数与明细，工程政策及 Core 决策语义保持不变。

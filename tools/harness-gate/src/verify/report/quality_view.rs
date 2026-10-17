@@ -1,4 +1,5 @@
 //! Presentation-only grouping; eligibility never changes supplied gate decisions.
+pub(super) mod debt;
 mod distribution;
 mod ranking;
 use crate::report_evidence;
@@ -13,6 +14,7 @@ pub(super) struct View<'a> {
     pub panels: Vec<Panel>,
     rankings: Vec<ranking::Panel>,
     distributions: Vec<distribution::Panel>,
+    debts: Vec<debt::Panel>,
 }
 #[derive(Serialize)]
 pub(super) struct Group<'a> {
@@ -38,6 +40,7 @@ struct Row<'a> {
     range: Option<ranking::Range>,
     distribution: Option<distribution::Selection>,
     ratchet: &'a Value,
+    debt: Option<debt::Selection>,
 }
 #[derive(Serialize)]
 pub(super) struct Panel {
@@ -94,6 +97,7 @@ fn row(gate: &Value, index: usize) -> Row<'_> {
         range: None,
         distribution: None,
         ratchet: &record["ratchet"],
+        debt: None,
     }
 }
 pub(super) fn project(quality: &QualityResult) -> View<'_> {
@@ -101,12 +105,18 @@ pub(super) fn project(quality: &QualityResult) -> View<'_> {
     let mut panels: BTreeMap<(String, String, String), Vec<Cell>> = BTreeMap::new();
     let mut rankings = ranking::Builder::default();
     let mut distributions = distribution::Builder::default();
+    let mut debts = debt::Builder::default();
     let index = report_evidence::Index::new(&quality.inputs["project"], &quality.evidence);
     if let Some(gates) = quality.project_report["gates"].as_object() {
         for (position, (gate_id, gate)) in gates.iter().enumerate() {
             let component = text(&gate["record"]["component"]);
             let path = text(&gate["record"]["subject"]["path"]);
             let mut row = row(gate, position);
+            row.debt = Some(debts.push(
+                gate,
+                !matches!(quality.status, "measurement_error" | "not_collected"),
+                &index,
+            ));
             row.distribution = distributions.push(
                 gate,
                 !matches!(quality.status, "measurement_error" | "not_collected"),
@@ -141,6 +151,7 @@ pub(super) fn project(quality: &QualityResult) -> View<'_> {
     View {
         rankings: rankings.finish(),
         distributions: distributions.finish(),
+        debts: debts.finish(),
         groups: groups
             .into_iter()
             .map(|((component, path), rows)| Group {
