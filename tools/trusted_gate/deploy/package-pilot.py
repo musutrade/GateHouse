@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import subprocess
 import tarfile
+import tempfile
 
 
 def main():
@@ -58,6 +59,16 @@ def main():
     payload['metadata.json'] = json.dumps({'repository': 'musutrade/GateHouse', 'head': revision,
         'base_at_packaging': base, 'coverage_acceptance': 'transition', 'core_profile': 'release',
         'release_incremental': False, 'core_build': build}, sort_keys=True, indent=2).encode() + b'\n'
+    # Parseable TOML is not enough: the packaged policy must be accepted by the
+    # exact Core release that will execute it. This runs before release.tar exists.
+    with tempfile.TemporaryDirectory() as temporary:
+        project = Path(temporary)
+        host = project / '.gatehouse-host'
+        (host / 'reports').mkdir(parents=True)
+        for name in ('flow.toml', 'audit.toml', 'secrets.toml'):
+            (host / name).write_bytes(payload['policy/' + name])
+        subprocess.run([str(core), '--project-root', str(project),
+                        '--config', str(host / 'flow.toml'), 'config', 'check'], check=True)
     archive_path = args.output / 'release.tar'
     with tarfile.open(archive_path, 'x:') as archive:
         for name, data in sorted(payload.items()):

@@ -12,6 +12,7 @@ import stat
 import tarfile
 import sys
 import tempfile
+import tomllib
 import unittest
 import subprocess
 from types import SimpleNamespace
@@ -720,6 +721,16 @@ class PublicationEvidenceTests(unittest.TestCase):
                 (directory / name).write_bytes(b'changed')
                 with self.assertRaises(Blocked):
                     self.verify(executor, evidence)
+
+
+class PilotPolicyProfileTests(unittest.TestCase):
+    def test_default_and_hook_profiles_are_declared_by_the_step_inventory(self):
+        flow = tomllib.loads((ROOT / 'tools/trusted_gate/deploy/pilot.flow.toml').read_text(encoding='utf-8'))
+        declared = {profile for step in flow['steps'] for profile in step['profiles']}
+        self.assertIn(flow['project']['default_profile'], declared)
+        self.assertIn(flow['project']['hook_profile'], declared)
+        self.assertIn('full', declared)
+        self.assertIn('hook', declared)
 
 
 if __name__ == '__main__':
