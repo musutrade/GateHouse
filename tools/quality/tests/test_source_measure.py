@@ -379,6 +379,17 @@ fn both() {
                 transformed, _ = instrument(source.read_text(encoding="utf-8"), {'symbols': symbols})
                 self.assertEqual(len(self.inventory(transformed)['symbols']), len(symbols))
 
+    def test_hotspot_source_certification(self):
+        path = 'verify/report/quality_view/hotspots.rs'
+        self.assertIn(path, SOURCE_FILES)
+        inventory = json.loads((ROOT / 'tools/quality/production-source.json').read_text(encoding="utf-8"))
+        self.assertIn('src/' + path, inventory['boundaries']['verify']['files'])
+        source = ROOT / 'tools/harness-gate/src' / path
+        symbols = ast(source, self.binary)['symbols']
+        self.assertTrue(any(not symbol['test'] for symbol in symbols))
+        transformed, _ = instrument(source.read_text(encoding="utf-8"), {'symbols': symbols})
+        self.assertEqual(len(self.inventory(transformed)['symbols']), len(symbols))
+
     def test_verify_reporting_source_certification(self):
         crate = ROOT / 'tools/harness-gate'
         for path in ('verify/mod.rs', 'verify/quality.rs', 'verify/report.rs', 'failure.rs', 'config/import.rs'):

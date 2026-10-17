@@ -1087,6 +1087,25 @@ archives. An archive error returns a report-delivery error while preserving the
 already completed report and its original Core decision. It does not turn a
 failed gate into success. Engineering Policy and required gates are unchanged.
 
+### Hot spot lists
+
+The bundled offline report adds the highest supplied CRAP and lowest supplied line
+coverage observations beside the existing coverage map, complexity Top 10 and debt
+categories. Each list retains up to 10 original reported gates, separated by
+component, policy, measurement series, metric and value type. Exact comparisons
+preserve decimal/rational precision; ties use source path, subject name, subject ID
+and gate ID. Links open the corresponding detail row, including from the keyboard.
+Search/status/component filters hide original entries without promoting replacements.
+
+These lists do not create a severity threshold or aggregate overlapping functions
+into module coverage. Files can occur more than once. Missing or inconsistent
+evidence is unavailable, never zero. CRAP ranking fields are bounded to 128
+characters per decimal or rational field to bound pairwise comparison work;
+coverage uses the existing nonzero-total, safe-integer map range. Larger values
+remain in the details and the separately bounded CRAP distribution. Empty or
+unavailable-only panels remain readable, including without JavaScript. Original
+Core outcomes, requiredness, baselines and ratchet/debt semantics are unchanged.
+
 ### Query a verified history archive
 
 Use `harness-report-history/v2` with the same sample entries for an explicit archive

@@ -1,6 +1,7 @@
 //! Presentation-only grouping; eligibility never changes supplied gate decisions.
 pub(super) mod debt;
 mod distribution;
+mod hotspots;
 mod ranking;
 use crate::report_evidence;
 use crate::verify::quality::QualityResult;
@@ -13,6 +14,7 @@ pub(super) struct View<'a> {
     pub groups: Vec<Group<'a>>,
     pub panels: Vec<Panel>,
     rankings: Vec<ranking::Panel>,
+    hotspots: Vec<hotspots::Panel>,
     distributions: Vec<distribution::Panel>,
     debts: Vec<debt::Panel>,
 }
@@ -38,6 +40,7 @@ struct Row<'a> {
     head: &'a Value,
     limit: &'a Value,
     visual_note: &'static str,
+    hotspot_note: Option<&'static str>,
     range: Option<ranking::Range>,
     distribution: Option<distribution::Selection>,
     ratchet: &'a Value,
@@ -96,6 +99,7 @@ fn row(gate: &Value, index: usize) -> Row<'_> {
         head: &record["head"],
         limit: &record["policy"]["limit"],
         visual_note: "No comparable coverage visual",
+        hotspot_note: None,
         range: None,
         distribution: None,
         ratchet: &record["ratchet"],
@@ -113,6 +117,7 @@ pub(super) fn project_with_sources<'a>(
     let mut groups: BTreeMap<(String, String), Vec<Row<'_>>> = BTreeMap::new();
     let mut panels: BTreeMap<(String, String, String), Vec<Cell>> = BTreeMap::new();
     let mut rankings = ranking::Builder::default();
+    let mut hotspots = hotspots::Builder::default();
     let mut distributions = distribution::Builder::default();
     let mut debts = debt::Builder::default();
     let index = report_evidence::Index::new(&quality.inputs["project"], &quality.evidence);
@@ -124,6 +129,14 @@ pub(super) fn project_with_sources<'a>(
             if !matches!(quality.status, "measurement_error" | "not_collected") {
                 row.source_url = sources.as_mut().and_then(|links| links.link(gate, &index));
             }
+
+            row.hotspot_note = hotspots.push(
+                gate_id,
+                gate,
+                &row.anchor,
+                !matches!(quality.status, "measurement_error" | "not_collected"),
+                &index,
+            );
             row.debt = Some(debts.push(
                 gate,
                 !matches!(quality.status, "measurement_error" | "not_collected"),
@@ -162,6 +175,7 @@ pub(super) fn project_with_sources<'a>(
     }
     View {
         rankings: rankings.finish(),
+        hotspots: hotspots.finish(),
         distributions: distributions.finish(),
         debts: debts.finish(),
         groups: groups
