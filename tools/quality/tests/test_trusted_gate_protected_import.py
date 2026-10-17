@@ -81,7 +81,8 @@ class ProtectedImportTests(unittest.TestCase):
 
     def fixture_owned(self, path, directory=False, private=False):
         """Replace Root ownership only; real paths, types, modes and reads remain."""
-        path = BOOT.path_operand(path)
+        path = Path(path)
+        BOOT.need(path.is_absolute() and '..' not in path.parts, 'absolute protected fixture path required')
         if path != self.root and self.root not in path.parents:
             return self.real_owned(path, directory=directory, private=private)
         for parent in (path, *path.parents):
@@ -109,7 +110,14 @@ class ProtectedImportTests(unittest.TestCase):
                 self.tool_fixture.archives, self.crate_fixture.archives, self.destination)
 
     def test_full_fixture_import_is_archive_derived_readonly_and_binds_frozen_git_lock(self):
-        result = self.import_inputs()
+        execute = subprocess.run
+        def read_git_only(argv, *args, **kwargs):
+            self.assertEqual(argv[0], '/usr/bin/git')
+            self.assertTrue(any(command in argv for command in ('rev-parse', 'merge-base', 'cat-file')))
+            return execute(argv, *args, **kwargs)
+        with patch.object(subprocess, 'run', side_effect=read_git_only), \
+             patch('urllib.request.OpenerDirector.open', side_effect=AssertionError('no network during import')):
+            result = self.import_inputs()
         self.assertEqual(result['state'], 'imported')
         self.assertEqual((result['tool_files'], result['dependency_packages'], result['dependency_files']), (9, 1, 3))
         self.assertEqual(result['lock_sha256'], self.crate_fixture.pin)
@@ -215,6 +223,19 @@ class ProtectedImportTests(unittest.TestCase):
                 BOOT.frozen_lock(self.source, self.head, self.head)
         self.assertFalse(self.destination.exists())
 
+    def test_mutable_git_configuration_and_external_objects_block_before_git_runs(self):
+        config = self.source / '.git/config'
+        config.chmod(0o666)
+        with self.fixture_domain(), patch.object(BOOT, 'git') as git, self.assertRaisesRegex(ValueError, 'mutable fixture'):
+            BOOT.frozen_lock(self.source, self.head, self.head)
+        git.assert_not_called()
+        config.chmod(0o600)
+        alternates = self.source / '.git/objects/info/alternates'
+        alternates.write_text('/unreviewed/objects\n')
+        with self.fixture_domain(), patch.object(BOOT, 'git') as git, self.assertRaisesRegex(ValueError, 'external Git'):
+            BOOT.frozen_lock(self.source, self.head, self.head)
+        git.assert_not_called()
+
     def test_failed_archive_import_is_retained_blocked_and_cannot_be_reused(self):
         row = self.tool_fixture.value['artifacts']['cargo']
         (self.tool_fixture.archives / row['url'].rsplit('/', 1)[1]).write_bytes(b'corrupted official archive')
@@ -252,6 +273,16 @@ class ProtectedImportTests(unittest.TestCase):
         self.assertTrue((self.destination / 'tools/inventory.json').is_file())
         self.assertFalse((self.destination / 'binding.json').exists())
         self.assertEqual(json.loads(self.destination.with_name('imported-import.json').read_text())['state'], 'blocked')
+
+    def test_archive_filenames_are_data_and_not_mount_operands(self):
+        import tarfile
+        name = 'tests/a [1]@%.rs'
+        self.crate_fixture.make_archive([*self.crate_fixture.members, (name, b'// exact fixture\n', 0o644, tarfile.REGTYPE)])
+        (self.source / 'tools/harness-gate/Cargo.lock').write_bytes(self.crate_fixture.lock.read_bytes())
+        self.git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qam', 'new frozen lock')
+        self.head = self.git('rev-parse', 'HEAD').decode().strip()
+        self.assertEqual(self.import_inputs()['dependency_files'], 4)
+        self.assertEqual((self.destination / 'dependencies/sources/fixture-1.2.3' / name).read_bytes(), b'// exact fixture\n')
 
     def test_code_change_during_import_invalidates_the_whole_result(self):
         importing = BOOT.import_dependencies

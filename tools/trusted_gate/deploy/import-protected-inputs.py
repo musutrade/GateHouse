@@ -49,7 +49,11 @@ def path_operand(value):
 
 
 def owned(path, directory=False, private=False):
-    path = path_operand(path)
+    # Internal archive filenames are data, never systemd operands or shell text.
+    # The archive validator already enforces relative containment; allow their
+    # full valid names while keeping entry-point operands separately restricted.
+    path = Path(path)
+    need(path.is_absolute() and '..' not in path.parts, 'absolute protected input path required')
     for parent in (path, *path.parents):
         info = parent.lstat()
         need(info.st_uid == 0 and not stat.S_ISLNK(info.st_mode) and not info.st_mode & 0o022,
@@ -147,11 +151,48 @@ def git(source, *args):
     return result.stdout
 
 
+def git_metadata(source):
+    """Check the worktree/common Git stores before Git can read local settings."""
+    pointer = source / '.git'
+    owned(pointer, directory=pointer.is_dir())
+    if pointer.is_dir():
+        store = pointer
+    else:
+        raw = read(pointer, 4096).decode('utf-8')
+        need(raw.startswith('gitdir: ') and raw.endswith('\n') and raw.count('\n') == 1,
+             'unsupported frozen Git pointer')
+        store = path_operand(raw[8:-1])
+    owned(store, directory=True)
+    common = store / 'commondir'
+    if common.exists() or common.is_symlink():
+        raw = read(common, 4096).decode('utf-8')
+        need(raw.endswith('\n') and raw.count('\n') == 1, 'unsupported common Git pointer')
+        common = store.parent.parent if raw == '../..\n' else path_operand(raw[:-1])
+    else:
+        common = store
+    count, total = 0, 0
+    for location in {store, common}:
+        owned(location, directory=True)
+        for name in ('objects/info/alternates', 'objects/info/http-alternates', 'info/grafts'):
+            path = location / name
+            need(not path.exists() and not path.is_symlink(), 'external Git object/history inputs are forbidden')
+        for parent, directories, files in os.walk(location):
+            for name in (*directories, *files):
+                path = Path(parent) / name
+                is_directory = path.is_dir()
+                owned(path, directory=is_directory)
+                count += 1
+                if not is_directory:
+                    size = path.stat().st_size
+                    need(size <= 128 * 1024 * 1024, 'frozen Git file exceeds budget')
+                    total += size
+                need(count <= 20000 and total <= 256 * 1024 * 1024, 'frozen Git stores exceed budget')
+
+
 def frozen_lock(source, head, base):
     source = owned(source, directory=True)
     need(re.fullmatch('[0-9a-f]{40}', head) and re.fullmatch('[0-9a-f]{40}', base), 'exact frozen head/base required')
-    pointer = source / '.git'
-    owned(pointer, directory=pointer.is_dir())
+    git_metadata(source)
     need(git(source, 'rev-parse', 'HEAD').decode().strip() == head, 'frozen source head differs')
     git(source, 'merge-base', '--is-ancestor', base, head)
     object_name = head + ':tools/harness-gate/Cargo.lock'
