@@ -56,12 +56,42 @@ Inventory any applicable consumer-specific workflows before deploying there.
 
 The initial offline serial sandbox does not supply macOS/Windows execution,
 GitHub action transports, an advisory-database refresh service, reviewed network
-acquisition for pinned plugins, or a readable immutable Git history inside the
-worker. Several existing quality scripts need that history. Schema generation
+acquisition for pinned plugins, or an accepted Git-history-dependent quality
+workload. The opt-in worker Git view described below supplies the read-only
+history prerequisite; its protected deployment and complete script workloads
+still need acceptance. Several existing quality scripts need that history. Schema generation
 and onboarding also need writable working copies while the trusted candidate
 remains immutable. These require reviewed step/materialization adapters and exact
 evidence contracts before assigning a local owner. Running a smaller Linux suite
 does not close those rows.
+
+### Opt-in worker Git history
+
+A reviewed step may set `git_history = true`. The root launcher prepares a
+separate bare Git repository beneath that invocation's private control directory,
+with exact candidate/base refs and an index matching the frozen source. It uses
+an empty template and fresh configuration; controller remotes, proxy settings,
+credentials, hooks and object alternates are not copied. Root checks clean source
+bytes and records the complete file inventory, digests and run/head/base/tree
+binding before reuse. A changed or interrupted view stays blocked and retained.
+The view has a 256-MiB total input budget and a 128-MiB individual-file read limit.
+
+Only that view is bound read-only to `/work/history`, with a synthetic read-only
+`.git` pointer over the original source metadata file. Controller Git metadata
+and private directories remain inaccessible. Native Git discovery selects the
+view in the source work tree; nested test repositories keep their own Git
+identity. No global `GIT_DIR` or `GIT_WORK_TREE` retargets fixture commands. Git
+disables optional index writes and ignores system/global configuration.
+The worker receives exact safe-directory entries for `/work/source` and
+`/work/history`, not a wildcard. A step cannot override these Git inputs through
+its environment. Source files remain immutable and writable outputs stay separate.
+
+This supports source reads, base/head differences, clean-status checks and source
+archives. It does not grant Git writes or supply writable schema/onboarding
+copies, dependencies, native execution or complete quality coverage. The current
+installed isolation pilot does not opt into this new adapter. Live mount/UID
+acceptance and each migrated quality workload remain required; table ownership
+above is unchanged.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,

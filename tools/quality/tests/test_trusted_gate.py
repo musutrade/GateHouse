@@ -15,6 +15,7 @@ import tempfile
 import tomllib
 import unittest
 import subprocess
+import uuid
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -32,6 +33,7 @@ from gatehouse_trusted_gate.cache import Cache, DIMENSIONS, identity, dimensions
 from gatehouse_trusted_gate.isolation import sandbox_arguments, unprivileged_identity
 from gatehouse_trusted_gate.execution import Executor as HostExecutor, clean_environment
 from gatehouse_trusted_gate.source import prepare, retire
+from gatehouse_trusted_gate.history import prepare as prepare_history
 from gatehouse_trusted_gate.publication import deliver
 
 PILOT_SPEC = importlib.util.spec_from_file_location('pilot_installer', ROOT / 'tools/trusted_gate/deploy/install-pilot.py')
@@ -570,6 +572,22 @@ class IsolationTests(unittest.TestCase):
             environment = clean_environment()
         self.assertFalse({'GH_TOKEN', 'PYTHONPATH', 'RUSTC_WRAPPER'} & environment.keys())
 
+    def test_reviewed_history_is_readonly_and_cannot_be_retargeted_by_step_environment(self):
+        config = self.config()
+        config['steps']['tests']['git_history'] = True
+        with self.assertRaisesRegex(Blocked, 'history view'):
+            sandbox_arguments(config, {'id': 'run'}, 'tests', '/scratch', '/cache')
+        args = sandbox_arguments(config, {'id': 'run'}, 'tests', '/scratch', '/cache', '/private/view')
+        self.assertTrue(any('/private/view:/work/history' in arg and 'BindReadOnlyPaths=' in arg for arg in args))
+        self.assertTrue(any('/private/git-pointer:/work/source/.git' in arg for arg in args))
+        self.assertFalse(any(arg.startswith(('--setenv=GIT_DIR=', '--setenv=GIT_WORK_TREE=')) for arg in args))
+        self.assertIn('--setenv=GIT_OPTIONAL_LOCKS=0', args)
+        self.assertTrue(any('/work/source/.gatehouse-host' in arg and 'InaccessiblePaths=' in arg for arg in args))
+        for name in ('GIT_DIR', 'GIT_WORK_TREE', 'GIT_CONFIG_COUNT', 'GIT_CONFIG_SYSTEM'):
+            config['steps']['tests']['env'] = {name: '/untrusted'}
+            with self.subTest(name=name), self.assertRaisesRegex(Blocked, 'Git input/configuration'):
+                sandbox_arguments(config, {'id': 'run'}, 'tests', '/scratch', '/cache', '/private/view')
+
     def test_privileged_developer_and_executor_groups_are_rejected(self):
         account = SimpleNamespace(pw_uid=1001, pw_gid=1001, pw_name='developer')
         for name in ('docker', 'lxd', 'sudo', 'disk', 'users'):
@@ -583,6 +601,107 @@ class IsolationTests(unittest.TestCase):
                 else:
                     with self.assertRaises(Blocked):
                         unprivileged_identity(1001)
+
+
+class WorkerHistoryTests(unittest.TestCase):
+    def fixture(self):
+        temporary = tempfile.TemporaryDirectory()
+        root = Path(temporary.name)
+        self.addCleanup(temporary.cleanup)
+        def writable():
+            for directory, _, files in os.walk(root):
+                os.chmod(directory, 0o755)
+                for name in files:
+                    os.chmod(Path(directory) / name, 0o644)
+        self.addCleanup(writable)
+        source = root / 'source'
+        source.mkdir()
+        def git(*args):
+            return subprocess.check_output(['git', '-c', 'core.hooksPath=/dev/null', *args],
+                cwd=source, env=clean_environment(), stderr=subprocess.DEVNULL, text=True).strip()
+        git('init', '-q', '-b', 'main')
+        (source / 'code.txt').write_text('baseline\n')
+        git('add', 'code.txt')
+        git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'base')
+        base = git('rev-parse', 'HEAD')
+        (source / 'code.txt').write_text('candidate\n')
+        git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qam', 'candidate')
+        head, tree = git('rev-parse', 'HEAD'), git('rev-parse', 'HEAD^{tree}')
+        git('config', 'remote.origin.url', 'https://private-fixture.invalid/repository')
+        git('config', 'http.proxy', 'http://private-fixture.invalid:1234')
+        git('config', 'http.extraheader', 'AUTHORIZATION: fixture-header')
+        git('config', 'credential.helper', 'fixture-helper')
+        records = root / 'records'
+        run_id = str(uuid.uuid4())
+        (records / run_id).mkdir(parents=True)
+        return ({'source': str(source), 'records': str(records)},
+                {'id': run_id, 'head': head, 'input': {'head': head, 'base': base, 'tree': tree}})
+
+    def test_real_history_supports_clean_status_base_diff_and_archive_without_controller_metadata(self):
+        config, run = self.fixture()
+        with patch('gatehouse_trusted_gate.history.protected', side_effect=lambda p, **kw: Path(p)):
+            view = prepare_history(config, run)
+            self.assertEqual(view, prepare_history(config, run))
+        settings = (view / 'config').read_text()
+        self.assertFalse(any(name in settings for name in ('private-fixture', 'fixture-header', 'credential', 'remote')))
+        self.assertFalse((view / 'FETCH_HEAD').exists())
+        self.assertFalse((view / 'objects/info/alternates').exists())
+        source = Path(config['source'])
+        original = source / '.git'
+        hidden = source / '.hidden-controller-git'
+        original.rename(hidden)
+        original.write_text('gitdir: ' + str(view) + '\n')
+        env = {**clean_environment(), 'GIT_OPTIONAL_LOCKS': '0'}
+        def git(*args):
+            return subprocess.check_output(['git', *args], cwd=source, env=env).decode()
+        self.assertEqual(git('rev-parse', 'HEAD').strip(), run['head'])
+        self.assertEqual(git('show', run['input']['base'] + ':code.txt'), 'baseline\n')
+        self.assertIn('+candidate', git('diff', run['input']['base'], run['head']))
+        self.assertEqual(git('status', '--porcelain', '--untracked-files=no'), '')
+        nested = source / 'test-fixture'
+        nested.mkdir()
+        subprocess.run(['git', 'init', '-q', '-b', 'fixture'], cwd=nested, env=env, check=True)
+        fixture_dir = subprocess.check_output(['git', 'rev-parse', '--absolute-git-dir'], cwd=nested, env=env, text=True).strip()
+        self.assertEqual(fixture_dir, str(nested / '.git'))
+        archive = subprocess.check_output(['git', 'archive', run['head']], cwd=source, env=env)
+        with tarfile.open(fileobj=io.BytesIO(archive)) as stream:
+            self.assertEqual(stream.extractfile('code.txt').read(), b'candidate\n')
+        for directory, _, files in os.walk(view):
+            self.assertEqual(stat.S_IMODE(Path(directory).stat().st_mode), 0o555)
+            for name in files:
+                self.assertEqual(stat.S_IMODE((Path(directory) / name).stat().st_mode), 0o444)
+        with self.assertRaises(PermissionError):
+            (view / 'config').open('ab')
+
+    def test_retained_view_tamper_and_changed_baseline_are_blocked(self):
+        config, run = self.fixture()
+        with patch('gatehouse_trusted_gate.history.protected', side_effect=lambda p, **kw: Path(p)):
+            view = prepare_history(config, run)
+            changed = copy.deepcopy(run)
+            changed['input']['base'] = run['head']
+            with self.assertRaisesRegex(Blocked, 'retained worker Git view changed'):
+                prepare_history(config, changed)
+            (view / 'config').chmod(0o644)
+            with (view / 'config').open('a') as stream:
+                stream.write('\n[credential]\n helper = unsafe\n')
+            with self.assertRaisesRegex(Blocked, 'retained worker Git view changed'):
+                prepare_history(config, run)
+
+    def test_dirty_source_and_interrupted_export_are_retained_and_blocked(self):
+        config, run = self.fixture()
+        source = Path(config['source'])
+        view = Path(config['records']) / run['id'] / 'git-history'
+        with patch('gatehouse_trusted_gate.history.protected', side_effect=lambda p, **kw: Path(p)):
+            (source / 'code.txt').write_text('changed after freeze\n')
+            with self.assertRaisesRegex(Blocked, 'source bytes changed'):
+                prepare_history(config, run)
+            self.assertFalse(view.exists())
+            (source / 'code.txt').write_text('candidate\n')
+            view.mkdir()
+            (view / 'interrupted').write_text('retain original partial export')
+            with self.assertRaises(Blocked):
+                prepare_history(config, run)
+            self.assertEqual((view / 'interrupted').read_text(), 'retain original partial export')
 
 
 class SourceTests(unittest.TestCase):

@@ -11,6 +11,7 @@ import time
 from .cache import Cache, dimensions
 from .common import atomic_json, digest, protected, require
 from .execution import clean_environment
+from .history import prepare as prepare_history
 
 
 def unprivileged_identity(uid):
@@ -23,11 +24,13 @@ def unprivileged_identity(uid):
     return account
 
 
-def sandbox_arguments(config, run, step_id, scratch, cache):
+def sandbox_arguments(config, run, step_id, scratch, cache, history=None):
     step = config['steps'][step_id]
     require(step['argv'] and all(isinstance(arg, str) and '\0' not in arg for arg in step['argv']), 'invalid approved step argv')
     require(Path(step['argv'][0]).is_absolute(), 'approved executable must be absolute')
     require(step['argv'][0] in config['protected_files'], 'step executable is not pinned')
+    require(type(step.get('git_history', False)) is bool, 'Git history selection must be explicit')
+    require(bool(history) == step.get('git_history', False), 'reviewed Git history view is missing or unexpected')
     core_unit = 'gatehouse-core-' + run['id'] + '.service'
     unit = 'gatehouse-step-' + run['id'] + '-' + digest(step_id.encode())[:12]
     properties = {
@@ -47,16 +50,26 @@ def sandbox_arguments(config, run, step_id, scratch, cache):
         'BindPaths': str(scratch) + ':/work/output ' + str(cache) + ':/work/cache',
         'ReadWritePaths': '/work/output /work/cache',
         'InaccessiblePaths': '/home /root /run /etc/gatehouse ' + config['records'] +
-                             ' /work/source/.git /work/source/.gatehouse-host',
+                             ' /work/source/.gatehouse-host' + ('' if history else ' /work/source/.git'),
     }
     for field, name in (('cargo_registry', 'registry'), ('cargo_git', 'git')):
         if config.get(field):
             properties['BindReadOnlyPaths'] += ' ' + config[field] + ':/work/output/cargo-home/' + name
+    if history:
+        properties['BindReadOnlyPaths'] += ' ' + str(history) + ':/work/history'
+        properties['BindReadOnlyPaths'] += ' ' + str(Path(history).with_name('git-pointer')) + ':/work/source/.git'
     argv = ['/usr/bin/systemd-run', '--quiet', '--wait', '--pipe', '--collect', '--unit=' + unit]
     argv.extend('--property=' + key + '=' + value for key, value in properties.items())
     environment = {'PATH': '/opt/gatehouse/toolchain/bin:/usr/local/bin:/usr/bin:/bin',
                    'LANG': 'C.UTF-8', 'TMPDIR': '/work/output', 'CARGO_HOME': '/work/output/cargo-home',
                    'CARGO_TARGET_DIR': '/work/cache/target', 'CARGO_NET_OFFLINE': 'true'}
+    if history:
+        environment.update(GIT_OPTIONAL_LOCKS='0', GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL='/dev/null',
+                           GIT_CONFIG_COUNT='2', GIT_CONFIG_KEY_0='safe.directory',
+                           GIT_CONFIG_VALUE_0='/work/source', GIT_CONFIG_KEY_1='safe.directory',
+                           GIT_CONFIG_VALUE_1='/work/history')
+    require(not any(name.startswith('GIT_') for name in step.get('env', {})),
+            'Git input/configuration overrides are forbidden')
     require(not set(step.get('env', {})) & {'HOME', 'PATH', 'LD_PRELOAD', 'LD_LIBRARY_PATH',
             'PYTHONPATH', 'GIT_CONFIG_GLOBAL', 'CARGO_HOME', 'RUSTC_WRAPPER', 'GH_TOKEN',
             'GITHUB_TOKEN', 'GITHUB_APP_PRIVATE_KEY', 'SSH_AUTH_SOCK'}, 'unsafe step environment override')
@@ -95,7 +108,8 @@ def launch(config, journal, run_id, step_id):
     before = cache.maintain(active=(path.name,))
     maintenance_seconds = time.monotonic() - maintenance_started
     os.chown(path, account.pw_uid, account.pw_gid)
-    argv = sandbox_arguments(config, run, step_id, scratch, path)
+    history = prepare_history(config, run) if step.get('git_history', False) else None
+    argv = sandbox_arguments(config, run, step_id, scratch, path, history)
     records = protected(config['records'], directory=True, private=True) / run_id / 'cache'
     records.mkdir(mode=0o700, exist_ok=True)
     record_path = records / (digest(step_id.encode()) + '.json')

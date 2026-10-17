@@ -17,7 +17,7 @@ import sys
 import tarfile
 import time
 
-MODULES = ('__init__', 'cache', 'cli', 'common', 'control', 'execution', 'github',
+MODULES = ('__init__', 'cache', 'cli', 'common', 'control', 'execution', 'github', 'history',
            'host', 'isolation', 'journal', 'publication', 'source')
 FILES = {*(f'trusted_gate/{name}.py' for name in MODULES), 'bin/harness-gate',
          'bin/gatehouse-control', 'bin/pilot-probe.py', 'policy/flow.toml',
