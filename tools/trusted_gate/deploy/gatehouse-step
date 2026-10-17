@@ -1,0 +1,8 @@
+#!/usr/bin/python3 -I
+"""Install root-owned beside the separately reviewed flow.toml."""
+import os
+import sys
+
+os.execve('/usr/bin/python3', ['/usr/bin/python3', '-I',
+    '/opt/gatehouse/trusted_gate/host.py', 'step', *sys.argv[1:]],
+    {'PATH': '/usr/bin:/bin', 'GATEHOUSE_RUN_ID': os.environ.get('GATEHOUSE_RUN_ID', '')})

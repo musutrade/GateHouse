@@ -1,0 +1,17 @@
+[Unit]
+Description=Reconcile GateHouse trusted local results with GitHub Checks
+ConditionPathExists=/etc/gatehouse/host.json
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+ExecStart=/usr/bin/python3 -I /opt/gatehouse/trusted_gate/host.py reconcile
+TimeoutStartSec=120
+KillMode=control-group
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/gatehouse/control
+Environment=PATH=/usr/bin:/bin
