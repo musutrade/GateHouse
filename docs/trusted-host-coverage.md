@@ -317,6 +317,39 @@ A separate read-only audit matched all 205 cached crate archives selected by the
 frozen Cargo.lock to their locked SHA-256 values; it does not yet verify extracted
 sources, registry metadata or compiler distribution provenance.
 
+`deploy/verify-locked-crates.py` separately compares the frozen Cargo.lock,
+SHA-256-verified `.crate` archives and Cargo's original extracted source trees.
+Its caller supplies a separately trusted lock digest and immutable inputs. Only
+the selected crates.io registry packages are checked; local packages are listed
+as unchecked, and unrelated cache packages are outside this comparison. Unknown
+registry/Git sources, duplicate identities, changed archives, missing/extra files
+or directories, byte/executable-mode changes, links, special files, privileged
+modes and observed read-time mutation block the comparison. The helper reuses
+the existing archive path validator, reads tar members without extraction, bounds
+compressed/decoded payloads and metadata, and changes no input or installation.
+
+Every selected source file, including hidden files, is compared against its
+archive. Only Cargo's generated `.cargo-ok` extraction marker is excluded from
+the file inventory, after strict version-1 JSON validation if present. A supplied
+`.cargo-checksum.json` is not trusted to override archive content. A trial of
+standard `cargo vendor --frozen --versioned-dirs` generated all 205 directories,
+but omitted some archive `.gitignore` files; it therefore does not establish this
+whole-source equivalence. No relaxed hidden-file exception was added.
+
+An actual readonly, network-isolated operator namespace comparison matched all
+205 locked registry packages: 8,720 files and 194,025,034 bytes in 11.041 seconds,
+against Cargo.lock SHA-256
+`a7cbc8d42763de46c79369f5d87a9efd430731038ff0633319dad850cfe4d461`.
+Thirteen focused negative/positive tests and all 119 trusted-host tests passed.
+This closes the selected archive/source comparison gap only. The helper does not
+validate registry index metadata, local dependency sources or compiler/tool
+distribution provenance, create a trusted bootstrap, import an Agent cache,
+change the installer inventory, or authorize a quality result. Future protected
+use must provide protected immutable inputs and independently trusted pins;
+ordinary-user observations do not provide Root/systemd/UID995 acceptance.
+Engineering-policy authority, thresholds, required coverage and ratchets remain
+unchanged.
+
 The accepted `659803a` pilot remains on its existing 2 GiB volume. Neither this
 preparation helper nor its ordinary-user observations install inputs or modify
 that filesystem. A future reviewed upgrade must preserve its outstanding source,
