@@ -45,7 +45,7 @@ class OfficialToolTests(unittest.TestCase):
         self.manifest.write_text(json.dumps(self.value))
         self.pin = hashlib.sha256(self.manifest.read_bytes()).hexdigest()
 
-    def make_archive(self, role, manifest=None, components=None, extra=()):
+    def make_archive(self, role, manifest=None, components=None, extra=(), selected_link=False):
         row = self.value['artifacts'][role]
         path = self.archives / row['url'].rsplit('/', 1)[1]
         root, component = OFFICIAL.component_identity(role, row)
@@ -59,7 +59,9 @@ class OfficialToolTests(unittest.TestCase):
             entries += [(prefix + p, data, mode, tarfile.REGTYPE, '') for p, (data, mode) in files.items()]
             entries.append((root + '/install.sh', b'never execute this fixture', 0o755, tarfile.REGTYPE, ''))
         elif role == 'node':
-            entries += [(root + '/bin/node', b'node', 0o755, tarfile.REGTYPE, ''),
+            binary = (root + '/bin/node', b'', 0o777, tarfile.SYMTYPE, '../lib/npm.js') if selected_link else (
+                root + '/bin/node', b'node', 0o755, tarfile.REGTYPE, '')
+            entries += [binary,
                         (root + '/bin/npm', b'', 0o777, tarfile.SYMTYPE, '../lib/npm.js'),
                         (root + '/lib/npm.js', b'unselected npm', 0o644, tarfile.REGTYPE, '')]
         else:
@@ -144,14 +146,25 @@ class OfficialToolTests(unittest.TestCase):
             self.prepare()
         self.assertEqual((self.destination / 'toolchain/bin/cargo').read_bytes(), b'cargo')
 
+    def test_selected_node_binary_cannot_be_a_link_even_inside_archive(self):
+        self.make_archive('node', selected_link=True)
+        row = self.value['artifacts']['node']
+        with self.assertRaisesRegex(ValueError, 'linked'):
+            OFFICIAL.archive_inventory(self.archives / row['url'].rsplit('/', 1)[1], 'node', row)
+
     def test_forged_inventory_cannot_hide_changed_bytes_or_executable_modes(self):
         self.prepare()
         path = self.destination / 'toolchain/bin/node'
         path.chmod(0o755); path.write_bytes(b'forged node'); path.chmod(0o555)
-        metadata = self.destination / 'inventory.json'; value = json.loads(metadata.read_text())
+        metadata = self.destination / 'inventory.json'; original = metadata.read_bytes()
+        value = json.loads(original)
         value['files']['bin/node'] = [len(b'forged node'), hashlib.sha256(b'forged node').hexdigest(), 0o555]
         metadata.chmod(0o644); metadata.write_bytes(OFFICIAL.canonical(value)); metadata.chmod(0o444)
         with self.assertRaisesRegex(ValueError, 'independently derived'):
+            self.verify()
+        metadata.chmod(0o644); metadata.write_bytes(original); metadata.chmod(0o444)
+        path.chmod(0o755); path.write_bytes(b'node'); path.chmod(0o444)
+        with self.assertRaisesRegex(ValueError, 'modes or directories differ'):
             self.verify()
 
     def test_extra_hidden_file_symlink_and_writable_directory_block(self):
