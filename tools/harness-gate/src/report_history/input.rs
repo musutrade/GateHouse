@@ -8,7 +8,7 @@ use std::fs;
 use std::io::Read;
 use std::path::{Component, Path, PathBuf};
 
-const INDEX_LIMIT: u64 = 64 * 1024;
+const INDEX_LIMIT: u64 = 256 * 1024;
 const REPORT_LIMIT: u64 = 32 * 1024 * 1024;
 const CONTROL_LIMIT: u64 = 1024 * 1024;
 
@@ -28,6 +28,7 @@ struct Sample {
 
 pub(super) struct Completed {
     pub machine: Value,
+    pub commit: String,
     pub machine_bytes: usize,
     pub directory: PathBuf,
     pub machine_sha256: String,
@@ -122,7 +123,7 @@ fn verify_controls(directory: &Path, manifest: &[u8]) -> Result<()> {
     crate::verify::verify_manifest_at(directory)?;
     Ok(())
 }
-fn verified_bytes(directory: &Path, sample: &Sample) -> Result<Vec<u8>> {
+fn verified_bytes(directory: &Path, sample: &Sample) -> Result<(Vec<u8>, Vec<u8>)> {
     let bytes = read(&directory.join("test_result.json"), REPORT_LIMIT)?;
     pin(&sample.machine_sha256, &bytes)?;
     let manifest = read(&directory.join("manifest.json"), CONTROL_LIMIT)?;
@@ -133,11 +134,39 @@ fn verified_bytes(directory: &Path, sample: &Sample) -> Result<Vec<u8>> {
             && manifest == read(&directory.join("manifest.json"), CONTROL_LIMIT)?,
         "history control bytes changed during validation"
     );
-    Ok(bytes)
+    Ok((bytes, manifest))
 }
 
-fn verify_identity(directory: &Path, machine: &Value) -> Result<()> {
-    let metadata = json(&read(&directory.join("invocation.json"), CONTROL_LIMIT)?)?;
+fn bound_metadata(directory: &Path, manifest: &[u8]) -> Result<Value> {
+    let bytes = read(&directory.join("invocation.json"), CONTROL_LIMIT)?;
+    let manifest = json(manifest)?;
+    let mut entries = manifest["artifacts"]
+        .as_array()
+        .context("missing manifest artifacts")?
+        .iter()
+        .filter(|a| a["path"] == "invocation.json");
+    let entry = entries
+        .next()
+        .context("missing manifested invocation metadata")?;
+    ensure!(
+        entries.next().is_none(),
+        "duplicate invocation metadata binding"
+    );
+    ensure!(
+        entry["size_bytes"].as_u64() == Some(bytes.len() as u64),
+        "invocation metadata size differs from pinned manifest"
+    );
+    pin(
+        entry["sha256"]
+            .as_str()
+            .context("missing invocation metadata digest")?,
+        &bytes,
+    )?;
+    json(&bytes)
+}
+fn verify_identity(directory: &Path, machine: &Value, manifest: &[u8]) -> Result<String> {
+    // Bind the bytes actually consumed, not a prior filesystem observation.
+    let metadata = bound_metadata(directory, manifest)?;
     for field in [
         "invocation_id",
         "input_mode",
@@ -168,15 +197,16 @@ fn verify_identity(directory: &Path, machine: &Value) -> Result<()> {
             "machine quality report differs from manifested project report"
         );
     }
-    Ok(())
+    Ok(metadata["commit"].as_str().unwrap_or("").into())
 }
 
 fn completed(root: &Path, sample: Sample) -> Result<Completed> {
     let directory = directory(root, &sample.directory)?;
-    let bytes = verified_bytes(&directory, &sample)?;
+    let (bytes, manifest) = verified_bytes(&directory, &sample)?;
     let machine = json(&bytes)?;
-    verify_identity(&directory, &machine)?;
+    let commit = verify_identity(&directory, &machine, &manifest)?;
     Ok(Completed {
+        commit,
         machine_bytes: bytes.len(),
         machine,
         directory,
@@ -185,7 +215,7 @@ fn completed(root: &Path, sample: Sample) -> Result<Completed> {
     })
 }
 
-fn index(path: &Path) -> Result<(PathBuf, Index)> {
+fn index(path: &Path) -> Result<(PathBuf, Index, String)> {
     let absolute = std::path::absolute(path)?;
     ensure!(
         !fs::symlink_metadata(&absolute)?.file_type().is_symlink(),
@@ -196,16 +226,26 @@ fn index(path: &Path) -> Result<(PathBuf, Index)> {
         .context("history index parent")?
         .canonicalize()?;
     let path = root.join(absolute.file_name().context("history index filename")?);
-    let index: Index = serde_json::from_value(json(&read(&path, INDEX_LIMIT)?)?)?;
+    let bytes = read(&path, INDEX_LIMIT)?;
+    let index = parse_index(&bytes)?;
+    Ok((root, index, digest(&bytes)))
+}
+
+fn parse_index(bytes: &[u8]) -> Result<Index> {
+    let index: Index = serde_json::from_value(json(bytes)?)?;
+    let maximum = match index.schema.as_str() {
+        "harness-report-history/v1" => {
+            ensure!(bytes.len() <= 64 * 1024, "v1 history index exceeds 64 KiB");
+            30
+        }
+        "harness-report-history/v2" => 300,
+        _ => anyhow::bail!("unsupported history index schema"),
+    };
     ensure!(
-        index.schema == "harness-report-history/v1",
-        "unsupported history index schema"
+        !index.samples.is_empty() && index.samples.len() <= maximum,
+        "history requires 1 to {maximum} explicit samples"
     );
-    ensure!(
-        !index.samples.is_empty() && index.samples.len() <= 30,
-        "history requires 1 to 30 explicit samples"
-    );
-    Ok((root, index))
+    Ok(index)
 }
 
 fn invocation_id(machine: &Value) -> Result<&str> {
@@ -223,8 +263,13 @@ fn invocation_id(machine: &Value) -> Result<&str> {
     Ok(invocation)
 }
 
-pub(super) fn load(path: &Path) -> Result<Vec<Completed>> {
-    let (root, index) = index(path)?;
+pub(super) struct Archive {
+    pub schema: String,
+    pub digest: String,
+    pub reports: Vec<Completed>,
+}
+pub(super) fn load_archive(path: &Path) -> Result<Archive> {
+    let (root, index, digest) = index(path)?;
     let mut directories = BTreeSet::new();
     let mut invocations = BTreeSet::new();
     let mut reports = Vec::new();
@@ -247,7 +292,15 @@ pub(super) fn load(path: &Path) -> Result<Vec<Completed>> {
         );
         reports.push(report);
     }
-    Ok(reports)
+    Ok(Archive {
+        schema: index.schema,
+        digest,
+        reports,
+    })
+}
+#[cfg(test)]
+fn load(path: &Path) -> Result<Vec<Completed>> {
+    Ok(load_archive(path)?.reports)
 }
 
 #[cfg(test)]
@@ -271,6 +324,57 @@ mod tests {
         assert!(load(&path).is_err());
         for name in ["..", "/outside", "sub/../outside", "C:\\outside", ""] {
             assert!(directory(root.path(), name).is_err());
+        }
+    }
+    #[test]
+    fn consumed_metadata_matches_pinned_manifest_bytes() {
+        let root = tempfile::tempdir().unwrap();
+        // Production passes the canonicalized invocation directory; macOS temp
+        // roots contain a /var symlink ancestor, so mirror that shape here.
+        let path = root.path().canonicalize().unwrap();
+        let bytes = br#"{"commit":"original"}"#;
+        fs::write(path.join("invocation.json"), bytes).unwrap();
+        let manifest=serde_json::to_vec(&serde_json::json!({"artifacts":[{"path":"invocation.json","size_bytes":bytes.len(),"sha256":digest(bytes)}]})).unwrap();
+        assert_eq!(
+            bound_metadata(&path, &manifest).unwrap()["commit"],
+            "original"
+        );
+        fs::write(path.join("invocation.json"), br#"{"commit":"modified"}"#).unwrap();
+        assert!(bound_metadata(&path, &manifest).is_err());
+        fs::write(path.join("invocation.json"), b"{}").unwrap();
+        assert!(bound_metadata(&path, &manifest).is_err());
+    }
+    #[test]
+    fn schema_specific_index_byte_and_sample_bounds() {
+        let sample = serde_json::json!({"directory":"one","machine_sha256":"a".repeat(64),"manifest_sha256":"b".repeat(64)});
+        for (schema, limit, max_samples) in [
+            ("harness-report-history/v1", 64 * 1024, 30),
+            ("harness-report-history/v2", 256 * 1024, 300),
+        ] {
+            let mut bytes =
+                serde_json::to_vec(&serde_json::json!({"schema":schema,"samples":[sample]}))
+                    .unwrap();
+            bytes.resize(limit, b' ');
+            assert!(parse_index(&bytes).is_ok());
+            bytes.push(b' ');
+            if schema.ends_with("v1") {
+                assert!(parse_index(&bytes).is_err());
+            } else {
+                let dir = tempfile::tempdir().unwrap();
+                let path = dir.path().join("index.json");
+                fs::write(&path, &bytes).unwrap();
+                assert!(index(&path).is_err());
+            }
+            let valid = serde_json::to_vec(
+                &serde_json::json!({"schema":schema,"samples":vec![sample.clone();max_samples]}),
+            )
+            .unwrap();
+            assert!(parse_index(&valid).is_ok());
+            let excess = serde_json::to_vec(
+                &serde_json::json!({"schema":schema,"samples":vec![sample.clone();max_samples+1]}),
+            )
+            .unwrap();
+            assert!(parse_index(&excess).is_err());
         }
     }
     #[cfg(unix)]

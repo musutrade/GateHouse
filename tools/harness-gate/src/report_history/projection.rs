@@ -173,10 +173,45 @@ fn point(report: &Completed, selection: &Selection<'_>) -> Result<Point> {
     );
     Ok(result)
 }
-pub(super) fn project(reports: &[Completed], selection: &Selection<'_>) -> Result<Vec<Point>> {
+fn queried_point(report: &Completed, selection: &Selection<'_>) -> Result<Point> {
+    let mut result = point(report, selection)?;
+    let gates = report
+        .machine
+        .pointer("/quality/project_report/gates")
+        .and_then(Value::as_object);
+    let claimed = gates
+        .and_then(|gates| {
+            gates.values().find(|g| {
+                g["policy"] == selection.policy
+                    && g["subject"] == selection.subject
+                    && g["record"]["metric"] == selection.metric
+            })
+        })
+        .and_then(|gate| gate.pointer("/record/context/commit"));
+    if let Some(claimed) = claimed {
+        if claimed.as_str() != Some(report.commit.as_str()) {
+            result.value = None;
+            let display: String = claimed.to_string().chars().take(128).collect();
+            result.reason = format!("comparison break: quality context commit {display} differs from manifested invocation commit {}", report.commit);
+        }
+    }
+    result.commit = report.commit.clone();
+    Ok(result)
+}
+pub(super) fn project(
+    reports: &[Completed],
+    selection: &Selection<'_>,
+    queried: bool,
+) -> Result<Vec<Point>> {
     let mut points = reports
         .iter()
-        .map(|r| point(r, selection))
+        .map(|r| {
+            if queried {
+                queried_point(r, selection)
+            } else {
+                point(r, selection)
+            }
+        })
         .collect::<Result<Vec<_>>>()?;
     let baseline = points
         .iter()

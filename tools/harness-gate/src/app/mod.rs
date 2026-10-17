@@ -26,7 +26,9 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             policy,
             subject,
             metric,
-        } => crate::report_history::run(input, output, policy, subject, metric).map_err(Into::into),
+            query,
+        } => crate::report_history::run_query(input, output, policy, subject, metric, query)
+            .map_err(Into::into),
 
         Commands::Explain {
             code, search, json, ..

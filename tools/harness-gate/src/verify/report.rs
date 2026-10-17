@@ -4811,4 +4811,146 @@ mod tests {
             std::mem::forget(workspace);
         }
     }
+    #[test]
+    fn history_query_selects_verified_archive_and_rejects_excluded_tampering() {
+        use serde_json::json;
+        let started = std::time::Instant::now();
+        let (workspace, mut project, _first, mut invocation_project, mut current) =
+            complete_invocation_fixture("history-query");
+        let mut samples = Vec::new();
+        let mut keep = Vec::new();
+        let mut subject_id = String::new();
+        for index in 0..31 {
+            project.invocation_input.commit = format!("{index:040x}");
+            let invocation = allocate_invocation(&project).unwrap();
+            write_invocation_metadata(&invocation, &project, "full", false).unwrap();
+            invocation_project.reports = invocation.root.clone();
+            current.invocation_id = invocation.id.clone();
+            current.report_directory = invocation.root.to_string_lossy().into_owned();
+            current.steps[0].invocation_id = Some(invocation.id.clone());
+            current.timestamp = format!("2026-01-{:02}T00:00:00Z", index + 1);
+            std::fs::write(invocation.root.join("logs/unit.log"), "complete\n").unwrap();
+            let mut quality = super::quality_view::tests::fixture(1);
+            let commit = if index == 29 {
+                "f".repeat(40)
+            } else {
+                project.invocation_input.commit.clone()
+            };
+            quality.evidence[0]["context"]["commit"] = json!(commit);
+            quality.project_report["gates"]["g0000"]["record"]["context"]["commit"] = json!(commit);
+            subject_id = quality.project_report["gates"]["g0000"]["subject"]
+                .as_str()
+                .unwrap()
+                .into();
+            current.quality = if index == 30 { None } else { Some(quality) };
+            current.passed = index != 30;
+            write(&current, &invocation_project).unwrap();
+            verify_manifest(&invocation_project).unwrap();
+            samples.push(json!({"directory":invocation.root.strip_prefix(&project.reports).unwrap().to_string_lossy().replace('\\',"/"),"machine_sha256":super::sha256_file(&invocation.root.join(MACHINE_RESULT_FILE)).unwrap(),"manifest_sha256":super::sha256_file(&invocation.root.join(MANIFEST_FILE)).unwrap()}));
+            keep.push(invocation);
+        }
+        let input = project.reports.join("query-index.json");
+        // Deliberately reversed: timestamps, not input ordering, determine the query.
+        samples.reverse();
+        std::fs::write(
+            &input,
+            serde_json::to_vec(&json!({"schema":"harness-report-history/v2","samples":samples}))
+                .unwrap(),
+        )
+        .unwrap();
+        let query = crate::report_history::Query {
+            last_commits: Some(30),
+            ..Default::default()
+        };
+        let output = workspace.root.join("queried-display");
+        let query_started = std::time::Instant::now();
+        crate::report_history::run_query(
+            &input,
+            &output,
+            "required",
+            &subject_id,
+            "coverage.line",
+            &query,
+        )
+        .unwrap();
+        let query_seconds = query_started.elapsed().as_secs_f64();
+        let html = std::fs::read_to_string(output.join("history.html")).unwrap();
+        let provenance: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(output.join("provenance.json")).unwrap())
+                .unwrap();
+        assert_eq!(provenance["query"]["indexed_invocations"], 31);
+        assert_eq!(provenance["samples"].as_array().unwrap().len(), 30);
+        assert_eq!(provenance["samples"][0]["commit"], format!("{:040x}", 1));
+        assert_eq!(provenance["samples"][29]["commit"], format!("{:040x}", 30));
+        assert_eq!(
+            provenance["index_sha256"],
+            super::sha256_file(&input).unwrap()
+        );
+        assert_eq!(
+            provenance["html_sha256"],
+            super::sha256_file(&output.join("history.html")).unwrap()
+        );
+        assert!(
+            html.contains("quality was not collected") && html.contains("quality context commit")
+        );
+        assert!(html.contains("FAIL"));
+        let refused = workspace.root.join("refused-query");
+        let all = crate::report_history::Query {
+            last_days: Some(30),
+            ..Default::default()
+        };
+        assert!(crate::report_history::run_query(
+            &input,
+            &refused,
+            "required",
+            &subject_id,
+            "coverage.line",
+            &all
+        )
+        .unwrap_err()
+        .to_string()
+        .contains("exceeds 30"));
+        assert!(!refused.exists());
+        let original = std::fs::read(keep[0].root.join(MACHINE_RESULT_FILE)).unwrap();
+        std::fs::write(keep[0].root.join(MACHINE_RESULT_FILE), b"{}").unwrap();
+        assert!(crate::report_history::run_query(
+            &input,
+            &refused,
+            "required",
+            &subject_id,
+            "coverage.line",
+            &query
+        )
+        .is_err());
+        assert!(!refused.exists());
+        std::fs::write(keep[0].root.join(MACHINE_RESULT_FILE), original).unwrap();
+        let original_index = std::fs::read(&input).unwrap();
+        let mut duplicate: serde_json::Value = serde_json::from_slice(&original_index).unwrap();
+        duplicate["samples"]
+            .as_array_mut()
+            .unwrap()
+            .push(samples.last().unwrap().clone());
+        std::fs::write(&input, serde_json::to_vec(&duplicate).unwrap()).unwrap();
+        assert!(crate::report_history::run_query(
+            &input,
+            &refused,
+            "required",
+            &subject_id,
+            "coverage.line",
+            &query
+        )
+        .is_err());
+        assert!(!refused.exists());
+        std::fs::write(&input, original_index).unwrap();
+        eprintln!(
+            "history-query:31 real publications {:.3}s; query {:.3}s; HTML {} bytes",
+            started.elapsed().as_secs_f64(),
+            query_seconds,
+            html.len()
+        );
+        if let Some(path) = std::env::var_os("HG_HISTORY_QUERY_PREVIEW") {
+            std::fs::write(path,serde_json::to_vec_pretty(&json!({"html":output.join("history.html"),"input":input,"subject":subject_id,"query_seconds_debug":query_seconds,"html_bytes":html.len(),"published_inputs":31,"selected":30})).unwrap()).unwrap();
+            std::mem::forget(workspace);
+        }
+    }
 }
