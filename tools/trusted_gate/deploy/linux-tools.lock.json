@@ -1,0 +1,68 @@
+{
+  "schema": "gatehouse-linux-tool-archives/v1",
+  "target": "x86_64-unknown-linux-gnu",
+  "versions": {
+    "rust": "1.99.1",
+    "cargo-nextest": "0.9.143",
+    "node": "24.18.0"
+  },
+  "metadata": {
+    "rust": {
+      "url": "https://static.rust-lang.org/dist/2026-10-15/channel-rust-1.99.1.toml",
+      "sha256": "fb152be80975c194aa5fc684b2aec3a6e14e2b855efe2faa4e5f8ae6e590f463",
+      "checksum_url": "https://static.rust-lang.org/dist/2026-10-15/channel-rust-1.99.1.toml.sha256"
+    },
+    "cargo-nextest": {
+      "url": "https://api.github.com/repos/nextest-rs/nextest/releases/tags/cargo-nextest-0.9.143",
+      "sha256": "0284fd691321c5b1f7ccde55e45db21ea03ed0150418fa15f0adca3326ee90fa",
+      "source": "release asset digest"
+    },
+    "node": {
+      "url": "https://nodejs.org/dist/v24.18.0/SHASUMS256.txt",
+      "sha256": "3927bab574a00ca0560c9583fe19655ba19603a1c5851414e4325d34ac50e469"
+    }
+  },
+  "artifacts": {
+    "rustc": {
+      "url": "https://static.rust-lang.org/dist/2026-10-15/rustc-1.99.1-x86_64-unknown-linux-gnu.tar.xz",
+      "sha256": "2ff05ff9c08a90861e7f6e4065b40a8b87463b4576186fd613871c3e37f2091f",
+      "max_bytes": 536870912
+    },
+    "cargo": {
+      "url": "https://static.rust-lang.org/dist/2026-10-15/cargo-1.99.1-x86_64-unknown-linux-gnu.tar.xz",
+      "sha256": "53f3521949404d595efb06a55c12c5658d4ed1c75566f33d3d514eaebe70bd8a",
+      "max_bytes": 536870912
+    },
+    "rust-std": {
+      "url": "https://static.rust-lang.org/dist/2026-10-15/rust-std-1.99.1-x86_64-unknown-linux-gnu.tar.xz",
+      "sha256": "109b074225bf5b9ea3820890876bfdf4ed161adbfaf94b2b4b5984c85ee5d958",
+      "max_bytes": 536870912
+    },
+    "rustfmt-preview": {
+      "url": "https://static.rust-lang.org/dist/2026-10-15/rustfmt-1.99.1-x86_64-unknown-linux-gnu.tar.xz",
+      "sha256": "e3b36c4c7ec3486c059d8067ff48787676612007123aad7a4e8ec12c48ee9ba2",
+      "max_bytes": 536870912
+    },
+    "clippy-preview": {
+      "url": "https://static.rust-lang.org/dist/2026-10-15/clippy-1.99.1-x86_64-unknown-linux-gnu.tar.xz",
+      "sha256": "458339712a058e52cc4522ff9ef8b59cd1ea1340312216cd94194c464a3f6dc5",
+      "max_bytes": 536870912
+    },
+    "llvm-tools-preview": {
+      "url": "https://static.rust-lang.org/dist/2026-10-15/llvm-tools-1.99.1-x86_64-unknown-linux-gnu.tar.xz",
+      "sha256": "8429c5117debfb45c22cf2f97712ef00e0e94976c96cf92f661974a458ca7e84",
+      "max_bytes": 536870912
+    },
+    "cargo-nextest": {
+      "url": "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.143/cargo-nextest-0.9.143-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "66786b9abe23920d022a182d1416b1bbc8130dd4872a9553d76985a1708dcd1e",
+      "max_bytes": 33554432
+    },
+    "node": {
+      "url": "https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-x64.tar.xz",
+      "sha256": "55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742",
+      "max_bytes": 134217728
+    }
+  },
+  "scope": "official HTTPS metadata pins; no signature/Sigstore claim; not installation, sysroot equivalence, ABI or quality acceptance"
+}

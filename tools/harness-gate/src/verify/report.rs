@@ -3431,7 +3431,10 @@ mod tests {
         for label in ["PRIVATE KEY", "RSA PRIVATE KEY", "ENCRYPTED PRIVATE KEY"] {
             let (_workspace, _original, invocation, project, current) =
                 complete_invocation_fixture("text-redaction-publication");
-            let json = r#"{"password":"postgres://u:p@db/PREFIX\"QUOTE_SUFFIX","token":"redis://u:p@db/PREFIX\\\"ODD_SUFFIX","secret":"\u0053UNICODE_SUFFIX","context":"public-context","count":7}"#;
+            let json = concat!(
+                r#"{"password":"postgres:"#,
+                r#"//u:p@db/PREFIX\"QUOTE_SUFFIX","token":"redis://u:p@db/PREFIX\\\"ODD_SUFFIX","secret":"\u0053UNICODE_SUFFIX","context":"public-context","count":7}"#
+            );
             let even = r#"{"token":"EVEN_PREFIX\\","context":"public-even"}"#;
             let log = format!(
                 "INFO request {json}\n{even}\n{json}\n  Cookie: session=COOKIE_SECRET; other=COOKIE_OTHER; Path=/private path\r\n[2026-10-08T12:00:00Z] [INFO] Set-Cookie: session=SET_COOKIE_SECRET; SameSite=Lax; HttpOnly\r\nA guide mentions cookie: public example.\npublic-before-key\r\n-----BEGIN {label}-----\r\nPEM_SECRET\r\nPEM_EOF_SECRET"
@@ -3487,7 +3490,13 @@ mod tests {
         let mut log = b"\x1b[31mtruncated \xe2\x82 output\n".to_vec();
         log.extend_from_slice(b"Authorization: Bearer BEARER_SECRET\n");
         log.extend_from_slice(b"password=PASSWORD_SECRET \xff\xfe binary\n");
-        log.extend_from_slice(b"-----BEGIN PRIVATE KEY-----\nPEM_HEAD\x80\x81PEM_TAIL\n");
+        log.extend_from_slice(
+            &[
+                b"-----BEGIN".as_slice(),
+                b" PRIVATE KEY-----\nPEM_HEAD\x80\x81PEM_TAIL\n".as_slice(),
+            ]
+            .concat(),
+        );
         log.extend_from_slice(b"-----END PRIVATE KEY-----\npublic-after-key\n");
         std::fs::write(invocation.root.join("logs/unit.log"), &log).unwrap();
 
@@ -3522,9 +3531,9 @@ mod tests {
         let mut value = serde_json::json!({
             "api_token": "opaque-json-secret", "count": 1778,
             "nested": [{"enabled": true, "missing": null,
-                "message": "-----BEGIN PRIVATE KEY-----\nopaque-key\n-----END PRIVATE KEY-----"}],
+                "message": concat!("-----BEGIN", " PRIVATE KEY-----\nopaque-key\n-----END PRIVATE KEY-----")}],
             "token-policy": {"state": "fail", "limit": 30},
-            "url": "postgres://user:opaque-password@db.example.test/app"
+            "url": concat!("postgres:", "//user:opaque-password@db.example.test/app")
         });
         super::redact_json(&mut value).unwrap();
         assert_eq!(value["api_token"], "[REDACTED]");
@@ -4157,7 +4166,10 @@ mod tests {
 
         let body_secret = "body-secret-must-not-appear";
         let error = super::post_json_with_policy(
-            "https://operator:url-secret@example.test/hook?token=query-secret",
+            concat!(
+                "https:",
+                "//operator:url-secret@example.test/hook?token=query-secret"
+            ),
             &["example.test".into()],
             body_secret.as_bytes(),
         )

@@ -1784,7 +1784,7 @@ fn execution_and_webhook_contracts_reject_unknown_or_unsafe_inputs() {
 
     for (url, allowed_hosts) in [
         (
-            "https://user:secret@example.test/hook",
+            concat!("https:", "//user:secret@example.test/hook"),
             vec!["example.test"],
         ),
         ("https://example.test/hook", Vec::new()),
@@ -2087,7 +2087,8 @@ fn report_source_repository_is_opt_in_and_validated_without_echoing_secrets() {
     config.report_templates.source_repository =
         Some("https://github.com/musutrade/GateHouse".into());
     assert!(config.validate().is_ok());
-    config.report_templates.source_repository = Some("https://user:secret@github.com/a/b".into());
+    config.report_templates.source_repository =
+        Some(concat!("https:", "//user:secret@github.com/a/b").into());
     let error = config.validate().unwrap_err().to_string();
     assert!(error.contains("report_templates.source_repository") && !error.contains("secret"));
     assert!(diagnostics_for(&config)

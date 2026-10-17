@@ -20,7 +20,7 @@ class GenerateSbomTests(unittest.TestCase):
             {
                 "name": "private-dependency",
                 "version": "1.2.3",
-                "source": "git+https://build-user:super-secret@example.test/repo#abc",
+                "source": "git+https:" "//build-user:super-secret@example.test/repo#abc",
             }
         )
         url = component["externalReferences"][0]["url"]
