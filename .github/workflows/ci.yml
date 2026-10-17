@@ -132,10 +132,37 @@ jobs:
       - name: Run tests
         env:
           HARNESS_GATE_CI_ACCEPTANCE: ${{ github.workspace }}/target/quality/workflow-acceptance
+          HG_HTML_ACCEPTANCE_DIR: ${{ runner.temp }}/gatehouse-html-example
+          HG_HTML_ACCEPTANCE_COMMIT: ${{ github.sha }}
         run: cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked
 
       - name: Test findings feedback integration without publishing
         run: node --test .github/actions/findings-feedback/feedback.test.cjs
+
+      - name: Test optional HTML artifact transport without uploading
+        run: node --test .github/actions/report-artifact/prepare.test.cjs
+
+      - name: Pin the generated synthetic HTML export
+        id: html-example
+        env:
+          HTML_EXPORT: ${{ runner.temp }}/gatehouse-html-example
+        run: |
+          node - <<'JS'
+          const fs = require('node:fs'), crypto = require('node:crypto'), path = require('node:path');
+          const bytes = fs.readFileSync(path.join(process.env.HTML_EXPORT, 'provenance.json'));
+          const digest = crypto.createHash('sha256').update(bytes).digest('hex');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `digest=${digest}\n`);
+          JS
+
+      - name: Upload synthetic report UI example (not repository quality evidence)
+        id: html-artifact
+        uses: ./.github/actions/report-artifact
+        with:
+          directory: ${{ runner.temp }}/gatehouse-html-example
+          provenance-sha256: ${{ steps.html-example.outputs.digest }}
+          commit: ${{ github.sha }}
+          upload: 'true'
+          retention-days: '7'
 
       - name: Validate configured workflow acceptance
         run: python3 tools/quality/ci_acceptance.py --directory target/quality/workflow-acceptance

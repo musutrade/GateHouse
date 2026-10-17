@@ -853,6 +853,80 @@ compose, and Reset clears all of them. Without JavaScript all counts and rows re
 readable. Engineering Policy, Core decisions and authoritative blockers are unchanged.
 History and trends use the separate explicit history command below.
 
+### Export a completed HTML report for Actions download
+
+The source-tree `report-export` command and
+[optional report-artifact Action](.github/actions/report-artifact/action.yml) share
+one HTML delivery path with issue #69. These are source capabilities, not a claim
+that a published Core release already includes them. They neither render a second
+report nor implement PR comments, Checks or GitLab publishing.
+
+Use the same pinned `harness-report-history/v1` index described below, with exactly
+one completed invocation containing the configured `test_result.html`:
+
+```sh
+harness-gate report-export --input archive/one-report.json --output html-export \
+  --commit FULL_EXPECTED_SOURCE_COMMIT
+```
+
+The expected 40- or 64-digit lowercase commit must match manifested invocation
+metadata. Export reuses complete publication/manifest verification, requires complete
+evidence, binds the bytes actually copied to the pinned manifest, and refuses missing,
+modified, symlinked or oversized HTML (2 MiB limit). The new output directory must
+be outside the input tree and must not exist. It contains only `test_result.html`
+and `provenance.json`: exact source pins, invocation, commit, original Core PASS/FAIL,
+evidence completeness and the HTML digest/size. No raw logs, evidence or machine
+report are exported. A successful export means the display was copied; it does not
+change a FAIL into a PASS. Existing history output bytes and policy semantics are unchanged.
+
+The Action validates an independently trusted provenance digest and expected commit,
+then stages only these two files. `upload` defaults to `'false'`. For a reviewed,
+trusted producer in the same workflow, the integration is:
+
+```yaml
+# Use a reviewed checkout of this source commit containing the Action.
+# A remote uses: reference must pin that reviewed full commit, not main/latest.
+- uses: ./.github/actions/report-artifact
+  id: html
+  with:
+    directory: ${{ runner.temp }}/html-export
+    provenance-sha256: ${{ steps.trusted-producer.outputs.provenance-sha256 }}
+    commit: ${{ steps.trusted-producer.outputs.commit }}
+    upload: 'true'
+    retention-days: '7'
+```
+
+`trusted-producer` above denotes your already authorized producer; it is not a new
+built-in step. Its pins and expected commit must come from the trusted completed
+run, not from an untrusted downloaded bundle. For cross-run delivery, authenticate
+the producer repository, exact workflow/run/attempt/commit and its independently
+retained digest before calling this Action. Pins provide integrity, not signatures.
+Do not run untrusted project code in the trusted delivery job or use
+`pull_request_target` to execute a PR checkout. Review the producer and template:
+the bundled template escapes/redacts report text, but the exporter does not sanitize
+arbitrary custom HTML or guarantee removal of unrecognized secrets. Upload is an
+explicit disclosure of the display's contents under the repository's artifact access.
+
+The transport example is exercised on GitHub.com Linux runners; GHES delivery
+is outside this integration. No `checks:write`, `pull-requests:write` or extra token is needed; use `contents:read`
+for checkout. The Action uses the normal Actions artifact runtime credentials.
+Names include exact commit, run ID and attempt; existing artifacts are not overwritten.
+Retention is explicit (default 7, accepted 1–30 days, subject to repository limits).
+Validation or upload errors fail the integration step; missing reports are never
+silently accepted. The original Core required gate and exit status remain authoritative.
+
+The existing Linux Test job produces a **synthetic 1000-subject UI acceptance example**
+through the real publisher, with a deliberate FAIL and complete evidence. Its HTML
+artifact demonstrates download and rendering; it is not GateHouse's production
+quality result. This adds export/transport to the existing test job, with no separate
+collector or quality job. Open Actions → the completed CI run → Artifacts →
+`gatehouse-html-COMMIT-RUN-ATTEMPT`, download, extract and open `test_result.html`
+offline. The Action also returns `artifact-id` and `artifact-url`; the URL is an
+authenticated download, not hosted HTML. Access requires repository read permission;
+links expire with retention or deletion. See [GitHub's artifact download guide](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts).
+Remove the opt-in Action step to disable upload; existing local reports and required
+gates are unchanged. #69's other platform integrations remain separate work.
+
 ### Explicit offline metric history
 
 `report-history` reads completed invocation publications; it does not run gates,

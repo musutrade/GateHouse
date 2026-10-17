@@ -40,7 +40,7 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 .coverage-cell { display:block; padding:.5rem; border:1px solid currentColor; color:#101010; background:hsl(210 65% calc(98% - var(--coverage) * .3%)); max-width:13rem; overflow-wrap:anywhere; }
 .coverage-cell span { display:block; }
 .quality-group > summary { cursor:pointer; font-weight:bold; padding:.5rem; overflow-wrap:anywhere; }
-.distribution-panel { overflow-wrap:anywhere; }
+.distribution-panel, .aggregate-blockers { overflow-wrap:anywhere; }
 .histogram-bar { height:0.6rem; background:#3576a5; width:var(--bar); }
 .coverage-panel h3, .coverage-panel p, .ranking-panel h3, .ranking-panel p, .ranking-panel li { overflow-wrap:anywhere; }
 </style>
@@ -107,7 +107,7 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 <p class="note">Gate states below are supplied results, not a blocker list. Optional failures do not necessarily block verification. Values are shown as recorded, without converting units or calculating percentages.</p>
 {% if q.project_report.aggregate.blockers is defined %}
 <p>Authoritative aggregate blockers: {{ q.project_report.aggregate.blockers | length }}. This list is not changed by table filters.</p>
-<ul>
+<ul class="aggregate-blockers">
 {% for blocker in q.project_report.aggregate.blockers %}
 <li>Policy: {{ self::scalar(v=blocker.policy | default(value="not available")) }}; subject: {{ self::scalar(v=blocker.subject | default(value="not available")) }}; state: {{ self::scalar(v=blocker.state | default(value="not available")) }}{% if blocker.reason %}; reason: {{ self::scalar(v=blocker.reason) }}{% endif %}</li>
 {% endfor %}

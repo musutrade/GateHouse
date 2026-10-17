@@ -787,3 +787,26 @@ python3 tools/quality/docs_consistency.py
 剩余债务分开。选择债务 panel 和类别可与搜索、状态、组件、复杂度范围及 CRAP 区间
 组合筛选；Reset 清除全部筛选。原始类别计数和权威 blockers 不随筛选变化。
 禁用 JavaScript 仍可读取所有计数与明细，工程政策及 Core 决策语义保持不变。
+
+### 已完成 HTML 报告的 Actions 下载
+
+源码中的 `report-export --input <单条v1索引> --output <新目录> --commit <精确提交>`
+复用已完成报告的完整 manifest 校验，导出已有 `test_result.html` 和精简
+`provenance.json`；不重新渲染，不导出原始日志、证据或 machine report。
+摘要钉定、已完成证据和精确 commit 必须匹配，HTML 上限 2 MiB，输出不得覆盖现有目录。
+导出成功不改变 Core 的 PASS/FAIL。
+
+[可选 Action](.github/actions/report-artifact/action.yml)与 #69 共用这一路径，默认
+`upload: 'false'`，开启时必须传入可信 producer 独立提供的 provenance 摘要和 commit。
+远程 Action 引用应固定审查过的完整提交；这属于源码能力，不表示已有发行版支持。
+Action 仅上传两个展示文件，无额外评论或 Checks 写权限，保留期默认 7 天，可选 1–30 天，
+受仓库政策限制。可信交付 job 不执行不可信 PR 代码；摘要不能替代来源认证，任意自定义
+HTML 也不会被导出器自动净化。跨运行来源校验、故障处理及完整接入示例见
+[英文接入说明](README.md#export-a-completed-html-report-for-actions-download)。
+
+Linux Test job 的下载样例是经真实发布器生成的 **1000 个 subject 合成 UI 验收报告**，
+故意保留 FAIL，不代表 GateHouse 自身的生产质量测量。进入 Actions 的已完成 CI run，
+在 Artifacts 下载 `gatehouse-html-COMMIT-RUN-ATTEMPT`，解压后离线打开
+`test_result.html`。Action 另返回 `artifact-id` 与 `artifact-url`；需要仓库读取权限，
+链接随保留期或删除失效，不是在线托管网页。上传/校验失败会使该集成步骤失败，
+Core 原有 required gates 与退出状态仍保持权威；移除显式上传步骤即可关闭交付。

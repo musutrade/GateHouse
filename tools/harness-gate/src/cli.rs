@@ -59,6 +59,19 @@ pub(crate) enum Commands {
         query: crate::report_history::Query,
     },
 
+    /// Export a completed, pinned HTML report for optional artifact delivery; never evaluate policy.
+    ReportExport {
+        /// Existing v1 history index containing exactly one publication.
+        #[arg(long)]
+        input: PathBuf,
+        /// New directory outside the input tree; contains only HTML and provenance.
+        #[arg(long)]
+        output: PathBuf,
+        /// Independently expected full commit identity for this report.
+        #[arg(long)]
+        commit: String,
+    },
+
     /// Explain a registered machine failure, CLI error or configuration diagnostic code without loading a project.
     Explain {
         /// Stable code, for example QUALITY_BLOCKED, E1401 or HGCFG-TOML-PARSE.

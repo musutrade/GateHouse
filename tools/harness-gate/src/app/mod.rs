@@ -20,6 +20,11 @@ pub(crate) fn run() -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
+        Commands::ReportExport {
+            input,
+            output,
+            commit,
+        } => crate::report_history::export_html(input, output, commit).map_err(Into::into),
         Commands::ReportHistory {
             input,
             output,
