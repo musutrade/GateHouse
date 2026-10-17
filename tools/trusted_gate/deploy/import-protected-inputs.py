@@ -22,7 +22,7 @@ FILES = {ENTRY, 'tools/maintenance/restore_evidence.py', *(
         'stage-linux-inputs.py', 'run-linux-test.py', 'prepare-linux-workspace.py',
         'prepare-locked-directory.py', 'linux-tools.lock.json', 'build-protected-core.py',
         'preserve-pilot-state.py', 'prepare-linux-volume.py', 'stage-protected-source.py', 'bootstrap-release.py',
-        'preflight-history-pilot.py', 'linux-transition-policy.py'))}
+        'preflight-history-pilot.py', 'linux-transition-policy.py', 'seal-linux-inputs.py'))}
 ENV = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'GIT_CONFIG_NOSYSTEM': '1',
        'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_TERMINAL_PROMPT': '0', 'GIT_OPTIONAL_LOCKS': '0'}
 
@@ -324,6 +324,27 @@ def import_inputs(root, manifest, manifest_pin, source, head, base, tool_archive
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    if sys.argv[1:2] == ['seal-linux-inputs']:
+        for name in ('helper-root', 'manifest', 'source', 'inputs', 'archives', 'onboarding', 'tool-recipe'):
+            parser.add_argument('--' + name, type=Path, required=True)
+        for name in ('manifest-sha256', 'head', 'input-binding-sha256', 'tool-recipe-sha256'):
+            parser.add_argument('--' + name, required=True)
+        args = parser.parse_args(sys.argv[2:])
+        try:
+            authenticate(args.helper_root, args.manifest, args.manifest_sha256)
+            sealer = load(args.helper_root, 'seal-linux-inputs.py')
+            context = SimpleNamespace(**{name: globals()[name] for name in (
+                'need', 'owned', 'path_operand', 'read', 'write', 'record', 'canonical', 'unique',
+                'git', 'frozen_lock', 'load', 'authenticate', 'readonly', 'ENV')})
+            result = sealer.seal(context, args.helper_root, args.manifest, args.manifest_sha256,
+                args.source, args.head, args.inputs, args.input_binding_sha256,
+                args.archives, args.onboarding, args.tool_recipe, args.tool_recipe_sha256)
+        except Exception as error:
+            parser.exit(1, 'Linux input sealing blocked (' + type(error).__name__ + '); retain private state\n')
+        summary = {key:result[key] for key in ('schema', 'state', 'head', 'files', 'bytes', 'administrator_ready', 'production_gate_enabled')}
+        summary['binding_sha256'] = hashlib.sha256(canonical(result)).hexdigest()
+        print(json.dumps(summary, sort_keys=True))
+        return
     if sys.argv[1:2] == ['preflight-pilot']:
         for name in ('helper-root', 'manifest'):
             parser.add_argument('--' + name, type=Path, required=True)

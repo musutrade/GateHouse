@@ -24,7 +24,7 @@ MAX_ARCHIVE = 160 * 1024**2
 MAX_MEMBER = 1024**2
 ORDER = ['authenticate-release-and-fixed659', 'verify-current-repository-and-base',
          'admit-separate-storage', 'preserve-and-pin659', 'stage-source-and-bind-payload',
-         'import-official-and-locked-inputs', 'build-and-capture-core-under995',
+         'import-official-and-locked-inputs', 'seal-reviewed-linux-data', 'build-and-capture-core-under995',
          'check-captured-core-policy', 'reverify-retention-and-applicability',
          'confirm-revocation', 'retire-old-source', 'install-reviewed-files-and-config',
          'accept-transition-workload-and-recovery']

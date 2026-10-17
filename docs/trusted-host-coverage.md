@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has seventeen files:
-the importer, Core builder, preservation, volume, source-staging, release-contract, preflight and Linux-policy libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has eighteen files:
+the importer, Core builder, preservation, volume, source-staging, release-contract, preflight, Linux-policy and input-sealing libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -986,8 +986,53 @@ rejected thirteen legitimate crate fixture names containing punctuation; the
 corrected role-only filename check passed in a fresh fixture, with the original
 attempt retained privately. No package code ran, and this is not Root import,
 mounted-systemd/UID995, workload, deployment, resource or quality acceptance.
-The helper/source-release inventories remain seventeen and 69 members, with no
-Core binary. Installed 659, Apps, rules and services remain unchanged.
+At `9e8598a`, the helper/source-release inventories remained seventeen and 69
+members, with no Core binary. Installed 659, Apps, rules and services remain unchanged.
+
+### Candidate protected Linux data capture
+
+The eighteenth helper, `seal-linux-inputs.py`, adds administrator-only
+`seal-linux-inputs`. It requires the authenticated helper revision to match the
+protected Git source, the fixed retained 659 controller lease and occupied slot,
+stopped workers, and admission of the separate registered storage volume. It
+revalidates the independent official-tool/dependency import before and after
+capture. Dependency files are reused only from that verified readonly import.
+The source lock and manifest must match protected Git facts; arbitrary existing
+directories or an Agent-created inventory cannot substitute for these proofs.
+
+Only a fresh private `bootstrap-linux-inputs` destination is accepted. Compressed
+test-data files are copied before using their independently source-pinned hashes
+and sizes; the existing archive copier's 128 MiB per-file cap is retained.
+Onboarding is copied without following links, executing installers or trusting
+mutable source checksums, then checked against the independently reviewed whole
+source digest. Files become readonly only in the new destination. Extra/empty
+directories, hardlinks, special files, source changes and byte/entry/metadata
+budget violations block sealing. Existing role budgets are not widened.
+
+The result includes canonical role metadata outside the three trees, the fixed
+offline Cargo configuration and a private binding with their explicit pins.
+Source, imported inputs, copied bytes/modes, helper code, storage and the old slot
+are checked again before the binding and completion record are written. Partial,
+blocked or completed destinations are never implicitly reused. A caller can
+retain its exact lease descriptor for later reviewed composition. Failures retain
+the private data and old pilot; this helper does not revoke, retire, install,
+publish, create an App Check or grant quality authority. Complete configuration,
+transaction/recovery and host acceptance remain required; administrator readiness
+and production remain false. The source archive now has 70 members, including
+eighteen helpers, with no Core binary; the normal pilot package is unchanged.
+
+Eighteen new regressions bring the focused suite to 332 tests, including a
+controller-verifier round trip through actual small Git/copy/hash fixtures and
+negative lifecycle/input/reuse cases. Root authentication, ownership, slot,
+worker, imported-input and storage boundaries are explicitly replaced in these
+ordinary fixtures. Separately, actual copy/inventory primitives captured the
+three compressed archives and 469 onboarding files and inventoried the existing
+205-package sources in 6.326 seconds. The controller then verified all 9,397 role
+files / 235,706,723 bytes plus 175 tools / 1,020,148,204 bytes in 7.120 seconds with
+production pins unchanged. This experiment invoked the copy/inventory primitives,
+not the privileged entry or its authentication/lease/slot/import/source-Git/mount
+lifecycle. Neither it nor the fixtures establish live Root, UID995, workload,
+resource, deployment or quality acceptance. Installed 659 remains untouched.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
