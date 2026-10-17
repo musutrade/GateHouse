@@ -280,6 +280,43 @@ or compare extracted crate sources against those verified archives. Only matchin
 independently verified inputs may be imported; this candidate does not implement
 that trusted bootstrap and does not accept an Agent cache as authoritative input.
 
+The staging helper at `b092937` prepared an operator snapshot of 116,914 files,
+3,888,114,185 logical bytes, with a 19,597,186-byte inventory in 513.304 seconds.
+Its inventory SHA-256 is
+`47f1d63ac6899d76af5068e2270154df28ecc90c4781f5711cc7a5951c85bcb0`.
+Copied Rust 1.99.1, Cargo 1.99.1, nextest 0.9.143 and Node 24.18.0 started
+successfully with the original homes hidden and network limited to loopback in
+an ordinary user namespace. Mount verification rejected chmod with EROFS.
+These are operator preparation/runtime observations, not trusted bootstrap proof.
+
+The first full namespace attempt retained a real cache-contract failure: the
+observation parent inherited mode 0775. Core correctly refused that ancestor;
+tightening only this private observation directory to 0700 made the exact
+contract pass, without changing Core or its tests. The next attempt passed all
+724 Rust tests with zero skipped, both Node suites, HTML/workflow acceptance and
+schema checks, but blocked on onboarding: its upgrade fixture copied readonly
+input modes and then could not edit its own copied catalog. Both failed attempts
+remain separate evidence and are not accepted complete executions.
+
+The adapter now makes a private writable onboarding source copy, verifies its
+complete content/executable-mode inventory against the same fixed pin, and keeps
+the original readonly input unchanged. The existing upstream acceptance test,
+including its corruption/upgrade/rollback cases, remains unchanged. A focused
+namespace recheck at `d8b3aa8` passed all 29 actual onboarding steps and verified
+both source copies' pins. This does not substitute partial runs for a full Gate.
+
+The corrected adapter at `d8b3aa8` then completed its own full namespace run in
+256.052 seconds: all ten stages succeeded, all 724 Rust tests passed with zero
+skipped, all 29 onboarding steps passed, and post-validation matched 1,623 tracked
+files plus all 1,480 restored inputs. It used the readonly copied runtime and
+registry with original homes hidden and loopback-only networking. Only compiled
+target artifacts were reused from the diagnosed earlier attempts; all commands,
+reports and output workspace were fresh. This is not a cold-cache success or
+root/systemd/UID995 acceptance. It grants no coverage migration or App authority.
+A separate read-only audit matched all 205 cached crate archives selected by the
+frozen Cargo.lock to their locked SHA-256 values; it does not yet verify extracted
+sources, registry metadata or compiler distribution provenance.
+
 The accepted `659803a` pilot remains on its existing 2 GiB volume. Neither this
 preparation helper nor its ordinary-user observations install inputs or modify
 that filesystem. A future reviewed upgrade must preserve its outstanding source,
