@@ -10,6 +10,7 @@ import tomllib
 import urllib.parse
 
 from .common import atomic_json, canonical, checked, digest, protected, read_json, read_regular, require, sha
+from .runtime import verify as verify_runtime
 
 
 HOST_DIRECTORY = '.gatehouse-host'
@@ -72,6 +73,7 @@ class Executor:
             path = protected(name)
             require(digest(read_regular(path, 128 * 1024 * 1024)) == expected,
                     'installed trusted input differs from reviewed pin')
+        verify_runtime(self.config)
         return digest(canonical(self.config))
 
     @checked

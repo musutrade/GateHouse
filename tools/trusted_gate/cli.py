@@ -18,6 +18,7 @@ from .isolation import launch, unprivileged_identity
 from .journal import Journal
 from .publication import deliver
 from .source import prepare, retire
+from .runtime import settings as runtime_settings
 
 
 CONFIG = Path('/etc/gatehouse/host.json')
@@ -47,6 +48,7 @@ def configuration():
                 for index, a in enumerate(paths) for b in paths[index + 1:]),
             'source, policy, control state, mirror, scratch, cache and inbox must be disjoint')
     require(config['freshness_seconds'] > 0 and config['timeout_seconds'] > 0, 'invalid time budget')
+    runtime_settings(config)
     unprivileged_identity(config['developer_uid'])
     return config
 

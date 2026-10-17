@@ -10,11 +10,13 @@ import re
 import stat
 import subprocess
 import time
+import uuid
 
 from .cache import Cache, dimensions
-from .common import atomic_json, canonical, checked, digest, protected, require
+from .common import atomic_json, canonical, checked, digest, protected, read_regular, require, sha
 from .execution import clean_environment, confirm_units_stopped
 from .history import prepare as prepare_history
+from .runtime import settings as runtime_settings, verify as verify_runtime
 
 
 def capture_names(step):
@@ -83,9 +85,37 @@ def unprivileged_identity(uid):
     return account
 
 
+@checked
+def run_arguments(config, run, step):
+    """Whole-token facts from the protected journal, never general interpolation."""
+    enabled = step.get('run_arguments', False)
+    require(type(enabled) is bool, 'run argument selection must be explicit')
+    arguments = step['argv']
+    require(isinstance(arguments, list) and arguments
+            and all(isinstance(arg, str) and '\0' not in arg for arg in arguments), 'invalid approved step argv')
+    if not enabled:
+        require(not any('@gatehouse:' in arg for arg in arguments), 'run argument tokens require explicit opt-in')
+        return list(arguments)
+    identity = uuid.UUID(run['id'])
+    require(identity.version == 4 and str(identity) == run['id'] and identity.int > 0,
+            'run arguments require the canonical journal UUID')
+    head, base = sha(run['head']), sha(run['input']['base'])
+    require(head == sha(run['input']['head']), 'journal head differs from frozen input')
+    values = {'@gatehouse:head@': head, '@gatehouse:base@': base,
+              '@gatehouse:receipt@': str(identity.int)}
+    if '@gatehouse:test-data-sha256@' in arguments:
+        manifest = protected(Path(config['source']) / 'test-data/manifest.json')
+        values['@gatehouse:test-data-sha256@'] = digest(read_regular(manifest, 4 * 1024 * 1024))
+    require(not any('@gatehouse:' in arg and arg not in values for arg in arguments),
+            'unknown or embedded run argument token')
+    require('@gatehouse:' not in arguments[0], 'step executable cannot be a run argument')
+    return [values.get(arg, arg) for arg in arguments]
+
+
 def sandbox_arguments(config, run, step_id, scratch, cache, history=None):
     step = config['steps'][step_id]
-    require(step['argv'] and all(isinstance(arg, str) and '\0' not in arg for arg in step['argv']), 'invalid approved step argv')
+    command = run_arguments(config, run, step)
+    runtime_settings(config)
     require(Path(step['argv'][0]).is_absolute(), 'approved executable must be absolute')
     require(step['argv'][0] in config['protected_files'], 'step executable is not pinned')
     require(type(step.get('git_history', False)) is bool, 'Git history selection must be explicit')
@@ -114,6 +144,10 @@ def sandbox_arguments(config, run, step_id, scratch, cache, history=None):
     for field, name in (('cargo_registry', 'registry'), ('cargo_git', 'git')):
         if config.get(field):
             properties['BindReadOnlyPaths'] += ' ' + config[field] + ':/work/output/cargo-home/' + name
+    if 'runtime' in config:
+        properties['BindReadOnlyPaths'] += ' ' + config['runtime']['root'] + ':/opt/gatehouse/toolchain'
+    if 'cargo_config' in config:
+        properties['BindReadOnlyPaths'] += ' ' + config['cargo_config'] + ':/work/output/cargo-home/config.toml'
     if history:
         properties['BindReadOnlyPaths'] += ' ' + str(history) + ':/work/history'
         properties['BindReadOnlyPaths'] += ' ' + str(Path(history).with_name('git-pointer')) + ':/work/source/.git'
@@ -134,7 +168,7 @@ def sandbox_arguments(config, run, step_id, scratch, cache, history=None):
             'GITHUB_TOKEN', 'GITHUB_APP_PRIVATE_KEY', 'SSH_AUTH_SOCK'}, 'unsafe step environment override')
     environment.update(step.get('env', {}))
     argv.extend('--setenv=' + key + '=' + value for key, value in environment.items())
-    return [*argv, '--', *step['argv']]
+    return [*argv, '--', *command]
 
 
 def launch(config, journal, run_id, step_id):
@@ -142,6 +176,7 @@ def launch(config, journal, run_id, step_id):
     run = journal.get(run_id)
     require(run['local'] == 'running', 'step has no active trusted Core invocation')
     require(step_id in config['steps'], 'step not in reviewed policy')
+    verify_runtime(config)
     names = capture_names(config['steps'][step_id])
     account = unprivileged_identity(pwd.getpwnam(config['executor_user']).pw_uid)
     require(account.pw_uid != 0 and account.pw_uid != config['developer_uid'], 'executor must have a separate identity')
@@ -156,6 +191,11 @@ def launch(config, journal, run_id, step_id):
     for field in ('cargo_registry', 'cargo_git'):
         if config.get(field):
             protected(config[field], directory=True)
+    if 'cargo_config' in config:
+        # Bind onto a worker-owned empty ordinary file, never a source/config symlink.
+        target = cargo_home / 'config.toml'
+        target.touch(mode=0o600, exist_ok=False)
+        os.chown(target, account.pw_uid, account.pw_gid)
     cache_config = config['cache']
     cache_root = protected(cache_config['root'], directory=True)
     cache = Cache(cache_root, cache_config['max_bytes'], cache_config['max_entries'], cache_config['ttl_seconds'])
@@ -163,6 +203,8 @@ def launch(config, journal, run_id, step_id):
     require(all(name in config['protected_files'] for name in step['toolchain_files']), 'unreviewed cache toolchain input')
     selected = dimensions(config['source'], step, config['repository'],
                           str(account.pw_uid) + ':' + str(account.pw_gid) + ':' + run['input']['policy'])
+    # Render journal facts only inside sandbox_arguments, after compatibility
+    # selection from the stable reviewed template and source build inputs.
     path = cache.directory(selected)
     maintenance_started = time.monotonic()
     before = cache.maintain(active=(path.name,))
