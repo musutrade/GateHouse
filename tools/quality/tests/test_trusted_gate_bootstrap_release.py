@@ -101,7 +101,7 @@ class BootstrapReleaseTests(unittest.TestCase):
 
     def test_exact_source_release_is_inspected_without_extraction_or_core(self):
         payload,result=self.decode()
-        self.assertEqual(result['members'],64)
+        self.assertEqual(result['members'],49+len(BOOT.FILES))
         self.assertFalse(result['administrator_ready']);self.assertTrue(result['source_binding_required'])
         self.assertFalse(any(name.endswith('/harness-gate') for name in payload))
         self.assertFalse((self.root/'files').exists())

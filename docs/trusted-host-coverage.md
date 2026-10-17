@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has fifteen files:
-the importer, Core builder, preservation, volume, source-staging and release-contract libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has sixteen files:
+the importer, Core builder, preservation, volume, source-staging, release-contract and preflight libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -805,7 +805,7 @@ required; a future administrator transaction must build/capture that Core under
 UID995 and check its policy before installation. Existing normal pilot packaging
 and its 25-file inventory are unchanged.
 
-The new archive has 64 exact regular members: fifteen authenticated helpers,
+At `c821606`, the archive had 64 exact regular members: fifteen authenticated helpers,
 twenty-two proposed installed-file source inputs, twenty-three fixed-659 source
 references, and four metadata/bundle members. The accepted 659 installer had
 thirteen controller modules and twenty-four flat release members; its old source
@@ -842,6 +842,54 @@ live Root upgrade or completed project verification. The accepted 659 deployment
 Apps, repository rules and services remain untouched; full guarded package/host
 preflight, transition policy, installation/recovery and broader acceptance are
 still required before any administrator offer or issue closure.
+
+### Candidate fixed-659 preflight
+
+`preflight-history-pilot.py` is the sixteenth authenticated helper, selected by
+the administrator-only `preflight-pilot` command. It observes the accepted 659
+installation while holding the existing exclusive controller lease. It does not
+run validation, revoke or retire a run, create preservation copies or volumes,
+install files or change repository rules. Its summary grants no upgrade authority
+and retains `administrator_ready=false` and production disabled. A caller can
+retain the same lease for a future composed transaction; observations must be
+rechecked before that transaction changes state.
+
+The fixed old stage's installer, upgrader and 24-member release are independently
+hashed before parsing; neither old script executes. The 23 old source references
+and Core provenance must match. Installed bytes, exact modes and module/bin/policy
+inventories, current Python/Git pins, exact restricted account/group membership,
+stopped workers, accepted report, configuration and occupied journal slot must
+agree. Safe Root-owned Python 3.14 caches are bounded data and never imported;
+unknown modules, cache names, links and writable inputs block observation. Pilot
+mount checks include the UUID, complete backing image inode/device, options and
+absence of loop/mount aliases. Operator and installed signing-key copies must
+still match; credential bytes are never included in the summary.
+
+Journal queries use a read-only, query-only SQLite transaction with schema,
+physical/logical size, row and time bounds, including committed WAL rows. They do
+not construct `Journal`, modify logical records, checkpoint or create a missing
+WAL shared-memory sidecar. Existing SQLite shared-memory read coordination is not
+a claim of a byte-for-byte unchanged SHM file. Configuration policy, old source,
+bundle, journal, mount and credential identities are checked again after the
+remote observation. The App client comes from authenticated old source blobs,
+without installed-module or bytecode imports. It explicitly requests only
+`contents:read`, mints the ephemeral installation token using the existing App,
+then GETs the repository and main ref. A different repository or advanced base,
+unavailable API, unexpected permissions or transport failure blocks; there is no
+PAT, `gh`, proxy or alternate-identity fallback. No Check, App configuration or
+persistent repository setting is written.
+
+Twenty-one new regressions bring the focused suite to 285 tests. Ordinary fixtures
+exercise actual archive parsing, installed-file rejection, JSON, WAL reads,
+mutation detection and lease ownership; Root ownership, accounts, credentials,
+kernel and remote responses are replaced. Separately, the retained actual 659
+release's 24 members and fixed source-reference aggregate parsed successfully as
+UID1000 with Root ownership replaced. Neither experiment is live Root preflight
+or App acceptance. The current helper closure gives the source archive 65 members;
+it still contains no Core binary. Explicit Linux transition policy, complete
+ingress/storage/transaction composition, installation/startup/recovery and live
+acceptance remain required before an administrator offer. Installed 659, existing
+Apps/rules and the normal pilot package are unchanged.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,

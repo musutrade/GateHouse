@@ -21,7 +21,8 @@ FILES = {ENTRY, 'tools/maintenance/restore_evidence.py', *(
         'prepare-official-tools.py', 'acquire-linux-tools.py', 'verify-locked-crates.py',
         'stage-linux-inputs.py', 'run-linux-test.py', 'prepare-linux-workspace.py',
         'prepare-locked-directory.py', 'linux-tools.lock.json', 'build-protected-core.py',
-        'preserve-pilot-state.py', 'prepare-linux-volume.py', 'stage-protected-source.py', 'bootstrap-release.py'))}
+        'preserve-pilot-state.py', 'prepare-linux-volume.py', 'stage-protected-source.py', 'bootstrap-release.py',
+        'preflight-history-pilot.py'))}
 ENV = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'GIT_CONFIG_NOSYSTEM': '1',
        'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_TERMINAL_PROMPT': '0', 'GIT_OPTIONAL_LOCKS': '0'}
 
@@ -323,6 +324,22 @@ def import_inputs(root, manifest, manifest_pin, source, head, base, tool_archive
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    if sys.argv[1:2] == ['preflight-pilot']:
+        for name in ('helper-root', 'manifest'):
+            parser.add_argument('--' + name, type=Path, required=True)
+        parser.add_argument('--manifest-sha256', required=True)
+        args = parser.parse_args(sys.argv[2:])
+        try:
+            authenticate(args.helper_root, args.manifest, args.manifest_sha256)
+            preflight = load(args.helper_root, 'preflight-history-pilot.py')
+            context = SimpleNamespace(**{name: globals()[name] for name in (
+                'need', 'owned', 'path_operand', 'read', 'write', 'record', 'canonical', 'unique',
+                'git', 'frozen_lock', 'load', 'authenticate', 'readonly', 'ENV')})
+            result = preflight.observe(context, args.helper_root, args.manifest, args.manifest_sha256)
+        except Exception as error:
+            parser.exit(1, 'pilot preflight blocked (' + type(error).__name__ + '); retain private state\n')
+        print(json.dumps(result, sort_keys=True))
+        return
     if sys.argv[1:2] == ['inspect-release']:
         for name in ('helper-root', 'manifest', 'archive'):
             parser.add_argument('--' + name, type=Path, required=True)
