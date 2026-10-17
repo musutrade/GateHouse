@@ -19,7 +19,7 @@ SCOPE = ('official manifest payload assembly; no package code execution, Root ow
 
 
 def mount_path(value):
-    require(isinstance(value, str) and re.fullmatch('/[A-Za-z0-9_./+-]+', value)
+    require(isinstance(value, str) and re.fullmatch('/[A-Za-z0-9_./+-]+', value) and not value.startswith('//')
             and value == str(Path(value)) and '..' not in Path(value).parts,
             'runtime mount operands must be canonical absolute paths without systemd escapes')
     return Path(value)

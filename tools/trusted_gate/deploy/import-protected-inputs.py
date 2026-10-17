@@ -43,7 +43,7 @@ def unique(pairs):
 
 def path_operand(value):
     value = str(value)
-    need(re.fullmatch('/[A-Za-z0-9_./+-]+', value) and value == str(Path(value))
+    need(re.fullmatch('/[A-Za-z0-9_./+-]+', value) and not value.startswith('//') and value == str(Path(value))
          and '..' not in Path(value).parts, 'canonical absolute bootstrap path required')
     return Path(value)
 

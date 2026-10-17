@@ -209,7 +209,7 @@ class RuntimeBindingTests(unittest.TestCase):
 
     def test_ambiguous_unprotected_and_mutable_mount_operands_are_rejected(self):
         root, config, _ = self.fixture()
-        for value in ('relative', '/a/../b', '/a//b', '/a/./b', '/a b', '/a:b', '/a%h', '/a\\x', '/a\n'):
+        for value in ('relative', '//a', '/a/../b', '/a//b', '/a/./b', '/a b', '/a:b', '/a%h', '/a\\x', '/a\n'):
             changed = copy.deepcopy(config)
             changed['runtime']['root'] = value
             with self.subTest(value=value), self.assertRaisesRegex(Blocked, 'mount operands'):

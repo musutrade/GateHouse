@@ -309,7 +309,7 @@ class ProtectedImportTests(unittest.TestCase):
         self.assertFalse((self.destination / 'binding.json').exists())
 
     def test_output_must_be_fresh_private_disjoint_and_unambiguous(self):
-        for path in ('relative', '/a/../b', '/a%h', '/a b', '/a:b'):
+        for path in ('relative', '//a', '/a/../b', '/a%h', '/a b', '/a:b'):
             with self.subTest(path=path), self.assertRaisesRegex(ValueError, 'canonical absolute'):
                 BOOT.path_operand(path)
         self.parent.chmod(0o755)

@@ -537,6 +537,56 @@ installed `659803a` pilot and its outstanding evidence remain untouched, and its
 old fa18 upgrader is still unsuitable for this candidate. Engineering-policy
 authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 
+### Candidate protected input import
+
+`package-bootstrap-inputs.py` exports an exact committed helper tree and a
+canonical manifest for separate administrator review. The closure has ten files:
+the new importer, eight helper/schema resources under `tools/trusted_gate/deploy`
+and the archive-path helper under `tools/maintenance`. Relative layout is retained.
+This is a separate input-bootstrap package; the normal pilot package does not
+silently install it. Packaging rejects Root execution and dirty source, and keeps
+`administrator_ready` false. A reviewed privileged installer must establish the
+trusted entry point and manifest pin before any administrator executes it.
+
+`import-protected-inputs.py` requires Root and verifies the Root ownership and
+permissions of every code path and parent, the administrator-reviewed manifest
+digest, every helper digest and the complete file/directory inventory before
+loading project helpers. Extra files/directories, injected bytecode, links,
+hardlinks, missing files, writable code and malformed metadata block import.
+The existing preparation helpers still reject Root at their own entry points;
+this separate importer uses only their bounded archive-validation primitives.
+It never runs package installers, Cargo, build scripts or network requests.
+
+The source lock is read from the exact candidate Git object and compared with the
+Root-protected working file, with exact head/base ancestry checks. Before running
+Git, the importer checks the worktree/common Git stores for protected ownership,
+ordinary file types, links and size/count bounds, and rejects external object
+alternates and grafts. Hooks, fsmonitor and external protocols remain disabled.
+Only lock-selected crate archives are copied, even when an operator cache has
+additional packages. Official tools are selected by the reviewed tool lock.
+Every selected archive is hashed into fresh private storage before parsing or
+extraction; no operator sysroot, registry index, source directory or inventory is
+promoted by changing ownership. The importer independently derives full tool and
+dependency contents, preserves hidden source files, generates Cargo checksums and
+compares the finished readonly trees against its retained archives again.
+
+The destination must be fresh, disjoint from all inputs and under a private
+Root-protected parent. A binding records candidate/base, helper revision/manifest,
+tool lock and source-lock digests. Source/code pins are checked again before
+completion. Failure retains a blocked control record and partial output; neither
+can be silently reused. Entry-point paths retain strict operand validation, while
+safe archive filenames are treated as data and may contain spaces, brackets,
+at signs and percent signs. The original archive containment/link/type budgets
+remain unchanged. Fifteen new focused regressions bring the suite to 180 tests.
+
+This candidate does not install a release, change the accepted `659803a` pilot,
+build the trusted Core, start a privileged worker or authorize delivery. The
+fixed 659 upgrade must still preserve and verify its complete source, journal and
+canonical publication before revocation/retirement, then establish the bounded
+storage, protected import, isolated Core build and actual UID995 execution.
+Engineering-policy authority, requiredness, thresholds and evidence limits remain
+unchanged.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the
