@@ -23,6 +23,23 @@ def clean_environment():
 
 
 @checked
+def confirm_units_stopped(*patterns):
+    result = subprocess.run(['/usr/bin/systemctl', 'list-units', '--all', '--plain', '--no-legend',
+        '--no-pager', *patterns], env=clean_environment(), capture_output=True, check=True, timeout=10)
+    for line in result.stdout.decode().splitlines():
+        fields = line.split()
+        require(len(fields) >= 4 and fields[2] in ('inactive', 'failed'),
+                'executor cgroup still active or unknown; retain slot and source')
+        group = subprocess.run(['/usr/bin/systemctl', 'show', '--property=ControlGroup', '--value', fields[0]],
+            env=clean_environment(), capture_output=True, check=True, timeout=10).stdout.decode().strip()
+        if group:
+            require(group.startswith('/') and '..' not in Path(group).parts, 'unsafe executor cgroup path')
+            events = Path('/sys/fs/cgroup') / group.lstrip('/') / 'cgroup.events'
+            require(events.is_file() and 'populated 0' in events.read_text().splitlines(),
+                    'executor cgroup is not proven empty')
+
+
+@checked
 def git(root, *args):
     result = subprocess.run(['/usr/bin/git', '-c', 'core.hooksPath=/dev/null',
         '-c', 'protocol.ext.allow=never', '-c', 'protocol.file.allow=never', *args],
@@ -211,15 +228,5 @@ class Executor:
 
     @checked
     def confirm_stopped(self, run):
-        result = subprocess.run(['/usr/bin/systemctl', 'list-units', '--all', '--plain', '--no-legend',
-            '--no-pager', 'gatehouse-core-' + run['id'] + '.service', 'gatehouse-step-' + run['id'] + '-*.service'],
-            env=clean_environment(), capture_output=True, check=True, timeout=10)
-        for line in result.stdout.decode().splitlines():
-            fields = line.split()
-            require(len(fields) >= 4 and fields[2] in ('inactive', 'failed'),
-                    'executor cgroup still active or unknown; retain slot and source')
-            group = subprocess.run(['/usr/bin/systemctl', 'show', '--property=ControlGroup', '--value', fields[0]],
-                env=clean_environment(), capture_output=True, check=True, timeout=10).stdout.decode().strip()
-            if group:
-                events = Path('/sys/fs/cgroup') / group.lstrip('/') / 'cgroup.events'
-                require(events.is_file() and 'populated 0' in events.read_text(), 'executor cgroup is not proven empty')
+        confirm_units_stopped('gatehouse-core-' + run['id'] + '.service',
+                              'gatehouse-step-' + run['id'] + '-*.service')

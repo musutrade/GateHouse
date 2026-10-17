@@ -203,6 +203,34 @@ Select the named receipts and logs for publication; onboarding's disposable
 signing-key files and other scratch contents remain private and are not export
 artifacts. Systemd still owns final worker-cgroup termination and resource limits.
 
+The candidate host launcher accepts an administrator-pinned `capture_files` list
+for each step. Paths are explicit and relative to that step's fresh scratch root;
+there is no glob or scratch-directory export. After `systemd-run --wait` returns,
+the launcher independently checks the exact worker unit and, when present, its
+empty cgroup before reading anything. Missing, linked, multiply linked, special,
+wrong-owner, oversized or concurrently changed files block the step. Capture is
+bounded to 128 files, 4 MiB per file and 8 MiB total. Existing steps without the
+selection retain their previous output behavior and also receive the stopped-unit
+check before cache maintenance.
+
+The launcher writes one JSON log entry with run/head/step, the actual worker exit
+code, selected relative names, sizes, SHA-256 and base64 of every selected file's
+complete bytes. This is diagnostic output in the existing Core step log. Core's
+unchanged invocation, artifact registry and manifest bind that log, including the
+embedded bytes; selected files are not invented individual Core declarations.
+The entry does not authorize PASS. A nonzero worker exit remains nonzero, and any
+capture failure or Core output-limit failure remains blocking. The unchanged
+16 MiB Core stdout limit also covers other worker stdout; logs are not truncated
+to manufacture success. No separate quality decision or credential format is added.
+
+For Linux Test, the future reviewed deployment must explicitly select the
+adapter result/preparation JSON, both HTML display files, workflow acceptance
+receipt/summary, onboarding report, the ten command stdout/stderr pairs and all
+29 onboarding stdout/stderr pairs. Disposable onboarding keys, plugin fixture
+workspaces, generated executables and general scratch contents are excluded.
+This capture candidate is not installed or enabled in the accepted `659803a`
+pilot, and protected worker/cgroup acceptance is still pending.
+
 An operator-domain run at `d3f0cbb` completed all 724 Rust tests with zero skipped,
 both Node suites, real HTML validation, workflow acceptance, matching schemas
 and all 29 pinned onboarding steps. The committed adapter at `e3e9fa3` then
