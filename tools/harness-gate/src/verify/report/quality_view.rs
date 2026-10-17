@@ -1,6 +1,7 @@
 //! Presentation-only grouping; eligibility never changes supplied gate decisions.
 pub(super) mod debt;
 mod distribution;
+mod hotspots;
 mod ranking;
 use crate::report_evidence;
 use crate::verify::quality::QualityResult;
@@ -13,6 +14,7 @@ pub(super) struct View<'a> {
     pub groups: Vec<Group<'a>>,
     pub panels: Vec<Panel>,
     rankings: Vec<ranking::Panel>,
+    hotspots: Vec<hotspots::Panel>,
     distributions: Vec<distribution::Panel>,
     debts: Vec<debt::Panel>,
 }
@@ -38,6 +40,7 @@ struct Row<'a> {
     head: &'a Value,
     limit: &'a Value,
     visual_note: &'static str,
+    hotspot_note: Option<&'static str>,
     range: Option<ranking::Range>,
     distribution: Option<distribution::Selection>,
     ratchet: &'a Value,
@@ -96,11 +99,18 @@ fn row(gate: &Value, index: usize) -> Row<'_> {
         head: &record["head"],
         limit: &record["policy"]["limit"],
         visual_note: "No comparable coverage visual",
+        hotspot_note: None,
         range: None,
         distribution: None,
         ratchet: &record["ratchet"],
         debt: None,
     }
+}
+struct Data<'a> {
+    status: &'a str,
+    project_report: &'a Value,
+    inputs: &'a Value,
+    evidence: &'a Value,
 }
 #[cfg(test)]
 pub(super) fn project(quality: &QualityResult) -> View<'_> {
@@ -108,14 +118,40 @@ pub(super) fn project(quality: &QualityResult) -> View<'_> {
 }
 pub(super) fn project_with_sources<'a>(
     quality: &'a QualityResult,
+    sources: Option<crate::source_links::Links<'_>>,
+) -> View<'a> {
+    project_data(
+        Data {
+            status: quality.status,
+            project_report: &quality.project_report,
+            inputs: &quality.inputs,
+            evidence: &quality.evidence,
+        },
+        sources,
+    )
+}
+pub(super) fn project_document(quality: &Value) -> View<'_> {
+    project_data(
+        Data {
+            status: quality["status"].as_str().unwrap_or("not_collected"),
+            project_report: &quality["project_report"],
+            inputs: &quality["inputs"],
+            evidence: &quality["evidence"],
+        },
+        None,
+    )
+}
+fn project_data<'a>(
+    quality: Data<'a>,
     mut sources: Option<crate::source_links::Links<'_>>,
 ) -> View<'a> {
     let mut groups: BTreeMap<(String, String), Vec<Row<'_>>> = BTreeMap::new();
     let mut panels: BTreeMap<(String, String, String), Vec<Cell>> = BTreeMap::new();
     let mut rankings = ranking::Builder::default();
+    let mut hotspots = hotspots::Builder::default();
     let mut distributions = distribution::Builder::default();
     let mut debts = debt::Builder::default();
-    let index = report_evidence::Index::new(&quality.inputs["project"], &quality.evidence);
+    let index = report_evidence::Index::new(&quality.inputs["project"], quality.evidence);
     if let Some(gates) = quality.project_report["gates"].as_object() {
         for (position, (gate_id, gate)) in gates.iter().enumerate() {
             let component = text(&gate["record"]["component"]);
@@ -124,6 +160,14 @@ pub(super) fn project_with_sources<'a>(
             if !matches!(quality.status, "measurement_error" | "not_collected") {
                 row.source_url = sources.as_mut().and_then(|links| links.link(gate, &index));
             }
+
+            row.hotspot_note = hotspots.push(
+                gate_id,
+                gate,
+                &row.anchor,
+                !matches!(quality.status, "measurement_error" | "not_collected"),
+                &index,
+            );
             row.debt = Some(debts.push(
                 gate,
                 !matches!(quality.status, "measurement_error" | "not_collected"),
@@ -139,7 +183,7 @@ pub(super) fn project_with_sources<'a>(
             {
                 row.range = rankings.push(gate_id, gate, &row.anchor, &index);
             }
-            if let Some((covered, total)) = visual(quality, gate, &index) {
+            if let Some((covered, total)) = visual(&quality, gate, &index) {
                 let cell = Cell {
                     anchor: row.anchor.clone(),
                     label: format!("{}: {}", path, row.name),
@@ -162,6 +206,7 @@ pub(super) fn project_with_sources<'a>(
     }
     View {
         rankings: rankings.finish(),
+        hotspots: hotspots.finish(),
         distributions: distributions.finish(),
         debts: debts.finish(),
         groups: groups
@@ -196,7 +241,7 @@ fn display_identity(gate: &Value) -> bool {
             })
 }
 fn visual(
-    quality: &QualityResult,
+    quality: &Data<'_>,
     gate: &Value,
     index: &report_evidence::Index<'_>,
 ) -> Option<(u64, u64)> {

@@ -1,5 +1,9 @@
 //! Read-only projection of explicitly pinned completed invocation reports.
+mod archive;
+pub(crate) use archive::{archive_path, record};
 mod crap;
+mod dashboard;
+pub(crate) use dashboard::{run as dashboard, SelectionFilter};
 mod export;
 pub(crate) use export::run as export_html;
 mod input;

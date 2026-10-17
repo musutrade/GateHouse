@@ -1,6 +1,6 @@
 //! Explicit, bounded completed-report inputs. Caller pins are not signatures.
 use anyhow::{ensure, Context, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
@@ -14,16 +14,16 @@ const CONTROL_LIMIT: u64 = 1024 * 1024;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Index {
-    schema: String,
-    samples: Vec<Sample>,
+pub(super) struct Index {
+    pub schema: String,
+    pub samples: Vec<Sample>,
 }
-#[derive(Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-struct Sample {
-    directory: String,
-    machine_sha256: String,
-    manifest_sha256: String,
+pub(super) struct Sample {
+    pub directory: String,
+    pub machine_sha256: String,
+    pub manifest_sha256: String,
 }
 
 pub(super) struct Completed {
@@ -52,7 +52,7 @@ fn no_symlinks(path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn read(path: &Path, limit: u64) -> Result<Vec<u8>> {
+pub(super) fn read(path: &Path, limit: u64) -> Result<Vec<u8>> {
     no_symlinks(path)?;
     let metadata = fs::symlink_metadata(path)?;
     ensure!(
@@ -71,7 +71,7 @@ fn read(path: &Path, limit: u64) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 
-fn json(bytes: &[u8]) -> Result<Value> {
+pub(super) fn json(bytes: &[u8]) -> Result<Value> {
     harness_gate::quality::parse(std::str::from_utf8(bytes)?).map_err(Into::into)
 }
 
@@ -214,7 +214,7 @@ fn verify_identity(directory: &Path, machine: &Value, manifest: &[u8]) -> Result
     Ok(metadata["commit"].as_str().unwrap_or("").into())
 }
 
-fn completed(root: &Path, sample: Sample) -> Result<Completed> {
+pub(super) fn completed(root: &Path, sample: Sample) -> Result<Completed> {
     let directory = directory(root, &sample.directory)?;
     let (bytes, manifest) = verified_bytes(&directory, &sample)?;
     let machine = json(&bytes)?;
@@ -229,7 +229,7 @@ fn completed(root: &Path, sample: Sample) -> Result<Completed> {
     })
 }
 
-fn index(path: &Path) -> Result<(PathBuf, Index, String)> {
+pub(super) fn index(path: &Path) -> Result<(PathBuf, Index, String)> {
     let absolute = std::path::absolute(path)?;
     ensure!(
         !fs::symlink_metadata(&absolute)?.file_type().is_symlink(),
@@ -262,7 +262,7 @@ fn parse_index(bytes: &[u8]) -> Result<Index> {
     Ok(index)
 }
 
-fn invocation_id(machine: &Value) -> Result<&str> {
+pub(super) fn invocation_id(machine: &Value) -> Result<&str> {
     let invocation = machine["invocation_id"]
         .as_str()
         .filter(|s| !s.is_empty())
@@ -315,6 +315,19 @@ pub(super) fn load_archive(path: &Path) -> Result<Archive> {
 #[cfg(test)]
 fn load(path: &Path) -> Result<Vec<Completed>> {
     Ok(load_archive(path)?.reports)
+}
+
+/// Pin a just-completed local publication before copying it into a managed archive.
+pub(super) fn local_sample(root: &Path, directory: &Path) -> Result<Sample> {
+    Ok(Sample {
+        directory: directory
+            .strip_prefix(root)?
+            .to_str()
+            .context("non-UTF8 archive path")?
+            .replace('\\', "/"),
+        machine_sha256: digest(&read(&directory.join("test_result.json"), REPORT_LIMIT)?),
+        manifest_sha256: digest(&read(&directory.join("manifest.json"), CONTROL_LIMIT)?),
+    })
 }
 
 #[cfg(test)]

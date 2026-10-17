@@ -225,6 +225,7 @@ a subdirectory instead of adding a suffix to cwd.
 | [scope] | Yes | Changed-path matching behavior. |
 | [[steps]] | Yes | External commands or built-in gates. |
 | [report_templates] | No | Optional HTML and JUnit output. |
+| [report_history] | No | Opt-in local immutable report archive (`archive` path); see [automatic archiving](../README.md#automatically-archive-completed-local-reports). |
 | [notifications] | No | Optional HTTP(S) notifications. |
 
 Unknown fields fail parsing rather than being silently ignored.

@@ -27,7 +27,11 @@
         "src/report_history/export.rs",
         "src/report_history/projection.rs",
         "src/report_history/publication.rs",
-        "src/report_history/render.rs"
+        "src/report_history/render.rs",
+        "src/report_history/archive.rs",
+        "src/report_history/archive/filesystem.rs",
+        "src/report_history/dashboard.rs",
+        "src/report_history/dashboard/impact.rs"
       ]
     },
     "audit": {
@@ -225,6 +229,7 @@
         "src/verify/quality.rs",
         "src/verify/report.rs",
         "src/verify/report/quality_view.rs",
+        "src/verify/report/quality_view/hotspots.rs",
         "src/verify/report/quality_view/ranking.rs",
         "src/verify/report/quality_view/distribution.rs",
         "src/verify/report/quality_view/debt.rs",

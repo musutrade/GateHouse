@@ -11,6 +11,13 @@ const FILES: [&str; 2] = ["history.html", "provenance.json"];
 pub(super) fn publish(destination: &Path, html: &[u8], provenance: &[u8]) -> Result<()> {
     publish_files(destination, FILES, [html, provenance])
 }
+pub(super) fn publish_dashboard(destination: &Path, html: &[u8], provenance: &[u8]) -> Result<()> {
+    publish_files(
+        destination,
+        ["dashboard.html", "provenance.json"],
+        [html, provenance],
+    )
+}
 pub(super) fn publish_export(destination: &Path, html: &[u8], provenance: &[u8]) -> Result<()> {
     publish_files(
         destination,

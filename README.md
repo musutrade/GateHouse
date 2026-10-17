@@ -1039,6 +1039,116 @@ total is calculated, and resolved debt is not labelled outstanding. Sample order
 follows the selected history sequence, never severity. Existing subject identity
 rules still apply, including source fingerprint and span.
 
+### Automatically archive completed local reports
+
+History remains opt-in. To keep independent copies after normal invocation
+retention removes older report directories, add this to `flow.toml`:
+
+```toml
+[report_history]
+archive = ".harness-gate/history"
+```
+
+The archive must be a canonical repository-relative directory, separate from both
+reports and template roots. Each completed PASS or FAIL publication is fully
+verified, copied privately, verified again, then published as an immutable snapshot.
+An automatically maintained `index.json` uses the existing `harness-report-history/v2`
+contract: pass `--input .harness-gate/history/index.json` to the query command
+below. No additional JSONL
+format, score, inferred transition, baseline or ratchet state is introduced.
+Unfinished evidence is not archived. Original report bytes and identities survive
+relocation; archived files are independent copies, not hard links to originals.
+
+The directory contains an archive/project marker, a `snapshots/` directory of
+content-pinned publications and entry records, and the generated index. A local
+`.gitignore` excludes the archive contents. It is local evidence storage, not the
+HTML-only upload directory; no Action uploads this archive automatically. Treat
+its logs and evidence as local data. Removing the configuration disables future
+archiving without deleting existing snapshots or changing report retention.
+
+Each update validates all existing snapshots and previous index pins. Index
+replacement is atomic; repeating the same publication is idempotent. Complete
+snapshots left by an interruption before index replacement are recovered on the
+next update. Changed or missing indexed snapshots, duplicate invocation identities,
+corrupt indexes, foreign files, symlinks and mixed project identities fail closed.
+A cooperative exclusive lock serializes writers; a busy or stale lock is an
+explicit error and is never stolen. After a crash, inspect the owner and any
+`.pending-*` directory before manually clearing abandoned state. Unknown or
+partial files are preserved for diagnosis. Do not edit an archive concurrently;
+the lock is not an isolation boundary against external filesystem writers.
+
+Limits are 300 snapshots, 1 GiB of snapshot files and 64 MiB of combined machine
+reports. Each snapshot allows 256 MiB, 8192 filesystem entries and 32 levels of
+nesting; existing report/control/index limits still apply. Full archives fail
+with a request to select a new directory: this increment never deletes history
+or resets authoritative baselines. Each update reads existing archive evidence,
+so its IO cost grows within these bounds; no five-second claim is made for full
+archives. An archive error returns a report-delivery error while preserving the
+already completed report and its original Core decision. It does not turn a
+failed gate into success. Engineering Policy and required gates are unchanged.
+
+### Integrated offline dashboard
+
+`report-dashboard` combines the latest selected report's overview and hot spots
+with up to 12 selected policy/subject/metric histories and observed changes between
+adjacent selected commits. It consumes the same verified v1/v2 indexes as
+`report-history`; every indexed publication is validated, even outside the window.
+Without time options it selects the latest 30 indexed commits. Time options use
+the existing UTC report-time rules, latest invocation per exact commit and explicit
+comparison gaps; they do not prove complete Git history or ancestry.
+
+```bash
+harness-gate report-dashboard --input archive/index.json --output dashboard \
+  --subject SUBJECT_ID --metric coverage.line --metric risk.crap \
+  --last-days 30 --last-commits 30
+```
+
+Open `dashboard/dashboard.html` locally. Native expandable sections show the
+individual charts, exact tables and supplied debt annotations without JavaScript;
+the current-report controls still filter the current-report rows. `--policy`,
+`--subject` and `--metric` match exact identifiers and may each repeat (OR within a
+field, AND between fields). Omitted filters include all supported observations in
+the selected reports, including subjects absent from the latest report. More than
+12 matching series is an error asking for narrower filters, never silent truncation.
+Supported metrics are `coverage.line`, `coverage.region`, `complexity.cyclomatic`
+and `risk.crap`. Use the identifiers shown in report details.
+
+Observed commit changes compare exact values only when adjacent observations are
+available and have the existing identical comparison identity. An increase or
+decrease describes the supplied metric, not policy severity or causation. Missing,
+changed-identity or unavailable samples remain incomparable; no numeric debt delta
+or replacement Core decision is derived. Pairwise comparison fields are limited
+to 128 characters; larger values keep their existing chart/table behavior and an
+explicit comparison-limit note. Current details are rendered with the bundled
+presentation from the verified document, not arbitrary configured templates.
+
+The new output directory contains only `dashboard.html` and `provenance.json`,
+with input-index, selected report and HTML hashes, query, selections, and the latest
+original Core status. Existing output directories are never replaced. History
+sections are bounded to 4 MiB and the combined document to 6 MiB; filter and archive
+bounds also apply. Rendering success is not a project PASS. It performs no
+collection, network request, baseline adoption or history update. Engineering
+Policy, required gates, debt and ratchet semantics remain unchanged.
+
+### Hot spot lists
+
+The bundled offline report adds the highest supplied CRAP and lowest supplied line
+coverage observations beside the existing coverage map, complexity Top 10 and debt
+categories. Each list retains up to 10 original reported gates, separated by
+component, policy, measurement series, metric and value type. Exact comparisons
+preserve decimal/rational precision; ties use source path, subject name, subject ID
+and gate ID. Links open the corresponding detail row, including from the keyboard.
+Search/status/component filters hide original entries without promoting replacements.
+
+These lists do not create a severity threshold or aggregate overlapping functions
+into module coverage. Files can occur more than once. Missing or inconsistent
+evidence is unavailable, never zero. CRAP ranking fields are bounded to 128
+characters per decimal or rational field to bound pairwise comparison work;
+coverage uses the existing nonzero-total, safe-integer map range. Larger values
+remain in the details and the separately bounded CRAP distribution. Empty or
+unavailable-only panels remain readable, including without JavaScript. Original
+Core outcomes, requiredness, baselines and ratchet/debt semantics are unchanged.
+
 ### Query a verified history archive
 
 Use `harness-report-history/v2` with the same sample entries for an explicit archive
@@ -1046,7 +1156,8 @@ of up to 300 invocations (256 KiB index). Per-report and combined limits remain
 32 MiB and 64 MiB. Version 2 requires a query; version 1 without query options keeps
 its original input order and output format. All listed publications are validated,
 including entries outside the selected window. Nothing is fetched from Git or
-scanned automatically, and no history or baseline is updated.
+scanned automatically by the query command, and it updates no history or baseline.
+The separate opt-in archive writer above maintains its local input index.
 
 ```bash
 harness-gate report-history --input archive/catalog.json --output last-30 \

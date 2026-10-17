@@ -1,7 +1,7 @@
 use super::projection::{Point, Selection};
 use crate::utils::redaction::redact_text;
 
-fn escape(text: &str) -> String {
+pub(super) fn escape(text: &str) -> String {
     redact_text(text)
         .replace('&', "&amp;")
         .replace('<', "&lt;")
@@ -83,7 +83,7 @@ fn crap_chart(points: &[Point]) -> String {
     svg.push_str("</svg>");
     svg
 }
-fn ratchet_timeline(points: &[Point]) -> String {
+pub(super) fn ratchet_timeline(points: &[Point]) -> String {
     let mut html=String::from("<h2>Supplied debt states by sample</h2><p>Discrete Core annotations, not calculated debt amounts or inferred transitions. States on unavailable or incompatible samples remain observations only. Resolved is not outstanding debt.</p><ol>");
     for (i, point) in points.iter().enumerate() {
         html.push_str(&format!(
@@ -118,6 +118,16 @@ fn render(
     query: Option<&serde_json::Value>,
 ) -> String {
     let mut html = String::from("<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Report history</title><style>body{font:1rem/1.5 system-ui;margin:1rem auto;padding:0 1rem;max-width:72rem;overflow-wrap:anywhere}svg{width:100%;max-height:20rem;fill:currentColor}table{border-collapse:collapse;width:100%;min-width:50rem}th,td{text-align:left;vertical-align:top;padding:.5rem;border-bottom:1px solid #888;overflow-wrap:anywhere;max-width:22rem}th:first-child{white-space:nowrap;min-width:4rem}.scroll{overflow-x:auto}:focus-visible{outline:3px solid #2684ff}summary{cursor:pointer}code{white-space:pre-wrap;overflow-wrap:anywhere}</style><h1>Completed report history</h1>");
+    html.push_str(&fragment(points, selection, query));
+    html.push_str("</html>");
+    html
+}
+pub(super) fn fragment(
+    points: &[Point],
+    selection: &Selection<'_>,
+    query: Option<&serde_json::Value>,
+) -> String {
+    let mut html = String::new();
     if let Some(summary) = query {
         html.push_str(&query_description(summary));
     }
@@ -141,11 +151,13 @@ fn render(
     if selection.metric == "risk.crap" {
         html.push_str(&ratchet_timeline(points));
     }
-    html.push_str("<p>This display never adopts a baseline, changes debt or creates a project PASS.</p></html>");
+    html.push_str(
+        "<p>This display never adopts a baseline, changes debt or creates a project PASS.</p>",
+    );
     html
 }
 
-fn query_description(summary: &serde_json::Value) -> String {
+pub(super) fn query_description(summary: &serde_json::Value) -> String {
     let mut html=String::from("<h2>History query</h2><p>Reports are ordered by UTC report time, with the latest report for each commit. This is not Git ancestry or commit time. Only reports in the supplied archive are included.</p><dl>");
     for (key, label, missing) in [
         ("indexed_invocations", "Reports in archive", "Not available"),

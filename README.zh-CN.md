@@ -831,3 +831,77 @@ Linux Test job 的下载样例是经真实发布器生成的 **1000 个 subject 
 `test_result.html`。Action 另返回 `artifact-id` 与 `artifact-url`；需要仓库读取权限，
 链接随保留期或删除失效，不是在线托管网页。上传/校验失败会使该集成步骤失败，
 Core 原有 required gates 与退出状态仍保持权威；移除显式上传步骤即可关闭交付。
+
+### 自动归档已完成的本地报告
+
+在 `flow.toml` 中配置即可启用，默认关闭：
+
+```toml
+[report_history]
+archive = ".harness-gate/history"
+```
+
+目录必须是规范仓库相对路径，与 reports/template 根互不包含。已完成的 PASS/FAIL publication
+先完整校验、私下复制、再次校验，再保存为不可变快照；自动生成现有
+`harness-report-history/v2` 格式的 `index.json`，可通过
+`report-history --input .harness-gate/history/index.json` 配合既有 policy/subject/metric 与
+时间窗口参数查询。不完整证据
+不归档；副本与原 invocation 文件独立，正常报告清理后仍可查询。不增加 JSONL 格式、新评分、
+推断债务变化或 Core baseline/ratchet 重算。
+
+归档含 project 标记、`snapshots/` 中的完整报告与 pin 记录、自动索引，以及排除全部归档内容的
+本地 `.gitignore`。它保存本地原始证据，不是 HTML artifact 上传目录；不会自动上传。
+删除配置只关闭后续归档，不删除已保存快照、不改变原报告保留策略。
+
+每次更新验证所有已有快照和旧索引 pin，再原子替换索引；同一 publication 重试幂等。
+快照完成、索引更新前发生中断时，下次更新会恢复该完整快照。已索引内容被改动/删除、重复
+invocation、坏索引、外来文件、符号链接或项目身份混合均拒绝，不重新计算 pin 掩盖问题。
+协作锁繁忙或崩溃后遗留锁会明确报错，不抢锁；请核实进程与 `.pending-*` 后再人工清理
+遗留状态，未知/未完成内容保留供诊断。不要并发手工编辑归档；这不是对抗外部写入者的隔离边界。
+
+最多 300 个快照、快照文件共 1 GiB、machine reports 共 64 MiB；单快照最多 256 MiB、8192 个
+文件系统条目、32 层目录，并保留现有报告/控制文件/索引上限。满额提示换新目录，不自动删除历史。
+更新读取既有归档证据，IO 成本随有界数据量增长，不宣称满额归档也满足 5 秒目标。
+归档失败返回报告交付错误，保留已完成的原始报告和 Core 决策；不会把失败门禁变成功。
+Engineering Policy 和 required gates 不变。
+
+### 热点列表
+
+内置离线报告在覆盖率图、复杂度 Top 10 和债务类别旁增加最高 CRAP 与最低行覆盖率列表。
+每组保留原始报告中最多 10 个 gate，按 component、policy、测量系列、metric、value type
+分开。使用精确小数/分数比较；相同值按源码路径、名称、subject 和 gate ID 排序。
+链接可用键盘跳转到详情，过滤只隐藏原列表条目，不补入低位项。
+
+列表不新增风险阈值，也不把可能重叠的函数覆盖率汇总成模块覆盖率；同一文件可能重复出现。
+缺失/不一致证据保留为 unavailable，不算零。CRAP 排名每个小数/分数字段最多 128 字符，
+限制成对比较成本；覆盖率沿用原图的非零分母及安全整数范围。超限值仍在详情和单独有界的
+CRAP 分布中展示。空组/全部不可用组及无 JavaScript 场景仍可读。
+Core 结果、requiredness、baseline 与 ratchet/debt 语义不变。
+
+### 综合离线看板
+
+`report-dashboard` 复用已验证的 v1/v2 历史索引，把最新选中报告的概览/热点、最多 12 组
+policy/subject/metric 趋势、相邻选中提交的观测变化放到一个离线页面。全部索引项都验证，
+包括时间窗口外的数据。没有时间参数时选最近 30 个已索引提交；时间、去重与不可比断线
+规则沿用 `report-history`，不声称覆盖完整 Git 历史或证明祖先关系。
+
+```bash
+harness-gate report-dashboard --input archive/index.json --output dashboard \
+  --subject SUBJECT_ID --metric coverage.line --metric risk.crap \
+  --last-days 30 --last-commits 30
+```
+
+本地打开 `dashboard/dashboard.html`，展开各系列查看图、精确表与 Core 债务注解；无
+JavaScript 也可操作原生展开项，当前报告的搜索过滤仅作用于当前行。policy/subject/metric
+按精确 ID 匹配，可重复指定：同字段取并集、不同字段取交集。不指定则纳入所选报告中支持的
+观测，包括最新报告中已缺失的 subject；超过 12 组明确要求缩小过滤，不静默截断。
+支持 coverage.line、coverage.region、complexity.cyclomatic、risk.crap；ID 可从报告详情复制。
+
+相邻观测身份完全兼容且可用时，精确比较数值增/减/相同；不是新的门禁判定、债务差额或
+提交因果归因。缺失、身份变化和不可用样本保持不可比较。成对比较字段最多 128 字符，
+超限保留原图/表与明确说明。当前详情使用已验证文档和内置模板，不执行自定义模板。
+
+输出新目录只含 dashboard.html 与 provenance.json，绑定索引、选中报告、HTML 摘要、
+查询条件、选择项及原始最新 Core 状态；不覆盖已有目录。历史部分最多 4 MiB，整页最多
+6 MiB。生成成功不等于项目 PASS；不采集、不联网、不更新历史，不采用 baseline 或重算
+Core debt/ratchet，Engineering Policy 与 required gates 保持不变。
