@@ -205,11 +205,15 @@ artifacts. Systemd still owns final worker-cgroup termination and resource limit
 
 An operator-domain run at `d3f0cbb` completed all 724 Rust tests with zero skipped,
 both Node suites, real HTML validation, workflow acceptance, matching schemas
-and all 29 pinned onboarding steps. This established command readiness, not
-protected execution acceptance. The new adapter also needs its own actual
-complete-run measurement and protected worker deployment. Neither observation
-changes the table's unassigned owners, enables production, removes native
-requirements or replaces the remaining Linux quality/build/audit/contracts jobs.
+and all 29 pinned onboarding steps. The committed adapter at `e3e9fa3` then
+completed its own fresh exact-candidate run: all ten command stages succeeded,
+724 Rust tests passed with none skipped, all 29 onboarding steps completed,
+HTML transport staged exactly its two validated files, and post-job verification
+matched 1,620 tracked files plus all 1,480 restored inputs. This remains an
+operator-domain measurement. Protected worker deployment and resource acceptance
+are still pending. Neither observation changes the table's unassigned owners,
+enables production, removes native requirements or replaces the remaining Linux
+quality/build/audit/contracts jobs.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
