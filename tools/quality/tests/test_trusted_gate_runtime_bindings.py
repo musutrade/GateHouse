@@ -3,7 +3,6 @@ import copy
 import importlib.util
 import os
 from pathlib import Path
-import stat
 import sys
 import tempfile
 import unittest
@@ -166,6 +165,7 @@ class RuntimeBindingTests(unittest.TestCase):
                    lambda v: v['files'].update({'../escape': [0, 'a' * 64, 0o444]}),
                    lambda v: v['files'].update({'/absolute': [0, 'a' * 64, 0o444]}),
                    lambda v: v['files'].update({'bin//alias': [0, 'a' * 64, 0o444]}),
+                   lambda v: v['files'].update({'.': [0, 'a' * 64, 0o444]}),
                    lambda v: v['files'].update({'bin/node': [True, 'a' * 64, 0o555]}),
                    lambda v: v['files'].update({'bin/node': [1, 'bad hash', 0o555]}),
                    lambda v: v['files'].update({'bin/node': [1, 'a' * 64, 0o755]}),

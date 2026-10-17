@@ -28,7 +28,8 @@ def mount_path(value):
 def relative_path(value):
     require(isinstance(value, str) and re.fullmatch('[A-Za-z0-9_./+@=-]+', value)
             and not value.startswith('/') and value == str(PurePosixPath(value))
-            and '..' not in value.split('/') and len(value.split('/')) <= 64,
+            and all(part not in ('.', '..', '') for part in value.split('/'))
+            and len(value.split('/')) <= 64,
             'unsafe runtime inventory path')
     return PurePosixPath(value)
 
