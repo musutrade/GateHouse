@@ -895,6 +895,45 @@ source edits, relocated clones or renamed functions. Working-tree source identit
 records the resolved commit, not a digest of uncommitted changes. This explicit
 history view does not maintain a rolling baseline or a historical database.
 
+### Query a verified history archive
+
+Use `harness-report-history/v2` with the same sample entries for an explicit archive
+of up to 300 invocations (256 KiB index). Per-report and combined limits remain
+32 MiB and 64 MiB. Version 2 requires a query; version 1 without query options keeps
+its original input order and output format. All listed publications are validated,
+including entries outside the selected window. Nothing is fetched from Git or
+scanned automatically, and no history or baseline is updated.
+
+```bash
+harness-gate report-history --input archive/catalog.json --output last-30 \
+  --policy coverage-floor --subject SUBJECT_ID --metric coverage.line \
+  --last-commits 30
+harness-gate report-history --input archive/catalog.json --output last-month \
+  --policy coverage-floor --subject SUBJECT_ID --metric coverage.line \
+  --last-days 30 --until 2026-10-16T00:00:00Z --last-commits 30
+```
+
+`--since` and `--until` are inclusive RFC3339 report-time bounds, normalized to UTC;
+these are **not Git commit timestamps**. `--last-days` (1–30) replaces `--since` and
+anchors to `--until`, or to the latest verified report timestamp when it is omitted.
+The current clock is never consulted. After filtering by time, the latest invocation
+per exact commit is selected, including FAIL or unavailable results. Equal timestamps
+use invocation ID as a deterministic tie-break. `--last-commits` (1–30) keeps the
+latest distinct indexed commits; it does not prove complete repository history or
+Git ancestry. Selected samples are shown chronologically, equally spaced. An empty
+selection or more than 30 selected commits without a narrower query is an error,
+not an implicit truncation.
+
+Commit identity comes from manifested `invocation.json`; missing, unknown or
+noncanonical commit IDs reject the query. A differing supplied quality-context
+commit creates an explicit comparison gap. Queries require the same existing
+project identity, including its checkout-path restriction; cloned paths are not
+silently combined. Metric identity and compatibility checks remain unchanged.
+A missing quality result retains its manifested commit and an explicit metric gap.
+The v2 output provenance records the exact index digest, normalized query/counts,
+selected commits, timestamps and original publication pins. These prove integrity
+relative to the supplied archive, not signatures or authorized producers.
+
 ### Explicit repository hooks
 
 Run `harness-gate hooks install` from an initialized Git project to install

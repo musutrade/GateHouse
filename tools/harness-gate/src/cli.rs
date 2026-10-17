@@ -55,6 +55,8 @@ pub(crate) enum Commands {
         subject: String,
         #[arg(long)]
         metric: String,
+        #[command(flatten)]
+        query: crate::report_history::Query,
     },
 
     /// Explain a registered machine failure, CLI error or configuration diagnostic code without loading a project.
