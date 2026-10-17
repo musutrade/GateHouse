@@ -28,6 +28,7 @@ struct Row<'a> {
     name: String,
     kind: String,
     span: String,
+    source_url: Option<String>,
     policy: &'a Value,
     subject: &'a Value,
     state: &'a Value,
@@ -77,6 +78,7 @@ fn row(gate: &Value, index: usize) -> Row<'_> {
     let span = &record["subject"]["span"];
     Row {
         anchor: format!("quality-row-{index}"),
+        source_url: None,
         name: text(&record["subject"]["discriminator"]),
         kind: text(&record["subject"]["kind"]),
         span: ["start_line", "start_column", "end_line", "end_column"]
@@ -100,7 +102,14 @@ fn row(gate: &Value, index: usize) -> Row<'_> {
         debt: None,
     }
 }
+#[cfg(test)]
 pub(super) fn project(quality: &QualityResult) -> View<'_> {
+    project_with_sources(quality, None)
+}
+pub(super) fn project_with_sources<'a>(
+    quality: &'a QualityResult,
+    mut sources: Option<crate::source_links::Links<'_>>,
+) -> View<'a> {
     let mut groups: BTreeMap<(String, String), Vec<Row<'_>>> = BTreeMap::new();
     let mut panels: BTreeMap<(String, String, String), Vec<Cell>> = BTreeMap::new();
     let mut rankings = ranking::Builder::default();
@@ -112,6 +121,9 @@ pub(super) fn project(quality: &QualityResult) -> View<'_> {
             let component = text(&gate["record"]["component"]);
             let path = text(&gate["record"]["subject"]["path"]);
             let mut row = row(gate, position);
+            if !matches!(quality.status, "measurement_error" | "not_collected") {
+                row.source_url = sources.as_mut().and_then(|links| links.link(gate, &index));
+            }
             row.debt = Some(debts.push(
                 gate,
                 !matches!(quality.status, "measurement_error" | "not_collected"),

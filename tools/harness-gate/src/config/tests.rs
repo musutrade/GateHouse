@@ -1136,6 +1136,7 @@ fn webhook_configuration_requires_http_url_and_an_enabled_result() {
 fn report_template_diagnostics_cover_pair_paths_and_extensions() {
     let mut config = repository_config();
     config.report_templates = ReportTemplatesConfig {
+        source_repository: None,
         root: Some("../templates".into()),
         template: Some("../report.txt".into()),
         junit: Some("../junit.txt".into()),
@@ -1156,6 +1157,7 @@ fn report_template_diagnostics_cover_pair_paths_and_extensions() {
     }
 
     config.report_templates = ReportTemplatesConfig {
+        source_repository: None,
         root: Some("templates".into()),
         template: None,
         junit: Some("junit.txt".into()),
@@ -1167,6 +1169,132 @@ fn report_template_diagnostics_cover_pair_paths_and_extensions() {
     assert!(diagnostics.iter().any(|diagnostic| {
         diagnostic.path == "report_templates.junit" && diagnostic.id == "HGCFG-INVALID-FIELD"
     }));
+}
+
+#[test]
+fn configured_report_template_validation_covers_pairs_extensions_and_source_repository() {
+    fn validate(
+        source_repository: Option<&str>,
+        root: Option<&str>,
+        template: Option<&str>,
+        junit: Option<&str>,
+    ) -> anyhow::Result<()> {
+        let mut config = repository_config();
+        config.report_templates = ReportTemplatesConfig {
+            source_repository: source_repository.map(str::to_owned),
+            root: root.map(str::to_owned),
+            template: template.map(str::to_owned),
+            junit: junit.map(str::to_owned),
+        };
+        config.validate()
+    }
+    fn invalid(
+        source_repository: Option<&str>,
+        root: Option<&str>,
+        template: Option<&str>,
+        junit: Option<&str>,
+        expected: &str,
+    ) {
+        let error = validate(source_repository, root, template, junit)
+            .expect_err("configuration must be rejected")
+            .to_string();
+        assert!(error.contains(expected), "{expected}: {error}");
+    }
+
+    validate(None, None, None, None).expect("default report templates");
+    validate(None, None, None, Some("reports/junit.xml")).expect("JUnit without HTML");
+    validate(
+        Some("https://github.com/musutrade/GateHouse"),
+        Some("templates"),
+        Some("templates/report.html"),
+        Some("reports/junit.xml"),
+    )
+    .expect("configured HTML and JUnit");
+    validate(
+        Some("https://github.com/musutrade/GateHouse"),
+        Some("templates"),
+        Some("templates/report.tera"),
+        None,
+    )
+    .expect("tera HTML template");
+
+    invalid(
+        Some("https://github.com/musutrade/GateHouse?token=secret"),
+        None,
+        None,
+        None,
+        "report_templates.source_repository must be a canonical https://github.com/owner/repository URL",
+    );
+    invalid(
+        None,
+        Some("templates"),
+        None,
+        None,
+        "report_templates.root and report_templates.template must be configured together",
+    );
+    invalid(
+        None,
+        None,
+        Some("templates/report.html"),
+        None,
+        "report_templates.root and report_templates.template must be configured together",
+    );
+    invalid(
+        None,
+        Some("templates"),
+        Some("templates/report.txt"),
+        None,
+        "report_templates.template must use a .html or .tera extension",
+    );
+    invalid(
+        None,
+        None,
+        None,
+        Some("reports/junit.txt"),
+        "report_templates.junit must use a .xml extension",
+    );
+    invalid(
+        None,
+        Some("templates"),
+        Some("templates/report.tera"),
+        Some("reports/junit.txt"),
+        "report_templates.junit must use a .xml extension",
+    );
+    invalid(
+        None,
+        Some("../templates"),
+        Some("templates/report.html"),
+        None,
+        "report_templates.root may not escape the repository",
+    );
+    invalid(
+        None,
+        Some(""),
+        Some("templates/report.html"),
+        None,
+        "report_templates.root must be a non-empty repository-relative path",
+    );
+    invalid(
+        None,
+        Some("templates"),
+        Some("../report.html"),
+        None,
+        "report_templates.template may not escape the repository",
+    );
+    invalid(
+        None,
+        None,
+        None,
+        Some("../junit.xml"),
+        "report_templates.junit may not escape the repository",
+    );
+    invalid(
+        None,
+        Some("templates"),
+        Some("templates/report.html"),
+        Some("../junit.xml"),
+        "report_templates.junit may not escape the repository",
+    );
 }
 
 #[test]
@@ -1950,4 +2078,19 @@ fn policy_waiver_configuration_rejects_invalid_approval_and_time_boundaries() {
         .waivers
         .push(duplicate.policy.waivers[0].clone());
     assert_diagnostic(&duplicate, "policy", "HGCFG-INVALID-FIELD");
+}
+
+#[test]
+fn report_source_repository_is_opt_in_and_validated_without_echoing_secrets() {
+    let mut config = repository_config();
+    assert!(config.report_templates.source_repository.is_none());
+    config.report_templates.source_repository =
+        Some("https://github.com/musutrade/GateHouse".into());
+    assert!(config.validate().is_ok());
+    config.report_templates.source_repository = Some("https://user:secret@github.com/a/b".into());
+    let error = config.validate().unwrap_err().to_string();
+    assert!(error.contains("report_templates.source_repository") && !error.contains("secret"));
+    assert!(diagnostics_for(&config)
+        .iter()
+        .any(|d| d.path == "report_templates.source_repository" && d.id == "HGCFG-INVALID-FIELD"));
 }

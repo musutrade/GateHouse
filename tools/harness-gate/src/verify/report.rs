@@ -933,7 +933,19 @@ fn configured_html(report: &VerificationReport, project: &Project) -> Result<Opt
         .context("serialize verification report for HTML template")?;
     context.insert("report", report);
     if let Some(quality) = &report.quality {
-        context.insert("quality_view", &quality_view::project(quality));
+        let sources = crate::source_links::Links::new(
+            project.config.report_templates.source_repository.as_deref(),
+            &project.input().commit,
+            &project.root,
+        );
+        context.insert(
+            "quality_view",
+            &quality_view::project_with_sources(quality, sources),
+        );
+        anyhow::ensure!(
+            !crate::process::cancelled(),
+            "HTML source navigation was cancelled"
+        );
     }
     context.insert("summary", if report.passed { "PASS" } else { "FAIL" });
     context.insert(
@@ -5297,6 +5309,145 @@ mod tests {
         );
         if let Some(path) = std::env::var_os("HG_CRAP_HISTORY_PREVIEW") {
             std::fs::write(path,serde_json::to_vec_pretty(&json!({"views":previews,"input":input,"subject":subject,"total_seconds_debug":started.elapsed().as_secs_f64()})).unwrap()).unwrap();
+            std::mem::forget(workspace);
+        }
+    }
+    #[test]
+    fn source_links_publish_only_evidence_matching_committed_files() {
+        use serde_json::json;
+        use sha2::{Digest, Sha256};
+        let (workspace, _project, _invocation, mut project, mut current) =
+            complete_invocation_fixture("source-links-html");
+        let source = b"fn example() {\n}\n";
+        std::fs::create_dir_all(workspace.join("src")).unwrap();
+        std::fs::write(workspace.join("src/file0.rs"), source).unwrap();
+        for args in [
+            vec!["add", "src"],
+            vec!["commit", "-qm", "committed source"],
+        ] {
+            assert!(std::process::Command::new("git")
+                .args(args)
+                .current_dir(&workspace.root)
+                .status()
+                .unwrap()
+                .success());
+        }
+        let commit =
+            crate::utils::git::capture_readonly(&workspace.root, ["rev-parse", "HEAD"]).unwrap();
+        let commit = String::from_utf8(commit.stdout).unwrap().trim().to_owned();
+        project.invocation_input.commit = commit.clone();
+        let templates = workspace.child("templates");
+        std::fs::write(
+            templates.join("verification.html"),
+            include_str!("../../templates/verification.html"),
+        )
+        .unwrap();
+        project.config.report_templates.root = Some("templates".into());
+        project.config.report_templates.template = Some("templates/verification.html".into());
+        project.config.report_templates.source_repository =
+            Some("https://github.com/example/project".into());
+        let mut quality = super::quality_view::tests::fixture(1);
+        let mut subject = quality.inputs["project"]["subjects"][0].clone();
+        subject["source_sha256"] = json!(format!("{:x}", Sha256::digest(source)));
+        subject["span"]["end_line"] = json!(2);
+        let bind = |quality: &mut crate::verify::quality::QualityResult,
+                    mut subject: serde_json::Value| {
+            subject["id"] =
+                json!(harness_gate::quality::project::subject_id("demo", &subject).unwrap());
+            quality.inputs["project"]["subjects"][0] = subject.clone();
+            quality.evidence[0]["subject"] = subject.clone();
+            quality.project_report["gates"]["g0000"]["subject"] = subject["id"].clone();
+            quality.project_report["gates"]["g0000"]["record"]["subject"] = subject;
+        };
+        bind(&mut quality, subject.clone());
+        quality.evidence[0]["context"]["commit"] = json!(commit);
+        quality.project_report["gates"]["g0000"]["record"]["context"]["commit"] = json!(commit);
+        current.passed = false;
+        let copy = |quality: &crate::verify::quality::QualityResult| {
+            let mut result = super::quality_view::tests::fixture(1);
+            result.inputs = quality.inputs.clone();
+            result.evidence = quality.evidence.clone();
+            result.project_report = quality.project_report.clone();
+            result
+        };
+        current.quality = Some(copy(&quality));
+        // A later dirty file does not replace the immutable committed target.
+        std::fs::write(workspace.join("src/file0.rs"), b"dirty\n").unwrap();
+        write(&current, &project).unwrap();
+        verify_manifest(&project).unwrap();
+        let html_path = project.reports.join("test_result.html");
+        let html = std::fs::read_to_string(&html_path).unwrap();
+        assert!(html
+            .replace("&#x2F;", "/")
+            .contains(&format!("/blob/{commit}/src/file0.rs#L1-L2")));
+        assert!(
+            html.contains("class=\"source-link\"")
+                && html.contains("referrerpolicy=\"no-referrer\"")
+        );
+        let machine: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(project.reports.join(MACHINE_RESULT_FILE)).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(machine["passed"], false);
+        assert_eq!(machine["evidence_complete"], true);
+        for case in 0..9 {
+            let mut bad = copy(&quality);
+            match case {
+                0 => bad.status = "measurement_error",
+                1 => bad.status = "not_collected",
+                2 => {
+                    bad.project_report["gates"]["g0000"]["record"]["context"]["commit"] =
+                        json!("b".repeat(40))
+                }
+                3 => {
+                    bad.evidence[0]["context"]["commit"] = json!("b".repeat(40));
+                    bad.project_report["gates"]["g0000"]["record"]["context"]["commit"] =
+                        json!("b".repeat(40));
+                }
+                4 => {
+                    let mut s = subject.clone();
+                    s["source_sha256"] = json!("a".repeat(64));
+                    bind(&mut bad, s);
+                }
+                5 => {
+                    let mut s = subject.clone();
+                    s["span"]["end_line"] = json!(999);
+                    bind(&mut bad, s);
+                }
+                6 => {
+                    let mut s = subject.clone();
+                    s.as_object_mut().unwrap().remove("span");
+                    bind(&mut bad, s);
+                }
+                7 => {
+                    let duplicate = bad.evidence[0].clone();
+                    bad.evidence.as_array_mut().unwrap().push(duplicate);
+                }
+                _ => {
+                    bad.project_report["gates"]["g0000"]["record"]["subject"]["path"] =
+                        json!("javascript:alert(1)")
+                }
+            }
+            current.quality = Some(bad);
+            let refused = configured_html(&current, &project).unwrap().unwrap();
+            assert!(!refused.contains("class=\"source-link\""), "case {case}");
+            assert!(refused.contains("data-component=") && refused.contains("supplied outcome"));
+        }
+        current.quality = Some(quality);
+        project.config.report_templates.source_repository = None;
+        assert!(!configured_html(&current, &project)
+            .unwrap()
+            .unwrap()
+            .contains("class=\"source-link\""));
+        if let Some(path) = std::env::var_os("HG_SOURCE_LINK_PREVIEW") {
+            std::fs::write(
+                path,
+                serde_json::to_vec_pretty(
+                    &json!({"html":html_path,"commit":commit,"links":1,"passed":false}),
+                )
+                .unwrap(),
+            )
+            .unwrap();
             std::mem::forget(workspace);
         }
     }

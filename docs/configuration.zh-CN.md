@@ -987,6 +987,8 @@ runner 描述只是声明，不能证明编译器版本；`executor_version` 表
 root = "templates/harness-gate"
 template = "templates/harness-gate/verification.tera"
 junit = "junit.xml"
+# 可选；默认不生成外部源码链接
+source_repository = "https://github.com/owner/repository"
 ```
 
 `root` 和 `template` 必须同时存在；二者必须是仓库内路径，不能是绝对路径、Windows 前缀、

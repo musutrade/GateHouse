@@ -730,6 +730,8 @@ audit and confirm every path, regex, and report option.
     root = "templates/harness-gate"
     template = "templates/harness-gate/verification.tera"
     junit = "junit.xml"
+    # Optional; defaults to no external source links
+    source_repository = "https://github.com/owner/repository"
 
 Template root and template must be repository-contained regular paths with no
 traversal or symlink escape, and the template must end in .html or .tera.
