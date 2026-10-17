@@ -109,6 +109,32 @@ pilot publication is checked by Core and retained; the separate negative App Che
 still completes with failure and authoritative publication stays blocked. This
 accepts an isolation/history prerequisite, not complete project/native coverage.
 
+### Observed protected history acceptance
+
+On 2026-10-17 the administrator executed the reviewed fixed upgrade to
+`659803a2f144926997e56d072c7fe8760d6ed176`, archive SHA-256
+`04190f57c76f9625be1e805ab212c48802181f458fecdc34f5478f796efd77ef`.
+The bounded acceptance summary recorded run
+`ce86a2a4-ff18-435f-bb5d-aafc313ceca6` and worker Git history passed within the
+protected Core boundary step. The actual developer UID was 999, with only the
+developer/submission groups; protected access and delegated-command denials held.
+
+Independent GitHub readback confirmed negative Check `117423517761`, the exact
+candidate SHA and isolation-pilot external identity, App `4867361`, and completed
+`failure` as intended. Independent system journal reads showed the Core and both
+workers deactivated successfully, including the actual `executor-history` probe;
+no matching units remained active. The persistent volume used 32 MiB of 2 GiB.
+Private publication and upgrade-retention files were not opened by the operator
+Agent; those checks are reported by the pinned administrator entry, not claimed
+as a second direct inspection. The previous fa18 evidence remains retained.
+
+The installed release is now `659803a`, still transition-only with authoritative
+publication blocked and production disabled. Do not use the ordinary installer
+or the fa18-only upgrade for a later differing release. A later upgrade requires
+its own reviewed reconciliation of the outstanding run and preservation of its
+evidence. Full project/native coverage and restricted Agent operation remain
+pending; this acceptance changes no required rule or workflow trigger.
+
 ## Exact host changes
 
 - Install the reviewed Python package, public launcher, access probe and Core

@@ -58,10 +58,11 @@ The initial offline serial sandbox does not supply macOS/Windows execution,
 GitHub action transports, an advisory-database refresh service, reviewed network
 acquisition for pinned plugins, or an accepted Git-history-dependent quality
 workload. The opt-in worker Git view described below supplies the read-only
-history prerequisite; its protected deployment and complete script workloads
-still need acceptance. Several existing quality scripts need that history. Schema generation
-and onboarding also need writable working copies while the trusted candidate
-remains immutable. These require reviewed step/materialization adapters and exact
+history prerequisite; its protected deployment was accepted in the limited
+`659803a` isolation pilot. Complete script workloads still need acceptance.
+Several existing quality scripts need that history. Schema generation has the
+separate-output candidate adapter below; onboarding still needs writable working
+copies while the trusted candidate remains immutable. These require reviewed step/materialization adapters and exact
 evidence contracts before assigning a local owner. Running a smaller Linux suite
 does not close those rows.
 
@@ -88,10 +89,37 @@ its environment. Source files remain immutable and writable outputs stay separat
 
 This supports source reads, base/head differences, clean-status checks and source
 archives. It does not grant Git writes or supply writable schema/onboarding
-copies, dependencies, native execution or complete quality coverage. The current
-installed isolation pilot does not opt into this new adapter. Live mount/UID
-acceptance and each migrated quality workload remain required; table ownership
-above is unchanged.
+copies, dependencies, native execution or complete quality coverage. The installed
+`659803a` isolation pilot opted into the adapter and passed its actual worker
+mount/UID/history probe. Each migrated quality workload still requires acceptance;
+table ownership above is unchanged.
+
+### Candidate schema measurement adapter
+
+[check-schemas.py](../tools/trusted_gate/deploy/check-schemas.py) runs the existing
+Core's `schema export` and `schema export --quality` with an explicit, fresh
+`--project-root` outside the frozen source. Core already supports that output
+root; a writable candidate copy is unnecessary for these two pure exports. The
+adapter checks both generated files byte for byte against the committed schemas.
+It requires the exact candidate head, clean tracked bytes, matching Core crate
+tree and reviewed binary digest, and rechecks those inputs after both commands.
+The protected caller must provide those pins from its reviewed build/configuration;
+arguments supplied by an Agent are not build provenance or acceptance.
+
+Stale output, overlapping source/output, links, changed input, command failure,
+timeout or missing output cannot produce a match. The result records exact
+commands and both file digests; a mismatch/error exits nonzero. Final gate
+requiredness and quality decisions remain in Core. Engineering-policy semantics
+are unchanged.
+
+An operator-domain measurement using the matching non-incremental release Core
+generated both schemas from `659803a` and found identical bytes (34,227 and 11,928
+bytes). The Cargo build output had two hard links, so it was copied to a separate,
+byte-identical single-link staging file; the input guard was retained. This is a
+measurement of the real Core, not a protected worker deployment acceptance.
+The adapter is not installed or selected by the pilot policy, is not included in
+the fixed fa18 upgrade, and does not close the complete Linux Test row. The other
+tests, onboarding, fixture/toolchain preparation and native cells remain pending.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
