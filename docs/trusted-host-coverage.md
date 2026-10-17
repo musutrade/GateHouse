@@ -231,6 +231,15 @@ workspaces, generated executables and general scratch contents are excluded.
 This capture candidate is not installed or enabled in the accepted `659803a`
 pilot, and protected worker/cgroup acceptance is still pending.
 
+An operator-domain transport observation at capture code `e67b037` selected 85
+files from the completed `e3e9fa3` Linux Test run (2,951,405 original bytes).
+The existing matching release Core sealed a 3,946,710-byte step log in its
+canonical invocation, manifest and registry. Every selected file decoded exactly
+to its original bytes and SHA-256; the disposable onboarding key was excluded.
+This fixture tests retention transport, not new candidate quality or real
+systemd/identity isolation. Failed fixture setup/configuration attempts were
+retained separately; no production result was retried or changed.
+
 An operator-domain run at `d3f0cbb` completed all 724 Rust tests with zero skipped,
 both Node suites, real HTML validation, workflow acceptance, matching schemas
 and all 29 pinned onboarding steps. The committed adapter at `e3e9fa3` then
