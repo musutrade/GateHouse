@@ -3,6 +3,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -114,6 +115,35 @@ class LinuxTestJobTests(unittest.TestCase):
         (self.plugin / 'external').symlink_to(self.root / 'other', target_is_directory=True)
         with self.assertRaises(ValueError):
             JOB.directory_digest(self.plugin)
+
+    def test_readonly_onboarding_input_gets_an_exact_writable_disposable_copy(self):
+        catalog = self.plugin / 'products/onboarding/products.json'
+        catalog.parent.mkdir(parents=True)
+        catalog.write_text('{"fixture":true}\n')
+        executable = self.plugin / 'fixture.sh'
+        executable.write_text('#!/bin/sh\nexit 0\n')
+        executable.chmod(0o555)
+        pin = JOB.directory_digest(self.plugin)
+        for root, directories, names in os.walk(self.plugin):
+            for name in names:
+                path = Path(root) / name
+                path.chmod(0o555 if path.stat().st_mode & 0o111 else 0o444)
+            Path(root).chmod(0o555)
+        try:
+            destination = self.root / 'onboarding-copy'
+            with patch.object(JOB, 'ONBOARDING_SHA256', pin):
+                JOB.copy_onboarding(self.plugin, destination)
+            self.assertEqual(JOB.directory_digest(destination), pin)
+            derived = self.root / 'upgrade-source'
+            shutil.copytree(destination / 'products/onboarding', derived)
+            (derived / 'products.json').write_text('{"upgraded":true}\n')
+            self.assertEqual(JOB.directory_digest(self.plugin), pin)
+            self.assertEqual(catalog.read_text(), '{"fixture":true}\n')
+            self.assertTrue((destination / 'fixture.sh').stat().st_mode & 0o100)
+            self.assertTrue((destination / 'products/onboarding/products.json').stat().st_mode & 0o200)
+        finally:
+            for root, directories, names in os.walk(self.plugin):
+                Path(root).chmod(0o700)
 
     def test_workflow_changes_require_parity_review_before_any_test_command(self):
         original = self.fake_prepare

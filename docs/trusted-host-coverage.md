@@ -270,7 +270,15 @@ bytes, SHA-256, executable modes and exact onboarding/test-data pins. Verificati
 rejects missing/extra/changed files, directories and permissions. Its optional
 trusted verification additionally requires root execution, root ownership and
 protected parents; an operator-owned snapshot is never accepted as that proof.
-This is a runtime input inventory, not a quality result or credential.
+This is a runtime input inventory, not a quality result or credential. Ownership
+verification alone does not establish upstream provenance. In particular, this
+helper's operator-owned Cargo registry and Rust installation must not enter the
+trusted execution domain through a chown/copy. The eventual administrator bootstrap
+must independently acquire approved toolchain inputs and registry metadata, check
+crate archives against the frozen source's Cargo.lock checksums, and reconstruct
+or compare extracted crate sources against those verified archives. Only matching
+independently verified inputs may be imported; this candidate does not implement
+that trusted bootstrap and does not accept an Agent cache as authoritative input.
 
 The accepted `659803a` pilot remains on its existing 2 GiB volume. Neither this
 preparation helper nor its ordinary-user observations install inputs or modify

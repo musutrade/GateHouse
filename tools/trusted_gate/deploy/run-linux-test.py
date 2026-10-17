@@ -67,6 +67,21 @@ def directory_digest(directory):
     return INPUTS.digest(json.dumps(files, sort_keys=True, separators=(',', ':')).encode())
 
 
+def copy_onboarding(source, destination):
+    """The upstream upgrade test mutates copies and must inherit writable modes."""
+    INPUTS.need(directory_digest(source) == ONBOARDING_SHA256, 'onboarding source differs from its reviewed pin')
+    shutil.copytree(source, destination, symlinks=True)
+    # Retain unexpected links for rejection rather than dereferencing them.
+    INPUTS.need(directory_digest(destination) == ONBOARDING_SHA256, 'onboarding copy differs')
+    for root, directories, names in os.walk(destination):
+        os.chmod(root, 0o700)
+        for name in names:
+            path = Path(root) / name
+            os.chmod(path, 0o700 if path.stat().st_mode & 0o111 else 0o600)
+    INPUTS.need(directory_digest(destination) == ONBOARDING_SHA256, 'onboarding copy changed while preparing')
+    return destination
+
+
 def clean_environment(output, head, identity, supplied):
     forbidden = {'RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'RUSTDOCFLAGS', 'RUSTC', 'RUSTDOC',
                  'RUSTC_WRAPPER', 'RUSTC_WORKSPACE_WRAPPER', 'CARGO_INCREMENTAL',
@@ -172,7 +187,8 @@ def run(source, history, cache, output, head, base, manifest_sha256,
         built = Path(env['CARGO_TARGET_DIR']) / 'debug/harness-gate'
         core = output / 'tested-core'
         core_sha = built_core_digest(built, core)
-        command('onboarding', [sys.executable, '-B', str(onboarding_source / 'tools/onboarding/acceptance.py'),
+        plugin = copy_onboarding(onboarding_source, output / 'onboarding-source')
+        command('onboarding', [sys.executable, '-B', str(plugin / 'tools/onboarding/acceptance.py'),
                                '--core', str(core), '--work-dir', str(output / 'onboarding')])
         onboarding = json.loads(INPUTS.regular(output / 'onboarding/report.json', 1024 * 1024))
         INPUTS.need(onboarding['schema'] == 'gateprobes-onboarding-acceptance/v1'
@@ -184,6 +200,8 @@ def run(source, history, cache, output, head, base, manifest_sha256,
                     'tested Core changed during onboarding')
         report['onboarding_steps'] = len(onboarding['steps'])
         report['tested_core_sha256'] = core_sha
+        report['onboarding_copy_sha256'] = directory_digest(plugin)
+        INPUTS.need(report['onboarding_copy_sha256'] == ONBOARDING_SHA256, 'onboarding copy changed during execution')
         report['post_validation'] = INPUTS.verify_prepared(source, history, project, head, base, manifest_sha256)
         INPUTS.need(directory_digest(onboarding_source) == ONBOARDING_SHA256, 'onboarding source changed during execution')
         report['state'] = 'commands_completed'
