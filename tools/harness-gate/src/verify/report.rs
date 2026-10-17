@@ -5555,6 +5555,25 @@ mod tests {
         assert!(std::fs::read_to_string(output.join("history.html"))
             .unwrap()
             .contains("<td>fail</td>"));
+        let dashboard = workspace.join("archive-dashboard");
+        crate::report_history::dashboard(
+            &index,
+            &dashboard,
+            &crate::report_history::SelectionFilter::default(),
+            &crate::report_history::Query::default(),
+        )
+        .unwrap();
+        let html = std::fs::read_to_string(dashboard.join("dashboard.html")).unwrap();
+        assert!(html.contains("<dd>FAIL</dd>"));
+        assert_eq!(html.matches("class=\"history-series\"").count(), 1);
+        assert!(!html.contains("class=\"source-link\""));
+        let provenance: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(dashboard.join("provenance.json")).unwrap())
+                .unwrap();
+        // Repeated invocations of one exact commit select the latest observation.
+        assert_eq!(provenance["samples"].as_array().unwrap().len(), 1);
+        assert_eq!(provenance["latest_core_status"], "FAIL");
+        assert_eq!(std::fs::read(&index).unwrap(), both);
         // A corrupt prior snapshot cannot be silently re-pinned or dropped.
         std::fs::write(copy.join("logs/unit.log"), b"tampered").unwrap();
         assert!(crate::report_history::record(&publication).is_err());
@@ -5570,7 +5589,7 @@ mod tests {
             std::fs::write(
                 path,
                 serde_json::to_vec_pretty(
-                    &json!({"index":index,"html":output.join("history.html"),"snapshots":2}),
+                    &json!({"index":index,"html":output.join("history.html"),"dashboard":dashboard.join("dashboard.html"),"snapshots":2}),
                 )
                 .unwrap(),
             )
