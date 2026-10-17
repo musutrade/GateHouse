@@ -137,33 +137,47 @@ fn verified_bytes(directory: &Path, sample: &Sample) -> Result<(Vec<u8>, Vec<u8>
     Ok((bytes, manifest))
 }
 
-fn bound_metadata(directory: &Path, manifest: &[u8]) -> Result<Value> {
-    let bytes = read(&directory.join("invocation.json"), CONTROL_LIMIT)?;
+fn bound_artifact(directory: &Path, manifest: &[u8], name: &str, limit: u64) -> Result<Vec<u8>> {
+    let bytes = read(&directory.join(name), limit)?;
     let manifest = json(manifest)?;
     let mut entries = manifest["artifacts"]
         .as_array()
         .context("missing manifest artifacts")?
         .iter()
-        .filter(|a| a["path"] == "invocation.json");
-    let entry = entries
-        .next()
-        .context("missing manifested invocation metadata")?;
-    ensure!(
-        entries.next().is_none(),
-        "duplicate invocation metadata binding"
-    );
+        .filter(|a| a["path"] == name);
+    let entry = entries.next().context("missing manifested artifact")?;
+    ensure!(entries.next().is_none(), "duplicate artifact binding");
     ensure!(
         entry["size_bytes"].as_u64() == Some(bytes.len() as u64),
-        "invocation metadata size differs from pinned manifest"
+        "artifact size differs from pinned manifest"
     );
     pin(
         entry["sha256"]
             .as_str()
-            .context("missing invocation metadata digest")?,
+            .context("missing artifact digest")?,
         &bytes,
     )?;
-    json(&bytes)
+    Ok(bytes)
 }
+fn bound_metadata(directory: &Path, manifest: &[u8]) -> Result<Value> {
+    json(&bound_artifact(
+        directory,
+        manifest,
+        "invocation.json",
+        CONTROL_LIMIT,
+    )?)
+}
+pub(super) fn exported_html(report: &Completed) -> Result<Vec<u8>> {
+    let manifest = read(&report.directory.join("manifest.json"), CONTROL_LIMIT)?;
+    pin(&report.manifest_sha256, &manifest)?;
+    bound_artifact(
+        &report.directory,
+        &manifest,
+        "test_result.html",
+        2 * 1024 * 1024,
+    )
+}
+
 fn verify_identity(directory: &Path, machine: &Value, manifest: &[u8]) -> Result<String> {
     // Bind the bytes actually consumed, not a prior filesystem observation.
     let metadata = bound_metadata(directory, manifest)?;
@@ -343,6 +357,35 @@ mod tests {
         assert!(bound_metadata(&path, &manifest).is_err());
         fs::write(path.join("invocation.json"), b"{}").unwrap();
         assert!(bound_metadata(&path, &manifest).is_err());
+    }
+    #[test]
+    fn exported_html_binds_consumed_bytes_to_the_original_manifest_pin() {
+        let root = tempfile::tempdir().unwrap();
+        let directory = root.path().canonicalize().unwrap();
+        let bytes = b"<!doctype html><title>completed</title>";
+        let manifest = serde_json::to_vec(&serde_json::json!({"artifacts":[{"path":"test_result.html","size_bytes":bytes.len(),"sha256":digest(bytes)}]})).unwrap();
+        fs::write(directory.join("manifest.json"), &manifest).unwrap();
+        fs::write(directory.join("test_result.html"), bytes).unwrap();
+        let report = Completed {
+            machine: Value::Null,
+            commit: String::new(),
+            machine_bytes: 0,
+            directory: directory.clone(),
+            machine_sha256: String::new(),
+            manifest_sha256: digest(&manifest),
+        };
+        assert_eq!(exported_html(&report).unwrap(), bytes);
+        fs::write(directory.join("test_result.html"), vec![b'x'; bytes.len()]).unwrap();
+        assert!(exported_html(&report).is_err());
+        fs::write(
+            directory.join("test_result.html"),
+            vec![b'x'; 2 * 1024 * 1024 + 1],
+        )
+        .unwrap();
+        assert!(exported_html(&report).is_err());
+        fs::write(directory.join("test_result.html"), bytes).unwrap();
+        fs::write(directory.join("manifest.json"), b"{}").unwrap();
+        assert!(exported_html(&report).is_err());
     }
     #[test]
     fn schema_specific_index_byte_and_sample_bounds() {

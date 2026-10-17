@@ -1,5 +1,7 @@
 //! Read-only projection of explicitly pinned completed invocation reports.
 mod crap;
+mod export;
+pub(crate) use export::run as export_html;
 mod input;
 mod projection;
 mod publication;

@@ -4846,6 +4846,108 @@ mod tests {
         }
     }
     #[test]
+    fn html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering() {
+        use serde_json::json;
+        let (workspace, mut project, _old_invocation, mut publication, mut current) =
+            complete_invocation_fixture("html-export-combined");
+        let commit = std::env::var("HG_HTML_ACCEPTANCE_COMMIT").unwrap_or_else(|_| "a".repeat(40));
+        project.invocation_input.commit = commit.clone();
+        let invocation = allocate_invocation(&project).unwrap();
+        write_invocation_metadata(&invocation, &project, "full", false).unwrap();
+        publication.reports = invocation.root.clone();
+        current.invocation_id = invocation.id.clone();
+        current.report_directory = invocation.root.to_string_lossy().into_owned();
+        current.steps[0].invocation_id = Some(invocation.id.clone());
+        current.passed = false;
+        current.profile = "synthetic-report-acceptance".into();
+        std::fs::write(
+            invocation.root.join("logs/unit.log"),
+            b"raw-fixture-log-not-for-export",
+        )
+        .unwrap();
+        let templates = project.root.join("templates");
+        std::fs::create_dir_all(&templates).unwrap();
+        std::fs::write(
+            templates.join("verification.html"),
+            include_str!("../../templates/verification.html"),
+        )
+        .unwrap();
+        publication.config.report_templates.root = Some("templates".into());
+        publication.config.report_templates.template = Some("templates/verification.html".into());
+        current.quality = Some(super::quality_view::tests::combined_fixture(1000, &commit));
+        let started = std::time::Instant::now();
+        write(&current, &publication).unwrap();
+        verify_manifest(&publication).unwrap();
+        let publication_seconds = started.elapsed().as_secs_f64();
+        let input = project.reports.join("html-export-index.json");
+        let sample = json!({"directory":invocation.root.strip_prefix(&project.reports).unwrap().to_string_lossy().replace('\\',"/"),"machine_sha256":super::sha256_file(&invocation.root.join(MACHINE_RESULT_FILE)).unwrap(),"manifest_sha256":super::sha256_file(&invocation.root.join(MANIFEST_FILE)).unwrap()});
+        std::fs::write(
+            &input,
+            serde_json::to_vec(&json!({"schema":"harness-report-history/v1","samples":[sample]}))
+                .unwrap(),
+        )
+        .unwrap();
+        let destination = std::env::var_os("HG_HTML_ACCEPTANCE_DIR")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| workspace.root.join("html-export"));
+        let started = std::time::Instant::now();
+        crate::report_history::export_html(&input, &destination, &commit).unwrap();
+        let export_seconds = started.elapsed().as_secs_f64();
+        let bytes = std::fs::read(destination.join("test_result.html")).unwrap();
+        assert_eq!(
+            bytes,
+            std::fs::read(invocation.root.join("test_result.html")).unwrap()
+        );
+        let html = std::str::from_utf8(&bytes).unwrap();
+        assert_eq!(html.matches("data-debt-category=").count(), 1000);
+        assert_eq!(html.matches("class=\"coverage-cell\"").count(), 334);
+        assert_eq!(html.matches("data-integer=").count(), 333);
+        assert_eq!(html.matches("data-crap-bin=").count(), 333);
+        assert!(bytes.len() < 2_000_000);
+        assert!(!html.contains("raw-fixture-log-not-for-export"));
+        assert_eq!(std::fs::read_dir(&destination).unwrap().count(), 2);
+        let provenance: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(destination.join("provenance.json")).unwrap())
+                .unwrap();
+        assert_eq!(provenance["core_status"], "FAIL");
+        assert_eq!(provenance["commit"], commit);
+        assert!(crate::report_history::export_html(&input, &destination, &commit).is_err());
+        let bad = workspace.root.join("bad-export");
+        for wrong in ["unknown".to_string(), "b".repeat(40)] {
+            assert!(crate::report_history::export_html(&input, &bad, &wrong).is_err());
+            assert!(!bad.exists());
+        }
+        assert!(crate::report_history::export_html(
+            &input,
+            &project.reports.join("nested"),
+            &commit
+        )
+        .is_err());
+        std::fs::write(invocation.root.join("test_result.html"), b"tampered").unwrap();
+        assert!(crate::report_history::export_html(&input, &bad, &commit).is_err());
+        assert!(!bad.exists());
+        std::fs::write(invocation.root.join("test_result.html"), &bytes).unwrap();
+        std::fs::write(
+            &input,
+            serde_json::to_vec(&json!({"schema":"harness-report-history/v2","samples":[sample]}))
+                .unwrap(),
+        )
+        .unwrap();
+        assert!(crate::report_history::export_html(&input, &bad, &commit).is_err());
+        assert!(!bad.exists());
+        std::fs::write(
+            &input,
+            serde_json::to_vec(&json!({"schema":"harness-report-history/v1","samples":[sample]}))
+                .unwrap(),
+        )
+        .unwrap();
+        eprintln!("combined HTML: 1000 subjects, {} bytes, publication+manifest {publication_seconds:.3}s, verified export {export_seconds:.3}s",bytes.len());
+        if let Some(path) = std::env::var_os("HG_COMBINED_PREVIEW") {
+            std::fs::write(path,serde_json::to_vec_pretty(&json!({"html":destination.join("test_result.html"),"subjects":1000,"html_bytes":bytes.len(),"publication_seconds":publication_seconds,"export_seconds":export_seconds,"input":input,"commit":commit,"provenance":destination.join("provenance.json")})).unwrap()).unwrap();
+            std::mem::forget(workspace);
+        }
+    }
+    #[test]
     fn history_query_selects_verified_archive_and_rejects_excluded_tampering() {
         use serde_json::json;
         let started = std::time::Instant::now();

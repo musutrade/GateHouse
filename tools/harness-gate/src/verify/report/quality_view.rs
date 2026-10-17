@@ -250,6 +250,54 @@ pub(super) mod tests {
             producers: json!({}),
         }
     }
+    pub(crate) fn combined_fixture(count: usize, commit: &str) -> QualityResult {
+        let mut quality = fixture(count);
+        for i in 0..count {
+            let (metric, value, base, limit) = match i % 3 {
+                0 => (
+                    "coverage.line",
+                    json!({"type":"ratio","covered":i%101,"total":100}),
+                    json!({"type":"ratio","covered":80,"total":100}),
+                    json!({"type":"ratio","covered":80,"total":100}),
+                ),
+                1 => (
+                    "complexity.cyclomatic",
+                    json!({"type":"count","value":i%41}),
+                    json!({"type":"count","value":15}),
+                    json!({"type":"count","value":10}),
+                ),
+                _ => (
+                    "risk.crap",
+                    json!({"type":"decimal","value":(i%100).to_string()}),
+                    json!({"type":"decimal","value":"40"}),
+                    json!({"type":"decimal","value":"30"}),
+                ),
+            };
+            let operator = if i % 3 == 0 { "ge" } else { "le" };
+            let rule = json!({"operator":operator,"limit":limit,"ratchet":{"allow_legacy_debt":true,"deny_regression":true},"on_violation":"fail"});
+            let (state, annotation) =
+                harness_gate::quality::ratchet::decision(&rule, &value, Some(&base)).unwrap();
+            let evidence = &mut quality.evidence[i];
+            evidence["series"]["metrics"] = json!([{"name":metric,"type":value["type"]}]);
+            evidence["series"]["id"] =
+                json!(harness_gate::quality::evidence::series_id(&evidence["series"]).unwrap());
+            evidence["metrics"] = json!([{"name":metric,"value":value}]);
+            evidence["context"]["commit"] = json!(commit);
+            let gate = &mut quality.project_report["gates"][format!("g{i:04}")];
+            gate["state"] = json!(state);
+            gate["record"]["metric"] = json!(metric);
+            gate["record"]["head"] = value;
+            gate["record"]["base"] = base;
+            gate["record"]["policy"]["limit"] = limit;
+            gate["record"]["ratchet"] = annotation;
+            gate["record"]["context"]["commit"] = json!(commit);
+            gate["record"]["measurement_series"]["head"] = evidence["series"]["id"].clone();
+        }
+        quality.status = "fail";
+        quality.full_quality_status = "fail";
+        quality.project_report["aggregate"] = json!({"state":"fail","blockers":[{"policy":"required","subject":quality.project_report["gates"]["g0000"]["subject"],"state":"fail","reason":"Synthetic report acceptance fixture"}]});
+        quality
+    }
     pub(crate) fn distribution_fixture() -> QualityResult {
         let mut quality = ranking_fixture();
         let rule = json!({"operator":"le","limit":{"type":"decimal","value":"30"},"ratchet":{"allow_legacy_debt":true,"deny_regression":true},"on_violation":"fail"});

@@ -24,6 +24,7 @@
         "src/report_history/mod.rs",
         "src/report_history/query.rs",
         "src/report_history/crap.rs",
+        "src/report_history/export.rs",
         "src/report_history/projection.rs",
         "src/report_history/publication.rs",
         "src/report_history/render.rs"

@@ -9,7 +9,17 @@ use std::{
 const FILES: [&str; 2] = ["history.html", "provenance.json"];
 
 pub(super) fn publish(destination: &Path, html: &[u8], provenance: &[u8]) -> Result<()> {
-    publish_with(destination, [html, provenance], write, |source, target| {
+    publish_files(destination, FILES, [html, provenance])
+}
+pub(super) fn publish_export(destination: &Path, html: &[u8], provenance: &[u8]) -> Result<()> {
+    publish_files(
+        destination,
+        ["test_result.html", "provenance.json"],
+        [html, provenance],
+    )
+}
+fn publish_files(destination: &Path, files: [&str; 2], contents: [&[u8]; 2]) -> Result<()> {
+    publish_with(destination, files, contents, write, |source, target| {
         fs::hard_link(source, target)
     })
 }
@@ -37,9 +47,10 @@ fn rollback(
     destination: &Path,
     staging: &Path,
     published: usize,
+    files: [&str; 2],
     contents: [&[u8]; 2],
 ) -> Result<()> {
-    for (name, expected) in FILES.iter().zip(contents).take(published) {
+    for (name, expected) in files.iter().zip(contents).take(published) {
         let path = destination.join(name);
         let meta = fs::symlink_metadata(&path)?;
         ensure!(
@@ -65,6 +76,7 @@ fn rollback(
 }
 fn publish_with(
     destination: &Path,
+    files: [&str; 2],
     contents: [&[u8]; 2],
     mut writer: impl FnMut(&Path, &[u8]) -> std::io::Result<()>,
     mut linker: impl FnMut(&Path, &Path) -> std::io::Result<()>,
@@ -72,18 +84,20 @@ fn publish_with(
     let staging = tempfile::Builder::new()
         .prefix(".history-")
         .tempdir_in(destination.parent().context("history output parent")?)?;
-    for (name, bytes) in FILES.iter().zip(contents) {
+    for (name, bytes) in files.iter().zip(contents) {
         writer(&staging.path().join(name), bytes)?;
     }
     fs::create_dir(destination).context("history output must be a new directory")?;
-    for (published, name) in FILES.iter().enumerate() {
+    for (published, name) in files.iter().enumerate() {
         if let Err(error) = linker(&staging.path().join(name), &destination.join(name)) {
-            rollback(destination, staging.path(), published, contents).with_context(|| {
-                format!(
-                    "publication failed ({error}); cleanup incomplete at {}",
-                    destination.display()
-                )
-            })?;
+            rollback(destination, staging.path(), published, files, contents).with_context(
+                || {
+                    format!(
+                        "publication failed ({error}); cleanup incomplete at {}",
+                        destination.display()
+                    )
+                },
+            )?;
             return Err(error)
                 .context("publish history without replacement (filesystem hard links required)");
         }
@@ -103,6 +117,7 @@ mod tests {
             let mut links = 0;
             assert!(publish_with(
                 &output,
+                FILES,
                 [b"html", b"provenance"],
                 |path, bytes| {
                     writes += 1;
@@ -131,6 +146,7 @@ mod tests {
         let mut links = 0;
         let error = publish_with(
             &output,
+            FILES,
             [b"html", b"provenance"],
             write,
             |source, target| {
@@ -156,6 +172,7 @@ mod tests {
         let mut links = 0;
         let error = publish_with(
             &output,
+            FILES,
             [b"html", b"provenance"],
             write,
             |source, target| {
