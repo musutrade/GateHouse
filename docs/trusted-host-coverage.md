@@ -252,6 +252,36 @@ are still pending. Neither observation changes the table's unassigned owners,
 enables production, removes native requirements or replaces the remaining Linux
 quality/build/audit/contracts jobs.
 
+`deploy/stage-linux-inputs.py` is a separate unprivileged preparation candidate
+for the offline runtime. It copies the full raw Rust sysroot, only Cargo's
+`registry` subtree (not Cargo home/configuration/credentials), explicit nextest
+and Node executables, the fixed onboarding source and only the test-data
+manifest's SHA-256-addressed archives. Sources, output and parents cannot overlap
+or contain symbolic links. Source tree inventories are checked before/after
+copy; individual streaming reads reject hardlinks, special files, privileged
+modes and mutation. Existing or partial output is retained and cannot be reused.
+The helper performs no network operation or tool execution.
+
+The separate input budget is 512 MiB per file, 6 GiB combined payload, 150,000
+files/directories and 64 MiB inventory metadata. This accommodates large Rust
+shared libraries without increasing the controller's configuration or evidence
+limits. The snapshot uses readonly files/directories and records complete names,
+bytes, SHA-256, executable modes and exact onboarding/test-data pins. Verification
+rejects missing/extra/changed files, directories and permissions. Its optional
+trusted verification additionally requires root execution, root ownership and
+protected parents; an operator-owned snapshot is never accepted as that proof.
+This is a runtime input inventory, not a quality result or credential.
+
+The accepted `659803a` pilot remains on its existing 2 GiB volume. Neither this
+preparation helper nor its ordinary-user observations install inputs or modify
+that filesystem. A future reviewed upgrade must preserve its outstanding source,
+journal and canonical publication before retirement, import independently checked
+inputs into a separate bounded filesystem, select the full Linux Test adapter
+and its 85 capture paths, and set measured resource budgets. Toolchain, scratch,
+persistent cache and evidence remain separate; capacity availability alone is not
+quota approval or protected-worker acceptance. No old installer/fa18 upgrader is
+valid for this transition. All matrix owners remain unassigned until live checks.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the
