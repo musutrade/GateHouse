@@ -43,11 +43,13 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 .distribution-panel, .aggregate-blockers { overflow-wrap:anywhere; }
 .histogram-bar { height:0.6rem; background:#3576a5; width:var(--bar); }
 .coverage-panel h3, .coverage-panel p, .ranking-panel h3, .ranking-panel h4, .ranking-panel p, .ranking-panel li { overflow-wrap:anywhere; }
+.history-series { overflow-wrap:anywhere; margin-block:1.5rem; } .history-series > summary { cursor:pointer; padding:.5rem; font-weight:bold; }
+.history-series svg { width:100%; max-height:20rem; fill:currentColor; } .history-series .scroll { overflow-x:auto; } .history-series table { table-layout:auto; min-width:50rem; }
 </style>
 </head>
 <body>
 <header>
-<h1>Verification report</h1>
+{% if dashboard is defined %}<h1>Quality dashboard</h1><p>Latest selected report below; history is a read-only display.</p>{% else %}<h1>Verification report</h1>{% endif %}
 <dl class="metadata">
 <dt>Report status</dt><dd>{{ report.status }}</dd>
 <dt>Profile</dt><dd>{{ report.profile }}</dd>
@@ -56,6 +58,7 @@ th { font-weight: 600; } .identity { width: 27%; } .state { width: 15%; } .durat
 </dl>
 <p class="note">Statuses are supplied by the report. Filtering changes only the rows shown, not the verification decision. Use the published machine report and manifest to inspect evidence completeness.</p>
 </header>
+{% if dashboard is defined %}{{ dashboard | safe }}{% endif %}
 <div class="controls" id="controls" hidden>
 <label for="search">Search labels, identifiers and details<input id="search" type="search" autocomplete="off"></label>
 <label for="status">Reported row status<select id="status"><option value="">All statuses</option></select></label>

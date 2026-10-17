@@ -1087,6 +1087,49 @@ archives. An archive error returns a report-delivery error while preserving the
 already completed report and its original Core decision. It does not turn a
 failed gate into success. Engineering Policy and required gates are unchanged.
 
+### Integrated offline dashboard
+
+`report-dashboard` combines the latest selected report's overview and hot spots
+with up to 12 selected policy/subject/metric histories and observed changes between
+adjacent selected commits. It consumes the same verified v1/v2 indexes as
+`report-history`; every indexed publication is validated, even outside the window.
+Without time options it selects the latest 30 indexed commits. Time options use
+the existing UTC report-time rules, latest invocation per exact commit and explicit
+comparison gaps; they do not prove complete Git history or ancestry.
+
+```bash
+harness-gate report-dashboard --input archive/index.json --output dashboard \
+  --subject SUBJECT_ID --metric coverage.line --metric risk.crap \
+  --last-days 30 --last-commits 30
+```
+
+Open `dashboard/dashboard.html` locally. Native expandable sections show the
+individual charts, exact tables and supplied debt annotations without JavaScript;
+the current-report controls still filter the current-report rows. `--policy`,
+`--subject` and `--metric` match exact identifiers and may each repeat (OR within a
+field, AND between fields). Omitted filters include all supported observations in
+the selected reports, including subjects absent from the latest report. More than
+12 matching series is an error asking for narrower filters, never silent truncation.
+Supported metrics are `coverage.line`, `coverage.region`, `complexity.cyclomatic`
+and `risk.crap`. Use the identifiers shown in report details.
+
+Observed commit changes compare exact values only when adjacent observations are
+available and have the existing identical comparison identity. An increase or
+decrease describes the supplied metric, not policy severity or causation. Missing,
+changed-identity or unavailable samples remain incomparable; no numeric debt delta
+or replacement Core decision is derived. Pairwise comparison fields are limited
+to 128 characters; larger values keep their existing chart/table behavior and an
+explicit comparison-limit note. Current details are rendered with the bundled
+presentation from the verified document, not arbitrary configured templates.
+
+The new output directory contains only `dashboard.html` and `provenance.json`,
+with input-index, selected report and HTML hashes, query, selections, and the latest
+original Core status. Existing output directories are never replaced. History
+sections are bounded to 4 MiB and the combined document to 6 MiB; filter and archive
+bounds also apply. Rendering success is not a project PASS. It performs no
+collection, network request, baseline adoption or history update. Engineering
+Policy, required gates, debt and ratchet semantics remain unchanged.
+
 ### Hot spot lists
 
 The bundled offline report adds the highest supplied CRAP and lowest supplied line

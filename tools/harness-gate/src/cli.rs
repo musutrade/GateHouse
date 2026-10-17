@@ -43,6 +43,17 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
+    /// Combine latest report hot spots, selected trends and observed commit changes, offline.
+    ReportDashboard {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[command(flatten)]
+        selection: crate::report_history::SelectionFilter,
+        #[command(flatten)]
+        query: crate::report_history::Query,
+    },
     /// Render one metric's history from explicitly pinned completed reports, offline.
     ReportHistory {
         #[arg(long)]

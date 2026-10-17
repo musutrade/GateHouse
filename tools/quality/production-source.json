@@ -29,7 +29,9 @@
         "src/report_history/publication.rs",
         "src/report_history/render.rs",
         "src/report_history/archive.rs",
-        "src/report_history/archive/filesystem.rs"
+        "src/report_history/archive/filesystem.rs",
+        "src/report_history/dashboard.rs",
+        "src/report_history/dashboard/impact.rs"
       ]
     },
     "audit": {

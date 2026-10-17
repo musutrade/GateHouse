@@ -17,9 +17,14 @@ pub(crate) fn run() -> Result<bool, CliError> {
     run_cli(Cli::parse())
 }
 
-pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
-    crate::ui::configure(cli.color);
-    match &cli.command {
+fn run_report(command: &Commands) -> Result<bool, CliError> {
+    match command {
+        Commands::ReportDashboard {
+            input,
+            output,
+            selection,
+            query,
+        } => crate::report_history::dashboard(input, output, selection, query).map_err(Into::into),
         Commands::ReportExport {
             input,
             output,
@@ -35,6 +40,16 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
         } => crate::report_history::run_query(input, output, policy, subject, metric, query)
             .map_err(Into::into),
 
+        _ => unreachable!("only report commands are dispatched here"),
+    }
+}
+
+pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
+    crate::ui::configure(cli.color);
+    match &cli.command {
+        Commands::ReportDashboard { .. }
+        | Commands::ReportHistory { .. }
+        | Commands::ReportExport { .. } => run_report(&cli.command),
         Commands::Explain {
             code, search, json, ..
         } => match code {

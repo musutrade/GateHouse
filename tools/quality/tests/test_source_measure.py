@@ -390,6 +390,19 @@ fn both() {
         transformed, _ = instrument(source.read_text(encoding="utf-8"), {'symbols': symbols})
         self.assertEqual(len(self.inventory(transformed)['symbols']), len(symbols))
 
+    def test_dashboard_source_certification(self):
+        inventory = json.loads((ROOT / 'tools/quality/production-source.json').read_text(encoding="utf-8"))
+        declared = {path for boundary in inventory['boundaries'].values() for path in boundary['files']}
+        for path in ('report_history/dashboard.rs', 'report_history/dashboard/impact.rs'):
+            with self.subTest(path=path):
+                self.assertIn(path, SOURCE_FILES)
+                self.assertIn('src/' + path, declared)
+                source = ROOT / 'tools/harness-gate/src' / path
+                symbols = ast(source, self.binary)['symbols']
+                self.assertTrue(any(not symbol['test'] for symbol in symbols))
+                transformed, _ = instrument(source.read_text(encoding="utf-8"), {'symbols': symbols})
+                self.assertEqual(len(self.inventory(transformed)['symbols']), len(symbols))
+
     def test_verify_reporting_source_certification(self):
         crate = ROOT / 'tools/harness-gate'
         for path in ('verify/mod.rs', 'verify/quality.rs', 'verify/report.rs', 'failure.rs', 'config/import.rs'):

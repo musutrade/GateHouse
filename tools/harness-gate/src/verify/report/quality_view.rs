@@ -106,12 +106,43 @@ fn row(gate: &Value, index: usize) -> Row<'_> {
         debt: None,
     }
 }
+struct Data<'a> {
+    status: &'a str,
+    project_report: &'a Value,
+    inputs: &'a Value,
+    evidence: &'a Value,
+}
 #[cfg(test)]
 pub(super) fn project(quality: &QualityResult) -> View<'_> {
     project_with_sources(quality, None)
 }
 pub(super) fn project_with_sources<'a>(
     quality: &'a QualityResult,
+    sources: Option<crate::source_links::Links<'_>>,
+) -> View<'a> {
+    project_data(
+        Data {
+            status: quality.status,
+            project_report: &quality.project_report,
+            inputs: &quality.inputs,
+            evidence: &quality.evidence,
+        },
+        sources,
+    )
+}
+pub(super) fn project_document(quality: &Value) -> View<'_> {
+    project_data(
+        Data {
+            status: quality["status"].as_str().unwrap_or("not_collected"),
+            project_report: &quality["project_report"],
+            inputs: &quality["inputs"],
+            evidence: &quality["evidence"],
+        },
+        None,
+    )
+}
+fn project_data<'a>(
+    quality: Data<'a>,
     mut sources: Option<crate::source_links::Links<'_>>,
 ) -> View<'a> {
     let mut groups: BTreeMap<(String, String), Vec<Row<'_>>> = BTreeMap::new();
@@ -120,7 +151,7 @@ pub(super) fn project_with_sources<'a>(
     let mut hotspots = hotspots::Builder::default();
     let mut distributions = distribution::Builder::default();
     let mut debts = debt::Builder::default();
-    let index = report_evidence::Index::new(&quality.inputs["project"], &quality.evidence);
+    let index = report_evidence::Index::new(&quality.inputs["project"], quality.evidence);
     if let Some(gates) = quality.project_report["gates"].as_object() {
         for (position, (gate_id, gate)) in gates.iter().enumerate() {
             let component = text(&gate["record"]["component"]);
@@ -152,7 +183,7 @@ pub(super) fn project_with_sources<'a>(
             {
                 row.range = rankings.push(gate_id, gate, &row.anchor, &index);
             }
-            if let Some((covered, total)) = visual(quality, gate, &index) {
+            if let Some((covered, total)) = visual(&quality, gate, &index) {
                 let cell = Cell {
                     anchor: row.anchor.clone(),
                     label: format!("{}: {}", path, row.name),
@@ -210,7 +241,7 @@ fn display_identity(gate: &Value) -> bool {
             })
 }
 fn visual(
-    quality: &QualityResult,
+    quality: &Data<'_>,
     gate: &Value,
     index: &report_evidence::Index<'_>,
 ) -> Option<(u64, u64)> {

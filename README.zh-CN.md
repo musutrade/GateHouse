@@ -877,3 +877,31 @@ Engineering Policy 和 required gates 不变。
 限制成对比较成本；覆盖率沿用原图的非零分母及安全整数范围。超限值仍在详情和单独有界的
 CRAP 分布中展示。空组/全部不可用组及无 JavaScript 场景仍可读。
 Core 结果、requiredness、baseline 与 ratchet/debt 语义不变。
+
+### 综合离线看板
+
+`report-dashboard` 复用已验证的 v1/v2 历史索引，把最新选中报告的概览/热点、最多 12 组
+policy/subject/metric 趋势、相邻选中提交的观测变化放到一个离线页面。全部索引项都验证，
+包括时间窗口外的数据。没有时间参数时选最近 30 个已索引提交；时间、去重与不可比断线
+规则沿用 `report-history`，不声称覆盖完整 Git 历史或证明祖先关系。
+
+```bash
+harness-gate report-dashboard --input archive/index.json --output dashboard \
+  --subject SUBJECT_ID --metric coverage.line --metric risk.crap \
+  --last-days 30 --last-commits 30
+```
+
+本地打开 `dashboard/dashboard.html`，展开各系列查看图、精确表与 Core 债务注解；无
+JavaScript 也可操作原生展开项，当前报告的搜索过滤仅作用于当前行。policy/subject/metric
+按精确 ID 匹配，可重复指定：同字段取并集、不同字段取交集。不指定则纳入所选报告中支持的
+观测，包括最新报告中已缺失的 subject；超过 12 组明确要求缩小过滤，不静默截断。
+支持 coverage.line、coverage.region、complexity.cyclomatic、risk.crap；ID 可从报告详情复制。
+
+相邻观测身份完全兼容且可用时，精确比较数值增/减/相同；不是新的门禁判定、债务差额或
+提交因果归因。缺失、身份变化和不可用样本保持不可比较。成对比较字段最多 128 字符，
+超限保留原图/表与明确说明。当前详情使用已验证文档和内置模板，不执行自定义模板。
+
+输出新目录只含 dashboard.html 与 provenance.json，绑定索引、选中报告、HTML 摘要、
+查询条件、选择项及原始最新 Core 状态；不覆盖已有目录。历史部分最多 4 MiB，整页最多
+6 MiB。生成成功不等于项目 PASS；不采集、不联网、不更新历史，不采用 baseline 或重算
+Core debt/ratchet，Engineering Policy 与 required gates 保持不变。
