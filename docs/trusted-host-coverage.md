@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has fourteen files:
-the importer, Core builder, preservation, volume and source-staging libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has fifteen files:
+the importer, Core builder, preservation, volume, source-staging and release-contract libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -795,6 +795,53 @@ staging does not bless stale input. Live Root staging, complete package/installa
 recovery, full workload/resource/cache/native coverage and App/rule/merge acceptance
 remain pending. The accepted 659 installation and normal 25-file pilot package
 remain unchanged.
+
+### Candidate bootstrap source release
+
+`package-bootstrap-release.py` exports a separate source-input archive from a clean
+committed revision. It neither takes an operator Core build record nor executes or
+includes an operator Core binary. The independently reviewed Core crate tree is
+required; a future administrator transaction must build/capture that Core under
+UID995 and check its policy before installation. Existing normal pilot packaging
+and its 25-file inventory are unchanged.
+
+The new archive has 64 exact regular members: fifteen authenticated helpers,
+twenty-two proposed installed-file source inputs, twenty-three fixed-659 source
+references, and four metadata/bundle members. The accepted 659 installer had
+thirteen controller modules and twenty-four flat release members; its old source
+reference aggregate is independently pinned. The candidate controller has fourteen
+modules. Source references include the old installer/upgrader but no Core binary
+or private App keys. The pilot mount and sudo delegation templates are explicitly
+retained byte-for-byte. Other proposed destinations, modes and before/after hashes
+come from a fixed source map, not archive-supplied paths.
+
+`bootstrap-release.py` is the fifteenth authenticated helper. Administrator-only
+`inspect-release` verifies the external archive pin before parsing bounded plain
+USTAR headers, without filesystem extraction or project execution. Links, sparse
+or extension headers, unknown/duplicate/missing members, noncanonical metadata,
+padding/trailing data, scope/provenance changes and changed old/helper digests are
+rejected. Bounds are a 160 MiB archive, 128 MiB source bundle and 1 MiB per other
+member. Complete payload digests and the exact installed-file plan must match.
+
+Inspection remains input validation. Before any installation, the future upgrader
+must supply the external authenticated helper-manifest pin and independently bind
+every proposed new file and helper byte to the protected staged Git revision.
+Rehashing an operator payload cannot satisfy that Git binding. The archive records
+the required preservation/build/capture/reverification-before-revoke/retire order;
+the executable transaction/recovery implementation remains separate work. Its
+policy is explicitly a pilot-only template, with external archive/data/host-recipe
+inputs still required, remote-base and captured-Core policy checks pending,
+`administrator_ready=false` and production disabled.
+
+Fifteen new release-contract regressions bring the focused suite to 264 tests.
+Parser/plan tests use an explicit small synthetic old-source fixture; the fixed
+production old-source digest is not weakened. Root ownership/authentication is
+replaced only for ordinary inspection fixtures. Actual parsing, hashes, file types,
+metadata and source-binding rejection execute. These checks do not constitute a
+live Root upgrade or completed project verification. The accepted 659 deployment,
+Apps, repository rules and services remain untouched; full guarded package/host
+preflight, transition policy, installation/recovery and broader acceptance are
+still required before any administrator offer or issue closure.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
