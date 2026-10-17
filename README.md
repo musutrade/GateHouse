@@ -1002,6 +1002,10 @@ exact typed metric values and reported states. Count and ratio metrics have an S
 history chart; zero totals, unsupported types or precision, unavailable quality,
 and missing selected metrics remain explicit gaps. Plot positions use index order,
 not elapsed time. No new verification status, threshold or quality score is computed.
+Charts mark unplotted samples with shaded columns and × symbols below the sample
+numbers. An adjacent notice lists each affected sample and its reason without
+requiring hover or JavaScript; these markers do not represent zero values. This
+also applies to CRAP history and the integrated dashboard.
 
 Comparison is deliberately strict: points must match the first plotted sample's
 project path, profile, input mode, flow configuration digest, complete quality
