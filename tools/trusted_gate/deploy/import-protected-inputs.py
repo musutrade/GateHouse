@@ -20,7 +20,8 @@ FILES = {ENTRY, 'tools/maintenance/restore_evidence.py', *(
     'tools/trusted_gate/deploy/' + name for name in (
         'prepare-official-tools.py', 'acquire-linux-tools.py', 'verify-locked-crates.py',
         'stage-linux-inputs.py', 'run-linux-test.py', 'prepare-linux-workspace.py',
-        'prepare-locked-directory.py', 'linux-tools.lock.json', 'build-protected-core.py'))}
+        'prepare-locked-directory.py', 'linux-tools.lock.json', 'build-protected-core.py',
+        'preserve-pilot-state.py'))}
 ENV = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'GIT_CONFIG_NOSYSTEM': '1',
        'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_TERMINAL_PROMPT': '0', 'GIT_OPTIONAL_LOCKS': '0'}
 
@@ -322,6 +323,25 @@ def import_inputs(root, manifest, manifest_pin, source, head, base, tool_archive
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    if sys.argv[1:2] == ['preserve-pilot']:
+        for name in ('helper-root', 'manifest', 'destination'):
+            parser.add_argument('--' + name, type=Path, required=True)
+        parser.add_argument('--manifest-sha256', required=True)
+        args = parser.parse_args(sys.argv[2:])
+        try:
+            authenticate(args.helper_root, args.manifest, args.manifest_sha256)
+            retention = load(args.helper_root, 'preserve-pilot-state.py')
+            context = SimpleNamespace(**{name: globals()[name] for name in (
+                'need', 'owned', 'path_operand', 'read', 'write', 'record', 'canonical', 'unique',
+                'git', 'frozen_lock', 'load', 'authenticate', 'readonly', 'ENV')})
+            result = retention.preserve(context, args.helper_root, args.manifest, args.manifest_sha256,
+                                        args.destination)
+        except Exception as error:
+            parser.exit(1, 'pilot preservation blocked (' + type(error).__name__ + '); retain private state\n')
+        summary = {key: result[key] for key in ('schema', 'state', 'head', 'run', 'production_gate_enabled')}
+        summary['manifest_sha256'] = hashlib.sha256(canonical(result)).hexdigest()
+        print(json.dumps(summary, sort_keys=True))
+        return
     if sys.argv[1:2] == ['build-core']:
         for name in ('helper-root', 'manifest', 'source', 'inputs', 'host-recipe', 'destination'):
             parser.add_argument('--' + name, type=Path, required=True)

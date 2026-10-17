@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has eleven files:
-the importer and Core builder, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has twelve files:
+the importer, Core builder and preservation library, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -601,7 +601,7 @@ unchanged.
 ### Candidate isolated Core bootstrap
 
 The authenticated importer now offers a separate `build-core` action and includes
-`build-protected-core.py` in its eleven-file helper closure. Import completion
+`build-protected-core.py` in its authenticated helper closure. Import completion
 also seals the tool and dependency inventory digests in the binding/control
 records. The builder requires these pins, matching retained source/head/base,
 the reviewed tool lock and a complete import record. Before and after a build it
@@ -661,6 +661,54 @@ or full Linux Test acceptance. Wrapper RSS is not a cgroup memory measurement an
 does not certify the candidate memory limit. The later fixed-659 slot/unit guards
 are covered separately by lifecycle regressions; the measured compile recipe is
 unchanged. Sixteen new bootstrap regressions bring the focused suite to 196 tests.
+
+### Candidate fixed-659 preservation
+
+The authenticated importer offers an administrator-only `preserve-pilot` action;
+`preserve-pilot-state.py` is the twelfth helper resource. This candidate retains
+private state without revoking a run, retiring source, changing installed code or
+issuing a quality verdict. It requires the fixed accepted 659 head/run/release,
+matching acceptance/configuration/marker, the sole idle pending publication slot,
+unchanged policy and frozen source/bundle, stopped trusted units and no UID995
+processes. It holds the existing controller lease and can retain a caller's
+already-held descriptor. The output must be fresh, private and separate from the
+old pilot volume and protected helper/configuration inputs.
+
+The journal uses SQLite's backup API from a read transaction, including committed
+WAL pages. Integrity, schema, complete ordered runs/events and their digests must
+match the retained database; copying `journal.sqlite3` alone is insufficient. Only
+the backup is normalized to DELETE journal mode, so reopening the retained
+database requires no WAL/SHM sidecars; the original WAL remains untouched.
+The candidate copies the complete source, repository and control trees, preserving
+raw invocation reports, Git objects/worktree metadata, original bundle/freeze,
+configuration, acceptance, marker, per-run records and validation logs. The live
+journal sidecars and controller lock are excluded from that tree copy: the logical
+database is retained separately and no active lock file becomes a restoration
+instruction. File/directory modes are recorded, while retained files are private
+and readonly. Source/configuration/database identity and all copied bytes are
+checked again before completion.
+
+Raw failed reports are retained even when the journal has no registered evidence.
+Preservation does not reinterpret those reports as PASS. Partial output, unknown
+schema/state, links, nonregular files, content drift or failed checks leave a
+blocked record and never reuse the destination. Bounds are 64 MiB per journal
+physical/logical snapshot, 50,000 rows per table, 256 MiB per raw file, 1 GiB total
+raw-tree bytes, 30,000 tree entries and a 16 MiB final manifest. The future upgrader
+must pin this private manifest outside the backup and call the retained-state
+verifier before any destructive transition. Unknown or changed retained state
+does not authorize retirement.
+
+Seventeen new regressions bring the focused suite to 213 tests. Ordinary-user
+fixtures replace Root ownership/authentication and unit probes; actual SQLite,
+WAL transactions, linked Git worktrees, backup copies and digests are exercised.
+An independent clone from retained Git objects recovers the fixture commit after
+the original source and mirror become unavailable. The fixture uses
+`--no-hardlinks` when preparing its mirror so it meets the unchanged protected Git
+input rules. These are candidate retention/restore checks, not a live Root backup
+or the complete fixed-659 upgrade acceptance. A reviewed bounded destination,
+actual host backup/restore, replacement Core capture before revoke/retire, guarded
+installation/recovery and full verification acceptance remain pending. Existing
+659 files, stages, volume, source, journal and services remain untouched.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
