@@ -39,6 +39,12 @@ from gatehouse_trusted_gate.publication import deliver
 PILOT_SPEC = importlib.util.spec_from_file_location('pilot_installer', ROOT / 'tools/trusted_gate/deploy/install-pilot.py')
 PILOT = importlib.util.module_from_spec(PILOT_SPEC)
 PILOT_SPEC.loader.exec_module(PILOT)
+PROBE_SPEC = importlib.util.spec_from_file_location('pilot_probe', ROOT / 'tools/trusted_gate/deploy/pilot-probe.py')
+PROBE = importlib.util.module_from_spec(PROBE_SPEC)
+PROBE_SPEC.loader.exec_module(PROBE)
+UPGRADE_SPEC = importlib.util.spec_from_file_location('pilot_upgrade', ROOT / 'tools/trusted_gate/deploy/upgrade-history-pilot.py')
+UPGRADE = importlib.util.module_from_spec(UPGRADE_SPEC)
+UPGRADE_SPEC.loader.exec_module(UPGRADE)
 
 
 class PilotReleaseTests(unittest.TestCase):
@@ -100,6 +106,98 @@ class PilotReleaseTests(unittest.TestCase):
             capture_output=True, text=True, check=False)
         self.assertEqual(result.returncode, 1)
         self.assertIn('administrator authentication required', json.loads(result.stderr)['reason'])
+
+
+class PilotUpgradeTests(unittest.TestCase):
+    def payloads(self):
+        before = {name: b'unchanged' for name in PILOT.FILES if name != 'trusted_gate/history.py'}
+        after = {**before, 'trusted_gate/history.py': b'new history'}
+        old = {'head': UPGRADE.OLD_HEAD, 'coverage_acceptance': 'transition'}
+        new = {'head': 'a' * 40, 'base_at_packaging': 'b' * 40,
+               'coverage_acceptance': 'transition', 'worker_git_history_probe': True}
+        return before, after, old, new
+
+    def test_exact_transition_upgrade_only_allows_reviewed_files(self):
+        before, after, old, new = self.payloads()
+        after['trusted_gate/isolation.py'] = b'reviewed isolation'
+        files = UPGRADE.plan(before, after, old, new)
+        self.assertEqual(files['/opt/gatehouse/trusted_gate/history.py']['before'], None)
+        self.assertEqual(files['/opt/gatehouse/bin/pilot-probe.py']['mode'], 0o755)
+        for name in ('bin/harness-gate', 'sudoers', 'policy/flow.toml', 'srv-gatehouse-pilot.mount'):
+            modified = {**after, name: b'changed unrelated protection'}
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'unreviewed'):
+                UPGRADE.plan(before, modified, old, new)
+
+    def test_unknown_release_inventory_or_missing_live_probe_is_rejected(self):
+        before, after, old, new = self.payloads()
+        for before_meta, after_meta, files in (({**old, 'head': 'c' * 40}, new, after),
+                (old, {**new, 'coverage_acceptance': 'complete'}, after),
+                (old, {**new, 'worker_git_history_probe': False}, after),
+                (old, new, {**after, 'keys/private-key.pem': b'forbidden'})):
+            with self.assertRaises(ValueError):
+                UPGRADE.plan(before, files, before_meta, after_meta)
+
+    def test_expected_configuration_preserves_unrelated_permissions_and_inputs(self):
+        before, after, old, new = self.payloads()
+        files = UPGRADE.plan(before, after, old, new)
+        config = {'app_id': 123, 'delivery': {'app_id': 456}, 'coverage_acceptance': 'transition',
+                  'environment': {'source_revision': old['head'], 'release_sha256': 'old'},
+                  'protected_files': {'/opt/gatehouse/trusted_gate/isolation.py': 'old'},
+                  'steps': {'pilot-boundary': {'argv': ['old'], 'timeout_seconds': 120}}}
+        changed = UPGRADE.expected_config(config, files, new, 'new-digest')
+        self.assertEqual(changed['app_id'], config['app_id'])
+        self.assertEqual(changed['delivery'], config['delivery'])
+        self.assertEqual(changed['coverage_acceptance'], 'transition')
+        self.assertEqual(changed['steps']['pilot-boundary']['argv'][-2:], [new['head'], new['base_at_packaging']])
+        self.assertTrue(changed['steps']['pilot-boundary']['git_history'])
+        self.assertNotIn('git_history', config['steps']['pilot-boundary'])
+
+    def test_atomic_file_replacement_failure_retains_original_bytes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            file = Path(directory) / 'host.json'
+            file.write_bytes(b'original')
+            with patch.object(UPGRADE, 'owned', side_effect=lambda p, private=False: Path(p)), \
+                 patch.object(UPGRADE.os, 'replace', side_effect=PermissionError('fixture failure')):
+                with self.assertRaises(PermissionError):
+                    UPGRADE.replace(file, b'new', 0o600)
+            self.assertEqual(file.read_bytes(), b'original')
+            self.assertEqual([p.name for p in Path(directory).iterdir()], ['host.json'])
+
+    def test_partial_retained_publication_cannot_authorize_source_removal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            backup = root / 'backup'
+            backup.mkdir()
+            run_id = str(uuid.uuid4())
+            publication = root / run_id / 'publication'
+            publication.mkdir(parents=True)
+            evidence = {}
+            for name, key in (('test_result.json', 'machine_sha256'), ('manifest.json', 'manifest_sha256'),
+                              ('artifact-registry.json', 'registry_sha256')):
+                (publication / name).write_bytes(b'canonical')
+                evidence[key] = digest(b'canonical')
+            artifact = publication / 'required.log'
+            artifact.write_bytes(b'retained measured evidence')
+            journal = Journal(root / 'journal.db')
+            self.addCleanup(journal.close)
+            journal.event(run_id, 'retired', {})
+            run = {'id': run_id, 'remote': 'revoked', 'evidence': evidence}
+            with patch.object(UPGRADE, 'owned', side_effect=lambda p, private=False: Path(p)):
+                expected = UPGRADE.publication_inventory(publication)
+                (backup / 'publication-inventory.json').write_text(json.dumps(expected))
+                UPGRADE.retained(journal, run, root, backup)
+                artifact.unlink()
+                with self.assertRaisesRegex(ValueError, 'incomplete or changed'):
+                    UPGRADE.retained(journal, run, root, backup)
+
+    @unittest.skipIf(os.geteuid() == 0, 'requires an actual non-root caller')
+    def test_upgrade_cannot_elevate_nonroot_or_touch_missing_inputs(self):
+        result = subprocess.run([sys.executable, '-I', str(ROOT / 'tools/trusted_gate/deploy/upgrade-history-pilot.py'),
+            '--release', '/nonexistent/archive', '--sha256', '0' * 64, '--installer-sha256', '0' * 64],
+            capture_output=True, text=True, check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('administrator authentication required', json.loads(result.stderr)['reason'])
+        self.assertEqual(result.stdout, '')
 
 
 class Executor:
@@ -686,6 +784,25 @@ class WorkerHistoryTests(unittest.TestCase):
                 stream.write('\n[credential]\n helper = unsafe\n')
             with self.assertRaisesRegex(Blocked, 'retained worker Git view changed'):
                 prepare_history(config, run)
+
+    def test_live_probe_reads_exact_history_and_preserves_fixture_discovery(self):
+        config, run = self.fixture()
+        with patch('gatehouse_trusted_gate.history.protected', side_effect=lambda p, **kw: Path(p)):
+            view = prepare_history(config, run)
+        source = Path(config['source'])
+        (source / '.git').rename(source / '.hidden-controller-git')
+        (source / '.git').write_text('gitdir: ' + str(view) + '\n')
+        with patch.dict(os.environ, clean_environment(), clear=True):
+            report = PROBE.history_probe(run['head'], run['input']['base'], source, view)
+            self.assertTrue(report['clean'])
+            self.assertTrue(report['nested_fixture_identity'])
+            self.assertGreater(report['archive_bytes'], 0)
+            self.assertEqual(report['head'], run['head'])
+            with self.assertRaisesRegex(ValueError, 'refs differ'):
+                PROBE.history_probe('a' * 40, run['input']['base'], source, view)
+            with patch.dict(os.environ, {'GIT_DIR': str(view)}):
+                with self.assertRaisesRegex(ValueError, 'global Git retargeting'):
+                    PROBE.history_probe(run['head'], run['input']['base'], source, view)
 
     def test_dirty_source_and_interrupted_export_are_retained_and_blocked(self):
         config, run = self.fixture()

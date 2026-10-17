@@ -190,7 +190,8 @@ def setup(payload, meta, digest):
         command(['/usr/bin/git', '-c', 'core.hooksPath=/dev/null', 'init', '--bare', str(mirror)], capture=True)
     owned(mirror, private=True)
     steps = {
-        'pilot-boundary': ['/usr/bin/python3.14', '-I', '/opt/gatehouse/bin/pilot-probe.py', 'executor'],
+        'pilot-boundary': ['/usr/bin/python3.14', '-I', '/opt/gatehouse/bin/pilot-probe.py',
+                           'executor-history', meta['head'], meta['base_at_packaging']],
         'pilot-host-contracts': ['/usr/bin/python3.14', '-B', '-m', 'unittest', 'discover', '-s',
                                  '/work/source/tools/quality/tests', '-p', 'test_trusted_gate.py', '-q']}
     dimensions = dict(repository='musutrade/GateHouse', platform='linux', architecture=os.uname().machine,
@@ -218,6 +219,7 @@ def setup(payload, meta, digest):
     pins = [*Path('/opt/gatehouse/trusted_gate').glob('*.py'), *Path('/opt/gatehouse/bin').iterdir(),
             *Path('/etc/gatehouse/policy').iterdir(), Path('/usr/bin/python3.14'), Path('/usr/bin/git')]
     config['protected_files'] = {str(path): hashlib.sha256(owned(path).read_bytes()).hexdigest() for path in pins}
+    config['steps']['pilot-boundary']['git_history'] = True
     install('/etc/gatehouse/host.json', json.dumps(config, sort_keys=True, indent=2).encode() + b'\n', 0o600)
     # Syntax is checked before installing the single narrowly delegated entry.
     candidate = Path('/etc/gatehouse/pilot.sudoers')
@@ -262,6 +264,9 @@ def accept(config, meta, digest):
     run = json.loads(validate.stdout)
     need(run['local'] == 'passed' and run['head'] == meta['head'], 'no accepted protected pilot execution')
     report['run'] = run['id']
+    need(config['steps']['pilot-boundary'].get('git_history') is True,
+         'history pilot did not select the protected Git view')
+    report['worker_git_history'] = 'passed within the protected Core boundary step'
     rejected = subprocess.run(['/usr/sbin/runuser', '-u', 'gatehouse-developer', '--', '/usr/bin/sudo', '-n',
         '/opt/gatehouse/bin/gatehouse-control', 'publish', run['id']], env=SAFE_ENV, capture_output=True, timeout=30)
     need(rejected.returncode != 0 and b'coverage migration is not accepted' in rejected.stderr,

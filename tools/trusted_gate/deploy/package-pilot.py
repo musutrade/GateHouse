@@ -58,7 +58,7 @@ def main():
     payload['source.bundle'] = bundle.read_bytes()
     payload['metadata.json'] = json.dumps({'repository': 'musutrade/GateHouse', 'head': revision,
         'base_at_packaging': base, 'coverage_acceptance': 'transition', 'core_profile': 'release',
-        'release_incremental': False, 'core_build': build}, sort_keys=True, indent=2).encode() + b'\n'
+        'release_incremental': False, 'core_build': build, 'worker_git_history_probe': True}, sort_keys=True, indent=2).encode() + b'\n'
     # Parseable TOML is not enough: the packaged policy must be accepted by the
     # exact Core release that will execute it. This runs before release.tar exists.
     with tempfile.TemporaryDirectory() as temporary:
@@ -82,9 +82,14 @@ def main():
     install_path = args.output / 'install-pilot.py'
     install_path.write_bytes(committed('tools/trusted_gate/deploy/install-pilot.py'))
     install_path.chmod(0o600)
+    upgrade_path = args.output / 'upgrade-history-pilot.py'
+    upgrade_path.write_bytes(committed('tools/trusted_gate/deploy/upgrade-history-pilot.py'))
+    upgrade_path.chmod(0o600)
     bundle.unlink()  # The bounded immutable archive already contains this data.
     result = {'head': revision, 'archive': str(archive_path), 'sha256': digest,
               'installer': str(install_path), 'installer_sha256': hashlib.sha256(install_path.read_bytes()).hexdigest(),
+              'upgrader': str(upgrade_path), 'upgrader_sha256': hashlib.sha256(upgrade_path.read_bytes()).hexdigest(),
+              'administrator_ready': False,
               'scope': 'reviewable isolation pilot only; administrator execution required'}
     (args.output / 'release.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result, indent=2))

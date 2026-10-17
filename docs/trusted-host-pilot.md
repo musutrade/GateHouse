@@ -60,6 +60,55 @@ already exists or its state is uncertain, reconcile it explicitly instead of
 rerunning verification. Source preparation transport errors return a bounded
 blocked result; transport output and credentials are not included in it.
 
+## Upgrade the accepted fa18 pilot to the worker-history probe
+
+The history candidate cannot be installed over an existing pilot with the normal
+installer: differing protected files and a different release marker remain
+blocked. The separate [upgrade-history-pilot.py](../tools/trusted_gate/deploy/upgrade-history-pilot.py)
+entry supports only the accepted `fa18d094` transition release and its exact
+archive/installer digests. The local packager supplies this entry beside the new
+installer/archive, with all three review digests. Packaging still marks
+`administrator_ready=false` until the exact-head candidate and deployment review
+are complete. Do not execute a preflight archive as an upgrade.
+
+After verifying and staging the reviewed files under a private root directory,
+the administrator invokes the upgrade entry with the archive SHA-256 and the
+separate installer SHA-256. Retain the original root staging directory
+`/root/gatehouse-issue98-pilot-fa18d09`: it provides the verified old archive and
+installer used by this one-time migration. No keys are included in either archive.
+
+The entry holds the existing controller lock, checks restricted accounts/processes,
+proves Core/worker units stopped with empty cgroups, verifies the old policy and
+toolchain pins, and independently checks the repository/current base. It refuses
+an attached/published pilot or another active candidate. It preserves the old
+configuration, acceptance, volume marker and input bundle under
+`/srv/gatehouse/pilot/control/history-upgrade-<new-release-digest>/`.
+
+Before revoking or removing the old source, it copies and compares the complete
+canonical publication and records its full file inventory. A partial prior copy
+blocks removal. It then revokes the exact old transition run through the existing
+controller, retires its source and retains the publication beneath that old run.
+The previous negative Check and validation logs remain. Only the reviewed
+history/source/isolation/probe file changes are allowed; Core/policy bytes,
+credentials, App settings, required rules, volume UUID and existing mirror proxy
+are preserved. New pins/metadata and the single `git_history` probe selection are
+checked against an explicit expected configuration before it replaces the old one.
+
+The protected upgrade intent records `prepared`, `retired` and `installed`
+checkpoints. Repeating the same reviewed upgrade can resume known checkpoints;
+unknown files, identity changes, partial evidence, a changed base or an unknown
+invocation remain blocked with their recovery records. An already failed/running
+new invocation requires explicit reconciliation. No retry implicitly reruns Core.
+
+After releasing the installation lock, the new candidate enters through the same
+developer public launcher. Its actual worker probe verifies the sanitized `.git`
+pointer, read-only history/source, exact head/base refs, clean status, differences,
+archive reads, fresh configuration and separate temporary fixture repository
+identity. Existing key/control/socket/network denials still apply. The complete
+pilot publication is checked by Core and retained; the separate negative App Check
+still completes with failure and authoritative publication stays blocked. This
+accepts an isolation/history prerequisite, not complete project/native coverage.
+
 ## Exact host changes
 
 - Install the reviewed Python package, public launcher, access probe and Core
