@@ -144,7 +144,10 @@ class WorkerCaptureTests(unittest.TestCase):
                 CAPTURE.launch(config, journal, 'run-id', 'blocked-test')
             capturing.assert_not_called()
             self.assertEqual(output.getvalue(), '')
-        record = json.loads(next((self.root / 'records/run-id/cache').glob('*.json')).read_text())
+        # The blocked launch also writes its initial per-step record; select the
+        # linux-test receipt instead of depending on filesystem glob order.
+        record = json.loads((self.root / 'records/run-id/cache' /
+                             (digest('linux-test'.encode()) + '.json')).read_text())
         self.assertEqual(record['captured_files']['job/report.json']['size_bytes'], 1)
 
 
