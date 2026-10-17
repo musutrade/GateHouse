@@ -12,6 +12,7 @@ from .execution import git
 
 def inventory(directory):
     files = {}
+    total = 0
     for root, directories, names in os.walk(directory):
         protected(root, directory=True)
         for name in directories:
@@ -21,10 +22,11 @@ def inventory(directory):
             info = path.stat()
             require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1,
                     'worker Git view contains a linked or special file')
+            total += info.st_size
+            require(len(files) < 20000 and total <= 256 * 1024 * 1024,
+                    'worker Git history exceeds its input budget')
             value = read_regular(path, 128 * 1024 * 1024)
             files[str(path.relative_to(directory))] = {'bytes': len(value), 'sha256': digest(value)}
-    require(sum(item['bytes'] for item in files.values()) <= 256 * 1024 * 1024,
-            'worker Git history exceeds its input budget')
     return files
 
 
@@ -53,7 +55,7 @@ def prepare(config, run):
     # Explicit empty template and fresh config: no hooks, remotes, proxy, tokens,
     # credential helper, includes, alternates or Agent Git configuration are copied.
     git(owner, 'init', '--bare', '--template=', str(directory))
-    git(directory, '-c', 'protocol.file.allow=always', 'fetch', '--no-tags',
+    git(directory, '-c', 'protocol.file.allow=always', 'fetch', '--no-tags', '--no-auto-maintenance',
         str(source), head, base)
     git(directory, 'update-ref', 'refs/heads/candidate', head)
     git(directory, 'update-ref', 'refs/gatehouse/base', base)
