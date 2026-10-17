@@ -16,7 +16,7 @@ from .cache import Cache, dimensions
 from .common import atomic_json, canonical, checked, digest, protected, read_regular, require, sha
 from .execution import clean_environment, confirm_units_stopped
 from .history import prepare as prepare_history
-from .runtime import settings as runtime_settings, verify as verify_runtime
+from .runtime import LINUX_MOUNTS, settings as runtime_settings, verify as verify_runtime
 
 
 def capture_names(step):
@@ -148,6 +148,9 @@ def sandbox_arguments(config, run, step_id, scratch, cache, history=None):
         properties['BindReadOnlyPaths'] += ' ' + config['runtime']['root'] + ':/opt/gatehouse/toolchain'
     if 'cargo_config' in config:
         properties['BindReadOnlyPaths'] += ' ' + config['cargo_config'] + ':/work/output/cargo-home/config.toml'
+    if 'linux_inputs' in config:
+        for role, target in LINUX_MOUNTS.items():
+            properties['BindReadOnlyPaths'] += ' ' + config['linux_inputs'][role] + ':' + target
     if history:
         properties['BindReadOnlyPaths'] += ' ' + str(history) + ':/work/history'
         properties['BindReadOnlyPaths'] += ' ' + str(Path(history).with_name('git-pointer')) + ':/work/source/.git'

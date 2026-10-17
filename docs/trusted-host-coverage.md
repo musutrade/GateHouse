@@ -943,6 +943,52 @@ bindings, complete configuration, captured-Core checks, ingress/storage,
 transaction/startup/recovery and the remaining coverage still precede any
 administrator offer or issue closure.
 
+### Candidate readonly Linux input bindings
+
+The controller now accepts an optional complete `linux_inputs` binding for
+directory dependency sources, test-data archives and onboarding source, plus an
+externally pinned inventory outside all three trees. It requires the existing
+runtime and Cargo configuration bindings. Each role has one fixed readonly
+worker destination from the transition policy; no inventory or broader host
+directory is mounted into the worker. Missing roles, unpinned metadata, unsafe
+mount operands and overlaps between inputs, source, scratch, inbox, cache,
+control, mirror, policy or signing-key domains block execution. Existing pilots
+without the new binding retain their previous behavior.
+
+Before worker launch and during policy verification, the controller checks the
+Root ownership and protected parents, exact readonly file/directory inventory,
+streamed hashes, modes, link counts and complete tree. The three roles share
+the existing separate input budgets: 512 MiB per file, 6 GiB total, 150,000 files
+and 64 MiB metadata. Generic controller readers and runtime mount operands are
+unchanged. Relative crate fixture names may contain spaces and punctuation as
+data; absolute paths, normalization/parent escapes, backslashes and control
+characters remain rejected. They are never shell or systemd operands.
+
+Dependency package names, archive checksums and Cargo directory checksum files
+must agree with the frozen source lock and protected role inventory. The exact
+compressed test-data bytes must match the frozen manifest. Onboarding must match
+the independently reviewed source digest. Cargo configuration must select only
+the fixed offline directory replacement. Inventory, manifest and source-lock
+facts are read again before completion. These checks consume separately reviewed
+Root inventory pins; they are not an authorization to import an Agent-created
+inventory or to execute project/package installers as Root. Trusted provisioning,
+full configuration and lifecycle composition remain required.
+
+Seventeen new regressions bring the focused suite to 314 tests. They cover missing
+and changed roles, content/source/checksum drift, invalid Cargo sources, ambiguous
+paths, links, special/writable/missing files, metadata mutation, bounds, legal
+crate fixture names and fixed readonly sandbox arguments. An ordinary-user
+actual-data experiment verified 205 packages including generated checksum files,
+three test-data archives and 469 onboarding files: 9,397 files / 235,706,723 bytes,
+alongside the 175 tools / 1,020,148,204 bytes, in 7.035 seconds. It retained the
+production source pins and replaced Root ownership only. The first attempt
+rejected thirteen legitimate crate fixture names containing punctuation; the
+corrected role-only filename check passed in a fresh fixture, with the original
+attempt retained privately. No package code ran, and this is not Root import,
+mounted-systemd/UID995, workload, deployment, resource or quality acceptance.
+The helper/source-release inventories remain seventeen and 69 members, with no
+Core binary. Installed 659, Apps, rules and services remain unchanged.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the
