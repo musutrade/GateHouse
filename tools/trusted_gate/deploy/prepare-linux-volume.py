@@ -136,6 +136,24 @@ def empty_target(B):
         B.need(not any(VOLUME.iterdir()), 'unmounted staging target is occupied')
 
 
+def admit(B, helpers, manifest, manifest_pin, recipe, recipe_pin):
+    """Readonly admission for a caller already holding the controller lease."""
+    code = B.authenticate(helpers, manifest, manifest_pin)
+    builder = B.load(helpers, 'build-protected-core.py')
+    commands = tools(B, builder, recipe, recipe_pin)
+    raw = B.read(B.owned(MARKER, private=True), 64 * 1024)
+    record = json.loads(raw, object_pairs_hook=B.unique)
+    B.need(raw == B.canonical(record) and record['schema'] == 'gatehouse-linux-storage/v1'
+           and record['phase'] == 'mounted' and record['status'] == 'ready' and record['size'] == SIZE
+           and record['image'] == str(IMAGE) and record['mountpoint'] == str(VOLUME)
+           and record['helper_revision'] == code['revision'] and record['helper_manifest_sha256'] == manifest_pin
+           and record['tools_sha256'] == recipe_pin and record['production_gate_enabled'] is False,
+           'staging storage is not the reviewed ready registration')
+    B.owned(VOLUME, directory=True, private=True)
+    mounted(B, commands, record, mounts(B, commands))
+    return record
+
+
 def prepare(B, helpers, manifest, manifest_pin, recipe, recipe_pin, lock_fd=None):
     B.need(os.geteuid() == 0, 'administrator authentication required for volume preparation')
     B.need(os.uname().sysname == 'Linux' and os.uname().machine == 'x86_64', 'unsupported staging volume platform')

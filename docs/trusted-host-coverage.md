@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has thirteen files:
-the importer, Core builder, preservation and volume libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has fourteen files:
+the importer, Core builder, preservation, volume and source-staging libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -754,6 +754,47 @@ and recovery scenarios remain pending. The complete guarded upgrade must still
 stage reviewed candidate source separately, preserve 659, capture the replacement
 Core before revoke/retire, install only reviewed files and define startup/recovery
 ordering. This helper does not install code, alter Apps/rules or enable production.
+
+### Candidate independent bootstrap source
+
+The authenticated administrator-only `stage-source` entry and
+`stage-protected-source.py` add the fourteenth helper resource. Staging requires
+the accepted 659 slot and controller lease to remain occupied, stopped trusted
+units, idle UID995 and readonly admission of the same ready staging volume. It
+never relaxes the normal `source.prepare` outstanding-slot guard, changes the old
+mirror/source/freeze, runs project programs or releases the publication slot.
+
+This bootstrap path is offline. It verifies the protected old source/freeze and
+fixed historical baseline, captures a private exact-pinned candidate bundle and
+clones the protected old object store without hardlinks. Bundle advertisement must
+identify the single reviewed helper revision; prerequisites, ancestry and fetched
+object integrity are checked before materialization. Every helper blob in the
+candidate must match the authenticated release. NUL-delimited source entries have
+explicit type/path/count/byte bounds; links, submodules and the reserved host
+overlay are rejected before checkout. Source, retained old freeze/lock, code,
+storage and process state are checked again before completing the new freeze.
+Existing or partial staging is retained and never automatically reused.
+
+Candidate Git runs with clean configuration/environment, no hooks/fsmonitor,
+external protocols or inherited network routing. Private temporary output files
+bound controller memory use; replies exceeding 4 MiB are rejected. Each candidate
+Git process has a 2 GiB address-space limit, 120 CPU seconds, 128 MiB generated-file
+limit, 128 descriptors and a 120-second wall timeout, with one pack thread. These
+per-process limits do not constitute live whole-cgroup resource acceptance.
+Bundle size is at most 128 MiB and materialized source at most 20,000 files /
+256 MiB. Blocked staging grants no installation, quality or delivery authority.
+
+Sixteen source regressions and one readonly-volume-admission regression bring the
+focused suite to 249 tests. Ordinary fixtures replace Root ownership/authentication,
+old-slot/unit probes and privileged volume admission; actual Git prerequisite
+bundles, independent object copies, worktrees, inode/lock/byte checks and bounded
+subprocesses execute. The trusted baseline here is the previously authenticated
+pilot freeze, not a fresh remote-base observation. The full upgrade and subsequent
+delivery must independently revalidate the configured repository/current base;
+staging does not bless stale input. Live Root staging, complete package/installation
+recovery, full workload/resource/cache/native coverage and App/rule/merge acceptance
+remain pending. The accepted 659 installation and normal 25-file pilot package
+remain unchanged.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,

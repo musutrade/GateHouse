@@ -21,7 +21,7 @@ FILES = {ENTRY, 'tools/maintenance/restore_evidence.py', *(
         'prepare-official-tools.py', 'acquire-linux-tools.py', 'verify-locked-crates.py',
         'stage-linux-inputs.py', 'run-linux-test.py', 'prepare-linux-workspace.py',
         'prepare-locked-directory.py', 'linux-tools.lock.json', 'build-protected-core.py',
-        'preserve-pilot-state.py', 'prepare-linux-volume.py'))}
+        'preserve-pilot-state.py', 'prepare-linux-volume.py', 'stage-protected-source.py'))}
 ENV = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'GIT_CONFIG_NOSYSTEM': '1',
        'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_TERMINAL_PROMPT': '0', 'GIT_OPTIONAL_LOCKS': '0'}
 
@@ -323,6 +323,24 @@ def import_inputs(root, manifest, manifest_pin, source, head, base, tool_archive
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    if sys.argv[1:2] == ['stage-source']:
+        for name in ('helper-root', 'manifest', 'bundle', 'tool-recipe'):
+            parser.add_argument('--' + name, type=Path, required=True)
+        for name in ('manifest-sha256', 'bundle-sha256', 'head', 'tool-recipe-sha256'):
+            parser.add_argument('--' + name, required=True)
+        args = parser.parse_args(sys.argv[2:])
+        try:
+            authenticate(args.helper_root, args.manifest, args.manifest_sha256)
+            staging = load(args.helper_root, 'stage-protected-source.py')
+            context = SimpleNamespace(**{name: globals()[name] for name in (
+                'need', 'owned', 'path_operand', 'read', 'write', 'record', 'canonical', 'unique',
+                'git', 'frozen_lock', 'load', 'authenticate', 'readonly', 'ENV')})
+            result = staging.stage(context, args.helper_root, args.manifest, args.manifest_sha256,
+                args.bundle, args.bundle_sha256, args.head, args.tool_recipe, args.tool_recipe_sha256)
+        except Exception as error:
+            parser.exit(1, 'source staging blocked (' + type(error).__name__ + '); retain private state\n')
+        print(json.dumps({key: result[key] for key in ('schema', 'state', 'head', 'base', 'files', 'bytes', 'production_gate_enabled')}, sort_keys=True))
+        return
     if sys.argv[1:2] == ['prepare-volume']:
         for name in ('helper-root', 'manifest', 'tool-recipe'):
             parser.add_argument('--' + name, type=Path, required=True)

@@ -109,7 +109,7 @@ class VolumeTests(unittest.TestCase):
         if self.fail_name==name: raise subprocess.TimeoutExpired(argv,1)
         return SimpleNamespace(returncode=code,stdout=data,stderr=b'')
 
-    def prepare(self,**kwargs):
+    def prepare(self,admission=False,**kwargs):
         # Only fixture Root uid/ownership, kernel mount/loop probes and management
         # programs are replaced. Small file allocation/flock/JSON checks are real.
         with patch.multiple(VOL,IMAGE=self.image,MARKER=self.marker,VOLUME=self.target,CONTROL=self.control,SIZE=self.size), \
@@ -117,7 +117,17 @@ class VolumeTests(unittest.TestCase):
              patch.object(VOL.os,'statvfs',side_effect=self.disk), \
              patch.object(VOL,'block_device',side_effect=lambda path:self.target.stat().st_dev), \
              patch.object(VOL.subprocess,'run',side_effect=self.execute):
+            if admission:
+                return VOL.admit(self.B,self.root/'helpers',self.root/'manifest','a'*64,self.recipe,self.recipe_pin)
             return VOL.prepare(self.B,self.root/'helpers',self.root/'manifest','a'*64,self.recipe,self.recipe_pin,**kwargs)
+
+    def test_readonly_admission_requires_ready_matching_registration(self):
+        self.prepare(); self.calls=[]
+        self.assertEqual(self.prepare(admission=True)['status'],'ready')
+        self.assertFalse({'fallocate','mkfs','fsck','mount'} & {name for name,args in self.calls})
+        value=json.loads(self.marker.read_bytes()); value['status']='blocked'
+        self.marker.write_bytes(BOOT.canonical(value))
+        with self.assertRaises(ValueError):self.prepare(admission=True)
 
     def test_fresh_registered_reservation_format_and_mount_leave_old_pilot_untouched(self):
         value=self.prepare()
