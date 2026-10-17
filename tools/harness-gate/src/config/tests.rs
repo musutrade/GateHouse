@@ -1136,6 +1136,7 @@ fn webhook_configuration_requires_http_url_and_an_enabled_result() {
 fn report_template_diagnostics_cover_pair_paths_and_extensions() {
     let mut config = repository_config();
     config.report_templates = ReportTemplatesConfig {
+        source_repository: None,
         root: Some("../templates".into()),
         template: Some("../report.txt".into()),
         junit: Some("../junit.txt".into()),
@@ -1156,6 +1157,7 @@ fn report_template_diagnostics_cover_pair_paths_and_extensions() {
     }
 
     config.report_templates = ReportTemplatesConfig {
+        source_repository: None,
         root: Some("templates".into()),
         template: None,
         junit: Some("junit.txt".into()),
@@ -1950,4 +1952,19 @@ fn policy_waiver_configuration_rejects_invalid_approval_and_time_boundaries() {
         .waivers
         .push(duplicate.policy.waivers[0].clone());
     assert_diagnostic(&duplicate, "policy", "HGCFG-INVALID-FIELD");
+}
+
+#[test]
+fn report_source_repository_is_opt_in_and_validated_without_echoing_secrets() {
+    let mut config = repository_config();
+    assert!(config.report_templates.source_repository.is_none());
+    config.report_templates.source_repository =
+        Some("https://github.com/musutrade/GateHouse".into());
+    assert!(config.validate().is_ok());
+    config.report_templates.source_repository = Some("https://user:secret@github.com/a/b".into());
+    let error = config.validate().unwrap_err().to_string();
+    assert!(error.contains("report_templates.source_repository") && !error.contains("secret"));
+    assert!(diagnostics_for(&config)
+        .iter()
+        .any(|d| d.path == "report_templates.source_repository" && d.id == "HGCFG-INVALID-FIELD"));
 }

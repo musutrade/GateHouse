@@ -234,7 +234,8 @@
         "src/verify/waiver.rs",
         "src/verify/cache/mod.rs",
         "src/verify/cache/identity.rs",
-        "src/verify/cache/store.rs"
+        "src/verify/cache/store.rs",
+        "src/source_links.rs"
       ]
     },
     "quality-core": {

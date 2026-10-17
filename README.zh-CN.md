@@ -788,6 +788,27 @@ python3 tools/quality/docs_consistency.py
 组合筛选；Reset 清除全部筛选。原始类别计数和权威 blockers 不随筛选变化。
 禁用 JavaScript 仍可读取所有计数与明细，工程政策及 Core 决策语义保持不变。
 
+### 精确提交上的源码跳转
+
+在 `[report_templates]` 中显式设置
+`source_repository = "https://github.com/owner/repository"` 后，内置 HTML 模板可显示
+源码链接；默认仅保留源码文本。仓库映射由项目所有者信任和配置，不读取 Git remote 或报告
+携带的 URL。仅支持规范 GitHub HTTPS 仓库地址，不允许凭据、query、fragment、`.git` 后缀
+或末尾 `/`；其他平台不在本增量范围。
+
+链接要求 invocation 与质量证据的完整 40/64 位提交一致、subject/series/evidence 身份一致、
+安全仓库相对路径及提交文件内的有效行范围。Core 读取本地 Git tree/blob，核对文件 SHA-256
+与 subject.source_sha256；未提交或暂存源码与提交不同、对象缺失、符号链接/子模块、身份
+不一致、质量不可用时均保留文本，不回退到 HEAD 或分支。路径按字节编码，URL 绑定精确提交
+和行号并禁止 referrer。离线检查不证明所配远端的所有权或可访问性。
+
+生成过程无网络请求或源码上传；禁用 Git lazy fetch、replacement objects、可选锁和 fsmonitor。
+每次渲染最多检查 128 个不同文件，共享 2 秒执行预算，单命令最多 500 ms，UTF-8 文件最多
+1 MiB，输出读取有界；进程回收可能增加耗时。预算耗尽后仍复用已有缓存，其余来源保持文本。
+Git 缺失/不支持或读取失败只省略链接，取消仍返回错误。不改变门禁、完整性、原始行和 Core
+政策。点击源码链接需要网络，报告本身仍可离线阅读。自定义模板可使用
+`quality_view.groups[].rows[].source_url`，仍属于受信任项目代码；不宣称已发布版本。
+
 ### 已完成 HTML 报告的 Actions 下载
 
 源码中的 `report-export --input <单条v1索引> --output <新目录> --commit <精确提交>`

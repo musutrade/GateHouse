@@ -71,6 +71,7 @@
       "default": {
         "junit": null,
         "root": null,
+        "source_repository": null,
         "template": null
       },
       "allOf": [
@@ -717,6 +718,14 @@
           ]
         },
         "root": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_repository": {
+          "description": "Opt-in canonical https://github.com/owner/repository for committed source links.",
           "default": null,
           "type": [
             "string",
