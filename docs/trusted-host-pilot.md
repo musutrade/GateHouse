@@ -33,6 +33,33 @@ them. A repeated identical release can resume its registered volume and retained
 pilot state. Unknown running/failed Core invocations still require explicit
 operator reconciliation, never another automatic full run.
 
+## Administrator-selected Git proxy and preparation recovery
+
+The protected Git environment deliberately ignores the developer's proxy environment
+and global Git configuration. A host whose GitHub pack transfer needs a proxy must
+configure that route explicitly in its root-owned private mirror. This is an
+administrator network setting; the delegated launcher accepts no proxy option.
+Keep Git's HTTPS certificate verification enabled. Scope the setting to GitHub:
+
+```sh
+sudo /usr/bin/git -C /srv/gatehouse/pilot/repository/mirror.git \
+  config --local --replace-all 'http.https://github.com/.proxy' http://HOST:PORT
+```
+
+Use the administrator's approved proxy endpoint, without embedded credentials.
+Do not import developer Git configuration or environment variables into the root
+controller. API transport remains independently configured; successful API reads
+or `ls-remote` alone do not prove that Git pack transfer works.
+
+If the retained validation stderr shows a baseline `git fetch` timeout in
+`source.prepare`, before any Core invocation was created, retain that log and
+resume the **same reviewed release** after correcting this network route. The
+freeze must still match the same head, base and bundle; changed input remains
+blocked. Preparation failure does not authorize a quality PASS. If a Core run
+already exists or its state is uncertain, reconcile it explicitly instead of
+rerunning verification. Source preparation transport errors return a bounded
+blocked result; transport output and credentials are not included in it.
+
 ## Exact host changes
 
 - Install the reviewed Python package, public launcher, access probe and Core

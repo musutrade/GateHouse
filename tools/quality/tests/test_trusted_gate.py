@@ -586,6 +586,29 @@ class IsolationTests(unittest.TestCase):
 
 
 class SourceTests(unittest.TestCase):
+    def test_baseline_fetch_timeout_blocks_without_exposing_transport_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            mirror = root / 'mirror.git'
+            mirror.mkdir()
+            config = {'source': str(root / 'source'), 'mirror': str(mirror),
+                      'repository': 'owner/project', 'repository_id': 10,
+                      'base_branch': 'main', 'max_bundle_bytes': 1024}
+            reader = SimpleNamespace(
+                repo=lambda method, path: {'object': {'sha': 'b' * 40}} if path else {'id': 10},
+                installation_token=lambda: 'private-fixture-token')
+            journal = SimpleNamespace(outstanding=lambda: [])
+            timeout = subprocess.TimeoutExpired(['git', 'fetch'], 120,
+                output=b'private-fixture-token', stderr=b'private transport response')
+            with patch('gatehouse_trusted_gate.source.protected', side_effect=lambda p, **kw: Path(p)), \
+                 patch('gatehouse_trusted_gate.source.subprocess.run', side_effect=timeout):
+                with self.assertRaisesRegex(Blocked, '^independent baseline fetch timed out; reconcile the administrator-managed Git network route$') as rejected:
+                    prepare(config, reader, journal, b'bundle', 'a' * 40)
+            self.assertNotIn('private-fixture-token', str(rejected.exception))
+            self.assertIsNone(rejected.exception.__cause__)
+            self.assertTrue((root / 'frozen.json').is_file())
+            self.assertFalse((root / 'source').exists())
+
     def test_old_terminal_epoch_cannot_retire_source_owned_by_active_batch(self):
         with tempfile.TemporaryDirectory() as directory:
             journal = Journal(Path(directory) / 'journal.db')

@@ -7,10 +7,11 @@ from pathlib import Path
 import shutil
 import subprocess
 
-from .common import atomic_json, digest, protected, read_json, read_regular, require, sha
+from .common import Blocked, atomic_json, checked, digest, protected, read_json, read_regular, require, sha
 from .execution import HOST_DIRECTORY, clean_environment, git
 
 
+@checked
 def prepare(config, github, journal, bundle, head):
     sha(head)
     require(not journal.outstanding(), 'previous batch must be merged or fully revoked before freezing input')
@@ -43,10 +44,13 @@ def prepare(config, github, journal, bundle, head):
     env.update(GIT_CONFIG_COUNT='1', GIT_CONFIG_KEY_0='http.https://github.com/.extraheader',
                GIT_CONFIG_VALUE_0='AUTHORIZATION: basic ' + base64.b64encode(
                    ('x-access-token:' + github.installation_token()).encode()).decode())
-    result = subprocess.run(['/usr/bin/git', '-c', 'core.hooksPath=/dev/null',
-        '-c', 'protocol.ext.allow=never', '-C', str(mirror), 'fetch', '--no-tags',
-        'https://github.com/' + config['repository'] + '.git', base], env=env,
-        capture_output=True, timeout=120)
+    try:
+        result = subprocess.run(['/usr/bin/git', '-c', 'core.hooksPath=/dev/null',
+            '-c', 'protocol.ext.allow=never', '-C', str(mirror), 'fetch', '--no-tags',
+            'https://github.com/' + config['repository'] + '.git', base], env=env,
+            capture_output=True, timeout=120)
+    except subprocess.TimeoutExpired:
+        raise Blocked('independent baseline fetch timed out; reconcile the administrator-managed Git network route') from None
     require(result.returncode == 0, 'independent fetch of target baseline failed')
     # Copy one bounded bundle to protected storage before parsing; never fetch a user-controlled
     # repository or its Git configuration as root. Git validates the content-addressed objects.
