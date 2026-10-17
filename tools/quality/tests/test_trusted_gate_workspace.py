@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -141,7 +142,7 @@ class WorkspaceTests(unittest.TestCase):
     def test_helper_timeout_retains_incomplete_preparation_record(self):
         actual = subprocess.run
         def timeout_helper(argv, **kwargs):
-            if argv[0] == '/usr/bin/python3':
+            if argv[0] == sys.executable:
                 raise subprocess.TimeoutExpired(argv, 120)
             return actual(argv, **kwargs)
         with patch.object(WORKSPACE.subprocess, 'run', side_effect=timeout_helper):
@@ -184,7 +185,7 @@ class WorkspaceTests(unittest.TestCase):
         actual = subprocess.run
         def mutate_after_restore(argv, **kwargs):
             result = actual(argv, **kwargs)
-            if argv[0] == '/usr/bin/python3':
+            if argv[0] == sys.executable:
                 self.git(self.destination, 'update-index', '--skip-worktree', 'candidate.txt')
                 (self.destination / 'candidate.txt').write_text('changed\n')
             return result
@@ -199,6 +200,21 @@ class WorkspaceTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'unprivileged worker'):
                 self.prepare()
         self.assertFalse(self.destination.exists())
+
+    def test_post_job_verification_does_not_trust_writable_index_or_restored_data(self):
+        self.prepare()
+        WORKSPACE.verify_prepared(self.source, self.history, self.destination,
+                                  self.head, self.base, self.pin)
+        (self.destination / self.name).write_text('changed external input\n')
+        with self.assertRaisesRegex(ValueError, 'restored input differs'):
+            WORKSPACE.verify_prepared(self.source, self.history, self.destination,
+                                      self.head, self.base, self.pin)
+        (self.destination / self.name).write_bytes(self.data)
+        self.git(self.destination, 'update-index', '--skip-worktree', 'candidate.txt')
+        (self.destination / 'candidate.txt').write_text('hidden source change\n')
+        with self.assertRaisesRegex(ValueError, 'workspace bytes or mode differ'):
+            WORKSPACE.verify_prepared(self.source, self.history, self.destination,
+                                      self.head, self.base, self.pin)
 
 
 if __name__ == '__main__':

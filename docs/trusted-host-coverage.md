@@ -161,6 +161,56 @@ execution or accepted Linux coverage. The installed `659803a` pilot, package
 inventory, policy, required rules and workflow triggers are unchanged. This
 candidate adapter still needs its own protected deployment review.
 
+### Candidate Linux Test workload
+
+[run-linux-test.py](../tools/trusted_gate/deploy/run-linux-test.py) prepares a
+fresh disposable workspace and executes the existing Linux Test job's project
+workload: the pinned nextest version check and complete locked nextest run, both
+Node integration suites, actual Rust-generated HTML provenance and display-file
+transport staging, configured workflow acceptance, both Cargo schema exports and
+their Git comparison, and real locked Rust/Python onboarding from GateProbes
+`53c01505bed2ff61dfad1d106abbec2dcd961d05`. Onboarding's 29-step receipt must bind
+the actual newly built candidate Core. Cargo's legitimately hard-linked generated
+executable is copied to a byte-identical private snapshot for onboarding; both
+copies are checked afterward. Immutable-input hardlink guards stay unchanged.
+
+The command plan refuses a changed CI workflow until parity is reviewed. The
+onboarding input's complete file/size/content/executable-mode inventory is pinned
+in the reviewed adapter alongside that exact commit; a directory label or an
+Agent-supplied SHA cannot substitute another snapshot. A protected caller must
+stage this snapshot from the pinned Git objects and mount it read-only, provide
+the approved offline toolchains/dependencies and persistent Cargo target, pin
+the adapter/helpers and actual tools in host policy, and retain the complete
+invocation outputs. This candidate does not install or configure those inputs.
+
+The worker receives a fresh home/temp and a narrow environment. Credentials,
+Agent Git configuration and non-default compiler/profile overrides are not
+forwarded. Every required command must finish successfully within the existing
+20-minute job budget; failure or timeout blocks without retry. Zero tool exits
+with missing HTML or onboarding output cannot complete the workload. After all
+commands, the adapter rechecks both the frozen input and working copy against
+the immutable Git blob/mode inventory, as well as restored regression data and
+the pinned onboarding snapshot. A mutable index cannot hide source changes.
+The existing Core remains the final quality authority; engineering-policy
+semantics are unchanged.
+
+The adapter invokes only the existing artifact preparation code to stage the
+two validated display files; it calls no GitHub upload action/API. Existing CI
+artifact retention must be replaced by the protected host's accepted evidence
+publication before this cell can migrate. The numeric receipt identity exercises
+the existing workflow contract locally and is explicitly not an Actions run.
+Select the named receipts and logs for publication; onboarding's disposable
+signing-key files and other scratch contents remain private and are not export
+artifacts. Systemd still owns final worker-cgroup termination and resource limits.
+
+An operator-domain run at `d3f0cbb` completed all 724 Rust tests with zero skipped,
+both Node suites, real HTML validation, workflow acceptance, matching schemas
+and all 29 pinned onboarding steps. This established command readiness, not
+protected execution acceptance. The new adapter also needs its own actual
+complete-run measurement and protected worker deployment. Neither observation
+changes the table's unassigned owners, enables production, removes native
+requirements or replaces the remaining Linux quality/build/audit/contracts jobs.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the

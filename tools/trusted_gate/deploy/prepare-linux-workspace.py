@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 import stat
 import subprocess
+import sys
 import tempfile
 
 MAX_BYTES = 256 * 1024 * 1024
@@ -55,6 +56,56 @@ def git(directory, *args, safe=()):
         argv.extend(['-c', 'safe.directory=' + str(path)])
     return subprocess.check_output([*argv, '-C', str(directory), *args],
         env=environment(), stderr=subprocess.PIPE, timeout=120)
+
+
+def tracked_inventory(history, head):
+    total, tracked = 0, []
+    for entry in filter(None, git(history, 'ls-tree', '-r', '-l', '-z', head).split(b'\0')):
+        meta, name = entry.split(b'\t', 1)
+        mode, kind, blob, size = meta.split()
+        need(mode in (b'100644', b'100755') and kind == b'blob', 'linked/submodule source is unsupported')
+        path = Path(os.fsdecode(name))
+        need(not path.is_absolute() and '..' not in path.parts and '\\' not in str(path)
+             and path.parts[0] not in ('.git', '.gatehouse-host'), 'reserved or escaping source path')
+        total += int(size)
+        tracked.append((str(path), mode.decode(), blob.decode(), int(size)))
+        need(total <= MAX_BYTES and len(tracked) <= 20000, 'workspace source exceeds input budget')
+    return tracked, total
+
+
+def verify_files(directory, tracked):
+    # Do not trust a worker-writable Git index or its skip-worktree flags.
+    for name, mode, blob, size in tracked:
+        path = Path(directory) / name
+        data = regular(path)
+        need(len(data) == size and hashlib.sha1(b'blob ' + str(size).encode() + b'\0' + data).hexdigest() == blob
+             and bool(path.stat().st_mode & 0o111) == (mode == '100755'),
+             'tracked workspace bytes or mode differ: ' + name)
+
+
+def verify_prepared(source, history, destination, head, base, manifest_sha256):
+    """Revalidate a used workspace against immutable inputs, never its own index."""
+    source, history, destination = map(Path, (source, history, destination))
+    need(git(history, 'rev-parse', 'HEAD').decode().strip() == head
+         and git(history, 'rev-parse', 'refs/gatehouse/base').decode().strip() == base,
+         'history view candidate/base differs')
+    tree = git(history, 'rev-parse', 'HEAD^{tree}').decode().strip()
+    need(all(git(path, 'rev-parse', 'HEAD', safe=(history,)).decode().strip() == head
+             and git(path, 'rev-parse', 'HEAD^{tree}', safe=(history,)).decode().strip() == tree
+             for path in (source, destination)), 'prepared workspace identity changed')
+    tracked, _ = tracked_inventory(history, head)
+    verify_files(source, tracked)
+    verify_files(destination, tracked)
+    manifest_bytes = regular(source / 'test-data/manifest.json', 4 * 1024 * 1024)
+    need(digest(manifest_bytes) == manifest_sha256, 'regression manifest differs from reviewed pin')
+    manifest = json.loads(manifest_bytes, object_pairs_hook=unique)
+    for archive in manifest['archives']:
+        for name, member in archive['files'].items():
+            path = Path(name)
+            need(not path.is_absolute() and '..' not in path.parts, 'escaping restored input path')
+            data = regular(destination / path)
+            need(len(data) == member['size'] and digest(data) == member['sha256'], 'restored input differs')
+    return {'head': head, 'base': base, 'tree': tree, 'tracked_files': len(tracked)}
 
 
 def prepare(source, history, destination, cache, head, base, manifest_sha256):
@@ -117,28 +168,9 @@ def prepare(source, history, destination, cache, head, base, manifest_sha256):
          and git(history, 'rev-parse', 'HEAD^{tree}').decode().strip() == tree,
          'history view candidate/base/tree differs')
     git(history, 'merge-base', '--is-ancestor', base, head)
-    entries = git(history, 'ls-tree', '-r', '-l', '-z', head).split(b'\0')
-    total, count, tracked = 0, 0, []
-    for entry in filter(None, entries):
-        meta, name = entry.split(b'\t', 1)
-        mode, kind, blob, size = meta.split()
-        need(mode in (b'100644', b'100755') and kind == b'blob', 'linked/submodule source is unsupported')
-        path = Path(os.fsdecode(name))
-        need(not path.is_absolute() and '..' not in path.parts and '\\' not in str(path)
-             and path.parts[0] not in ('.git', '.gatehouse-host'), 'reserved or escaping source path')
-        total += int(size)
-        count += 1
-        need(total <= MAX_BYTES and count <= 20000, 'workspace source exceeds input budget')
-        tracked.append((str(path), mode.decode(), blob.decode(), int(size)))
-    def verify_files(directory):
-        # Do not trust a worker-writable Git index or its skip-worktree flags.
-        for name, mode, blob, size in tracked:
-            path = directory / name
-            data = regular(path)
-            need(len(data) == size and hashlib.sha1(b'blob ' + str(size).encode() + b'\0' + data).hexdigest() == blob
-                 and bool(path.stat().st_mode & 0o111) == (mode == '100755'),
-                 'tracked workspace bytes or mode differ: ' + name)
-    verify_files(source)
+    tracked, total = tracked_inventory(history, head)
+    count = len(tracked)
+    verify_files(source, tracked)
     git(destination.parent, 'init', '--template=', str(destination))
     git(destination, '-c', 'protocol.file.allow=always', 'fetch', '--no-tags',
         '--no-auto-maintenance', str(history), head, base, safe=(history,))
@@ -147,7 +179,7 @@ def prepare(source, history, destination, cache, head, base, manifest_sha256):
     git(destination, 'config', '--local', 'core.hooksPath', '/dev/null')
     (destination / '.git/FETCH_HEAD').unlink()
     need(not (destination / '.git/objects/info/alternates').exists(), 'workspace shares external Git objects')
-    command = ['/usr/bin/python3', '-B', str(destination / 'tools/maintenance/test_data.py'),
+    command = [sys.executable, '-B', str(destination / 'tools/maintenance/test_data.py'),
                '--root', str(destination), '--cache', str(cache), '--offline']
     # Retain failure logs outside the candidate copy; never delete/reuse a partial workspace.
     record = {'head': head, 'base': base, 'tree': tree, 'manifest_sha256': manifest_sha256,
@@ -193,8 +225,8 @@ def prepare(source, history, destination, cache, head, base, manifest_sha256):
          and git(history, 'rev-parse', 'refs/gatehouse/base').decode().strip() == base
          and not git(source, 'status', '--porcelain', '--untracked-files=no', safe=(history,)),
          'tracked input changed during preparation')
-    verify_files(destination)
-    verify_files(source)
+    verify_files(destination, tracked)
+    verify_files(source, tracked)
     record.update(state='prepared', restored_files=files, restored_bytes=size)
     save()
     return record
