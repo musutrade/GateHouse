@@ -60,6 +60,14 @@ impl<'a> Index<'a> {
         }
     }
     pub(crate) fn resolve(&self, gate: &Value, metric: &str) -> Result<&'a Value> {
+        let evidence = self.resolve_agreement(gate, metric)?;
+        let metric = named(&evidence["metrics"], metric)?;
+        let _: harness_gate::quality::model::MetricValue =
+            serde_json::from_str(&metric["value"].to_string())?;
+        Ok(evidence)
+    }
+    /// Verify provenance and exact value agreement without parsing the metric's numeric domain.
+    pub(crate) fn resolve_agreement(&self, gate: &Value, metric: &str) -> Result<&'a Value> {
         let record = &gate["record"];
         let evidence = get(
             &self.evidence,
@@ -122,8 +130,6 @@ impl<'a> Index<'a> {
             contract["type"] == metric["value"]["type"],
             "metric does not match series contract"
         );
-        let _: harness_gate::quality::model::MetricValue =
-            serde_json::from_str(&metric["value"].to_string())?;
         Ok(())
     }
 }

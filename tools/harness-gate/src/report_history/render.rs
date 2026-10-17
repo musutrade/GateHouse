@@ -46,6 +46,69 @@ fn chart(points: &[Point]) -> String {
     svg.push_str("</svg>");
     svg
 }
+fn crap_chart(points: &[Point]) -> String {
+    let Some(ceiling) = points
+        .iter()
+        .find(|p| p.crap_grid.is_some())
+        .map(|p| p.crap_ceiling)
+    else {
+        return "<p>No comparable CRAP values within the supported chart range. Exact supplied values and gap reasons remain below.</p>".into();
+    };
+    let mut svg=format!("<p>CRAP display scale: 0 to {ceiling}, divided into 200 floor-quantized positions. These are display coordinates, not policy thresholds. Coincident pixels do not imply equal values; a tiny positive value may share the zero coordinate. Exact values remain in the table. Sample order is chronological for queries and input order otherwise, never severity order.</p><svg viewBox=\"0 0 640 240\" role=\"img\" aria-label=\"Exact CRAP values quantized to 200 display positions; gaps are not connected\"><path d=\"M30 10V210H620\" fill=\"none\" stroke=\"currentColor\"/><text x=\"32\" y=\"16\">{ceiling}</text><text x=\"10\" y=\"215\">0</text>");
+    let count = points.len().saturating_sub(1).max(1);
+    let mut previous = None;
+    for (i, point) in points.iter().enumerate() {
+        let x = 30 + 580 * i / count;
+        svg.push_str(&format!(
+            "<text x=\"{x}\" y=\"232\" text-anchor=\"middle\" font-size=\"10\">{}</text>",
+            i + 1
+        ));
+        if let Some(grid) = point.crap_grid {
+            let y = 210 - grid;
+            if let Some((a, b)) = previous {
+                svg.push_str(&format!(
+                    "<path d=\"M{a} {b}L{x} {y}\" fill=\"none\" stroke=\"currentColor\"/>"
+                ));
+            }
+            svg.push_str(&format!(
+                "<circle cx=\"{x}\" cy=\"{y}\" r=\"4\"><title>Sample {}: exact {}</title></circle>",
+                i + 1,
+                escape(&point.exact)
+            ));
+            previous = Some((x, y));
+        } else {
+            previous = None;
+        }
+    }
+    svg.push_str("</svg>");
+    svg
+}
+fn ratchet_timeline(points: &[Point]) -> String {
+    let mut html=String::from("<h2>Supplied debt states by sample</h2><p>Discrete Core annotations, not calculated debt amounts or inferred transitions. States on unavailable or incompatible samples remain observations only. Resolved is not outstanding debt.</p><ol>");
+    for (i, point) in points.iter().enumerate() {
+        html.push_str(&format!(
+            "<li data-ratchet-sample=\"{}\"><strong>Sample {} — {}</strong>",
+            i + 1,
+            i + 1,
+            escape(&point.timestamp)
+        ));
+        if point.ratchet.is_empty() {
+            html.push_str("<p>Supplied ratchet: not available</p>");
+        } else {
+            html.push_str("<dl>");
+            for (label, value) in &point.ratchet {
+                html.push_str(&format!("<dt>{label}</dt><dd>{}</dd>", escape(value)));
+            }
+            html.push_str("</dl>");
+        }
+        if !point.reason.is_empty() {
+            html.push_str(&format!("<p>{}</p>", escape(&point.reason)));
+        }
+        html.push_str("</li>");
+    }
+    html.push_str("</ol>");
+    html
+}
 pub(super) fn html(points: &[Point], selection: &Selection<'_>) -> String {
     render(points, selection, None)
 }
@@ -65,12 +128,20 @@ fn render(
         html.push_str("<p>Selected chronological sequence order, not elapsed-time spacing. ");
     }
     html.push_str("Only samples compatible with the first plotted sample are drawn. Missing or incompatible samples break the line. Ratios use covered / total as a display coordinate; exact reported values remain below. Supplied states are not recalculated. Input pins prove selected-byte integrity, not trusted signatures.</p>");
-    html.push_str(&chart(points));
+    if selection.metric == "risk.crap" {
+        html.push_str(&crap_chart(points));
+    } else {
+        html.push_str(&chart(points));
+    }
     html.push_str("<div class=\"scroll\" tabindex=\"0\" role=\"region\" aria-label=\"History table; scroll horizontally\"><table><caption>Exact supplied observations (also available without JavaScript)</caption><thead><tr><th>Sample</th><th>Source</th><th>Reported state</th><th>Exact value</th><th>Comparison</th></tr></thead><tbody>");
     for (index, point) in points.iter().enumerate() {
         html.push_str(&format!("<tr><th scope=\"row\">{}</th><td><details><summary>{}</summary>Invocation: {}<br>Commit: {}</details></td><td>{}</td><td><code>{}</code></td><td>{}</td></tr>",index+1,escape(&point.timestamp),escape(&point.invocation),escape(&point.commit),escape(&point.status),escape(&point.exact),escape(if point.reason.is_empty() { "Comparable" } else { &point.reason })));
     }
-    html.push_str("</tbody></table></div><p>This display never adopts a baseline, changes debt or creates a project PASS.</p></html>");
+    html.push_str("</tbody></table></div>");
+    if selection.metric == "risk.crap" {
+        html.push_str(&ratchet_timeline(points));
+    }
+    html.push_str("<p>This display never adopts a baseline, changes debt or creates a project PASS.</p></html>");
     html
 }
 
@@ -162,6 +233,38 @@ mod tests {
         let html = query_description(&hostile);
         assert!(html.contains("&lt;img") && html.contains("[REDACTED]"));
         assert!(!html.contains("query-secret") && !html.contains("must-not-display"));
+    }
+    #[test]
+    fn crap_gap_only_has_no_fake_chart_and_annotations_are_safe() {
+        let point = Point {
+            invocation: "one".into(),
+            timestamp: "time".into(),
+            commit: "commit".into(),
+            status: "FAIL".into(),
+            exact: "9007199254740993".into(),
+            value: None,
+            crap: None,
+            crap_grid: None,
+            crap_ceiling: 1,
+            reason: "above chart range".into(),
+            compatibility: None,
+            ratchet: vec![
+                ("Debt", "resolved".into()),
+                ("Trend", "<img src=x> token=ratchet-secret".into()),
+            ],
+        };
+        let output = html(
+            &[point],
+            &Selection {
+                policy: "p",
+                subject: "s",
+                metric: "risk.crap",
+            },
+        );
+        assert!(!output.contains("<svg") && !output.contains("display scale:"));
+        assert!(output.contains("9007199254740993") && output.contains("<dd>resolved</dd>"));
+        assert!(output.contains("&lt;img") && output.contains("[REDACTED]"));
+        assert!(!output.contains("ratchet-secret") && !output.contains("<img"));
     }
     #[test]
     fn displayed_selection_is_escaped_and_redacted() {

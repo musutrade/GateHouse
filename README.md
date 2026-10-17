@@ -895,6 +895,33 @@ source edits, relocated clones or renamed functions. Working-tree source identit
 records the resolved commit, not a digest of uncommitted changes. This explicit
 history view does not maintain a rolling baseline or a historical database.
 
+### Exact CRAP history and supplied debt states
+
+Select `--metric risk.crap` with the existing `report-history` command to display
+compatible decimal or rational CRAP observations. The chart uses exact Core
+comparisons against small constants, then integer SVG coordinates on 200 vertical
+positions. Its automatic display ceiling follows 1/2/5 decades up to 1,000,000,000;
+these are display scales, not policy thresholds. Positions are rounded down, so
+coincident pixels do not imply equal values and tiny positive values can share the
+zero coordinate. Exact typed values remain in the table; no metric is converted
+to a machine float.
+
+Fields above 4096 characters, values above the supported ceiling, invalid domains,
+and unavailable measurements are explicit gaps. Oversized fields are not parsed
+or claimed numerically valid, but their provenance, identities and exact agreement
+with the referenced evidence are still checked; inconsistent evidence rejects the
+report. Decimal and rational types, measurement series, configuration changes and
+commit-identity conflicts cannot be connected or influence another series' scale.
+A history with no supported comparable observations shows gaps without a chart.
+
+The accompanying discrete timeline shows only supplied Core ratchet annotations:
+debt, trend, remaining-debt, regression, legacy-debt and compliance fields. Missing
+fields are `not available`. Annotations on unavailable or incompatible observations
+remain visible with their warning; no transition, debt amount, cost or outstanding
+total is calculated, and resolved debt is not labelled outstanding. Sample order
+follows the selected history sequence, never severity. Existing subject identity
+rules still apply, including source fingerprint and span.
+
 ### Query a verified history archive
 
 Use `harness-report-history/v2` with the same sample entries for an explicit archive
