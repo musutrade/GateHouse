@@ -4,10 +4,12 @@ from __future__ import annotations
 import copy
 import json
 import importlib.util
+import io
 import os
 from pathlib import Path
 import runpy
 import stat
+import tarfile
 import sys
 import tempfile
 import unittest
@@ -30,6 +32,71 @@ from gatehouse_trusted_gate.isolation import sandbox_arguments, unprivileged_ide
 from gatehouse_trusted_gate.execution import Executor as HostExecutor, clean_environment
 from gatehouse_trusted_gate.source import prepare, retire
 from gatehouse_trusted_gate.publication import deliver
+
+PILOT_SPEC = importlib.util.spec_from_file_location('pilot_installer', ROOT / 'tools/trusted_gate/deploy/install-pilot.py')
+PILOT = importlib.util.module_from_spec(PILOT_SPEC)
+PILOT_SPEC.loader.exec_module(PILOT)
+
+
+class PilotReleaseTests(unittest.TestCase):
+    def archive(self, mutation=None, extra=None):
+        files = {name: b'data' for name in PILOT.FILES}
+        meta = {'repository': 'musutrade/GateHouse', 'head': 'a' * 40, 'coverage_acceptance': 'transition',
+                'core_profile': 'release', 'release_incremental': False,
+                'core_build': {'sha256': digest(files['bin/harness-gate'])}}
+        files['metadata.json'] = canonical(meta)
+        if mutation:
+            mutation(files, meta)
+        stream = io.BytesIO()
+        with tarfile.open(fileobj=stream, mode='w:') as archive:
+            for name, data in files.items():
+                item = tarfile.TarInfo(name)
+                item.size = len(data)
+                archive.addfile(item, io.BytesIO(data))
+            if extra:
+                archive.addfile(extra)
+        return stream.getvalue()
+
+    def test_fixed_release_inventory_and_binary_provenance(self):
+        data = self.archive()
+        files, meta = PILOT.release(data, digest(data))
+        self.assertEqual(set(files), PILOT.FILES)
+        self.assertEqual(meta['coverage_acceptance'], 'transition')
+        with self.assertRaisesRegex(ValueError, 'digest'):
+            PILOT.release(data, '0' * 64)
+
+    def test_traversal_duplicate_link_special_and_oversize_members_are_rejected(self):
+        for name in ('../escape', '/etc/shadow', 'source.bundle'):
+            item = tarfile.TarInfo(name)
+            data = self.archive(extra=item)
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                PILOT.release(data, digest(data))
+        for kind, size in ((tarfile.SYMTYPE, 0), (tarfile.LNKTYPE, 0), (tarfile.CHRTYPE, 0),
+                           (tarfile.REGTYPE, 128 * 1024 * 1024 + 1)):
+            item = tarfile.TarInfo('bin/harness-gate')
+            item.type, item.size, item.linkname = kind, size, '/etc/shadow'
+            # A real declared-size header tests rejection before any oversized allocation.
+            data = item.tobuf() + b'\0' * 1024
+            with self.subTest(kind=kind, size=size), self.assertRaises(ValueError):
+                PILOT.release(data, digest(data))
+
+    def test_incomplete_complete_mode_and_changed_binary_cannot_be_installed(self):
+        def changed_mode(files, meta):
+            meta['coverage_acceptance'] = 'complete'
+            files['metadata.json'] = canonical(meta)
+        for mutation in (lambda files, meta: files.pop('source.bundle'), changed_mode,
+                         lambda files, meta: files.update({'bin/harness-gate': b'different'})):
+            data = self.archive(mutation=mutation)
+            with self.assertRaises(ValueError):
+                PILOT.release(data, digest(data))
+
+    @unittest.skipIf(os.geteuid() == 0, 'requires an actual non-root caller')
+    def test_installer_cannot_elevate_a_nonroot_caller(self):
+        result = subprocess.run([sys.executable, '-I', str(ROOT / 'tools/trusted_gate/deploy/install-pilot.py'),
+            '--release', '/nonexistent/gatehouse-pilot.tar', '--sha256', '0' * 64],
+            capture_output=True, text=True, check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('administrator authentication required', json.loads(result.stderr)['reason'])
 
 
 class Executor:

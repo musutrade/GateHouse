@@ -28,6 +28,11 @@ capabilities of `gem` are not an alternate administrator-authentication mechanis
 for this deployment. An administrator must authenticate in their own terminal;
 do not send passwords, App keys or tokens through chat.
 
+After that initialization and App repository authorization, use the separately
+reviewed [bounded isolation pilot](trusted-host-pilot.md) to prepare the complete
+installer and run actual identity probes. The initial provisioner alone does not
+install the package, keys, policy, delegated entry or service.
+
 Inspect and copy the accepted release into a root-owned staging directory first.
 Run the reviewed provisioner from that snapshot with a clean environment:
 
