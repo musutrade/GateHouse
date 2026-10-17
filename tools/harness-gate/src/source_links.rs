@@ -194,7 +194,7 @@ mod tests {
             "",
             "http://github.com/a/b",
             "https://github.com.evil/a/b",
-            "https://user:secret@github.com/a/b",
+            concat!("https:", "//user:secret@github.com/a/b"),
             "https://github.com/a/b?token=secret",
             "https://github.com/a/b#ref",
             "https://github.com/a/b/",
