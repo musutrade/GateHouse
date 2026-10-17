@@ -1,4 +1,5 @@
 //! Read-only projection of explicitly pinned completed invocation reports.
+mod crap;
 mod input;
 mod projection;
 mod publication;

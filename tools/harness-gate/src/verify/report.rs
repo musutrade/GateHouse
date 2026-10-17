@@ -4953,4 +4953,215 @@ mod tests {
             std::mem::forget(workspace);
         }
     }
+    fn crap_history_quality(index: usize, commit: &str) -> crate::verify::quality::QualityResult {
+        use serde_json::json;
+        let mut quality = super::quality_view::tests::fixture(1);
+        let pairs = [
+            ("0", "10"),
+            ("40", "10"),
+            ("40", "50"),
+            ("50", "40"),
+            ("40", "40"),
+            ("10", "40"),
+        ];
+        let (head, base) = if index == 6 {
+            ("2000000000", "4000000000")
+        } else {
+            pairs[index % 6]
+        };
+        let kind = if index >= 11 { "rational" } else { "decimal" };
+        let typed = |value: &str| {
+            if kind == "decimal" {
+                json!({"type":kind,"value":value})
+            } else {
+                json!({"type":kind,"numerator":value.parse::<u64>().unwrap(),"denominator":1})
+            }
+        };
+        let mut value = typed(head);
+        if index == 12 {
+            value = json!({"type":"rational","numerator":1,"denominator":3});
+        }
+        let limit = if index == 6 { "3000000000" } else { "30" };
+        let rule = json!({"id":"required","operator":"le","limit":typed(limit),"ratchet":{"allow_legacy_debt":true,"deny_regression":true},"on_violation":"fail"});
+        let (_, mut annotation) =
+            harness_gate::quality::ratchet::decision(&rule, &value, Some(&typed(base))).unwrap();
+        if matches!(index, 7 | 8 | 10) {
+            annotation =
+                harness_gate::quality::ratchet::decision(&rule, &typed("10"), Some(&typed("40")))
+                    .unwrap()
+                    .1;
+            value = typed("10");
+        }
+        if index == 9 {
+            value = json!({"type":"decimal","value":"9".repeat(4097)});
+        }
+        if index == 11 {
+            value = json!({"type":"rational","numerator":1,"denominator":0});
+        }
+        let evidence = &mut quality.evidence[0];
+        evidence["series"]["metrics"] = json!([{"name":"risk.crap","type":kind}]);
+        if index == 14 {
+            evidence["series"]["tool"]["version"] = json!("different");
+        }
+        evidence["series"]["id"] =
+            json!(harness_gate::quality::evidence::series_id(&evidence["series"]).unwrap());
+        evidence["metrics"] = json!([{"name":"risk.crap","value":value}]);
+        evidence["context"]["commit"] = json!(if index == 8 {
+            "f".repeat(40)
+        } else {
+            commit.into()
+        });
+        let gate = &mut quality.project_report["gates"]["g0000"];
+        gate["record"]["context"] = evidence["context"].clone();
+        gate["record"]["metric"] = json!("risk.crap");
+        gate["record"]["head"] = value;
+        gate["record"]["policy"] = rule;
+        gate["record"]["ratchet"] = annotation;
+        gate["record"]["measurement_series"]["head"] = evidence["series"]["id"].clone();
+        if index == 7 {
+            quality.status = "not_collected";
+        }
+        if index == 10 {
+            gate["record"]["head"] = serde_json::Value::Null;
+            gate["record"]["evidence_links"]["head"] = serde_json::Value::Null;
+        }
+        quality
+    }
+    #[test]
+    fn crap_history_publishes_exact_trends_and_supplied_states() {
+        use serde_json::json;
+        let started = std::time::Instant::now();
+        let (workspace, mut project, _first, mut invocation_project, mut current) =
+            complete_invocation_fixture("crap-history");
+        let mut samples = Vec::new();
+        let mut keep = Vec::new();
+        let mut subject = String::new();
+        for index in 0..15 {
+            project.invocation_input.commit = format!("{index:040x}");
+            let invocation = allocate_invocation(&project).unwrap();
+            write_invocation_metadata(&invocation, &project, "full", false).unwrap();
+            invocation_project.reports = invocation.root.clone();
+            current.invocation_id = invocation.id.clone();
+            current.report_directory = invocation.root.to_string_lossy().into_owned();
+            current.steps[0].invocation_id = Some(invocation.id.clone());
+            current.timestamp = format!("2026-02-{:02}T00:00:00Z", index + 1);
+            std::fs::write(invocation.root.join("logs/unit.log"), "complete\n").unwrap();
+            let quality = crap_history_quality(index, &project.invocation_input.commit);
+            subject = quality.project_report["gates"]["g0000"]["subject"]
+                .as_str()
+                .unwrap()
+                .into();
+            current.quality = Some(quality);
+            write(&current, &invocation_project).unwrap();
+            verify_manifest(&invocation_project).unwrap();
+            samples.push(json!({"directory":invocation.root.strip_prefix(&project.reports).unwrap().to_string_lossy().replace('\\',"/"),"machine_sha256":super::sha256_file(&invocation.root.join(MACHINE_RESULT_FILE)).unwrap(),"manifest_sha256":super::sha256_file(&invocation.root.join(MANIFEST_FILE)).unwrap()}));
+            keep.push(invocation);
+        }
+        let input = project.reports.join("crap-index.json");
+        std::fs::write(
+            &input,
+            serde_json::to_vec(&json!({"schema":"harness-report-history/v2","samples":samples}))
+                .unwrap(),
+        )
+        .unwrap();
+        let mut previews = serde_json::Map::new();
+        for (name, query, expected) in [
+            (
+                "decimal",
+                crate::report_history::Query {
+                    last_commits: Some(30),
+                    ..Default::default()
+                },
+                6,
+            ),
+            (
+                "rational",
+                crate::report_history::Query {
+                    since: Some("2026-02-13T00:00:00Z".into()),
+                    ..Default::default()
+                },
+                2,
+            ),
+        ] {
+            let output = workspace.root.join(format!("crap-{name}"));
+            let began = std::time::Instant::now();
+            crate::report_history::run_query(
+                &input,
+                &output,
+                "required",
+                &subject,
+                "risk.crap",
+                &query,
+            )
+            .unwrap();
+            let html = std::fs::read_to_string(output.join("history.html")).unwrap();
+            assert_eq!(html.matches("<circle ").count(), expected);
+            assert!(
+                html.contains("floor-quantized") && html.contains("Supplied debt states by sample")
+            );
+            if name == "decimal" {
+                assert!(html.contains("CRAP display scale: 0 to 50,"));
+                for state in [
+                    "none",
+                    "new",
+                    "improved",
+                    "regressed",
+                    "unchanged",
+                    "resolved",
+                ] {
+                    assert!(html.contains(&format!("<dd>{state}</dd>")));
+                }
+                for note in [
+                    "chart ceiling of 1000000000",
+                    "4096-character",
+                    "quality context commit",
+                    "quality unavailable",
+                    "invalid exact CRAP",
+                ] {
+                    assert!(html.contains(note), "missing {note}");
+                }
+                assert!(html.contains(&"9".repeat(4097)));
+                for sample in [7, 8, 9, 11] {
+                    let entry = html
+                        .split(&format!("data-ratchet-sample=\"{sample}\""))
+                        .nth(1)
+                        .unwrap()
+                        .split("</li>")
+                        .next()
+                        .unwrap();
+                    assert!(entry.contains("<dd>resolved</dd>"), "sample{sample}");
+                }
+            }
+            previews.insert(name.into(),json!({"html":output.join("history.html"),"query_seconds_debug":began.elapsed().as_secs_f64(),"html_bytes":html.len()}));
+        }
+        // A field too large for numeric parsing still requires exact evidence agreement.
+        let invocation = allocate_invocation(&project).unwrap();
+        write_invocation_metadata(&invocation, &project, "full", false).unwrap();
+        invocation_project.reports = invocation.root.clone();
+        current.invocation_id = invocation.id.clone();
+        current.report_directory = invocation.root.to_string_lossy().into_owned();
+        current.steps[0].invocation_id = Some(invocation.id.clone());
+        std::fs::write(invocation.root.join("logs/unit.log"), "complete\n").unwrap();
+        let mut bad = crap_history_quality(9, &project.invocation_input.commit);
+        bad.evidence[0]["metrics"][0]["value"]["value"] = json!("1");
+        current.quality = Some(bad);
+        write(&current, &invocation_project).unwrap();
+        verify_manifest(&invocation_project).unwrap();
+        let bad_input = project.reports.join("bad-crap-index.json");
+        std::fs::write(&bad_input,serde_json::to_vec(&json!({"schema":"harness-report-history/v1","samples":[{"directory":invocation.root.strip_prefix(&project.reports).unwrap().to_string_lossy().replace('\\',"/"),"machine_sha256":super::sha256_file(&invocation.root.join(MACHINE_RESULT_FILE)).unwrap(),"manifest_sha256":super::sha256_file(&invocation.root.join(MANIFEST_FILE)).unwrap()}]})).unwrap()).unwrap();
+        let refused = workspace.root.join("refused-crap");
+        let error =
+            crate::report_history::run(&bad_input, &refused, "required", &subject, "risk.crap")
+                .unwrap_err();
+        assert!(error.to_string().contains("gate value differs"), "{error}");
+        assert!(!refused.exists());
+        eprintln!(
+            "CRAP15 publication+two queries {:.3}s",
+            started.elapsed().as_secs_f64()
+        );
+        if let Some(path) = std::env::var_os("HG_CRAP_HISTORY_PREVIEW") {
+            std::fs::write(path,serde_json::to_vec_pretty(&json!({"views":previews,"input":input,"subject":subject,"total_seconds_debug":started.elapsed().as_secs_f64()})).unwrap()).unwrap();
+            std::mem::forget(workspace);
+        }
+    }
 }

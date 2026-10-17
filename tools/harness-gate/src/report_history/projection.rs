@@ -14,6 +14,10 @@ pub(super) struct Point {
     pub status: String,
     pub exact: String,
     pub value: Option<f64>,
+    pub crap: Option<Value>,
+    pub crap_grid: Option<u16>,
+    pub crap_ceiling: u64,
+    pub ratchet: Vec<(&'static str, String)>,
     pub reason: String,
     pub compatibility: Option<Value>,
 }
@@ -28,6 +32,10 @@ fn gap(machine: &Value, reason: &str) -> Point {
         status: text(&machine["status"]),
         exact: "not available".into(),
         value: None,
+        crap: None,
+        crap_grid: None,
+        crap_ceiling: 1,
+        ratchet: Vec::new(),
         reason: reason.into(),
         compatibility: None,
     }
@@ -95,8 +103,13 @@ fn verified_metric<'a>(
     gate: &Value,
     selection: &Selection<'_>,
 ) -> Result<&'a Value> {
-    crate::report_evidence::Index::new(&quality["inputs"]["project"], &quality["evidence"])
-        .resolve(gate, selection.metric)
+    let index =
+        crate::report_evidence::Index::new(&quality["inputs"]["project"], &quality["evidence"]);
+    if selection.metric == "risk.crap" && super::crap::oversized(&gate["record"]["head"]) {
+        index.resolve_agreement(gate, selection.metric)
+    } else {
+        index.resolve(gate, selection.metric)
+    }
 }
 fn selected_gate<'a>(
     project_report: &'a Value,
@@ -133,6 +146,18 @@ fn observation(machine: &Value, record: &Value, gate: &Value, unavailable: bool)
     result.status = text(&gate["state"]);
     result.exact = exact;
     result.value = value;
+    if record["metric"] == "risk.crap" {
+        result.value = None;
+        if !unavailable {
+            match super::crap::candidate(&record["head"]) {
+                Ok(value) => {
+                    result.crap = Some(value);
+                    result.reason.clear();
+                }
+                Err(reason) => result.reason = reason.into(),
+            }
+        }
+    }
     result
 }
 fn point(report: &Completed, selection: &Selection<'_>) -> Result<Point> {
@@ -157,17 +182,50 @@ fn point(report: &Completed, selection: &Selection<'_>) -> Result<Point> {
     let Some(gate) = gate else {
         return Ok(gap(machine, "selected policy/subject/metric is absent"));
     };
+    gate_point(machine, quality, gate, selection, unavailable)
+}
+fn ratchet(value: &Value) -> Vec<(&'static str, String)> {
+    [
+        ("debt", "Debt"),
+        ("trend", "Trend"),
+        ("remaining_debt", "Remaining debt"),
+        ("regression", "Regression"),
+        ("legacy_debt_allowed", "Legacy debt allowed"),
+        ("absolute_compliant", "Absolute compliant"),
+        ("base_absolute_compliant", "Base absolute compliant"),
+    ]
+    .into_iter()
+    .map(|(key, label)| {
+        let text = match &value[key] {
+            Value::String(s) => s.chars().take(256).collect(),
+            Value::Bool(b) => b.to_string(),
+            _ => "not available".into(),
+        };
+        (label, text)
+    })
+    .collect()
+}
+fn gate_point(
+    machine: &Value,
+    quality: &Value,
+    gate: &Value,
+    selection: &Selection<'_>,
+    unavailable: bool,
+) -> Result<Point> {
     let record = &gate["record"];
     if record["head"].is_null()
         && record
             .pointer("/evidence_links/head")
             .is_none_or(Value::is_null)
     {
-        return Ok(gap(machine, "selected head metric is unavailable"));
+        let mut result = gap(machine, "selected head metric is unavailable");
+        result.ratchet = ratchet(&record["ratchet"]);
+        return Ok(result);
     }
     verify_configuration(machine, quality, gate)?;
     let evidence = verified_metric(quality, gate, selection)?;
     let mut result = observation(machine, record, gate, unavailable);
+    result.ratchet = ratchet(&record["ratchet"]);
     result.compatibility = Some(
         json!({"project":machine["project_identity"],"profile":machine["profile"],"mode":machine["input_mode"],"flow":machine["configuration_digest"],"project_model":quality["inputs"]["project"],"policy_model":quality["inputs"]["policy"],"rule":record["policy"],"series":evidence["series"],"subject":record["subject"],"metric":selection.metric,"type":record["head"]["type"],"unit":record["head"]["unit"]}),
     );
@@ -191,6 +249,7 @@ fn queried_point(report: &Completed, selection: &Selection<'_>) -> Result<Point>
     if let Some(claimed) = claimed {
         if claimed.as_str() != Some(report.commit.as_str()) {
             result.value = None;
+            result.crap = None;
             let display: String = claimed.to_string().chars().take(128).collect();
             result.reason = format!("comparison break: quality context commit {display} differs from manifested invocation commit {}", report.commit);
         }
@@ -215,15 +274,36 @@ pub(super) fn project(
         .collect::<Result<Vec<_>>>()?;
     let baseline = points
         .iter()
-        .find(|p| p.value.is_some())
+        .find(|p| p.value.is_some() || p.crap.is_some())
         .and_then(|p| p.compatibility.clone());
     for point in &mut points {
-        if point.value.is_some() && point.compatibility != baseline {
+        if (point.value.is_some() || point.crap.is_some()) && point.compatibility != baseline {
             point.value = None;
+            point.crap = None;
             point.reason = "comparison break: differs from first plotted sample's project, configuration, profile or measurement identity".into();
         }
     }
+    scale_crap(&mut points);
     Ok(points)
+}
+fn scale_crap(points: &mut [Point]) {
+    let Some(ceiling) = points
+        .iter()
+        .filter_map(|p| p.crap.as_ref())
+        .map(super::crap::ceiling)
+        .max()
+    else {
+        return;
+    };
+    for point in points {
+        point.crap_ceiling = ceiling;
+        if let Some(value) = &point.crap {
+            match super::crap::coordinate(value, ceiling) {
+                Ok(grid) => point.crap_grid = Some(grid),
+                Err(reason) => point.reason = reason.into(),
+            }
+        }
+    }
 }
 
 #[cfg(test)]
