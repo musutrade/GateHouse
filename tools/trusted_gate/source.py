@@ -20,7 +20,9 @@ def prepare(config, github, journal, bundle, head):
     base = sha(branch['object']['sha'])
     repository = github.repo('GET', '')
     require(repository['id'] == config['repository_id'], 'repository identity differs from protected configuration')
-    payload = read_regular(bundle, config['max_bundle_bytes'])
+    require(isinstance(bundle, bytes), 'source preparation accepts only captured submission bytes')
+    payload = bundle
+    require(len(payload) <= config['max_bundle_bytes'], 'bundle exceeds budget')
     freeze_path = mirror.parent / 'frozen.json'
     freeze = {'repository': config['repository'], 'repository_id': repository['id'],
               'head': head, 'base': base, 'bundle_sha256': digest(payload)}
@@ -83,6 +85,9 @@ def prepare(config, github, journal, bundle, head):
 def retire(config, executor, journal, run_id):
     run = journal.get(run_id)
     require(run['remote'] in ('merged', 'revoked'), 'retain the source until merge or confirmed revocation')
+    require(not journal.outstanding(), 'a later active epoch owns the source slot; cannot retire an old run')
+    require(journal.latest(run['repository'], run['head'])['id'] == run_id,
+            'a later epoch exists for this candidate; only its owner can retire the source')
     executor.confirm_stopped(run)
     source = Path(config['source'])
     freeze_path = Path(config['mirror']).parent / 'frozen.json'

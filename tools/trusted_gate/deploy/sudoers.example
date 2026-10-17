@@ -1,0 +1,4 @@
+# Administrator review required. Install only the root-owned public launcher.
+# This grants no shell, interpreter, systemd, Docker, internal step or policy access.
+# Use a separate non-privileged gatehouse-developer account, never the operator account.
+gatehouse-developer ALL=(root) NOPASSWD: /opt/gatehouse/bin/gatehouse-control

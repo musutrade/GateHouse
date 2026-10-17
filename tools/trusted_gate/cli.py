@@ -10,7 +10,7 @@ import re
 import sys
 import urllib.parse
 
-from .common import Blocked, protected, read_json, require
+from .common import Blocked, protected, read_json, read_submission, require, submission_inbox
 from .control import Control
 from .execution import Executor
 from .github import APIError, GitHub
@@ -40,11 +40,12 @@ def configuration():
         protected(config[field], directory=True)
     paths = [Path(config[key]) for key in ('records', 'mirror', 'scratch', 'policy_directory', 'source')]
     paths.append(Path(config['cache']['root']))
-    require(all(path.is_absolute() and not any(c.isspace() for c in str(path)) and ':' not in str(path)
+    paths.append(submission_inbox(config['inbox']))
+    require(all(path.is_absolute() and '..' not in path.parts and not any(c.isspace() for c in str(path)) and ':' not in str(path)
                 for path in paths), 'host paths must be absolute and unambiguous systemd mount operands')
     require(all(a != b and a not in b.parents and b not in a.parents
                 for index, a in enumerate(paths) for b in paths[index + 1:]),
-            'source, policy, control state, mirror, scratch and cache must be disjoint')
+            'source, policy, control state, mirror, scratch, cache and inbox must be disjoint')
     require(config['freshness_seconds'] > 0 and config['timeout_seconds'] > 0, 'invalid time budget')
     unprivileged_identity(config['developer_uid'])
     return config
@@ -94,7 +95,8 @@ def main(argv=None):
                     if old and old['remote'] != 'revoked':
                         result = control.validate(old['input'])
                     else:
-                        inputs = prepare(config, github, journal, args.bundle, args.head)
+                        payload = read_submission(args.bundle, config['inbox'], config['developer_uid'], config['max_bundle_bytes'])
+                        inputs = prepare(config, github, journal, payload, args.head)
                         inputs['policy'] = executor.policy_identity()
                         result = control.validate(inputs)
                 elif args.action == 'attach':
@@ -103,9 +105,8 @@ def main(argv=None):
                     settings = config['delivery']
                     publisher = GitHub(settings['app_id'], settings['installation_id'], settings['app_key'],
                         config['repository'], permissions={'contents': 'write', 'pull_requests': 'write'})
-                    from .common import read_regular
                     result = deliver(control, publisher, args.run, args.title,
-                                     read_regular(args.body_file, 16384).decode('utf-8'))
+                        read_submission(args.body_file, config['inbox'], config['developer_uid'], 16384).decode('utf-8'))
                 elif args.action == 'publish':
                     require(config.get('coverage_acceptance') == 'complete',
                             'coverage migration is not accepted; cannot publish an authoritative success')

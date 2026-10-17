@@ -4,7 +4,10 @@ from __future__ import annotations
 import copy
 import json
 import importlib.util
+import os
 from pathlib import Path
+import runpy
+import stat
 import sys
 import tempfile
 import unittest
@@ -18,14 +21,14 @@ SPEC = importlib.util.spec_from_file_location('gatehouse_trusted_gate',
 PACKAGE = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = PACKAGE
 SPEC.loader.exec_module(PACKAGE)
-from gatehouse_trusted_gate.common import Blocked, canonical, digest, read_json, read_regular
+from gatehouse_trusted_gate.common import Blocked, canonical, digest, read_json, read_regular, read_submission, submission_inbox
 from gatehouse_trusted_gate.control import Control
 from gatehouse_trusted_gate.github import APIError, GitHub
 from gatehouse_trusted_gate.journal import Journal
 from gatehouse_trusted_gate.cache import Cache, DIMENSIONS, identity, dimensions as resolved_dimensions
 from gatehouse_trusted_gate.isolation import sandbox_arguments, unprivileged_identity
 from gatehouse_trusted_gate.execution import Executor as HostExecutor, clean_environment
-from gatehouse_trusted_gate.source import prepare
+from gatehouse_trusted_gate.source import prepare, retire
 from gatehouse_trusted_gate.publication import deliver
 
 
@@ -314,6 +317,62 @@ class APITests(unittest.TestCase):
 
 
 class FileTests(unittest.TestCase):
+    def test_delegated_file_reads_cannot_publish_root_files_or_special_entries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            inbox = Path(directory) / 'inbox'
+            inbox.mkdir()
+            body = inbox / 'body.txt'
+            body.write_bytes(b'reviewed body')
+            outside = Path(directory) / 'private-key'
+            outside.write_bytes(b'never publish')
+            link = inbox / 'link'
+            link.symlink_to(outside)
+            fifo = inbox / 'fifo'
+            os.mkfifo(fifo)
+            # Ownership of the deployed parent/inbox is tested separately. These are real
+            # file-descriptor reads; no mocked read can hide a symlink, hardlink or FIFO.
+            with patch('gatehouse_trusted_gate.common.submission_inbox', return_value=inbox):
+                self.assertEqual(read_submission(body, inbox, os.getuid(), 100), b'reviewed body')
+                for path, uid, limit in ((outside, os.getuid(), 100), (link, os.getuid(), 100),
+                        (fifo, os.getuid(), 100), (body, os.getuid() + 1, 100), (body, os.getuid(), 1),
+                        (inbox / '..' / 'private-key', os.getuid(), 100)):
+                    with self.subTest(path=path, uid=uid, limit=limit), self.assertRaises(Blocked):
+                        read_submission(path, inbox, uid, limit)
+                os.link(body, inbox / 'hardlink')
+                with self.assertRaises(Blocked):
+                    read_submission(body, inbox, os.getuid(), 100)
+
+    def test_inbox_requires_protected_parent_root_sticky_and_no_world_access(self):
+        inbox = Path('/var/spool/gatehouse/inbox')
+        with patch('gatehouse_trusted_gate.common.protected') as protected_parent:
+            for owner, mode in ((0, stat.S_IFDIR | 0o1730), (1000, stat.S_IFDIR | 0o1730),
+                    (0, stat.S_IFDIR | 0o0770), (0, stat.S_IFDIR | 0o1777),
+                    (0, stat.S_IFLNK | 0o1730)):
+                with self.subTest(owner=owner, mode=mode), patch.object(Path, 'lstat',
+                        return_value=SimpleNamespace(st_uid=owner, st_mode=mode)):
+                    if owner == 0 and mode == stat.S_IFDIR | 0o1730:
+                        self.assertEqual(submission_inbox(inbox), inbox)
+                    else:
+                        with self.assertRaises(Blocked):
+                            submission_inbox(inbox)
+            protected_parent.assert_called_with(inbox.parent, directory=True)
+
+    def test_public_launcher_rejects_internal_actions_and_discards_caller_environment(self):
+        launcher = ROOT / 'tools/trusted_gate/deploy/gatehouse-control'
+        with patch('os.geteuid', return_value=0), patch('os.execve', side_effect=SystemExit(77)) as execute:
+            for action in ('step', 'retire', 'revoke', 'maintain-cache', '/bin/sh'):
+                with self.subTest(action=action), patch.object(sys, 'argv', [str(launcher), action]), self.assertRaises(SystemExit):
+                    runpy.run_path(str(launcher), run_name='__main__')
+            execute.assert_not_called()
+            with patch.dict(os.environ, {'PYTHONPATH': '/agent', 'GITHUB_TOKEN': 'must-not-forward'}), \
+                 patch.object(sys, 'argv', [str(launcher), 'status']), self.assertRaises(SystemExit) as exit_status:
+                runpy.run_path(str(launcher), run_name='__main__')
+            self.assertEqual(exit_status.exception.code, 77)
+            program, argv, environment = execute.call_args.args
+            self.assertEqual(program, '/usr/bin/python3')
+            self.assertEqual(argv, ['/usr/bin/python3', '-I', '/opt/gatehouse/trusted_gate/host.py', 'status'])
+            self.assertEqual(environment, {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8'})
+
     def test_duplicate_json_symlink_and_oversize_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'input'
@@ -459,6 +518,25 @@ class IsolationTests(unittest.TestCase):
 
 
 class SourceTests(unittest.TestCase):
+    def test_old_terminal_epoch_cannot_retire_source_owned_by_active_batch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            journal = Journal(Path(directory) / 'journal.db')
+            self.addCleanup(journal.close)
+            executor = Executor()
+            control = Control(journal, Remote(), executor,
+                {'repository': 'owner/project', 'check_name': 'Trusted Gate'}, clock=lambda: 100)
+            inputs = {'repository': 'owner/project', 'head': 'a' * 40,
+                      'tree': 'b' * 40, 'base': 'c' * 40, 'policy': executor.policy}
+            old = control.validate(inputs)
+            control.revoke(old['id'], 'retired attempt')
+            current = control.validate(inputs)
+            with self.assertRaisesRegex(Blocked, 'later active epoch'):
+                retire({}, executor, journal, old['id'])
+            self.assertEqual(journal.outstanding()[0]['id'], current['id'])
+            control.revoke(current['id'], 'newer terminal attempt')
+            with self.assertRaisesRegex(Blocked, 'later epoch exists'):
+                retire({}, executor, journal, old['id'])
+
     def test_real_bundle_fixed_input_and_interrupted_preparation_recovery(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -500,8 +578,8 @@ class SourceTests(unittest.TestCase):
                 return actual_run(argv, **kwargs)
             with patch('gatehouse_trusted_gate.source.protected', side_effect=lambda p, **kw: Path(p)), \
                  patch('gatehouse_trusted_gate.source.subprocess.run', side_effect=run):
-                inputs = prepare(config, Reader(), EmptyJournal(), bundle, head)
-                repeated = prepare(config, Reader(), EmptyJournal(), bundle, head)
+                inputs = prepare(config, Reader(), EmptyJournal(), bundle.read_bytes(), head)
+                repeated = prepare(config, Reader(), EmptyJournal(), bundle.read_bytes(), head)
             self.assertEqual(inputs, repeated)
             self.assertEqual(inputs['head'], head)
             self.assertEqual(inputs['base'], base)

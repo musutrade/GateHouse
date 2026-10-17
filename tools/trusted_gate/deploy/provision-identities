@@ -1,0 +1,56 @@
+#!/bin/bash
+# Provision identities/directories only. No App key, service, sudoers or gate is installed.
+set -euo pipefail
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+umask 077
+
+if [[ "$#" != 1 || "$1" != --apply ]]; then
+  echo 'Usage: provision-identities --apply (reviewed administrator operation)' >&2
+  exit 2
+fi
+if [[ "$EUID" != 0 ]]; then
+  echo 'Administrator authentication is required; no alternate elevation is attempted.' >&2
+  exit 1
+fi
+
+# Stop before any mutation when an identity or managed location already exists.
+# An existing deployment requires explicit reconciliation, never an implicit chown.
+for name in gatehouse-developer gatehouse-executor gatehouse-submit; do
+  if getent passwd "$name" >/dev/null || getent group "$name" >/dev/null; then
+    echo "Existing identity requires administrator reconciliation: $name" >&2
+    exit 1
+  fi
+done
+locations=(/opt/gatehouse /etc/gatehouse /srv/gatehouse /var/lib/gatehouse
+           /var/cache/gatehouse /var/lib/gatehouse-scratch /var/spool/gatehouse)
+for location in "${locations[@]}"; do
+  if [[ -e "$location" || -L "$location" ]]; then
+    echo "Existing location requires administrator reconciliation: $location" >&2
+    exit 1
+  fi
+  parent="${location%/*}"
+  # All selected parents must be real root-owned directories without write grants.
+  /usr/bin/python3 -I - "$parent" <<'PY'
+import os, pathlib, stat, sys
+for item in (pathlib.Path(sys.argv[1]), *pathlib.Path(sys.argv[1]).parents):
+    info = item.lstat()
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
+        raise SystemExit('Unsafe managed parent: ' + str(item))
+PY
+done
+
+groupadd --system gatehouse-developer
+groupadd --system gatehouse-executor
+groupadd --system gatehouse-submit
+useradd --system --no-create-home --home-dir /srv/gatehouse/developer \
+  --gid gatehouse-developer --groups gatehouse-submit --shell /bin/bash gatehouse-developer
+useradd --system --no-create-home --home-dir /nonexistent \
+  --gid gatehouse-executor --shell /usr/sbin/nologin gatehouse-executor
+install -d -o root -g root -m 0755 /opt/gatehouse /etc/gatehouse /srv/gatehouse
+install -d -o root -g root -m 0700 /var/lib/gatehouse /var/lib/gatehouse/control \
+  /var/cache/gatehouse /var/lib/gatehouse-scratch
+install -d -o root -g root -m 0755 /var/spool/gatehouse
+install -d -o root -g gatehouse-submit -m 1730 /var/spool/gatehouse/inbox
+install -d -o gatehouse-developer -g gatehouse-developer -m 0700 /srv/gatehouse/developer
+echo 'Identities and empty directories provisioned. No service or authoritative gate is enabled.'
+echo 'Complete protected installation, quotas and live access acceptance before delegation.'

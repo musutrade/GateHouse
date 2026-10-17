@@ -90,6 +90,37 @@ def protected(path, *, directory=False, private=False):
     return path
 
 
+@checked
+def submission_inbox(inbox):
+    inbox = Path(inbox)
+    require(inbox.is_absolute() and '..' not in inbox.parts, 'inbox must be an absolute canonical path')
+    protected(inbox.parent, directory=True)
+    info = inbox.lstat()
+    require(stat.S_ISDIR(info.st_mode) and info.st_uid == 0 and info.st_mode & stat.S_ISVTX
+            and not info.st_mode & 0o007, 'inbox must be a root-owned sticky directory without world access')
+    return inbox
+
+
+@checked
+def read_submission(path, inbox, developer_uid, limit):
+    """A delegated root entry must never turn --body-file into arbitrary root file read."""
+    path, inbox = Path(path), submission_inbox(inbox)
+    require(path.is_absolute() and path.parent == inbox and path.name not in ('.', '..'),
+            'submission must be one file in the configured inbox')
+    directory = os.open(inbox, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        fd = os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        with os.fdopen(fd, 'rb') as stream:
+            item = os.fstat(stream.fileno())
+            require(stat.S_ISREG(item.st_mode) and item.st_uid == developer_uid and item.st_nlink == 1
+                    and item.st_size <= limit, 'submission must be a bounded developer-owned ordinary file')
+            data = stream.read(limit + 1)
+        require(len(data) <= limit, 'submission grew beyond limit')
+        return data
+    finally:
+        os.close(directory)
+
+
 def atomic_json(path, value):
     path = Path(path)
     fd, name = tempfile.mkstemp(prefix='.' + path.name, dir=path.parent)

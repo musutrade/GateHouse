@@ -39,8 +39,9 @@ Private directories, cgroup options and offline unit tests alone do not establis
 the deployed boundary. Test it with the actual developer and worker identities.
 Apply a filesystem quota to writable scratch/cache storage; a per-file size limit
 does not bound total disk consumption. Do not grant the developer permission to
-edit the installed package, run the controller as root, use a privileged container
-socket, or invoke arbitrary systemd units.
+edit the installed package, invoke internal root controller operations, use a
+privileged container socket, or invoke arbitrary systemd units. Delegate only the
+fixed public launcher described in the deployment runbook.
 
 The 2026-10-17 local inspection found that the current development account belongs
 to Docker/LXD and administrative groups and can access the Docker socket. The
@@ -59,7 +60,11 @@ entry is `/usr/bin/python3 -I /opt/gatehouse/trusted_gate/host.py`. It must run
 through the protected operator/service boundary; it is not an Agent shell hook.
 The [example settings](../tools/trusted_gate/deploy/host.example.json) deliberately
 use `coverage_acceptance: "transition"` and an empty pin inventory, which cannot
-publish a successful authoritative Check.
+publish a successful authoritative Check. The selected same-host identity setup,
+restricted submission entry and administrator prerequisites are in the
+[deployment runbook](trusted-host-deployment.md); the
+[coverage inventory](trusted-host-coverage.md) records every current CI cell that
+still needs a local owner and native acceptance.
 
 1. The consumer confirms its previous batch merged, selects the latest base and
    freezes the next task members/order. Agent scheduling and integration belong
