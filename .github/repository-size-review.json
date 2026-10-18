@@ -1,8 +1,8 @@
 {
   "schema": "repository-size-review/v1",
-  "base": "8994cf53a44677ecb36acc6f9a9ce1d547c57728",
+  "base": "0d969e03ab2a58591eb39ca67d7dba4d5cf04581",
   "owner": "higoalespn",
-  "reason": "Issue98 trusted-host candidate source, tests and documentation; exact cumulative inventory including approved controller API/delivery/Git proxy route, immutable configuration replay and environment isolation. Thresholds and individual-file policy unchanged.",
+  "reason": "Issue98 trusted-host candidate source, tests and documentation, including narrowly pinned administrative readmission of the interrupted063 installation, complete batch Git byte binding and detached recovery/progress. Candidate synchronized with approved main0d969e03; exact cumulative inventory. Thresholds and individual-file policy unchanged.",
   "blobs": [
     {
       "path": "docs/README.md",
@@ -23,6 +23,11 @@
       "path": "docs/trusted-host-administrator.md",
       "oid": "a48400f43eaafd480d7f40b82100de2a4387a5f9",
       "bytes": 10054
+    },
+    {
+      "path": "docs/trusted-host-administrator.md",
+      "oid": "adea8929ac6895270b4a1b8982304d60408bc05c",
+      "bytes": 18675
     },
     {
       "path": "docs/trusted-host-administrator.md",
@@ -725,6 +730,21 @@
       "bytes": 17605
     },
     {
+      "path": "tools/quality/tests/test_trusted_gate_recovery_batch.py",
+      "oid": "1c20d16c15522f4c4d7c9b07f85476a79b60041a",
+      "bytes": 5503
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_recovery_readmission.py",
+      "oid": "881f4fd3b92f3b5280819ec0d98492c507746b58",
+      "bytes": 12770
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_recovery_service.py",
+      "oid": "a57313bb9215921964df8634195501063b75acfa",
+      "bytes": 8159
+    },
+    {
       "path": "tools/quality/tests/test_trusted_gate_runtime.py",
       "oid": "e35d177a885af605b1b2403fddd17a27f656522e",
       "bytes": 10150
@@ -1360,6 +1380,21 @@
       "bytes": 2671
     },
     {
+      "path": "tools/trusted_gate/deploy/recover-interrupted-installation.py",
+      "oid": "342b40ba8b263d7e1f06c832afe665388cd0baac",
+      "bytes": 15562
+    },
+    {
+      "path": "tools/trusted_gate/deploy/recovery-worker.py",
+      "oid": "a8f80ac411358c53931f60027250b71e0367cc82",
+      "bytes": 7813
+    },
+    {
+      "path": "tools/trusted_gate/deploy/resume-interrupted-063.py",
+      "oid": "dc2ba1184cc5458fe3eca793434bc8dafb4ca13c",
+      "bytes": 6923
+    },
+    {
       "path": "tools/trusted_gate/deploy/run-linux-test.py",
       "oid": "7442659783bf40112071078215934ca433b2f5f4",
       "bytes": 13094
@@ -1398,6 +1433,11 @@
       "path": "tools/trusted_gate/deploy/stage-protected-source.py",
       "oid": "be1fa2cefcfec4c740da3eafbf1fc983cdd3fefc",
       "bytes": 8610
+    },
+    {
+      "path": "tools/trusted_gate/deploy/start-interrupted-recovery.py",
+      "oid": "bd988409c9ea64384544950db8b8814f3172a50f",
+      "bytes": 5580
     },
     {
       "path": "tools/trusted_gate/deploy/sudoers.example",
