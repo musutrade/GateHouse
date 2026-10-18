@@ -1449,6 +1449,235 @@ fn machine_identities_bind_policy_runtime_and_selected_series() {
     );
 }
 
+fn stage_worktree(root: &Path) {
+    for args in [
+        vec!["add", "-A"],
+        vec![
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-q",
+            "-m",
+            "staged",
+        ],
+    ] {
+        assert!(std::process::Command::new("git")
+            .args(args)
+            .current_dir(root)
+            .status()
+            .unwrap()
+            .success());
+    }
+}
+
+fn machine_result(report: &crate::verify::VerificationReport) -> Value {
+    serde_json::from_slice(
+        &fs::read(Path::new(&report.report_directory).join("test_result.json")).unwrap(),
+    )
+    .unwrap()
+}
+
+fn signed_snapshot_project(
+    fixture: &mut Fixture,
+    index: bool,
+    destination: &Path,
+) -> crate::project::Project {
+    let root = fixture.dir.path().to_path_buf();
+    let destination = destination
+        .parent()
+        .unwrap()
+        .canonicalize()
+        .unwrap()
+        .join(destination.file_name().unwrap());
+    let artifact_root = destination.join(&fixture.state.artifact_root);
+    let mut request_input = fixture.request.input.clone();
+    request_input["workspace_root"] = json!(destination.to_string_lossy());
+    request_input["output_root"] = json!(artifact_root.to_string_lossy());
+    fixture.request.input = request_input;
+    fixture.request.artifact_root = artifact_root;
+    fixture.sign();
+    write(
+        &root.join(".harness-gate/workflow-state.json"),
+        &fixture.state,
+    );
+    stage_worktree(&root);
+    if index {
+        crate::project::Project::discover_index_content(Some(root), None, Some(&destination))
+            .unwrap()
+    } else {
+        crate::project::Project::discover(Some(root), None)
+            .unwrap()
+            .directory_snapshot(Some(&destination))
+            .unwrap()
+    }
+}
+
+#[test]
+fn signed_collector_destination_binds_content_snapshots_in_both_adapters() {
+    for index in [false, true] {
+        let mut fixture = Fixture::workflow("pass", true, true);
+        let root = fixture.dir.path().to_path_buf();
+        let host = tempdir().unwrap();
+        let destination = host.path().join("signed-destination");
+        let project = signed_snapshot_project(&mut fixture, index, &destination);
+        if index {
+            // An unstaged invalid workflow cannot change the index invocation.
+            fs::write(root.join(DEFAULT_CONFIG_PATH), "not = [valid").unwrap();
+        }
+        let report = crate::verify::run(
+            &project,
+            crate::scope::ScopeResult::all(&project),
+            "full",
+            false,
+        )
+        .unwrap();
+        let result = machine_result(&report);
+        crate::test_support::schema_validator::validate_machine_result(&result).unwrap();
+        assert!(report.passed, "{index}: {result:#}");
+        assert_eq!(
+            result["input_mode"],
+            json!(if index { "content-index" } else { "directory" })
+        );
+        assert_eq!(result["quality"]["baseline"]["status"], json!("available"));
+        assert!(result["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|step| step["step_id"] == "configured-check" && step["passed"] == json!(true)));
+        assert!(destination.exists());
+        drop(project);
+        assert!(!destination.exists(), "{index}: destination not cleaned up");
+    }
+}
+
+#[test]
+fn content_snapshot_destinations_reject_existing_relative_and_overlapping_paths() {
+    let fixture = Fixture::workflow("pass", true, false);
+    let root = fixture.dir.path().to_path_buf();
+    let host = tempdir().unwrap();
+    let project = crate::project::Project::discover(Some(root.clone()), None).unwrap();
+    let existing = host.path().join("existing-destination");
+    fs::create_dir(&existing).unwrap();
+    fs::write(existing.join("sentinel"), "preserve").unwrap();
+    let error = project
+        .directory_snapshot(Some(&existing))
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("new directory"), "{error}");
+    assert_eq!(
+        fs::read_to_string(existing.join("sentinel")).unwrap(),
+        "preserve"
+    );
+    let error = project
+        .directory_snapshot(Some(Path::new("relative/destination")))
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("absolute"), "{error}");
+    let inside = root.join("inside-destination");
+    let error = project
+        .directory_snapshot(Some(&inside))
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("separate from candidate input"), "{error}");
+    assert!(!inside.exists());
+
+    let mut fixture = Fixture::workflow("pass", true, false);
+    let root = fixture.dir.path().to_path_buf();
+    fixture.state.artifact_root = "src".into();
+    write(
+        &root.join(".harness-gate/workflow-state.json"),
+        &fixture.state,
+    );
+    let host = tempdir().unwrap();
+    let destination = host.path().join("overlap-destination");
+    let project = signed_snapshot_project(&mut fixture, false, &destination);
+    match crate::verify::run(
+        &project,
+        crate::scope::ScopeResult::all(&project),
+        "full",
+        false,
+    ) {
+        Ok(report) => {
+            let value = serde_json::to_value(&report).unwrap();
+            assert!(!report.passed, "{value:#}");
+            assert_eq!(value["quality"]["status"], "blocked");
+            assert!(
+                value["quality"]["error"]
+                    .as_str()
+                    .is_some_and(|error| error.contains("overlaps candidate input")),
+                "{value:#}"
+            );
+        }
+        Err(error) => {
+            assert!(
+                error.to_string().contains("overlaps candidate input"),
+                "{error}"
+            );
+        }
+    }
+}
+
+#[test]
+fn content_snapshot_retained_baseline_failures_block_success() {
+    for case in ["missing", "corrupt", "lineage"] {
+        let mut fixture = Fixture::workflow("pass", true, true);
+        let root = fixture.dir.path().to_path_buf();
+        match case {
+            "missing" => fs::remove_file(root.join("base/manifest.json")).unwrap(),
+            "corrupt" => fs::write(root.join("base/manifest.json"), "{}").unwrap(),
+            "lineage" => {
+                fixture.state.mappings = Some(json!({"invalid": true}));
+                write(
+                    &root.join(".harness-gate/workflow-state.json"),
+                    &fixture.state,
+                );
+            }
+            _ => unreachable!(),
+        }
+        let host = tempdir().unwrap();
+        let destination = host.path().join("baseline-destination");
+        let project = signed_snapshot_project(&mut fixture, false, &destination);
+        let outcome = crate::verify::run(
+            &project,
+            crate::scope::ScopeResult::all(&project),
+            "full",
+            false,
+        );
+        match outcome {
+            Ok(report) => {
+                let value = serde_json::to_value(&report).unwrap();
+                assert!(!report.passed, "{case}: {value:#}");
+                assert_eq!(value["quality"]["status"], "blocked", "{case}");
+                assert!(value["quality"]["error"].is_string(), "{case}");
+            }
+            Err(error) => {
+                assert!(!error.to_string().is_empty(), "{case}");
+            }
+        }
+    }
+}
+
+#[test]
+fn content_snapshot_detects_collector_writes_outside_the_declared_root() {
+    let mut fixture = Fixture::workflow("source-change", true, false);
+    let host = tempdir().unwrap();
+    let destination = host.path().join("writes-elsewhere-destination");
+    let project = signed_snapshot_project(&mut fixture, false, &destination);
+    let error = crate::verify::run(
+        &project,
+        crate::scope::ScopeResult::all(&project),
+        "full",
+        false,
+    )
+    .unwrap_err()
+    .to_string();
+    assert!(error.contains("materialized candidate changed"), "{error}");
+    drop(project);
+    assert!(!destination.exists());
+}
+
 #[test]
 fn retained_evidence_rejects_stale_or_tampered_inputs_without_fallback() {
     for mode in [

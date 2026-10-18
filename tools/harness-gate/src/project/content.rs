@@ -258,4 +258,53 @@ mod tests {
         fs::write(root.path().join("nested/.git"), "metadata").unwrap();
         assert!(ContentManifest::capture(root.path(), None).is_err());
     }
+
+    #[test]
+    fn artifact_roots_cannot_overlap_candidate_files() {
+        let root = tempfile::tempdir().unwrap();
+        fs::create_dir_all(root.path().join("src")).unwrap();
+        fs::write(root.path().join("src/lib.rs"), "candidate").unwrap();
+        let manifest = ContentManifest::capture(root.path(), None).unwrap();
+        let error = manifest
+            .output_path(root.path(), Path::new("src"))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("overlaps candidate input"), "{error}");
+        let error = manifest
+            .output_path(root.path(), Path::new("src/lib.rs"))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("overlaps candidate input"), "{error}");
+        assert_eq!(
+            manifest
+                .output_path(root.path(), Path::new("generated"))
+                .unwrap(),
+            root.path().join("generated")
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn artifact_roots_reject_symlink_aliases_git_metadata_and_absolute_paths() {
+        use std::os::unix::fs::symlink;
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let manifest = ContentManifest::capture(root.path(), None).unwrap();
+        symlink(outside.path(), root.path().join("aliased")).unwrap();
+        let error = manifest
+            .output_path(root.path(), Path::new("aliased"))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("real directories"), "{error}");
+        let error = manifest
+            .output_path(root.path(), Path::new(".git/objects"))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("Git metadata"), "{error}");
+        let error = manifest
+            .output_path(root.path(), Path::new("/absolute/root"))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("relative"), "{error}");
+    }
 }
