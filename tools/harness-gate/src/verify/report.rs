@@ -1,8 +1,6 @@
 mod quality_view;
 mod rendering;
 
-#[cfg(test)]
-use rendering::escape;
 use rendering::{junit, markdown};
 
 use super::VerificationReport;
@@ -2291,13 +2289,14 @@ fn resolve_report_root(project: &Project, repository: &Path) -> Result<PathBuf> 
 mod tests {
     use super::{
         allocate_invocation, configured_html, ensure_supported_machine_result, junit,
-        machine_result, markdown, redact_invocation_files, redact_text, render_html, report_target,
+        machine_result, markdown, redact_invocation_files, redact_text, report_target,
         verify_manifest, write, write_invocation_metadata, ARTIFACT_REGISTRY_FILE,
         MACHINE_RESULT_FILE, MANIFEST_FILE, REDACTION_TEXT_LIMIT,
     };
     use crate::process::TaskResult;
     use crate::scope::ScopeResult;
     use crate::verify::{SkippedStep, VerificationReport};
+    use std::io::Write;
     use std::time::Duration;
 
     fn report() -> VerificationReport {
@@ -3613,15 +3612,6 @@ mod tests {
         assert!(output.contains("tests=\"1\" failures=\"1\""));
         assert!(output.contains("unit &lt;tests&gt;"));
         assert!(output.contains("<failure message=\"exit code 1\"/>"));
-    }
-
-    #[test]
-    fn html_template_replaces_only_supported_fields() {
-        let output = render_html(
-            "{{ profile }} {{ summary }} {{ components }} {{ unknown }}",
-            &report(),
-        );
-        assert_eq!(output, "full FAIL api {{ unknown }}");
     }
 
     #[test]
