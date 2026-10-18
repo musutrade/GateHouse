@@ -357,10 +357,11 @@ fn run_selected(
         .map(|result| result.runtime.clone())
         .unwrap_or(local_runtime);
     let identities = serde_json::json!({
-        "quality_policy_identity": policy_identity,
+        "verification_policy_identity": policy_identity,
+        "quality_policy_identity": quality_identity,
         "runtime_bundle_digest": actual_runtime["runtime_bundle_digest"],
         "runtime": actual_runtime,
-        "policy_binding_complete": quality.as_ref().is_none_or(|result| result.inputs["quality_policy_identity"].is_string()),
+        "policy_binding_complete": quality.as_ref().is_some_and(|result| result.inputs["quality_policy_identity"].is_string()),
         "current_applicability": "not_proven",
     });
     let passed = quality.as_ref().is_none_or(|result| result.passed())

@@ -248,12 +248,12 @@ fn evaluate(project: &Project, work: Prepared, result: &mut QualityResult) -> Re
     result.inputs = serde_json::to_value(&collection.inputs)?;
     result.evidence = collection.evidence;
     result.producers = serde_json::to_value(collection.producers)?;
-    super::runtime::bind_collection(&mut result.runtime, &result.inputs, &result.producers)?;
-    result.runtime["facts"]["collectors"] = serde_json::to_value(collection.runtime_bindings)?;
-    result.runtime["runtime_bundle_digest"] = json!(crate::config::quality::identity::digest(
-        "runtime-bundle/v1",
-        &result.runtime["facts"]
-    )?);
+    super::runtime::bind_collection(
+        &mut result.runtime,
+        &result.inputs,
+        &result.producers,
+        &serde_json::to_value(collection.runtime_bindings)?,
+    )?;
     if !work.has_policy {
         result.status = "not_collected";
         result.full_quality_status = "not_collected";

@@ -66,9 +66,10 @@
     "identities": {
       "type": ["object", "null"],
       "additionalProperties": false,
-      "required": ["quality_policy_identity", "runtime_bundle_digest", "runtime", "policy_binding_complete", "current_applicability"],
+      "required": ["verification_policy_identity", "quality_policy_identity", "runtime_bundle_digest", "runtime", "policy_binding_complete", "current_applicability"],
       "properties": {
-        "quality_policy_identity": {"type": "string", "pattern": "^verification-policy/v1:sha256:[a-f0-9]{64}$"},
+        "verification_policy_identity": {"type": "string", "pattern": "^verification-policy/v1:sha256:[a-f0-9]{64}$"},
+        "quality_policy_identity": {"type": ["string", "null"], "pattern": "^quality-policy/v1:sha256:[a-f0-9]{64}$"},
         "runtime_bundle_digest": {"type": "string", "pattern": "^runtime-bundle/v1:sha256:[a-f0-9]{64}$"},
         "runtime": {"type": "object"},
         "policy_binding_complete": {"type": "boolean"},

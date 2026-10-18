@@ -79,13 +79,16 @@ pub(super) fn bind_collection(
     runtime: &mut Value,
     inputs: &Value,
     producers: &Value,
+    collectors: &Value,
 ) -> Result<()> {
     let facts = runtime.get_mut("facts").context("runtime facts missing")?;
-    // Preserve collector tool/runtime/source series and authenticated producer
-    // facts separately. Do not mistake their identities for a host attestation.
+    // Bind collector tool/runtime/source series, selected adapter settings and
+    // collected/retained origin states together. The origin labels are not
+    // signatures or an independent host attestation.
     facts["series"] = inputs["project"]["series"].clone();
+    facts["collectors"] = collectors.clone();
+    facts["collector_producers"] = producers.clone();
     let identity = digest("runtime-bundle/v1", facts)?;
-    runtime["collector_producers"] = producers.clone();
     runtime["runtime_bundle_digest"] = json!(identity);
     Ok(())
 }

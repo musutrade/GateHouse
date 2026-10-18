@@ -5,19 +5,34 @@ quality evidence and compilation bindings. The additive `identities` object
 separates quality policy from recorded execution facts; it does not replace
 those existing fields or introduce a second quality evaluator.
 
-`quality_policy_identity` binds workflow policy, selected profile, requiredness,
-waivers, built-in policy files and the quality compiler's selected original
-rules, baseline policy, mappings and exceptions. The compiler retains its full
-`identity` for concrete candidate/subject/series/run binding. Hashing policy
-rules before expansion avoids treating a new source fingerprint or run ID as
-a policy edit. CLI/help source, report presentation, external delivery settings,
-operator probes and cache configuration are not policy inputs.
+`identities.quality_policy_identity` is the exact `quality-policy/v1` value
+from compiled quality inputs, or null when no compiled identity is available.
+It binds the selected original rules, workflow policy, requiredness, waivers,
+built-in policy files, baseline policy, mappings and exceptions. The compiler
+retains its full `identity` for concrete candidate/subject/series/run binding.
+Hashing rules before expansion avoids treating a new source fingerprint or run
+ID as a policy edit. CLI/help source, report presentation, external delivery
+settings, operator probes and cache configuration are not policy inputs.
+
+`verification_policy_identity` has a distinct `verification-policy/v1` domain.
+It binds `{workflow, quality_policy_identity}`, where workflow contains the
+projected flow, built-in policy pins, selected `profile` and `only_step` (null
+for normal verification). This outer selection binding must not be compared
+with the compiler's policy identity as though the two were the same field.
+
+`policy_binding_complete` means a compiled quality policy identity is present.
+It is false when compilation is absent or fails, including execution-only
+`step` runs. It does not mean quality PASS, complete coverage, or permission to
+reuse evidence. Generic workflow identity remains available independently.
 
 `runtime_bundle_digest` binds the executing Core file digest, platform,
 execution and runner configuration, and the effective collector host policy.
 These facts are captured before workload execution. Collected quality inputs
-add their existing tool/runtime series; authenticated producer facts remain
-available alongside them. Raw command arguments, service configuration and
+add their existing tool/runtime series, selected adapter executable/settings
+bindings and collected/retained origin labels. The digest covers all three
+inside `runtime.facts`: `series`, `collectors`, and `collector_producers`.
+Origin labels are not signatures. Collector host limits, including
+`max_artifact_bytes`, belong to runtime, not quality thresholds. Raw command arguments, service configuration and
 environment values are not copied into runtime metadata. Configurations are
 bound through domain-separated digests; ambient secret values are not read.
 
@@ -48,3 +63,8 @@ Older reports without these additive fields remain historically readable.
 Missing identity facts cannot be treated as wildcard matches for current use.
 This increment records and separates facts; it does not claim complete host
 attestation or close the remaining execution-trust acceptance work.
+
+These are additive fields under the existing result schema version. Updated
+Core readers retain historical compatibility, but consumers pinned to an older
+strict schema must upgrade that schema before accepting new reports. An old
+schema rejection must remain an error; do not disable additional-property checks.
