@@ -272,7 +272,8 @@ def command(B, source, inputs, worker, cargo_config, unit, host):
         'ProtectProc': 'invisible', 'ProcSubset': 'pid', 'KillMode': 'control-group',
         'RuntimeMaxSec': str(TIMEOUT), 'TimeoutStopSec': '15', 'MemoryMax': str(8 * 1024**3),
         'TasksMax': '512', 'LimitFSIZE': str(1024**3), 'WorkingDirectory': '/work/source',
-        'TemporaryFileSystem': '/work:mode=0755,nosuid,nodev', 'UnsetEnvironment': 'LD_PRELOAD LD_LIBRARY_PATH',
+        'TemporaryFileSystem': '/work:mode=0755,nosuid,nodev /opt/gatehouse:mode=0755,nosuid,nodev',
+        'UnsetEnvironment': 'LD_PRELOAD LD_LIBRARY_PATH',
         'BindReadOnlyPaths': str(source) + ':/work/source ' + str(inputs / 'tools/toolchain') +
             ':/opt/gatehouse/toolchain ' + str(inputs / 'dependencies/sources') + ':/work/dependencies/sources ' +
             str(cargo_config) + ':/work/output/cargo-home/config.toml',

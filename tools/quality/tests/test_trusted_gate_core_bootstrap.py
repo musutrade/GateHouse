@@ -189,7 +189,7 @@ class CoreBootstrapTests(unittest.TestCase):
                     '--property=PrivateNetwork=yes', '--property=KillMode=control-group',
                     '--property=CapabilityBoundingSet=', '--property=ReadWritePaths=/work/output',
                     '--property=WorkingDirectory=/work/source',
-                    '--property=TemporaryFileSystem=/work:mode=0755,nosuid,nodev'):
+                    '--property=TemporaryFileSystem=/work:mode=0755,nosuid,nodev /opt/gatehouse:mode=0755,nosuid,nodev'):
             self.assertIn(arg, command)
         self.assertEqual(command[command.index('--')+1:command.index('--')+4], ['/usr/bin/reviewed-env', '-i',
                          'PATH=/opt/gatehouse/toolchain/bin:/usr/bin:/bin'])

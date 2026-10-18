@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has nineteen files:
-the importer, Core builder, preservation, volume, source-staging, release-contract, preflight, Linux-policy, input-sealing and host-configuration libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has twenty files:
+the importer, Core builder, preservation, volume, source-staging, release-contract, preflight, Linux-policy, input-sealing, host-configuration and Core-inspection libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -1091,9 +1091,79 @@ Root/source-release/import/kernel/worker proof boundaries explicitly replaced.
 Cases include incomplete records, rehashed identity/authority drift, wrong Core
 recipe/binary/mode, runtime data drift, changed OS pins/source freeze, repeated
 output, wrong/busy inherited leases and postcheck mutations. These fixtures are
-not Root deployment, UID995 workload or quality acceptance. The source-only
-release has nineteen helpers and 71 members with no Core binary; the normal
+not Root deployment, UID995 workload or quality acceptance. At `59092ee`, the source-only
+release had nineteen helpers and 71 members with no Core binary; the normal
 pilot package and installed 659 are unchanged.
+
+### Candidate captured-Core policy inspection
+
+The twentieth authenticated helper, `check-core-policy.py`, adds administrator-only
+`inspect-core-policy`. Under the exact inherited 659 controller lease, it uses
+the configuration composer's new read-only mode to reconstruct and reverify an
+externally pinned completed configuration. That mode also checks exact private
+file modes, the complete control record, installed plan and all original
+source/import/seal/Core/host/storage/old-pilot proofs. It neither reuses partial
+output nor rewrites a previously completed candidate on failure. The public
+composition entry still accepts only fresh output.
+
+Inspection makes a fresh independent Git mirror and working tree from protected
+inputs, without hardlinks or alternates. The exact reviewed candidate bundle is
+verified and fetched explicitly, including when the candidate is not reachable
+from the original mirror's refs. Policy is overlaid only in this private copy:
+Core requires the configuration inside the project root, and leaving an overlay
+in the real frozen source would prevent a later fresh execution. Source, Git and
+policy metadata are inventoried and checked again after each command.
+
+Only three commands are permitted: configuration check in JSON mode, and full
+and hook verification plans with `--all --plan --json`. They use the separately
+verified captured release Core through transient parser units with no effective
+capabilities, network, mutable system view or access to the existing credentials
+and pilot control state. The source view and Core mounts are readonly. Each
+command has a 30-second runtime, 1 GiB memory and 2 MiB output limit; the outer
+forwarder also has bounded files, CPU, descriptors and timeout. A clean explicit
+environment replaces manager/user environment. Unit identity/argv and private
+stdout/stderr remain available for diagnosis. The unit is stopped and its cgroup
+checked even after failure; unknown stop state never becomes acceptance.
+
+Inspection mount targets remain inside private `/work`. The Core builder also
+uses a private `/opt/gatehouse` temporary view for its existing toolchain mount,
+preserving the old installation inventory while keeping the approved tool paths
+and build arguments. The mount destinations must exist or be creatable under
+[systemd's mount rules](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html);
+these private parents keep that preparation within the service view.
+
+The reply validator requires a complete typed configuration report and the exact
+versioned passive-plan envelope. Both profiles must select all five nodes with
+the mandatory builtin chain and unchanged components/profile inventory. Services,
+waivers, shortened coverage, diagnostics, claimed runtime validation or a
+verification result block inspection. Raw policy bytes and Core's effective
+configuration digest are separate reviewed pins: Core hashes its Rust TOML
+serialization including defaults. The validator does not reinterpret that digest
+as a raw file hash or accept a value chosen by the reply. The reviewed Core crate
+tree remains unchanged.
+
+All configuration and protected input facts are rechecked before completion, as
+are copied view metadata, response bytes and successful unit-stop records. An
+externally pinnable inspection binding records compatibility of captured Core
+with this policy only. It does not change the original configuration binding,
+enable authoritative publication, run project steps, grant complete coverage or
+install anything. Preservation/revocation/retirement, guarded installation and
+startup recovery, live UID995/Linux workload, other quality/native cells and
+cache/resource/App/rule/delivery acceptance remain pending. Engineering-policy
+semantics, generic limits and quality authority are unchanged.
+
+Thirty-five new regressions bring the focused suite to 387 tests: fifteen passive
+protocol cases, four read-only composition cases and sixteen inspection/copy/unit
+cases. Root/provenance/OS/kernel boundaries are explicitly replaced in fixtures.
+An ordinary UID1000 experiment independently copied the actual `59092ee` source
+plus policy, 1,665 files / 13,117,921 bytes and a separate 5,093,893-byte Git store,
+in 1.530 seconds. Existing operator Core then passed configuration and both passive
+plan checks in about 0.019/0.012/0.012 seconds, with matching view inventories.
+That experiment exercised copy/inventory and passive diagnostics only; it did
+not invoke Root authentication, record provenance, lease/slot/mount/cgroup or
+UID995 admission. It is not captured-Core, workload or quality acceptance. The
+source-only release has twenty helpers and 72 members with no Core binary;
+administrator readiness and production remain false, and installed 659 is untouched.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,

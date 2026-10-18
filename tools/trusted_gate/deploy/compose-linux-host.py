@@ -160,8 +160,25 @@ def runtime_verification(B, payload, config):
         for full in (name + '.runtime', name + '.common', name):sys.modules.pop(full, None)
 
 
+def artifact_bytes(B, contract, payload, config, old, old_raw, captured, core_root, destination, head):
+    raw = B.canonical(config);B.need(len(raw) <= 1024**2, 'host configuration exceeds budget')
+    plan = contract.plan(payload)
+    plan['captured-Core'] = {'destination': '/opt/gatehouse/bin/harness-gate', 'mode': 0o555, 'action': 'replace',
+        'source': str(core_root / 'harness-gate'), 'before_sha256': old['protected_files'][config['core']],
+        'after_sha256': captured['binary']['sha256']}
+    plan['host-configuration'] = {'destination': str(CONFIG), 'mode': 0o600, 'action': 'replace',
+        'source': str(destination / 'host.json'), 'before_sha256': digest(old_raw), 'after_sha256': digest(raw)}
+    plan_value = {'schema': 'gatehouse-linux-install-plan/v1', 'head': head, 'files': plan,
+        'directories': {str(VOLUME / name): 0o700 for name in ('scratch', 'cache')},
+        'required_migration_order': contract.ORDER, 'required_before_installation': [
+            'captured-Core-config-and-profile-plan-checks', 'reverified-pilot-preservation',
+            'confirmed-old-run-revocation-and-source-retirement', 'guarded-install-and-startup-recovery'],
+        'administrator_ready': False, 'production_gate_enabled': False}
+    return raw, B.canonical(plan_value)
+
+
 def compose(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin, seal_pin, core_pin,
-            host, host_pin, recipe, recipe_pin, lock_fd=None):
+            host, host_pin, recipe, recipe_pin, lock_fd=None, *, existing_pin=None):
     B.need(os.geteuid() == 0, 'administrator authentication required for host configuration')
     B.need(os.uname().sysname == 'Linux' and os.uname().machine == 'x86_64', 'unsupported configuration platform')
     os.umask(0o077)
@@ -188,7 +205,10 @@ def compose(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin,
             volume.admit(B, helpers, manifest, manifest_pin, recipe, recipe_pin)
             return preflight.observe(B, helpers, manifest, manifest_pin, lock_fd=lock_fd)
         before = guards()
-        B.need(not destination.exists() and not destination.is_symlink(), 'retain previous host configuration; never reuse')
+        if existing_pin is None:
+            B.need(not destination.exists() and not destination.is_symlink(), 'retain previous host configuration; never reuse')
+        else:
+            B.owned(destination, directory=True, private=True)
         old_raw = B.read(B.owned(CONFIG, private=True), 1024**2)
         old = json.loads(old_raw, object_pairs_hook=B.unique)
         contract.inspect(B, helpers, manifest, manifest_pin, archive, archive_pin)
@@ -224,27 +244,16 @@ def compose(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin,
         verified = runtime_verification(B, payload, config)
         B.need(B.canonical([verified['linux_inputs']['files'], verified['linux_inputs']['bytes']]) ==
                B.canonical([sealed['files'], sealed['bytes']]), 'sealed Linux totals differ')
-        destination.mkdir(mode=0o700)
         status = {'schema': 'gatehouse-linux-host-config/v1', 'state': 'incomplete', 'head': head, 'base': BASE,
                   'helper_manifest_sha256': manifest_pin, 'administrator_ready': False, 'production_gate_enabled': False,
                   'captured_core_policy_checked': False, 'coverage_acceptance': 'transition', 'authoritative_publish': 'blocked'}
-        B.record(destination / 'compose.json', status)
-        try:
-            raw = B.canonical(config);B.need(len(raw) <= 1024**2, 'host configuration exceeds budget')
-            B.write(destination / 'host.json', raw, 0o600)
-            plan = contract.plan(payload)
-            plan['captured-Core'] = {'destination': '/opt/gatehouse/bin/harness-gate', 'mode': 0o555, 'action': 'replace',
-                'source': str(core_root / 'harness-gate'), 'before_sha256': old['protected_files'][config['core']],
-                'after_sha256': captured['binary']['sha256']}
-            plan['host-configuration'] = {'destination': str(CONFIG), 'mode': 0o600, 'action': 'replace',
-                'source': str(destination / 'host.json'), 'before_sha256': digest(old_raw), 'after_sha256': digest(raw)}
-            plan_value = {'schema': 'gatehouse-linux-install-plan/v1', 'head': head, 'files': plan,
-                'directories': {str(VOLUME / name): 0o700 for name in ('scratch', 'cache')},
-                'required_migration_order': contract.ORDER, 'required_before_installation': [
-                    'captured-Core-config-and-profile-plan-checks', 'reverified-pilot-preservation',
-                    'confirmed-old-run-revocation-and-source-retirement', 'guarded-install-and-startup-recovery'],
-                'administrator_ready': False, 'production_gate_enabled': False}
-            plan_raw = B.canonical(plan_value);B.write(destination / 'install-plan.json', plan_raw, 0o400)
+        raw, plan_raw = artifact_bytes(B, contract, payload, config, old, old_raw, captured, core_root, destination, head)
+        result = {**status, 'state': 'composed', 'configuration_sha256': digest(raw), 'plan_sha256': digest(plan_raw),
+            'old_configuration_sha256': digest(old_raw), 'release_sha256': archive_pin,
+            'input_binding_sha256': input_pin, 'linux_role_binding_sha256': seal_pin, 'core_build_record_sha256': core_pin,
+            'runtime_verification': verified, 'execution_pins': len(config['protected_files']),
+            'scope': 'pinned configuration candidate only; no captured-Core policy check, installation or quality acceptance'}
+        def recheck():
             B.need(facts() == initial and runtime_verification(B, payload, config) == verified
                    and B.read(CONFIG, 1024**2) == old_raw and B.read(archive, contract.MAX_ARCHIVE) == archive_raw
                    and B.read(destination / 'host.json', 1024**2) == raw
@@ -252,11 +261,22 @@ def compose(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin,
                    'configuration inputs or outputs changed')
             B.authenticate(helpers, manifest, manifest_pin)
             B.need(guards() == before, 'old pilot changed during configuration')
-            result = {**status, 'state': 'composed', 'configuration_sha256': digest(raw), 'plan_sha256': digest(plan_raw),
-                'old_configuration_sha256': digest(old_raw), 'release_sha256': archive_pin,
-                'input_binding_sha256': input_pin, 'linux_role_binding_sha256': seal_pin, 'core_build_record_sha256': core_pin,
-                'runtime_verification': verified, 'execution_pins': len(config['protected_files']),
-                'scope': 'pinned configuration candidate only; no captured-Core policy check, installation or quality acceptance'}
+        if existing_pin is not None:
+            for name, mode in (('host.json', 0o600), ('install-plan.json', 0o400), ('binding.json', 0o400), ('compose.json', 0o600)):
+                path = B.owned(destination / name, private=True)
+                B.need(stat.S_IMODE(path.stat().st_mode) == mode, 'composed configuration mode differs')
+            saved = builder.json_pin(B, B.owned(destination / 'binding.json', private=True), existing_pin)
+            B.need(B.canonical(saved) == B.canonical(result), 'composed configuration binding differs')
+            B.need(B.canonical(value(B, destination / 'compose.json')) == B.canonical(
+                {**status, 'state': 'composed', 'binding_sha256': existing_pin}), 'configuration has no complete control record')
+            recheck()
+            return result
+        destination.mkdir(mode=0o700)
+        B.record(destination / 'compose.json', status)
+        try:
+            B.write(destination / 'host.json', raw, 0o600)
+            B.write(destination / 'install-plan.json', plan_raw, 0o400)
+            recheck()
             B.write(destination / 'binding.json', B.canonical(result), 0o400)
             B.record(destination / 'compose.json', {**status, 'state': 'composed', 'binding_sha256': digest(B.canonical(result))})
             return result

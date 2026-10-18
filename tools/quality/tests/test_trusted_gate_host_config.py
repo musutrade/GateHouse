@@ -162,6 +162,34 @@ class HostConfigurationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'never reuse'):self.compose()
         self.assertEqual(json.loads((self.output/'compose.json').read_bytes())['state'],'composed')
 
+    def test_completed_candidate_can_be_reverified_with_external_pin_without_any_writes(self):
+        result=self.compose();pin=C.digest((self.output/'binding.json').read_bytes())
+        before={path:path.read_bytes() for path in self.output.iterdir()}
+        with patch.object(self.B,'write',side_effect=AssertionError('unexpected write')), \
+             patch.object(self.B,'record',side_effect=AssertionError('unexpected state change')):
+            self.assertEqual(self.compose(existing_pin=pin),result)
+        self.assertEqual({path:path.read_bytes() for path in self.output.iterdir()},before)
+
+    def test_existing_candidate_requires_pin_complete_state_and_exact_outputs(self):
+        self.compose();pin=C.digest((self.output/'binding.json').read_bytes())
+        with self.assertRaises(ValueError):self.compose(existing_pin='f'*64)
+        status=self.output/'compose.json';before=status.read_bytes();value=json.loads(before);value['state']='blocked'
+        status.write_bytes(BOOT.canonical(value))
+        with self.assertRaises(ValueError):self.compose(existing_pin=pin)
+        self.assertEqual(status.read_bytes(),BOOT.canonical(value));status.write_bytes(before)
+        path=self.output/'host.json';path.write_bytes(b'changed')
+        with self.assertRaises(ValueError):self.compose(existing_pin=pin)
+        self.assertEqual(status.read_bytes(),before)
+
+    def test_rehashed_existing_binding_cannot_promote_acceptance(self):
+        self.compose();path=self.output/'binding.json';value=json.loads(path.read_bytes());value['administrator_ready']=True
+        path.chmod(0o600);path.write_bytes(BOOT.canonical(value));path.chmod(0o400)
+        with self.assertRaises(ValueError):self.compose(existing_pin=C.digest(path.read_bytes()))
+
+    def test_existing_candidate_mode_drift_cannot_be_reverified(self):
+        self.compose();pin=C.digest((self.output/'binding.json').read_bytes());(self.output/'host.json').chmod(0o644)
+        with self.assertRaisesRegex(ValueError,'mode'):self.compose(existing_pin=pin)
+
     def test_wrong_seal_external_pin_blocks_even_valid_completed_record(self):
         self.seal_pin='0'*64
         with self.assertRaises(ValueError):self.compose()
