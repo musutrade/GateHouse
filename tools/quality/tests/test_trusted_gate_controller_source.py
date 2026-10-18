@@ -42,6 +42,7 @@ class ControllerSourceTests(unittest.TestCase):
         self.interpreter.chmod(0o755)
         self.config_path = self.directory / 'host.json'
         self.barrier_path = self.directory / 'installation.json'
+        self.activation_path = self.directory / 'controller-activation.json'
         self.pin()
         # Replace Root ownership/ancestor admission only. Real ordinary file, link,
         # mode, inode, timestamp, byte limits and loader operations remain exercised.
@@ -74,18 +75,25 @@ class ControllerSourceTests(unittest.TestCase):
         self.config_path.chmod(0o600)
 
     def snapshot(self):
-        return H.Snapshot(self.root, self.config_path, self.interpreter, self.barrier_path)
+        return H.Snapshot(self.root, self.config_path, self.interpreter, self.barrier_path, self.activation_path)
 
     def execute(self):
         return H.run(self.snapshot(), [str(self.config_path)])
 
     def barrier(self, phase='active'):
-        self.config['environment'] = {'source_revision': 'a' * 40}
+        self.config['environment'] = {'source_revision': 'a' * 40, 'bootstrap_helper_manifest_sha256': 'a' * 64}
         self.config_path.write_text(json.dumps(self.config))
         value = {'schema': 'gatehouse-installation-barrier/v1', 'transaction': str(uuid.uuid4()),
                  'phase': phase, 'head': 'a' * 40, 'configuration_sha256': hashlib.sha256(self.config_path.read_bytes()).hexdigest(),
                  'plan_sha256': 'b' * 64}
         self.write_barrier(value)
+        activation = {'schema':'gatehouse-controller-activation/v1', 'head':value['head'],
+            'transaction':value['transaction'], 'lease':[1,2], 'phase':'entries-enabled',
+            'administrator_ready':False, 'production_gate_enabled':False,
+            **{name:'a'*64 for name in ('helper_manifest_sha256','recipe_sha256','material_sha256',
+                 'upgrade_receipt_sha256','file_receipt_sha256','entry_fence_sha256')}}
+        self.activation_path.write_bytes(json.dumps(activation,sort_keys=True,separators=(',',':')).encode()+b'\n')
+        self.activation_path.chmod(0o600)
         return value
 
     def write_barrier(self, value):
@@ -95,6 +103,48 @@ class ControllerSourceTests(unittest.TestCase):
     def test_active_installation_barrier_matches_pinned_configuration_and_source_head(self):
         self.barrier()
         self.assertEqual(self.execute(), 7)
+
+    def test_incomplete_activation_blocks_effectful_run_before_any_cli_import(self):
+        self.barrier();value=json.loads(self.activation_path.read_bytes())
+        for phase in ('prepared','marker-intent','marker-active','internal-intent','internal-enabled','public-intent'):
+            value['phase']=phase
+            self.activation_path.write_bytes(json.dumps(value,sort_keys=True,separators=(',',':')).encode()+b'\n')
+            snapshot=self.snapshot();snapshot.verify()
+            with patch.object(H,'SourceFinder',side_effect=AssertionError('CLI import')),self.assertRaises(H.HostBlocked):
+                H.run(snapshot,[])
+
+    def test_active_marker_requires_activation_and_binds_head_transaction_manifest_and_flags(self):
+        for change in ({'head':'b'*40},{'transaction':str(uuid.uuid4())},{'helper_manifest_sha256':'b'*64},
+                       {'administrator_ready':True},{'production_gate_enabled':True},{'lease':[1,True]},
+                       {'extra':'unknown'}):
+            self.barrier();value=json.loads(self.activation_path.read_bytes());value.update(change)
+            self.activation_path.write_bytes(json.dumps(value,sort_keys=True,separators=(',',':')).encode()+b'\n')
+            with self.assertRaises(H.HostBlocked):self.execute()
+        self.barrier();self.activation_path.unlink()
+        with self.assertRaises(OSError):self.execute()
+
+    def test_armed_snapshot_cannot_readopt_changed_activation_or_drop_completion(self):
+        self.barrier();snapshot=self.snapshot();snapshot.arm();raw=self.activation_path.read_bytes()
+        self.activation_path.unlink()
+        with self.assertRaises(OSError):H.run(snapshot,[])
+        self.activation_path.write_bytes(raw);self.activation_path.chmod(0o600)
+        with self.assertRaises(H.HostBlocked):H.run(snapshot,[])
+
+    def test_legacy_without_barrier_rejects_orphan_activation_and_partial_metadata(self):
+        self.activation_path.write_bytes(b'orphan');self.activation_path.chmod(0o600)
+        with self.assertRaises(H.HostBlocked):self.execute()
+        self.activation_path.unlink()
+        self.activation_path.with_name('.'+self.activation_path.name+'.tmp').write_bytes(b'partial')
+        with self.assertRaises(H.HostBlocked):self.execute()
+
+    def test_activation_metadata_mode_noncanonical_json_and_link_rejects(self):
+        self.barrier();self.activation_path.chmod(0o644)
+        with self.assertRaises(H.HostBlocked):self.execute()
+        self.activation_path.chmod(0o600);value=json.loads(self.activation_path.read_bytes())
+        self.activation_path.write_text(json.dumps(value))
+        with self.assertRaises(H.HostBlocked):self.execute()
+        self.activation_path.unlink();self.activation_path.symlink_to(self.config_path)
+        with self.assertRaises(H.HostBlocked):self.execute()
 
     def test_every_incomplete_barrier_blocks_before_configuration_read(self):
         original = H.read

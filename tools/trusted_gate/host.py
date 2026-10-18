@@ -20,6 +20,7 @@ MODULES = ('__init__', 'cache', 'cli', 'common', 'control', 'execution', 'github
 CONFIG = Path('/etc/gatehouse/host.json')
 INTERPRETER = Path('/usr/bin/python3.14')
 BARRIER = Path('/var/lib/gatehouse/installation.json')
+ACTIVATION = Path('/srv/gatehouse/pilot/control/controller-activation.json')
 MAX_SOURCE = 1024 * 1024
 
 
@@ -102,12 +103,38 @@ def installation_barrier(path):
     return value, stamp
 
 
+def controller_activation(path, barrier, config):
+    temporary = path.with_name('.' + path.name + '.tmp')
+    need(not temporary.exists() and not temporary.is_symlink())
+    if barrier is None:
+        need(not path.exists() and not path.is_symlink())
+        return None
+    raw, stamp = read(path, 4096, mode=0o600)
+    value = json.loads(raw, object_pairs_hook=unique, parse_constant=lambda _: need(False))
+    pins = ('helper_manifest_sha256', 'recipe_sha256', 'material_sha256', 'upgrade_receipt_sha256',
+            'file_receipt_sha256', 'entry_fence_sha256')
+    need(isinstance(value, dict) and set(value) == {'schema', 'head', 'transaction', 'lease', 'phase',
+         'administrator_ready', 'production_gate_enabled', *pins})
+    need(value['schema'] == 'gatehouse-controller-activation/v1' and value['phase'] == 'entries-enabled'
+         and value['head'] == barrier[0]['head'] and value['transaction'] == barrier[0]['transaction']
+         and value['administrator_ready'] is False and value['production_gate_enabled'] is False
+         and all(isinstance(value[key], str) and re.fullmatch('[0-9a-f]{64}', value[key]) for key in pins)
+         and value['helper_manifest_sha256'] == config.get('environment', {}).get('bootstrap_helper_manifest_sha256')
+         and isinstance(value['lease'], list) and len(value['lease']) == 2
+         and all(type(number) is int and number >= 0 for number in value['lease']) and value['lease'][1] > 0)
+    need(raw == json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode() + b'\n')
+    return value, stamp
+
+
 class Snapshot:
-    def __init__(self, root, config_path=CONFIG, interpreter=INTERPRETER, barrier_path=BARRIER):
+    def __init__(self, root, config_path=CONFIG, interpreter=INTERPRETER, barrier_path=BARRIER,
+                 activation_path=ACTIVATION):
         self.root = Path(root)
         self.config_path = Path(config_path)
         self.interpreter = Path(interpreter)
         self.barrier_path = Path(barrier_path)
+        self.activation_path = Path(activation_path)
+        self.armed = False
         # Stop incomplete installations before reading configuration or importing
         # any controller module, including direct administrative host invocation.
         self.barrier = installation_barrier(self.barrier_path)
@@ -143,9 +170,21 @@ class Snapshot:
 
     def verify(self):
         need(installation_barrier(self.barrier_path) == self.barrier)
+        if self.armed:
+            need(controller_activation(self.activation_path, self.barrier,
+                 json.loads(self.raw, object_pairs_hook=unique)) == self.activation)
         inventory(self.root)
         for path, (stamp, mode) in self.stamps.items():
             need(protected(path, mode=mode) == stamp)
+
+    def arm(self):
+        """Effects require completion; passive installed Snapshot checks remain read-only."""
+        self.verify()
+        if not self.armed:
+            self.activation = controller_activation(self.activation_path, self.barrier,
+                                                   json.loads(self.raw, object_pairs_hook=unique))
+            self.armed = True
+        self.verify()
 
     def configuration(self, path):
         need(Path(path) == self.config_path)
@@ -181,6 +220,7 @@ class SourceFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
 
 def run(snapshot, argv=None):
     need(not any(name == 'trusted_gate' or name.startswith('trusted_gate.') for name in sys.modules))
+    snapshot.arm()
     snapshot.verify()
     finder = SourceFinder(snapshot)
     sys.meta_path.insert(0, finder)

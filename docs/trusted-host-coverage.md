@@ -1540,6 +1540,57 @@ Installation, administrator and production acceptance remain false, and installe
 659 is untouched. The source-only closure has 27 helpers and 79 members without a
 Core binary.
 
+The twenty-eighth authenticated library, `activate-linux-controller.py`, adds an
+internal forward activation transaction after installed-disabled completion. Its
+separate private receipt binds the original upgrade/file/fence receipts, helper
+manifest, recipe, materials, head, transaction and inherited lease. Every stage
+rechecks prepared inspection/materials, retired remote/publication inputs, native
+process observations and namespace, worker/autostart state, source inventory,
+interpreter and full runtime bytes. The new configuration already uses the
+separate protected bootstrap source, so the ordinary runtime verifier requires
+no source alias or exception after the old pilot source is retired.
+
+Activation validates all 27 installed files and directories against the completed
+file receipt. Non-entry identities remain exact; entry identities permit only
+the mode/ctime change inherent in a recorded in-place permission transition.
+Unexpected inodes, bytes, modes, temporary files, metadata, generations and barrier
+changes block recovery. The disabled file engine's original inspector is not
+relaxed or reused after the barrier advances. The active marker uses the original
+fence plan and is followed by the actual installed Snapshot and source-bound
+configuration loader while both entries remain disabled. No CLI action, Journal
+constructor, token or quality workload is invoked by that passive check.
+
+Durable intents precede the active-marker rename and each permission change.
+The internal step entry is enabled before the public control entry; each uses
+in-place fchmod, file sync, parent sync and live revalidation. Replays adopt only
+those known intent states. Both original held entry inodes stay disabled. A
+completed retry performs observations without changing metadata or permissions.
+Partial metadata is retained rather than cleaned up or adopted.
+
+The formal controller startup now arms its Snapshot with the Root-protected
+activation receipt before importing CLI code. An active barrier alone cannot
+start effects: the receipt must be canonical, complete, bound to that barrier's
+transaction/head and the configuration's helper manifest, with the known schema,
+pins and flags. A public entry made executable before the completion record is
+therefore still blocked from controller startup. Passive installed Snapshot
+inspection remains available with the actual active marker. Armed snapshots
+recheck the activation bytes/inode on every verification, including the existing
+post-lease configuration check before SQLite or network activity. Legacy absence
+of both records remains supported; orphan or partial activation state blocks it.
+
+Twenty-one new regressions bring the focused suite to 666 tests: 16 activation/file
+and Snapshot integrations plus five startup-record suites. They exercise actual
+27-file installation, source compilation/configuration loading, modes, fsync,
+marker rename and permission interruption, exact replay and metadata rejection.
+Root/DAC/account admission, prepared configuration/runtime facts, native process
+scans, systemd and API responses are replaced at explicit private-fixture borders.
+These tests provide no live Root, remote, installation or quality acceptance.
+The internal activation receipt keeps administrator and production flags false.
+A complete reviewed administrator preparation/dispatch package and live restricted
+identity, workload, recovery and resource acceptance are still required. Installed
+659 remains untouched; the source-only closure has 28 helpers and 80 members,
+without a Core binary or administrator CLI.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the
