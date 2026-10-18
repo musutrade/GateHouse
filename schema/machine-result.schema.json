@@ -39,6 +39,7 @@
     "source_identity": {"type": "string", "minLength": 1},
     "execution_root": {"type": "string", "minLength": 1},
     "configuration_digest": {"type": "string", "pattern": "^sha256:[A-Fa-f0-9]{64}$"},
+    "identities": {"$ref": "#/definitions/identities"},
     "scope": {
       "type": "object",
       "additionalProperties": false,
@@ -62,6 +63,18 @@
     "status": {"enum": ["PASS", "WAIVED", "FAIL", "SKIPPED", "CANCELLED"]}
   },
   "definitions": {
+    "identities": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["quality_policy_identity", "runtime_bundle_digest", "runtime", "policy_binding_complete", "current_applicability"],
+      "properties": {
+        "quality_policy_identity": {"type": "string", "pattern": "^verification-policy/v1:sha256:[a-f0-9]{64}$"},
+        "runtime_bundle_digest": {"type": "string", "pattern": "^runtime-bundle/v1:sha256:[a-f0-9]{64}$"},
+        "runtime": {"type": "object"},
+        "policy_binding_complete": {"type": "boolean"},
+        "current_applicability": {"const": "not_proven"}
+      }
+    },
     "quality": {
       "type": "object",
       "additionalProperties": false,
@@ -71,6 +84,7 @@
         "status": {"enum": ["pass", "fail", "blocked"]},
         "phase": {"enum": ["configuration", "baseline", "collection", "evaluation", "complete"]},
         "error": {"type": ["string", "null"]},
+        "runtime": {"type": ["object", "null"]},
         "selection": {"type": ["object", "null"]},
         "inputs": {"type": ["object", "null"]},
         "evidence": {"type": ["array", "null"]},

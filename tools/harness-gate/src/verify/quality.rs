@@ -12,6 +12,7 @@ use std::{collections::BTreeSet, fs, path::Path};
 
 pub(super) struct Prepared {
     state: compiler::TrustedState,
+    runtime: Value,
     host_policy: HostPolicy,
     baseline: Option<baseline::Request>,
     output: String,
@@ -39,6 +40,7 @@ pub struct QualityResult {
     pub participation: Value,
     pub full_quality_status: &'static str,
     pub producers: Value,
+    pub runtime: Value,
 }
 
 impl QualityResult {
@@ -64,6 +66,7 @@ impl QualityResult {
             participation: json!({ "profile": profile }),
             full_quality_status: "blocked",
             producers: Value::Null,
+            runtime: Value::Null,
         }
     }
 }
@@ -130,21 +133,24 @@ pub(super) fn prepare(
     }
     compiler::compile(root, &state)?;
     validate_selection(&config, &state, scope)?;
+    let host_policy = crate::process::replay::collector_policy(
+        HostPolicy {
+            trusted_keys: read::<Vec<TrustedKey>>(trust_root, &workflow.trusted_keys)?,
+            max_artifact_bytes: config
+                .limits
+                .as_ref()
+                .map(|limits| limits.max_artifact_bytes)
+                .or(HostPolicy::default().max_artifact_bytes),
+            ..HostPolicy::default()
+        },
+        &project.root,
+        project.replay_state_dir.as_deref(),
+        &root.join(&state.artifact_root),
+    )?;
+    let runtime = super::runtime::facts(project, &host_policy)?;
     Ok(Some(Prepared {
-        host_policy: crate::process::replay::collector_policy(
-            HostPolicy {
-                trusted_keys: read::<Vec<TrustedKey>>(trust_root, &workflow.trusted_keys)?,
-                max_artifact_bytes: config
-                    .limits
-                    .as_ref()
-                    .map(|limits| limits.max_artifact_bytes)
-                    .or(HostPolicy::default().max_artifact_bytes),
-                ..HostPolicy::default()
-            },
-            &project.root,
-            project.replay_state_dir.as_deref(),
-            &root.join(&state.artifact_root),
-        )?,
+        host_policy,
+        runtime,
         participation: config.participation(profile),
         complete: participation.assurance == Assurance::Complete,
         has_policy: !participation.policies.is_empty(),
@@ -208,6 +214,7 @@ pub(super) fn run(
 
 fn evaluate(project: &Project, work: Prepared, result: &mut QualityResult) -> Result<()> {
     let root = &project.execution_root;
+    result.runtime = work.runtime;
     result.selection = serde_json::to_value(&work.state.selection)?;
     result.output = Some(work.output);
     result.formats = work.formats;
@@ -241,6 +248,12 @@ fn evaluate(project: &Project, work: Prepared, result: &mut QualityResult) -> Re
     result.inputs = serde_json::to_value(&collection.inputs)?;
     result.evidence = collection.evidence;
     result.producers = serde_json::to_value(collection.producers)?;
+    super::runtime::bind_collection(&mut result.runtime, &result.inputs, &result.producers)?;
+    result.runtime["facts"]["collectors"] = serde_json::to_value(collection.runtime_bindings)?;
+    result.runtime["runtime_bundle_digest"] = json!(crate::config::quality::identity::digest(
+        "runtime-bundle/v1",
+        &result.runtime["facts"]
+    )?);
     if !work.has_policy {
         result.status = "not_collected";
         result.full_quality_status = "not_collected";

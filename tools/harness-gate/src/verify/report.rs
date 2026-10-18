@@ -42,6 +42,7 @@ struct MachineResult {
     source_identity: String,
     execution_root: String,
     configuration_digest: String,
+    identities: serde_json::Value,
     scope: crate::scope::ScopeResult,
     services: Vec<MachineService>,
     steps: Vec<MachineStep>,
@@ -388,6 +389,7 @@ fn machine_result(report: &VerificationReport) -> MachineResult {
         source_identity: report.source_identity.clone(),
         execution_root: report.execution_root.clone(),
         configuration_digest: report.configuration_digest.clone(),
+        identities: report.identities.clone(),
         scope: report.scope.clone(),
         services: report
             .services
@@ -2312,6 +2314,7 @@ mod tests {
             source_identity: "working-tree:fixture".into(),
             execution_root: "/repository".into(),
             configuration_digest: format!("sha256:{}", "0".repeat(64)),
+            identities: serde_json::Value::Null,
             scope: ScopeResult {
                 mode: "all".into(),
                 changed_files: vec![],
@@ -3333,6 +3336,7 @@ mod tests {
             participation: serde_json::json!({"profile":"full"}),
             full_quality_status: "fail",
             producers: serde_json::json!({"native":"collected"}),
+            runtime: serde_json::Value::Null,
         });
         write(&current, &project).expect("finalize large Core-owned report");
         verify_manifest(&project).expect("large artifact digests remain verifiable");
@@ -4007,6 +4011,7 @@ mod tests {
                     status
                 },
                 producers: serde_json::Value::Null,
+                runtime: serde_json::Value::Null,
             });
             write(&current, &project).expect("publish quality HTML");
             verify_manifest(&project).expect("quality HTML manifest");
@@ -4102,6 +4107,7 @@ mod tests {
                 participation: json!({}),
                 full_quality_status: "pass",
                 producers: json!({}),
+                runtime: serde_json::Value::Null,
             });
             write(&current, &invocation_project).unwrap();
             verify_manifest(&invocation_project).unwrap();

@@ -29,6 +29,7 @@ pub(crate) struct Collection {
     pub evidence: Value,
     pub producers: BTreeMap<String, &'static str>,
     pub responses: BTreeMap<String, Value>,
+    pub runtime_bindings: BTreeMap<String, Value>,
 }
 
 #[derive(Deserialize)]
@@ -344,7 +345,23 @@ pub(crate) fn collect(
     let mut records = Vec::new();
     let mut producers = BTreeMap::new();
     let mut responses = BTreeMap::new();
+    let mut runtime_bindings = BTreeMap::new();
     for (id, request, claims) in requests {
+        // Capture the exact selected adapter declaration and invocation settings.
+        // Do not expose signed environment/argument values in reports. A retained
+        // response is identified as retained, never as a newly executed process.
+        let settings = json!({"executable": request.adapter.executable,
+            "args": request.args, "environment": request.environment,
+            "capabilities": request.capabilities, "timeout_ms": request.timeout_ms});
+        runtime_bindings.insert(
+            id.clone(),
+            json!({
+                "adapter": request.adapter.name, "version": request.adapter.version,
+                "source_digest": request.adapter.source_digest,
+                "settings_digest": super::identity::digest("collector-runtime/v1", &settings)?,
+                "execution": if retained.contains_key(&id) { "retained" } else { "collected" },
+            }),
+        );
         if let Some((reused, response)) = retained.remove(&id) {
             records.extend(reused);
             producers.insert(id.clone(), "retained");
@@ -413,6 +430,7 @@ pub(crate) fn collect(
         evidence: records,
         producers,
         responses,
+        runtime_bindings,
     })
 }
 

@@ -4,6 +4,7 @@ pub(crate) mod parser;
 mod plan;
 mod quality;
 mod report;
+mod runtime;
 pub(crate) use report::{dashboard_document, verify_manifest_at};
 mod scheduler;
 mod steps;
@@ -114,6 +115,7 @@ pub struct VerificationReport {
     pub source_identity: String,
     pub execution_root: String,
     pub configuration_digest: String,
+    pub identities: serde_json::Value,
     pub scope: ScopeResult,
     pub services: Vec<ServiceResult>,
     pub steps: Vec<TaskResult>,
@@ -269,6 +271,12 @@ fn run_selected(
     } else {
         Ok(None)
     };
+    let local_runtime = runtime::local_facts(project).map_err(VerifyError::execution)?;
+    let policy_inputs = serde_json::json!({
+        "flow": crate::config::quality::identity::flow_policy(&project.config).map_err(VerifyError::execution)?,
+        "builtin_policies": crate::config::quality::identity::builtin_policies(&project.execution_root, &project.config).map_err(VerifyError::execution)?,
+        "profile": profile, "only_step": only_step,
+    });
     let services = Mutex::new(ServiceManager::new(&invocation_project));
     let scheduler_result = scheduler::run_plan(
         &invocation_project,
@@ -323,6 +331,38 @@ fn run_selected(
         .input()
         .verify_content()
         .map_err(VerifyError::execution)?;
+    let final_builtin_policies = crate::config::quality::identity::builtin_policies(
+        &project.execution_root,
+        &project.config,
+    )
+    .map_err(VerifyError::execution)?;
+    if policy_inputs["builtin_policies"] != final_builtin_policies {
+        return Err(VerifyError::execution(anyhow::anyhow!(
+            "built-in policy inputs changed during verification"
+        )));
+    }
+    let quality_identity = quality
+        .as_ref()
+        .map(|result| result.inputs["quality_policy_identity"].clone());
+    let policy_identity = crate::config::quality::identity::digest(
+        "verification-policy/v1",
+        &serde_json::json!({
+            "workflow": policy_inputs, "quality_policy_identity": quality_identity,
+        }),
+    )
+    .map_err(VerifyError::execution)?;
+    let actual_runtime = quality
+        .as_ref()
+        .filter(|result| !result.runtime.is_null())
+        .map(|result| result.runtime.clone())
+        .unwrap_or(local_runtime);
+    let identities = serde_json::json!({
+        "quality_policy_identity": policy_identity,
+        "runtime_bundle_digest": actual_runtime["runtime_bundle_digest"],
+        "runtime": actual_runtime,
+        "policy_binding_complete": quality.as_ref().is_none_or(|result| result.inputs["quality_policy_identity"].is_string()),
+        "current_applicability": "not_proven",
+    });
     let passed = quality.as_ref().is_none_or(|result| result.passed())
         && !cancelled
         && failures.is_empty()
@@ -346,6 +386,7 @@ fn run_selected(
             .to_string_lossy()
             .into_owned(),
         configuration_digest: invocation_project.input().configuration_digest.clone(),
+        identities,
         scope,
         services,
         steps,
