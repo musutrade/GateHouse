@@ -117,7 +117,7 @@ class Monitor:
                  'elapsed_seconds':round(now-self.started,1),'current_phase_seconds':round(now-self.changed,1),
                  'updated_unix':round(time.time(),3),
                  'last_checkpoint':self.last_checkpoint,
-                 'last_checkpoint_age_seconds':round(now-self.checkpoint_changed,1),
+                 'last_checkpoint_age_seconds':max(0.0,round(now-self.checkpoint_changed,1)),
                  'progress':progress,'administrator_ready':False,'production_gate_enabled':False,
                  'acceptance':'operator progress only; installation/quality acceptance is separate'}
         if final is not None:

@@ -17,7 +17,7 @@ PREVIOUS_OUTPUT = Path('/var/lib/gatehouse/operator-runs/063eac64c53b')
 HEAD = '063eac64c53b69371ce603f87396f5b2710c8cbb'
 PINS = {
     'resume.py':('resume-reviewed-linux.py','a75d76caeeb5a7d692b2f89d25c3e6679e43bcbc5c99d5a7672ec04fd07b8429'),
-    'worker.py':('detached-linux-worker.py','1b921bc9bfe05ffe09ae307723b6fe4bc33e1849ba19a688ed071ff9527c169d'),
+    'worker.py':('detached-linux-worker.py','bde9bb09da57f5d2e2011d8f33fe2c71d05f1ec7176b0a1e0cfd84874ffd3472'),
     'recovery.py':('recover-interrupted-installation.py','faf879f3f6474f11bbe8f402597501786931483252523ec1457398fdf8e8a6a6'),
 }
 ENV = {'PATH':'/usr/bin:/bin','LANG':'C.UTF-8'}
