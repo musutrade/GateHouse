@@ -80,7 +80,8 @@ class AcceptanceTests(unittest.TestCase):
         self.assertNotIn('continue-on-error', test_job)
         # The quality pipeline is collected by the three parallel shard jobs;
         # the merge job only verifies and seals the combined candidate.
-        self.assertEqual(workflow.count('ci_quality.py collect'), 3)
+        self.assertEqual(workflow.count('ci_quality.py collect'), 2)
+        self.assertEqual(workflow.count('ci_quality.py assemble-fast-coverage'), 1)
         self.assertNotIn('cache-target: true', workflow)
         self.assertNotIn('build-once', workflow)
         tree = ast.parse(Path(acceptance.__file__).read_text())

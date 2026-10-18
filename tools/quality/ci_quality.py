@@ -416,6 +416,140 @@ def _risk_side_candidate(name: str, directory: Path) -> tuple[dict, dict[str, st
     return report, local, tool_document, measurer
 
 
+
+def _llvm_tool(name: str) -> Path:
+    """Resolve the LLVM tool shipped with the active Rust toolchain."""
+    libdir = subprocess.check_output(['rustc', '--print', 'target-libdir'],
+                                     cwd=ROOT, text=True).strip()
+    tool = Path(libdir).parent / 'bin' / name
+    require(tool.is_file(), f'LLVM tool missing from active toolchain: {name}')
+    return tool
+
+
+def _fast_archive_objects(target: Path, debug_root: Path | None = None) -> list[Path]:
+    """Map archived nextest metadata to extracted test objects."""
+    metadata_path = target / 'nextest' / 'binaries-metadata.json'
+    require(metadata_path.is_file(), 'fast archive is missing nextest metadata')
+    data = json.loads(metadata_path.read_text())
+    binaries = data.get('rust-binaries')
+    require(isinstance(binaries, dict) and binaries, 'fast archive has no rust binaries')
+    debug_root = debug_root or (target / 'debug')
+    objects = []
+    seen = set()
+    for row in binaries.values():
+        require(isinstance(row, dict) and isinstance(row.get('binary-path'), str),
+                'fast archive has invalid binary metadata')
+        candidate = debug_root / 'deps' / Path(row['binary-path']).name
+        if candidate.is_file() and candidate not in seen:
+            seen.add(candidate)
+            objects.append(candidate)
+    main = debug_root / 'harness-gate'
+    if main.is_file() and main not in seen:
+        objects.append(main)
+    require(objects, 'fast archive has no runnable objects')
+    return objects
+
+
+def _fast_ignore_regex(target: Path) -> str:
+    """Match cargo-llvm-cov's source filtering for archive-backed reports."""
+    workspace = (ROOT / 'tools' / 'harness-gate').resolve()
+    target = target.resolve()
+    cargo_home = Path(os.environ.get('CARGO_HOME', Path.home() / '.cargo')).resolve()
+    rustup_home = Path(os.environ.get('RUSTUP_HOME', Path.home() / '.rustup')).resolve()
+    return '|'.join((
+        r'/rustc/([0-9a-f]+|[0-9]+\.[0-9]+\.[0-9]+)/',
+        f'^{re.escape(str(workspace))}(/.*)?/(tests|examples|benches)/',
+        f'^{re.escape(str(workspace))}(/.*)?/(tests\\.rs|[0-9a-zA-Z_-]+[_-]tests\\.rs)$',
+        f'^{re.escape(str(target))}($|/)',
+        f'^{re.escape(str(cargo_home))}/(registry|git)/',
+        f'^{re.escape(str(rustup_home))}($|/)',
+        f'^{re.escape(str(workspace))}/quality-replay($|/)',
+    ))
+
+
+def _lcov_to_cobertura(lcov: Path, workspace: Path) -> str:
+    """Encode the merged LCOV line map as a Cobertura XML artifact."""
+    records = {}
+    current = None
+    for line in lcov.read_text().splitlines():
+        if line.startswith('SF:'):
+            require(current is None, 'unterminated LCOV before SF')
+            current = line[3:]
+            require(current not in records, f'duplicate LCOV source: {current}')
+            records[current] = {}
+        elif line.startswith('DA:'):
+            require(current is not None, 'LCOV DA outside source')
+            number, count = map(int, line[3:].split(',')[:2])
+            require(number > 0 and count >= 0 and number not in records[current],
+                    'invalid duplicate LCOV DA')
+            records[current][number] = count
+        elif line == 'end_of_record':
+            require(current is not None, 'LCOV end without source')
+            current = None
+    require(current is None and records, 'empty or incomplete LCOV report')
+    prefix = str(workspace.resolve()) + '/'
+    rows = {}
+    for filename, lines in records.items():
+        relative = Path(filename.replace('\\', '/')).as_posix()
+        if relative.startswith(prefix):
+            relative = relative[len(prefix):]
+        rows[relative] = lines
+    source = ET.Element('sources')
+    ET.SubElement(source, 'source').text = str(workspace.resolve())
+    packages = ET.Element('packages')
+    grouped = {}
+    total_covered = total_valid = 0
+    for relative, lines in sorted(rows.items()):
+        parent = Path(relative).parent.as_posix()
+        grouped.setdefault(parent, []).append((relative, lines))
+        total_covered += sum(hit > 0 for hit in lines.values())
+        total_valid += len(lines)
+    for parent, classes in sorted(grouped.items()):
+        package = ET.SubElement(packages, 'package', {
+            'name': parent.replace('/', '.'),
+            'line-rate': '0',
+            'branch-rate': '0',
+            'complexity': '0',
+        })
+        elements = []
+        package_covered = package_valid = 0
+        for relative, lines in classes:
+            covered = sum(hit > 0 for hit in lines.values())
+            package_covered += covered
+            package_valid += len(lines)
+            klass = ET.Element('class', {
+                'name': relative.replace('/', '.'),
+                'filename': relative,
+                'line-rate': str(covered / len(lines)) if lines else '0',
+                'branch-rate': '0',
+                'complexity': '0',
+            })
+            ET.SubElement(klass, 'methods')
+            line_nodes = ET.SubElement(klass, 'lines')
+            for number, hits in sorted(lines.items()):
+                ET.SubElement(line_nodes, 'line', {
+                    'number': str(number), 'hits': str(hits), 'branch': 'false'})
+            elements.append(klass)
+        for element in elements:
+            package.append(element)
+        package.set('line-rate', str(package_covered / package_valid) if package_valid else '0')
+    root = ET.Element('coverage', {
+        'timestamp': str(int(time.time())),
+        'version': 'llvm-cov',
+        'lines-valid': str(total_valid),
+        'lines-covered': str(total_covered),
+        'line-rate': str(total_covered / total_valid) if total_valid else '0',
+        'branches-valid': '0',
+        'branches-covered': '0',
+        'branch-rate': '0',
+        'complexity': '0',
+    })
+    root.append(source)
+    root.append(packages)
+    ET.indent(root, space='  ')
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(root, encoding='unicode') + '\n'
+
+
 def assemble_risk(base_shard: Path, head_shard: Path, output: Path) -> dict:
     """Assemble two independently collected risk workers into one shard.
 
@@ -1028,6 +1162,24 @@ class Collector:
         print(f'{name}: exited {code} in {elapsed:.2f}s', flush=True)
         require(code in allowed, f'{name} exited {code}; see {name}.log')
 
+    def output_command(self, name: str, command: list[str], output: Path,
+                       allowed=(0,), env=None):
+        """Run a command whose stdout is itself the retained artifact."""
+        started = time.monotonic()
+        print(f'{name}: started (log: {name}.log)', flush=True)
+        effective_env = env if env is not None else self.environment
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with (self.directory / f'{name}.log').open('w') as log, output.open('wb') as stream:
+            code = subprocess.run(command, cwd=ROOT, env=effective_env,
+                                  stdout=stream, stderr=log).returncode
+        elapsed = time.monotonic() - started
+        with self._save_lock:
+            self.report['commands'].append({'name': name, 'argv': command, 'exit_code': code,
+                                            'seconds': elapsed})
+            write_json(self.directory / 'candidate.json', self.report)
+        print(f'{name}: exited {code} in {elapsed:.2f}s', flush=True)
+        require(code in allowed, f'{name} exited {code}; see {name}.log')
+
     def python(self, name: str, script: str, *args: str, allowed=(0,), env=None):
         self.command(name, [sys.executable, str(ROOT / 'tools/quality' / script), *map(str, args)], allowed, env=env)
 
@@ -1321,6 +1473,72 @@ class Collector:
                 self.report['artifacts'][str(relative)] = sha256(artifact)
         self.save()
 
+    def assemble_fast_coverage(self, archive: Path, profdata_root: Path, partitions: int):
+        """Assemble archive-backed legacy/production evidence from test shards."""
+        require(partitions >= 2, f'invalid fast coverage partition count: {partitions}')
+        archive = Path(archive).resolve()
+        profdata_root = Path(profdata_root).resolve()
+        require(archive.is_file(), f'fast coverage archive missing: {archive}')
+        require(profdata_root.is_dir(), f'fast coverage profile root missing: {profdata_root}')
+        profiles = sorted(profdata_root.glob('fast-shard-*.profdata'))
+        require(len(profiles) == partitions,
+                f'expected {partitions} fast shard profiles, found {len(profiles)}')
+
+        started = time.monotonic()
+        self.report['stages'] = {'legacy': {'status': 'running'}}
+        self.save()
+        current = 'legacy'
+        try:
+            with tempfile.TemporaryDirectory(prefix='gatehouse-fast-coverage-') as temporary:
+                extract = Path(temporary)
+                self.command('fast-archive-extract', [
+                    'tar', '--zstd', '-xf', str(archive), '-C', str(extract)])
+                target = extract / 'target'
+                debug = extract / 'debug'
+                debug.symlink_to(target / 'debug', target_is_directory=True)
+                objects = _fast_archive_objects(target, debug)
+                require(objects, 'fast archive has no coverage objects')
+                merged = extract / 'merged.profdata'
+                self.command('fast-profdata-merge', [
+                    str(_llvm_tool('llvm-profdata')), 'merge', '-sparse',
+                    *map(str, profiles), '-o', str(merged)])
+                raw = self.directory / 'coverage.raw.json'
+                lcov = self.directory / 'coverage.lcov'
+                cobertura = self.directory / 'coverage.cobertura.xml'
+                object_args = [item for obj in objects for item in ('-object', str(obj))]
+                ignore = _fast_ignore_regex(target)
+                llvm_cov = str(_llvm_tool('llvm-cov'))
+                profile = f'-instr-profile={merged}'
+                self.output_command('fast-coverage-json', [
+                    llvm_cov, 'export', profile, *object_args,
+                    '-ignore-filename-regex', ignore], raw)
+                self.output_command('fast-coverage-lcov', [
+                    llvm_cov, 'export', '-format=lcov', profile, *object_args,
+                    '-ignore-filename-regex', ignore], lcov)
+                cobertura.write_text(_lcov_to_cobertura(lcov, ROOT / 'tools/harness-gate'))
+                self.python('fast-legacy', 'coverage.py', '--raw', raw,
+                            '--output', self.directory / 'coverage.json')
+                legacy_seconds = time.monotonic() - started
+                self.report['stages']['legacy'] = {
+                    'status': 'success', 'seconds': legacy_seconds}
+                self.save()
+                current = 'production'
+                production_started = time.monotonic()
+                self.python('fast-production', 'coverage.py', '--production',
+                            '--raw', raw, '--lcov', lcov,
+                            '--output', self.directory / 'production.json')
+                self.report['stages']['production'] = {
+                    'status': 'success', 'seconds': time.monotonic() - production_started}
+        except (ValueError, OSError, KeyError, subprocess.SubprocessError) as error:
+            self.report['stages'][current] = {
+                'status': 'failure', 'error': str(error)}
+            self.save()
+            require(False, f'failed to assemble fast coverage: {error}')
+        self.report['collection_seconds'] = time.monotonic() - started
+        self.save()
+        self._record_artifacts()
+        print('fast coverage assembled: legacy + production', flush=True)
+
     def collect_risk_side(self, side: str):
         """Run one risk worker and retain a partial candidate for assembly."""
         require(side in RISK_SIDES, f'unknown risk side: {side}')
@@ -1434,7 +1652,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('operation', choices=('aggregate', 'classify', 'collect',
                                               'collect-risk-side', 'collect-risk-shard',
-                                              'assemble-risk', 'assemble-risk-shards', 'verify',
+                                              'assemble-risk', 'assemble-risk-shards',
+                                              'assemble-fast-coverage', 'verify',
                                               'certified-base', 'merge', 'tool-identity'))
     parser.add_argument('--event', default=os.environ.get('EVENT_NAME'))
     parser.add_argument('--needs', default=os.environ.get('NEEDS_JSON'))
@@ -1446,7 +1665,7 @@ def main():
     parser.add_argument('--stages', type=str, help='Comma-separated list of stages to run (default: all)')
     parser.add_argument('--side', choices=RISK_SIDES, help='risk worker side')
     parser.add_argument('--risk-shard', type=int, help='risk test shard number')
-    parser.add_argument('--partitions', type=int, help='number of risk test shards')
+    parser.add_argument('--partitions', type=int, help='number of test shards')
     parser.add_argument('--exclude-tests', default='',
                         help='nextest filterset excluded from every risk partition')
     parser.add_argument('--extra-tests', default='',
@@ -1454,6 +1673,8 @@ def main():
     parser.add_argument('--base-shard', type=Path, help='base risk worker candidate')
     parser.add_argument('--head-shard', type=Path, help='head risk worker candidate')
     parser.add_argument('--shards-root', type=Path, help='downloaded risk shard artifact root')
+    parser.add_argument('--archive', type=Path, help='instrumented nextest archive')
+    parser.add_argument('--profdata-root', type=Path, help='downloaded fast shard profdata root')
     parser.add_argument('--shard', action='append', default=[],
                         help='name=path shard for merge; repeat once per expected shard')
     args = parser.parse_args()
@@ -1507,7 +1728,8 @@ def main():
             for commit in (args.base_sha, args.head_sha):
                 require(bool(re.fullmatch('[0-9a-f]{40}', commit or '')), 'full base/head SHAs required')
                 subprocess.run(['git', 'cat-file', '-e', f'{commit}^{{commit}}'], cwd=ROOT, check=True)
-            if args.operation in ('collect', 'collect-risk-side', 'collect-risk-shard'):
+            if args.operation in ('collect', 'collect-risk-side', 'collect-risk-shard',
+                                  'assemble-fast-coverage'):
                 require(git_sha() == args.head_sha, 'head must equal checked-out commit')
                 require_committed_sources(args.head_sha)
                 collector = Collector(args.output, args.base_sha, args.head_sha, args.run_id)
@@ -1519,13 +1741,19 @@ def main():
                 elif args.operation == 'collect-risk-side':
                     require(args.side in RISK_SIDES, 'collect-risk-side needs --side base|head')
                     collector.collect_risk_side(args.side)
-                else:
+                elif args.operation == 'collect-risk-shard':
                     require(args.side in RISK_SIDES, 'collect-risk-shard needs --side base|head')
                     require(args.risk_shard is not None and args.partitions is not None,
                             'collect-risk-shard needs --risk-shard and --partitions')
                     collector.collect_risk_shard(
                         args.side, args.risk_shard, args.partitions,
                         excluded_tests=args.exclude_tests, extra_tests=args.extra_tests)
+                else:
+                    require(args.archive is not None and args.profdata_root is not None
+                            and args.partitions is not None,
+                            'assemble-fast-coverage needs --archive, --profdata-root and --partitions')
+                    collector.assemble_fast_coverage(
+                        args.archive, args.profdata_root, args.partitions)
             else:
                 verify(args.output / 'candidate.json', args.head_sha, args.base_sha, args.run_id)
         return 0

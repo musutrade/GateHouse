@@ -365,7 +365,10 @@ class AggregateTests(unittest.TestCase):
             with self.subTest(shard=name):
                 self.assertNotIn("github.event_name == 'push'", body)
                 self.assertIn('fetch-depth: 0', body)
-                self.assertIn('ci_quality.py collect', body)
+                if name == 'quality-fast':
+                    self.assertIn('ci_quality.py assemble-fast-coverage', body)
+                else:
+                    self.assertIn('ci_quality.py collect', body)
         job = workflow.split('  quality-coverage:\n')[1].split('  quality-generic-shadow:\n')[0]
         self.assertIn('needs: [classify, quality-fast, quality-risk, quality-matrix]', job)
         self.assertIn('ci_quality.py verify', job)
@@ -781,6 +784,48 @@ class RiskShardTests(unittest.TestCase):
             self.assertEqual(checked['base']['functions'][0]['instances'][0]['count'], 3)
             self.assertEqual({k: checked['head']['functions'][0]['regions'][k] for k in ('covered', 'count')},
                              {'covered': 1, 'count': 1})
+
+
+
+class FastCoverageAssemblyTests(unittest.TestCase):
+    def test_archive_metadata_maps_to_extracted_debug_objects(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            target = root / 'target'
+            debug = root / 'debug'
+            (target / 'nextest').mkdir(parents=True)
+            (debug / 'deps').mkdir(parents=True)
+            (debug / 'harness-gate').write_text('main')
+            first = debug / 'deps' / 'one-test'
+            first.write_text('one')
+            second = debug / 'deps' / 'two-test'
+            second.write_text('two')
+            (target / 'nextest' / 'binaries-metadata.json').write_text(json.dumps({
+                'rust-binaries': {
+                    'one': {'binary-path': '/build/target/debug/deps/one-test'},
+                    'two': {'binary-path': '/build/target/debug/deps/two-test'},
+                    'missing': {'binary-path': '/build/target/debug/deps/missing-test'},
+                }
+            }))
+            self.assertEqual(gate._fast_archive_objects(target, debug),
+                             [first, second, debug / 'harness-gate'])
+
+    def test_lcov_to_cobertura_preserves_relative_line_hits(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            lcov = root / 'coverage.lcov'
+            lcov.write_text(
+                'SF:/repo/tools/harness-gate/src/verify/report.rs\n'
+                'DA:4,0\nDA:5,7\nend_of_record\n')
+            xml = gate._lcov_to_cobertura(lcov, Path('/repo/tools/harness-gate'))
+        parsed = gate.ET.fromstring(xml)
+        self.assertEqual(parsed.attrib['lines-valid'], '2')
+        self.assertEqual(parsed.attrib['lines-covered'], '1')
+        klass = parsed.find('.//class')
+        self.assertEqual(klass.attrib['filename'], 'src/verify/report.rs')
+        self.assertEqual([(line.attrib['number'], line.attrib['hits'])
+                          for line in klass.findall('./lines/line')],
+                         [('4', '0'), ('5', '7')])
 
 
 class MergeTests(unittest.TestCase):

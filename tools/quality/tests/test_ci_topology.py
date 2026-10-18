@@ -220,12 +220,19 @@ class SupplementalCadenceTests(unittest.TestCase):
         previous = json.loads((ROOT / 'tools/quality/fixtures/ci-topology-pre-cadence.json').read_text())
         self.assertEqual(set(previous['jobs']) - set(CONTRACT['jobs']), {'coverage', 'quality-baseline'})
         added = set(CONTRACT['jobs']) - set(previous['jobs'])
-        # The only post-cadence additions are the three split-collection shards.
-        self.assertEqual(added, {'quality-fast', 'quality-risk', 'quality-matrix'})
+        # Post-cadence additions are the split-collection and archive-backed
+        # fast-coverage workers.
+        self.assertEqual(added, {'quality-fast', 'quality-fast-build',
+                                 'quality-fast-shard', 'quality-risk', 'quality-matrix'})
         for name in sorted(added):
             row = CONTRACT['jobs'][name]
             self.assertEqual(row['required_events'], [], name)
-            self.assertEqual(row['needs'], ['classify'], name)
+            expected_needs = (['classify', 'quality-fast-build']
+                              if name == 'quality-fast-shard'
+                              else ['classify', 'quality-fast-build', 'quality-fast-shard']
+                              if name == 'quality-fast'
+                              else ['classify'])
+            self.assertEqual(row['needs'], expected_needs, name)
             self.assertEqual(row['runner_labels'], ['ubuntu-latest'], name)
             self.assertEqual(row['events'], ['pull_request', 'push'], name)
             self.assertEqual(row['condition'],

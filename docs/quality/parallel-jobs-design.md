@@ -355,3 +355,29 @@ hosted 成功 run `39094259393` 中 Risk shard 出现偏斜：
 four-way native/Risk sharding 增加 runner 数，以 wall-clock 换取并行度；
 最终取舍仍以 hosted PR 实测为准。Generic Shadow 使用上面的只读缓存适配器，
 不改变现有 advisory/required-status 语义。
+
+## 2026-10-18 Fast coverage archive 分片
+
+`Quality Fast Stages (legacy, production)` 的 188s collector 由一次完整
+instrumented test run 组成。现在拆成：
+
+1. `Build Fast Coverage Archive`：一次构建 instrumented nextest archive；
+2. `Fast Coverage Shard (1/4..4/4)`：四个独立 runner 从同一 archive 执行
+   `count:<shard>/4` partition，每个 shard 用 `llvm-profdata merge` 合并自己的
+   profraw 后上传约 0.6–0.7MB 的 profdata；
+3. `Quality Fast Stages (legacy, production)`：下载 archive + 四份 profdata，
+   合并 profile 后用 `llvm-cov export` 生成完整 `coverage.raw.json`、LCOV 和
+   Cobertura，再运行未修改的 `coverage.py --raw` legacy 评估与 production
+   评估，最后生成原有 fast candidate。
+
+本地验证：
+
+- archive 为 46MB，构建约 59s；
+- 四个 count partition 覆盖 724 个测试且无交集；
+- 四个 shard 的 profile 合并后生成的 raw/LCOV 与单进程完整 run 具有相同的
+  module aggregate 和 production aggregate；
+- LCOV Cobertura、candidate artifact inventory、legacy/production stages
+  均可被现有 merge 路径消费。
+
+hosted 关键路径预计由 archive build + 最慢 shard + assembly 组成；最终数据
+以 GitHub runner 实测为准。

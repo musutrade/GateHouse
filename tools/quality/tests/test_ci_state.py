@@ -164,10 +164,14 @@ class WorkflowBoundaryTests(unittest.TestCase):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()
         jobs = dict(re.findall(r'^  ([a-z][a-z-]+):\n(.*?)(?=^  [a-z][a-z-]+:|\Z)',
                                workflow, re.M | re.S))
-        owners = [name for name, body in jobs.items() if 'ci_quality.py collect' in body]
+        owners = [name for name, body in jobs.items()
+                  if 'ci_quality.py collect' in body or
+                  'ci_quality.py assemble-fast-coverage' in body]
         self.assertEqual(owners, ['quality-fast', 'quality-risk', 'quality-matrix'])
         for name in owners:
-            self.assertEqual(jobs[name].count('ci_quality.py collect'), 1)
+            self.assertEqual(
+                jobs[name].count('ci_quality.py collect') +
+                jobs[name].count('ci_quality.py assemble-fast-coverage'), 1)
         risk = jobs['quality-risk']
         self.assertIn('side: [base, head]', risk)
         self.assertIn('shard: [1, 2, 3, 4]', risk)

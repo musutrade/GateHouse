@@ -78,6 +78,24 @@ class CoverageRunnerTests(unittest.TestCase):
                 report = json.loads((directory / 'coverage.json').read_text())
                 self.assertEqual(report['aggregate']['status'], 'fail')
 
+    def test_existing_raw_report_uses_the_same_module_boundary_without_execution(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            raw = directory / 'coverage.raw.json'
+            raw.write_text(json.dumps({'data': [{'files': [
+                {'filename': f'/repo/src/{module}/mod.rs',
+                 'summary': {'lines': {'covered': 80, 'count': 100}}}
+                for module in coverage.CORE_MODULES]}]}))
+            output = directory / 'coverage.json'
+            with patch.object(coverage, 'metadata',
+                              side_effect=lambda **kw: {'commit': 'test', **kw}):
+                self.assertEqual(coverage.report(raw, output, 80, ['llvm-cov', 'export']), 0)
+            report = json.loads(output.read_text())
+            self.assertEqual(report['test_runner'], 'nextest')
+            self.assertEqual(report['aggregate']['status'], 'pass')
+            self.assertEqual(report['aggregate']['covered'], 80 * len(coverage.CORE_MODULES))
+            self.assertEqual(report['aggregate']['executable'], 100 * len(coverage.CORE_MODULES))
+
     def test_unknown_backend_is_rejected_before_execution(self):
         with patch.object(coverage.subprocess, 'run') as execute:
             with self.assertRaises(ValueError):

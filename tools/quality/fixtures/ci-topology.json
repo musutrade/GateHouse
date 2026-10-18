@@ -191,9 +191,11 @@
       ],
       "required_events": [],
       "needs": [
-        "classify"
+        "classify",
+        "quality-fast-build",
+        "quality-fast-shard"
       ],
-      "outcome": "Legacy and production coverage shard; not required directly, feeds the merge job.",
+      "outcome": "Assemble archive-backed legacy and production coverage from four independent test shards; not required directly, feeds the merge job.",
       "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "quality-risk": {
@@ -443,6 +445,48 @@
       "aggregate_required": true,
       "needs": [],
       "outcome": "Pure-docs vs full selection from changed paths; conservative for unknown or empty scope."
+    },
+    "quality-fast-build": {
+      "check_names": [
+        "Build Fast Coverage Archive"
+      ],
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}",
+      "events": [
+        "pull_request",
+        "push"
+      ],
+      "name": "Build Fast Coverage Archive",
+      "needs": [
+        "classify"
+      ],
+      "outcome": "Build one instrumented nextest archive for the fast coverage shards; not required directly.",
+      "required_events": [],
+      "runner_labels": [
+        "ubuntu-latest"
+      ]
+    },
+    "quality-fast-shard": {
+      "check_names": [
+        "Fast Coverage Shard (1/4)",
+        "Fast Coverage Shard (2/4)",
+        "Fast Coverage Shard (3/4)",
+        "Fast Coverage Shard (4/4)"
+      ],
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}",
+      "events": [
+        "pull_request",
+        "push"
+      ],
+      "name": "Fast Coverage Shard (${{ matrix.shard }}/4)",
+      "needs": [
+        "classify",
+        "quality-fast-build"
+      ],
+      "outcome": "Run one count-partitioned legacy coverage shard from the shared instrumented archive and retain merged LLVM profile data; not required directly.",
+      "required_events": [],
+      "runner_labels": [
+        "ubuntu-latest"
+      ]
     }
   },
   "observed_pre_change_aggregate_gap": "test-cross-platform ran on both events but was mistakenly in ci_quality.PUSH_ONLY. GH-164 enforces the already specified PR requirement; no scheduling change.",
