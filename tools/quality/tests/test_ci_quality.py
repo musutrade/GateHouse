@@ -716,14 +716,47 @@ class RiskShardTests(unittest.TestCase):
                 patch.object(gate, 'compiler_configuration', return_value={'target': 'x86_64'}), \
                 patch.object(gate, 'git_sha', return_value='a' * 40), \
                 patch.object(gate, 'require_committed_sources'):
-            collector.collect_risk_shard('head', 2, 2)
+            collector.collect_risk_shard(
+                'head', 2, 2, excluded_tests='test(slow)', extra_tests='test(extra)')
         scope.assert_called_once_with('b' * 40, 'a' * 40)
         snapshot.assert_called_once_with('head', 'a' * 40)
         self.assertEqual(collect.call_args.args[:2], ('head', 'a' * 40))
         self.assertEqual(collect.call_args.args[5:7], (2, 2))
+        self.assertEqual(collect.call_args.kwargs,
+                         {'excluded_tests': 'test(slow)', 'extra_tests': 'test(extra)'})
         self.assertEqual(collector.report['stages']['risk']['side'], 'head')
         self.assertEqual(collector.report['stages']['risk']['shard'], 2)
         self.assertEqual(collector.report['stages']['risk']['partitions'], 2)
+
+    def test_risk_partition_filters_precede_one_final_report(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            collector = object.__new__(gate.Collector)
+            collector.directory = Path(temporary)
+            coverage = collector.directory / 'head-coverage-1.json'
+            coverage.write_text('{}')
+            manifest = collector.directory / 'head-manifest.json'
+            manifest.write_text(json.dumps({'files': {}, 'absent_sources': []}))
+            risk = collector.directory / 'head-risk-1.json'
+            risk.write_text(json.dumps({
+                'manifest_sha256': gate.sha256(manifest),
+                'llvm_sha256': gate.sha256(coverage),
+            }))
+            commands = []
+            with patch.object(collector, 'python'), \
+                    patch.object(collector, 'command',
+                                 side_effect=lambda name, argv, **kwargs: commands.append((name, argv))):
+                collector._collect_commit_coverage_shard(
+                    'head', 'a' * 40, Path('snapshot'), Path('binary'), 'x86_64', 1, 2,
+                    excluded_tests='test(slow) | test(other)', extra_tests='test(extra)')
+        self.assertEqual([name for name, _ in commands],
+                         ['head-coverage-1', 'head-coverage-extra-1', 'head-coverage-json-1',
+                          'head-lcov-1', 'head-cobertura.xml-1'])
+        partition = commands[0][1]
+        self.assertIn('--no-report', partition)
+        self.assertEqual(partition[-2:], ['-E', 'not (test(slow) | test(other))'])
+        self.assertIn('-E', commands[1][1])
+        self.assertIn('--json', commands[2][1])
+        self.assertIn('--output-path', commands[2][1])
 
     def test_shard_assembly_discovers_and_merges_both_sides_before_risk_assembly(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -1193,7 +1193,8 @@ class Collector:
 
     def _collect_commit_coverage_shard(self, side: str, commit: str, snapshot: Path,
                                        binary: Path, target: str, shard: int,
-                                       partitions: int, *, env=None):
+                                       partitions: int, *, excluded_tests: str = '',
+                                       extra_tests: str = '', env=None):
         """Run one test partition and retain partial coverage/risk evidence."""
         crate = snapshot / 'tools/harness-gate'
         manifest = self.directory / f'{side}-manifest.json'
@@ -1209,11 +1210,25 @@ class Collector:
         )
 
         cargo_manifest = str(crate / 'Cargo.toml')
+        nextest = ['cargo', 'llvm-cov', 'nextest', '--workspace', '--locked',
+                   '--manifest-path', cargo_manifest, '--target', target]
+        partition = [*nextest, '--partition', f'hash:{shard}/{partitions}', '--no-report']
+        if excluded_tests:
+            partition.extend(['-E', f'not ({excluded_tests})'])
+        self.command(f'{side}-coverage-{shard}', partition, env=env)
+
+        if extra_tests:
+            self.command(
+                f'{side}-coverage-extra-{shard}',
+                [*nextest, '--no-report', '-E', extra_tests], env=env
+            )
+
+        # Generate one report after both invocations so all retained profiles
+        # participate in every evidence format.
         self.command(
-            f'{side}-coverage-{shard}',
-            ['cargo', 'llvm-cov', 'nextest', '--workspace', '--locked',
+            f'{side}-coverage-json-{shard}',
+            ['cargo', 'llvm-cov', 'report', '--workspace',
              '--manifest-path', cargo_manifest, '--target', target,
-             '--partition', f'hash:{shard}/{partitions}',
              '--json', '--output-path', str(coverage)], env=env
         )
 
@@ -1329,7 +1344,8 @@ class Collector:
         self.report['collection_seconds'] = time.monotonic() - started
         self._record_artifacts()
 
-    def collect_risk_shard(self, side: str, shard: int, partitions: int):
+    def collect_risk_shard(self, side: str, shard: int, partitions: int, *,
+                           excluded_tests: str = '', extra_tests: str = ''):
         """Run one risk test partition; the merge job combines side shards."""
         require(side in RISK_SIDES, f'unknown risk side: {side}')
         require(partitions >= 2 and 1 <= shard <= partitions,
@@ -1347,7 +1363,8 @@ class Collector:
             commit = base if side == 'base' else head
             snapshot = self.snapshot(side, commit)
             self._collect_commit_coverage_shard(
-                side, commit, snapshot, binary, target, shard, partitions)
+                side, commit, snapshot, binary, target, shard, partitions,
+                excluded_tests=excluded_tests, extra_tests=extra_tests)
             result = {'status': 'success', 'side': side, 'shard': shard,
                       'partitions': partitions}
         except (ValueError, OSError, KeyError, subprocess.SubprocessError) as error:
@@ -1430,6 +1447,10 @@ def main():
     parser.add_argument('--side', choices=RISK_SIDES, help='risk worker side')
     parser.add_argument('--risk-shard', type=int, help='risk test shard number')
     parser.add_argument('--partitions', type=int, help='number of risk test shards')
+    parser.add_argument('--exclude-tests', default='',
+                        help='nextest filterset excluded from every risk partition')
+    parser.add_argument('--extra-tests', default='',
+                        help='nextest filterset run once in the selected risk shard')
     parser.add_argument('--base-shard', type=Path, help='base risk worker candidate')
     parser.add_argument('--head-shard', type=Path, help='head risk worker candidate')
     parser.add_argument('--shards-root', type=Path, help='downloaded risk shard artifact root')
@@ -1502,7 +1523,9 @@ def main():
                     require(args.side in RISK_SIDES, 'collect-risk-shard needs --side base|head')
                     require(args.risk_shard is not None and args.partitions is not None,
                             'collect-risk-shard needs --risk-shard and --partitions')
-                    collector.collect_risk_shard(args.side, args.risk_shard, args.partitions)
+                    collector.collect_risk_shard(
+                        args.side, args.risk_shard, args.partitions,
+                        excluded_tests=args.exclude_tests, extra_tests=args.extra_tests)
             else:
                 verify(args.output / 'candidate.json', args.head_sha, args.base_sha, args.run_id)
         return 0

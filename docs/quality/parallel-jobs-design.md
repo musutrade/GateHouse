@@ -301,3 +301,32 @@ hosted 成功 run `39092702264` 显示 hash partition 仍有明显偏斜：
 - Windows 路由：245 + 221 + 256 + 1 + 1 = 724，交集 0。
 
 这只改变测试在 shard 间的分配，不改变测试集合、失败传播或必需检查名。
+
+## 2026-10-18 Risk shard 耗时平衡
+
+hosted 成功 run `39094259393` 中 Risk shard 出现偏斜：
+
+| Side / shard | 墙钟 | 测试执行 |
+| --- | ---: | ---: |
+| base 1/2 | 141s | 169.5s cumulative |
+| base 2/2 | 183s | 242.1s cumulative |
+| head 1/2 | 125s | 142.4s cumulative |
+| head 2/2 | 181s | 265.9s cumulative |
+
+将少量稳定重测试显式移出 hash partition，并由 shard 1 单独执行：
+
+- base 排除 `html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering`、
+  `cow_no_hit_borrows_and_mixed_replacements_match_frozen_g_bytes` 和
+  `waiter_terminates_on_writer_failure_and_observed_output_limits`；
+- head 排除 `frozen_policy_and_reference_acceptance_match_python`。
+
+移动量按 wall-clock 而不是测试时长总和估计：额外命令只执行少量可并行的重测试，
+避免把 base/head shard 1 变成新的串行长尾。
+
+`collect-risk-shard` 新增 `--exclude-tests` / `--extra-tests`。每个分片先以
+`cargo llvm-cov nextest --no-report` 执行 partition，再以同样方式执行额外测试，
+最后只生成一次 JSON/LCOV/Cobertura report，确保所有 profile 都进入同一份证据。
+
+本地 `cargo nextest list` 验证两种 side 的 partition + extra 路由都恰好覆盖
+724 个测试且交集为 0；两次 `--no-report` 后生成的 coverage union 为两次单独
+覆盖的并集。
