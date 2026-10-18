@@ -2,12 +2,17 @@
   "schema": "repository-size-review/v1",
   "base": "8994cf53a44677ecb36acc6f9a9ce1d547c57728",
   "owner": "higoalespn",
-  "reason": "Issue98 trusted-host candidate source, tests and documentation; exact cumulative blob inventory including durable controller activation and source-bound startup completion. Thresholds and individual-file policy unchanged.",
+  "reason": "Issue98 trusted-host candidate source, tests and documentation; exact cumulative blob inventory including authenticated administrator preparation, durable dispatch and explicit API transport bindings. Thresholds and individual-file policy unchanged.",
   "blobs": [
     {
       "path": "docs/README.md",
       "oid": "c1eedff0f09d8e4da9e892377c8826a58ea5a531",
       "bytes": 3594
+    },
+    {
+      "path": "docs/trusted-host-administrator.md",
+      "oid": "2d8033c41758a5f5c637c761d4dd18eeca684238",
+      "bytes": 6905
     },
     {
       "path": "docs/trusted-host-coverage.md",
@@ -68,6 +73,11 @@
       "path": "docs/trusted-host-coverage.md",
       "oid": "6a1a570099bf2080e69038d4dd17524f888c196c",
       "bytes": 79276
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "6ea6b6f11a18781bc985c5a2f418e52f9d94cce3",
+      "bytes": 117464
     },
     {
       "path": "docs/trusted-host-coverage.md",
@@ -400,6 +410,11 @@
       "bytes": 16765
     },
     {
+      "path": "tools/quality/tests/test_trusted_gate_administrator.py",
+      "oid": "fe99fe07199416a1b52cacc2c3b23f8046712309",
+      "bytes": 22885
+    },
+    {
       "path": "tools/quality/tests/test_trusted_gate_bootstrap_release.py",
       "oid": "5d984bb931b6cf80f1984e58f5bd21812fff020d",
       "bytes": 11698
@@ -466,6 +481,11 @@
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_core_inspection.py",
+      "oid": "0cb1e114251f0b47ef12e412cd0c460dd85d6996",
+      "bytes": 14161
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_core_inspection.py",
       "oid": "c5064c0ee79cae60f1243ed6991db503a1083345",
       "bytes": 13727
     },
@@ -488,6 +508,11 @@
       "path": "tools/quality/tests/test_trusted_gate_file_install.py",
       "oid": "5f50e59d6163eba91d86e52856d60e29caf7d7f7",
       "bytes": 22476
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_host_config.py",
+      "oid": "2c64ea0853399ad50e48ec6407de50aeb8139940",
+      "bytes": 21923
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_host_config.py",
@@ -568,6 +593,11 @@
       "path": "tools/quality/tests/test_trusted_gate_preflight.py",
       "oid": "306bcdd4c60465f45772270e840b9740018de179",
       "bytes": 25756
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_preflight.py",
+      "oid": "371f8cbf2101e005cd29c5318d4f20043f79781c",
+      "bytes": 28042
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_prepared_replay.py",
@@ -740,6 +770,11 @@
       "bytes": 13003
     },
     {
+      "path": "tools/trusted_gate/deploy/administrator-upgrade.py",
+      "oid": "466864bd16abd99983cccb08568946fe31b1c3aa",
+      "bytes": 20913
+    },
+    {
       "path": "tools/trusted_gate/deploy/admit-upgrade-effects.py",
       "oid": "5416e67c7a147d289f85beb6415a190f108a5efa",
       "bytes": 13066
@@ -800,6 +835,11 @@
       "bytes": 19897
     },
     {
+      "path": "tools/trusted_gate/deploy/check-core-policy.py",
+      "oid": "dbb1c3e00ffdda46ba3688cff576f763378b4019",
+      "bytes": 30155
+    },
+    {
       "path": "tools/trusted_gate/deploy/check-schemas.py",
       "oid": "443fd4630e99f71fa0586c1800138c622a507907",
       "bytes": 6276
@@ -813,6 +853,11 @@
       "path": "tools/trusted_gate/deploy/compose-linux-host.py",
       "oid": "78e75de49d98df76c7043e9cea484d1899e90cdc",
       "bytes": 19181
+    },
+    {
+      "path": "tools/trusted_gate/deploy/compose-linux-host.py",
+      "oid": "cda46b396bb3cc874a6160fa39c45731c8acde4b",
+      "bytes": 27833
     },
     {
       "path": "tools/trusted_gate/deploy/compose-linux-host.py",
@@ -903,6 +948,11 @@
       "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
       "oid": "572ef77354bd7f304ca75f5e61bc116d8572f028",
       "bytes": 23010
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "5bc82c8b700a6d9bfbb79843d0f88242a064feb6",
+      "bytes": 30997
     },
     {
       "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
@@ -1088,6 +1138,11 @@
       "path": "tools/trusted_gate/deploy/preflight-history-pilot.py",
       "oid": "49ea43da2f630f488bf42ca9aa52f6dabb180d55",
       "bytes": 20997
+    },
+    {
+      "path": "tools/trusted_gate/deploy/preflight-history-pilot.py",
+      "oid": "62bb571ac41e88d7d48f36e96ce250f640ed3d04",
+      "bytes": 21442
     },
     {
       "path": "tools/trusted_gate/deploy/preflight-history-pilot.py",
