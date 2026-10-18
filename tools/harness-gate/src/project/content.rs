@@ -96,6 +96,35 @@ impl ContentManifest {
         Ok(format!("content-v1:sha256:{:x}", Sha256::digest(bytes)))
     }
 
+    /// A generated artifact root is never allowed to cover candidate input.
+    /// Reject aliases too: excluding a symlink could conceal a source mutation.
+    pub(crate) fn output_path(&self, root: &Path, relative: &Path) -> Result<PathBuf> {
+        let name = portable_path(relative)?;
+        ensure!(
+            name.split('/').all(|part| part != ".git"),
+            "Git metadata is not an artifact root"
+        );
+        ensure!(
+            self.files
+                .iter()
+                .all(|file| !Path::new(&file.path).starts_with(relative)),
+            "artifact root overlaps candidate input: {name}"
+        );
+        let mut current = root.to_path_buf();
+        for component in relative.components() {
+            current.push(component);
+            match fs::symlink_metadata(&current) {
+                Ok(metadata) => ensure!(
+                    metadata.is_dir() && !metadata.file_type().is_symlink(),
+                    "artifact root must use real directories: {name}"
+                ),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(current)
+    }
+
     pub(crate) fn materialize(&self, source: &Path, destination: &Path) -> Result<()> {
         for entry in &self.files {
             let path = destination.join(&entry.path);

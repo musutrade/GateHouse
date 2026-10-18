@@ -49,6 +49,7 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
         Commands::Verify {
             snapshot,
             snapshot_source,
+            snapshot_destination,
             scope: args,
             components,
             profile,
@@ -59,7 +60,9 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
             let project = if snapshot {
                 snapshot_project =
                     match snapshot_source.unwrap_or(crate::cli::SnapshotSource::Directory) {
-                        crate::cli::SnapshotSource::Directory => project.directory_snapshot()?,
+                        crate::cli::SnapshotSource::Directory => {
+                            project.directory_snapshot(snapshot_destination.as_deref())?
+                        }
                         crate::cli::SnapshotSource::Index => project.clone(),
                     };
                 &snapshot_project

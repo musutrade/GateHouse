@@ -51,8 +51,13 @@ policies, baselines, tools, platforms or execution conditions.
 The copy is checked against the manifest, and the source is checked again after
 materialization. Before a result can be published, Core checks that the execution
 input still matches. The source must remain stable while copying; preventing adversarial concurrent
-writers is an execution-environment responsibility. Steps must put build products and other writes outside the
-snapshot (for example under their declared report output), or this mode rejects
+writers is an execution-environment responsibility. Steps must put build products and other writes outside candidate input
+(for example under their declared report output). The quality collector may
+write its explicitly declared artifact root inside the snapshot only when that
+root contains no candidate files. Core creates missing empty artifact directories,
+rejects overlap or symlink aliases, and excludes only that verified collection
+output root from the final input comparison. It still validates collected
+artifacts through the existing Core evidence contract. Other writes reject
 the invocation. Repository-bound steps are rejected because they would bypass
 the selected input. The private input is removed when the invocation releases it;
 its manifest remains in the existing invocation evidence.
@@ -69,3 +74,29 @@ started by selecting this mode.
 Issue #130 also tracks explicit non-SCM baseline acceptance. This change does
 not close #130 or the architecture umbrella #134. Plugin measurement
 implementations remain in [GateProbes](https://github.com/musutrade/GateProbes).
+
+## Explicit execution root and non-SCM baseline
+
+Signed collector requests bind their workspace and artifact roots. When the
+trusted host needs to know the execution root before signing, supply
+`--snapshot-destination /absolute/new/path`. Its parent must already exist;
+the destination must be new and separate from candidate input. Core creates it
+with private permissions on Unix, copies and verifies input, then removes its
+own directory on invocation cleanup. Existing destinations are rejected rather
+than reused or removed. Both snapshot adapters support this option. Without it,
+Core allocates a private temporary directory as before.
+
+The host must sign requests for that explicit destination before invoking Core.
+Core never rewrites signed roots, arguments or permissions to make an old request
+fit a new invocation. A root/signature mismatch fails existing protocol checks.
+This option names storage; it does not attest the host or grant isolation.
+
+For a non-SCM baseline, use the existing quality configuration
+`baseline.provider.kind = "retained_artifact"` and its explicit host-pinned
+`quality-baseline-request/v1`. The existing bundle includes the base state,
+evidence and exact source/config/artifact file inventory. Core validates those
+bytes with the same quality/ratchet engine; it neither queries Git nor substitutes
+the candidate for a missing baseline. A required absent, corrupted or wrong
+lineage baseline remains a failure. Fresh collector output roots must not
+overlap input files; pre-existing candidate files are never reclassified as
+disposable output.

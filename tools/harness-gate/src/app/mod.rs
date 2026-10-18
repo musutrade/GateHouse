@@ -152,6 +152,7 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
         Commands::Verify {
             snapshot: _,
             snapshot_source: _,
+            snapshot_destination: _,
             plan: true,
             scope,
             components,
@@ -507,7 +508,14 @@ fn run_project(
             ..
         }
     ) {
-        Project::discover_index_content(root, config)
+        let destination = match &command {
+            Commands::Verify {
+                snapshot_destination,
+                ..
+            } => snapshot_destination.as_deref(),
+            _ => None,
+        };
+        Project::discover_index_content(root, config, destination)
     } else if matches!(&command, Commands::Verify { snapshot: true, .. }) {
         // Directory snapshots do not consult optional Git context at all.
         Project::discover_for_plan(root, config)

@@ -240,9 +240,16 @@ impl InvocationInput {
         })
     }
 
-    pub(crate) fn directory_snapshot(root: &Path, output: &Path) -> Result<Self> {
+    pub(crate) fn directory_snapshot(
+        root: &Path,
+        output: &Path,
+        destination: Option<&Path>,
+    ) -> Result<Self> {
         let manifest = super::content::ContentManifest::capture(root, Some(output))?;
-        let snapshot_root = allocate_snapshot_root()?;
+        let snapshot_root = match destination {
+            Some(path) => allocate_known_snapshot(root, path)?,
+            None => allocate_snapshot_root()?,
+        };
         let guard = Arc::new(SnapshotGuard {
             root: snapshot_root.clone(),
         });
@@ -263,10 +270,25 @@ impl InvocationInput {
         })
     }
 
-    pub(crate) fn verify_content(&self) -> Result<()> {
+    pub(crate) fn prepare_content_output(&self, name: &Path) -> Result<()> {
+        if let Some(manifest) = &self.content {
+            let path = manifest.output_path(&self.execution_root, name)?;
+            fs::create_dir_all(path)?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn verify_content(&self, output: Option<&Path>) -> Result<()> {
         if let Some(expected) = &self.content {
+            let relative = output
+                .map(|path| path.strip_prefix(&self.execution_root))
+                .transpose()?;
+            if let Some(relative) = relative {
+                expected.output_path(&self.execution_root, relative)?;
+            }
             anyhow::ensure!(
-                super::content::ContentManifest::capture(&self.execution_root, None)? == *expected,
+                super::content::ContentManifest::capture(&self.execution_root, relative)?
+                    == *expected,
                 "materialized candidate changed during verification"
             );
         }
@@ -433,6 +455,35 @@ fn parse_commit(stdout: &[u8]) -> Option<String> {
     let value = std::str::from_utf8(stdout).ok()?.trim();
     (matches!(value.len(), 40 | 64) && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
         .then(|| value.to_string())
+}
+
+fn allocate_known_snapshot(source: &Path, destination: &Path) -> Result<PathBuf> {
+    anyhow::ensure!(
+        destination.is_absolute(),
+        "snapshot destination must be absolute"
+    );
+    let parent = destination
+        .parent()
+        .context("snapshot destination parent")?
+        .canonicalize()?;
+    let path = parent.join(
+        destination
+            .file_name()
+            .context("snapshot destination name")?,
+    );
+    anyhow::ensure!(
+        !path.starts_with(source) && !source.starts_with(&path),
+        "snapshot destination must be separate from candidate input"
+    );
+    #[cfg(unix)]
+    let created = {
+        use std::os::unix::fs::DirBuilderExt;
+        fs::DirBuilder::new().mode(0o700).create(&path)
+    };
+    #[cfg(not(unix))]
+    let created = fs::create_dir(&path);
+    created.context("snapshot destination must be a new directory")?;
+    Ok(path)
 }
 
 fn allocate_snapshot_root() -> Result<PathBuf> {

@@ -189,6 +189,9 @@ pub(crate) enum Commands {
         /// Select directory bytes (default) or the validated Git index as snapshot input.
         #[arg(long, value_enum, requires = "snapshot")]
         snapshot_source: Option<SnapshotSource>,
+        /// New absolute snapshot directory, for host-signed requests bound to a known root.
+        #[arg(long, requires = "snapshot", value_name = "PATH")]
+        snapshot_destination: Option<PathBuf>,
         #[command(flatten)]
         scope: ScopeArgs,
         /// Override scope detection with a comma-separated component list.

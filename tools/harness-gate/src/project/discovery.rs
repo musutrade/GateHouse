@@ -26,6 +26,7 @@ impl Project {
     pub(crate) fn discover_index_content(
         override_root: Option<PathBuf>,
         config_override: Option<PathBuf>,
+        destination: Option<&Path>,
     ) -> Result<Self> {
         let start = canonical_directory(&override_root.clone().unwrap_or(env::current_dir()?))?;
         let top = crate::utils::git::capture_readonly(&start, ["rev-parse", "--show-toplevel"])?;
@@ -49,7 +50,7 @@ impl Project {
         crate::utils::git::index_path(&relative)?;
         let input = InvocationInput::materialize_staged(&root, &relative, "not-sampled")?;
         let indexed = Self::from_input(root, &relative, input)?;
-        let mut snapshot = indexed.directory_snapshot()?;
+        let mut snapshot = indexed.directory_snapshot(destination)?;
         snapshot.invocation_input.mode = super::InputMode::ContentIndex;
         Ok(snapshot)
     }
@@ -82,10 +83,10 @@ impl Project {
         Self::from_input(root, &config_relative, input)
     }
 
-    pub(crate) fn directory_snapshot(&self) -> Result<Self> {
+    pub(crate) fn directory_snapshot(&self, destination: Option<&Path>) -> Result<Self> {
         let relative = self.config_path.strip_prefix(&self.execution_root)?;
         let output = self.reports.strip_prefix(&self.root)?;
-        let input = InvocationInput::directory_snapshot(&self.execution_root, output)?;
+        let input = InvocationInput::directory_snapshot(&self.execution_root, output, destination)?;
         let mut project = Self::from_input(self.root.clone(), relative, input)?;
         anyhow::ensure!(
             project
