@@ -75,7 +75,11 @@ SOURCE_FILES = sorted({"report_history/dashboard.rs", "report_history/dashboard/
     {f"config/quality/{name}.rs" for name in ("mod", "model", "policy", "validation", "compiler", "collectors", "baseline", "baseline/git")} |
     {f"../quality-core/{name}.rs" for name in (
     "comparison", "cross_component", "evidence", "json", "mod", "model",
-    "policy", "project", "project_report", "ratchet", "replay", "schema")})
+    "policy", "project", "project_report", "ratchet", "replay", "schema")} |
+    # Issue #130: the staged snapshot content module and secret scanning against
+    # the snapshot file list. Additive measured inventory; both commits are
+    # recollected under the same expanded selection.
+    {"project/content.rs", "secrets/mod.rs"})
 
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
