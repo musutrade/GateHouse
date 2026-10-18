@@ -225,7 +225,8 @@ class WorkflowBoundaryTests(unittest.TestCase):
     def test_cross_platform_tests_are_partitioned_without_changing_the_check_name(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()
         native = workflow.split('  test-cross-platform:\n')[1].split('  security-audit:\n')[0]
-        self.assertIn('name: Test (${{ matrix.os }})', native)
+        self.assertIn("name: ${{ matrix.shard == 1 && format('Test ({0})', matrix.os) || "
+                      "format('Test ({0}, shard {1})', matrix.os, matrix.shard) }}", native)
         self.assertIn('os: [macos-latest, windows-latest]', native)
         self.assertIn('shard: [1, 2, 3]', native)
         self.assertIn('os: macos-latest\n            shard: 3', native)

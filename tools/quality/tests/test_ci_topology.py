@@ -249,6 +249,10 @@ class SupplementalCadenceTests(unittest.TestCase):
                     "needs.classify.outputs.run_full == 'true'",
                     "needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_native != 'false'").replace(
                     "github.event_name == 'push'", "github.event_name != 'pull_request'")
+            if name in ('test', 'test-cross-platform'):
+                # Matrix shards retain the original shard 1 check names while
+                # additional shards get explicit suffixed display names.
+                expected['name'] = row['name']
             self.assertEqual(row, expected)
         self.assertEqual(set(previous['jobs']['quality-required']['needs']) -
                          set(CONTRACT['jobs']['quality-required']['needs']),

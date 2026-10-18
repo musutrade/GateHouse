@@ -106,7 +106,7 @@ jobs:
             --github-output "$GITHUB_OUTPUT"
 
   test:
-    name: Test
+    name: ${{ matrix.shard == 1 && 'Test' || format('Test (shard {0})', matrix.shard) }}
     needs: [classify]
     if: ${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.reuse_verified != 'true' }}
     strategy:
@@ -237,7 +237,7 @@ jobs:
           retention-days: 30
 
   test-cross-platform:
-    name: Test (${{ matrix.os }})
+    name: ${{ matrix.shard == 1 && format('Test ({0})', matrix.os) || format('Test ({0}, shard {1})', matrix.os, matrix.shard) }}
     needs: [classify]
     if: ${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_native != 'false' && needs.classify.outputs.reuse_verified != 'true' }}
     strategy:

@@ -13,7 +13,7 @@
   "aggregate_job": "quality-required",
   "jobs": {
     "test": {
-      "name": "Test",
+      "name": "${{ matrix.shard == 1 && 'Test' || format('Test (shard {0})', matrix.shard) }}",
       "check_names": [
         "Test"
       ],
@@ -35,7 +35,7 @@
       "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "test-cross-platform": {
-      "name": "Test (${{ matrix.os }})",
+      "name": "${{ matrix.shard == 1 && format('Test ({0})', matrix.os) || format('Test ({0}, shard {1})', matrix.os, matrix.shard) }}",
       "check_names": [
         "Test (macos-latest)",
         "Test (windows-latest)"
