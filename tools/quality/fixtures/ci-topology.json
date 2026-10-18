@@ -15,7 +15,8 @@
     "test": {
       "name": "${{ matrix.shard == 1 && 'Test' || format('Test (shard {0})', matrix.shard) }}",
       "check_names": [
-        "Test"
+        "Test",
+        "Test (shard 2)"
       ],
       "runner_labels": [
         "ubuntu-latest"
@@ -38,7 +39,10 @@
       "name": "${{ matrix.shard == 1 && format('Test ({0})', matrix.os) || format('Test ({0}, shard {1})', matrix.os, matrix.shard) }}",
       "check_names": [
         "Test (macos-latest)",
-        "Test (windows-latest)"
+        "Test (macos-latest, shard 2)",
+        "Test (windows-latest)",
+        "Test (windows-latest, shard 2)",
+        "Test (windows-latest, shard 3)"
       ],
       "runner_labels": [
         "macos-latest",
@@ -55,7 +59,7 @@
       "needs": [
         "classify"
       ],
-      "outcome": "Full locked native macOS and Windows nextest suites with --no-fail-fast; both PR-required.",
+      "outcome": "Full locked native macOS and Windows nextest suites over partitioned shards, with duration-heavy tests explicitly balanced and every shard required.",
       "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_native != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "security-audit": {

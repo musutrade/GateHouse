@@ -178,8 +178,10 @@ class TopologyTests(unittest.TestCase):
                     self.assertNotIn('continue-on-error:', body)
         native = jobs['test-cross-platform']
         self.assertIn('fail-fast: false', native)
-        self.assertIn('run: cargo nextest run --manifest-path tools/harness-gate/Cargo.toml '
-                      '--locked --no-fail-fast', native)
+        self.assertIn('shell: bash', native)
+        self.assertIn('cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked \\', native)
+        self.assertIn('--no-fail-fast --partition "hash:${CI_SHARD}/${CI_PARTITIONS}"', native)
+        self.assertIn('-E "$extra"', native)
         native_steps = native.split('    steps:\n', 1)[1]
         self.assertNotRegex(native_steps, re.compile(r'^\s+if:', re.M),
                             msg='native test steps cannot be conditional within the job')
@@ -253,6 +255,8 @@ class SupplementalCadenceTests(unittest.TestCase):
                 # Matrix shards retain the original shard 1 check names while
                 # additional shards get explicit suffixed display names.
                 expected['name'] = row['name']
+                expected['check_names'] = row['check_names']
+                expected['outcome'] = row['outcome']
             self.assertEqual(row, expected)
         self.assertEqual(set(previous['jobs']['quality-required']['needs']) -
                          set(CONTRACT['jobs']['quality-required']['needs']),

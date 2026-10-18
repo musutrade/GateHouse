@@ -274,3 +274,30 @@ debuginfo，已用 `cargo llvm-cov` 实际导出验证。
 
 直接复用会改变 legacy 的源码/工具/区域语义，属于证据身份变更而不是纯性能优化；
 在未完成新的 measurement-series 与 acceptance 前不复用。
+
+## 2026-10-18 按实际耗时重新平衡 native shard
+
+hosted 成功 run `39092702264` 显示 hash partition 仍有明显偏斜：
+
+| Job | 墙钟 | 测试执行 |
+| --- | ---: | ---: |
+| Test (macos-latest) | 144s | 73s |
+| Test (macos-latest, shard 2) | 249s | 119s |
+| Test (windows-latest) | 206s | 49s |
+| Test (windows-latest, shard 2) | 198s | 71s |
+| Test (windows-latest, shard 3) | 230s | 75s |
+
+因此在不改变测试集合的前提下，把少量已知耗时测试从重分片移动到轻分片。每个
+平台的全部 shard 都先从 partition 中排除这些测试，再由唯一指定 shard 单独执行：
+
+- macOS：`frozen_policy_and_reference_acceptance_match_python`
+  从 shard 2 移到 shard 1；
+- Windows：`large_core_quality_json_is_redacted_and_finalized_without_truncation`
+  移到 shard 1，`frozen_evidence_and_integrity_matrix_matches_python` 移到 shard 2。
+
+本地用 `cargo nextest list` 验证：
+
+- macOS 路由：361 + 362 + 1 = 724，交集 0；
+- Windows 路由：245 + 221 + 256 + 1 + 1 = 724，交集 0。
+
+这只改变测试在 shard 间的分配，不改变测试集合、失败传播或必需检查名。

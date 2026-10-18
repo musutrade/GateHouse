@@ -230,9 +230,14 @@ class WorkflowBoundaryTests(unittest.TestCase):
         self.assertIn('os: [macos-latest, windows-latest]', native)
         self.assertIn('shard: [1, 2, 3]', native)
         self.assertIn('os: macos-latest\n            shard: 3', native)
-        self.assertIn('cargo nextest run --manifest-path tools/harness-gate/Cargo.toml '
-                      '--locked --no-fail-fast --partition hash:${{ matrix.shard }}/'
-                      "${{ matrix.os == 'windows-latest' && 3 || 2 }}", native)
+        self.assertIn('CI_OS: ${{ matrix.os }}', native)
+        self.assertIn('CI_SHARD: ${{ matrix.shard }}', native)
+        self.assertIn("CI_PARTITIONS: ${{ matrix.os == 'windows-latest' && 3 || 2 }}", native)
+        self.assertIn('--partition "hash:${CI_SHARD}/${CI_PARTITIONS}"', native)
+        self.assertIn('-E "not ($excluded)"', native)
+        self.assertIn('-E "$extra"', native)
+        self.assertIn("excluded='test(frozen_policy_and_reference_acceptance_match_python)'", native)
+        self.assertIn("extra='test(large_core_quality_json_is_redacted_and_finalized_without_truncation)'", native)
         self.assertIn('fail-fast: false', native)
         regex = re.compile(r'^\s+if:', re.M)
         self.assertNotRegex(native.split('    steps:\n', 1)[1], regex)

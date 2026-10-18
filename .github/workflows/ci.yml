@@ -276,7 +276,40 @@ jobs:
           tool: cargo-nextest
 
       - name: Run tests
-        run: cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked --no-fail-fast --partition hash:${{ matrix.shard }}/${{ matrix.os == 'windows-latest' && 3 || 2 }}
+        shell: bash
+        env:
+          CI_OS: ${{ matrix.os }}
+          CI_SHARD: ${{ matrix.shard }}
+          CI_PARTITIONS: ${{ matrix.os == 'windows-latest' && 3 || 2 }}
+        run: |
+          set -euo pipefail
+          excluded=''
+          extra=''
+          if [ "$CI_OS" = 'macos-latest' ]; then
+            excluded='test(frozen_policy_and_reference_acceptance_match_python)'
+            if [ "$CI_SHARD" = '1' ]; then
+              extra="$excluded"
+            fi
+          elif [ "$CI_OS" = 'windows-latest' ]; then
+            excluded='test(large_core_quality_json_is_redacted_and_finalized_without_truncation) | test(frozen_evidence_and_integrity_matrix_matches_python)'
+            if [ "$CI_SHARD" = '1' ]; then
+              extra='test(large_core_quality_json_is_redacted_and_finalized_without_truncation)'
+            elif [ "$CI_SHARD" = '2' ]; then
+              extra='test(frozen_evidence_and_integrity_matrix_matches_python)'
+            fi
+          fi
+          if [ -n "$excluded" ]; then
+            cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked \
+              --no-fail-fast --partition "hash:${CI_SHARD}/${CI_PARTITIONS}" \
+              -E "not ($excluded)"
+          else
+            cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked \
+              --no-fail-fast --partition "hash:${CI_SHARD}/${CI_PARTITIONS}"
+          fi
+          if [ -n "$extra" ]; then
+            cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked \
+              --no-fail-fast -E "$extra"
+          fi
 
   security-audit:
     name: Security Audit
