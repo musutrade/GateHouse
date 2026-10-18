@@ -2,7 +2,7 @@
   "schema": "repository-size-review/v1",
   "base": "8994cf53a44677ecb36acc6f9a9ce1d547c57728",
   "owner": "higoalespn",
-  "reason": "Issue98 trusted-host candidate source, tests and documentation; exact cumulative inventory including closed administrator transport, bounded private staging and pinned Root loader. Thresholds and individual-file policy unchanged.",
+  "reason": "Issue98 trusted-host candidate source, tests and documentation; exact cumulative inventory including source-bound Linux mount installation and durable lease-bound enablement before controller activation. Thresholds and individual-file policy unchanged.",
   "blobs": [
     {
       "path": "docs/README.md",
@@ -18,6 +18,11 @@
       "path": "docs/trusted-host-administrator.md",
       "oid": "a48400f43eaafd480d7f40b82100de2a4387a5f9",
       "bytes": 10054
+    },
+    {
+      "path": "docs/trusted-host-administrator.md",
+      "oid": "fdb89197b5f6b8b8ee651dd4b86435803d979b98",
+      "bytes": 12738
     },
     {
       "path": "docs/trusted-host-coverage.md",
@@ -158,6 +163,11 @@
       "path": "docs/trusted-host-coverage.md",
       "oid": "b65146dcd196280aedb174fca647fb036868207a",
       "bytes": 44281
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "b9258339fc9d23edfa8c73e5a9d3316c31725c79",
+      "bytes": 120436
     },
     {
       "path": "docs/trusted-host-coverage.md",
@@ -416,6 +426,11 @@
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_activation.py",
+      "oid": "91b3f2a9346954767c6fdf7488348001a47879b2",
+      "bytes": 18008
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_activation.py",
       "oid": "aa8c91ae4148abf169dd3afd44fce80cf191c54b",
       "bytes": 16765
     },
@@ -525,6 +540,11 @@
       "bytes": 22476
     },
     {
+      "path": "tools/quality/tests/test_trusted_gate_file_install.py",
+      "oid": "65380b605c280dc6d14fb52455b935be298e7924",
+      "bytes": 22476
+    },
+    {
       "path": "tools/quality/tests/test_trusted_gate_host_config.py",
       "oid": "2c64ea0853399ad50e48ec6407de50aeb8139940",
       "bytes": 21923
@@ -538,6 +558,11 @@
       "path": "tools/quality/tests/test_trusted_gate_host_config.py",
       "oid": "a7fed3c836c28beb72861510b44f65cb64eb94a7",
       "bytes": 21583
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_host_config.py",
+      "oid": "a914f5f937c4efdbd06cfc419f5f0004870485db",
+      "bytes": 21923
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_host_config.py",
@@ -565,6 +590,11 @@
       "bytes": 22754
     },
     {
+      "path": "tools/quality/tests/test_trusted_gate_installation_inputs.py",
+      "oid": "6c415463304335a9ad839b56a797ed92a2f8f378",
+      "bytes": 22754
+    },
+    {
       "path": "tools/quality/tests/test_trusted_gate_linux_inputs.py",
       "oid": "21d9f6b4fa0ff686aeccf46e95b16f35532b283b",
       "bytes": 14952
@@ -588,6 +618,11 @@
       "path": "tools/quality/tests/test_trusted_gate_linux_test.py",
       "oid": "639643dd674dead43a19a0895e9d9e3803aec55a",
       "bytes": 6756
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_mount_persistence.py",
+      "oid": "c5b03c9830dd46a91f1201d54a553639341a51c2",
+      "bytes": 13343
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_official_tools.py",
@@ -785,6 +820,11 @@
       "bytes": 13003
     },
     {
+      "path": "tools/trusted_gate/deploy/activate-linux-controller.py",
+      "oid": "cf48eda46cc56b05141ede06c0f577e993193be9",
+      "bytes": 13412
+    },
+    {
       "path": "tools/trusted_gate/deploy/administrator-upgrade.py",
       "oid": "466864bd16abd99983cccb08568946fe31b1c3aa",
       "bytes": 20913
@@ -798,6 +838,11 @@
       "path": "tools/trusted_gate/deploy/admit-upgrade-journal.py",
       "oid": "5235eb5c26e3471453870e5cfcd4bddfdb800b24",
       "bytes": 10441
+    },
+    {
+      "path": "tools/trusted_gate/deploy/bootstrap-release.py",
+      "oid": "060f80cd754f4a1714142e146fbe4395346ba615",
+      "bytes": 12488
     },
     {
       "path": "tools/trusted_gate/deploy/bootstrap-release.py",
@@ -961,6 +1006,11 @@
     },
     {
       "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "2b0ccfcacf40a7de4821c47d479c98ea0d58abf0",
+      "bytes": 31064
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
       "oid": "3b8af2021819dbc2fd4a66fc56ac6fbf9d5b0ae3",
       "bytes": 16067
     },
@@ -1070,6 +1120,11 @@
       "bytes": 18935
     },
     {
+      "path": "tools/trusted_gate/deploy/install-reviewed-files.py",
+      "oid": "f555c95adc84fceb597e1c9423e87e6967d6c28f",
+      "bytes": 18935
+    },
+    {
       "path": "tools/trusted_gate/deploy/install-transaction.py",
       "oid": "47f9ffe4fa365869d1c48273c35afc69de182836",
       "bytes": 11084
@@ -1133,6 +1188,11 @@
       "path": "tools/trusted_gate/deploy/package-pilot.py",
       "oid": "d36b6f2cb88a68eda5c9a5eadee1f2fb96707050",
       "bytes": 5561
+    },
+    {
+      "path": "tools/trusted_gate/deploy/persist-linux-mount.py",
+      "oid": "bfe85b3493faff70ad31da92587c7938ad56adf4",
+      "bytes": 7571
     },
     {
       "path": "tools/trusted_gate/deploy/pilot-probe.py",
@@ -1228,6 +1288,11 @@
       "path": "tools/trusted_gate/deploy/seal-linux-inputs.py",
       "oid": "ba89176350233f5e08b4515742c395523ecd49e7",
       "bytes": 11774
+    },
+    {
+      "path": "tools/trusted_gate/deploy/srv-gatehouse-linux.mount",
+      "oid": "652b2b1c9bba3ebb37d6d836c97f2552e5a1f870",
+      "bytes": 277
     },
     {
       "path": "tools/trusted_gate/deploy/srv-gatehouse-pilot.mount",
