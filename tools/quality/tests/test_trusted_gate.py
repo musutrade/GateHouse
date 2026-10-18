@@ -542,8 +542,8 @@ class FileTests(unittest.TestCase):
                 runpy.run_path(str(launcher), run_name='__main__')
             self.assertEqual(exit_status.exception.code, 77)
             program, argv, environment = execute.call_args.args
-            self.assertEqual(program, '/usr/bin/python3')
-            self.assertEqual(argv, ['/usr/bin/python3', '-I', '/opt/gatehouse/trusted_gate/host.py', 'status'])
+            self.assertEqual(program, '/usr/bin/python3.14')
+            self.assertEqual(argv, ['/usr/bin/python3.14', '-I', '/opt/gatehouse/trusted_gate/host.py', 'status'])
             self.assertEqual(environment, {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8'})
 
     def test_duplicate_json_symlink_and_oversize_are_rejected(self):

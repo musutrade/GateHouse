@@ -78,6 +78,33 @@ and a fresh environment. Internal `step`, maintenance, revocation, retirement,
 arbitrary systemd units, interpreters and shells are not delegated. Configuration
 is always `/etc/gatehouse/host.json`; callers cannot select another one.
 
+Both the public entry and internal step entry select `/usr/bin/python3.14`.
+The candidate [bootstrap](../tools/trusted_gate/host.py) checks the running
+interpreter inode against that protected path, then reads the private configuration
+and all fourteen explicitly listed controller source files through bounded,
+no-follow descriptors. Each source file must be root-owned, mode 0644, single
+link and match its configuration pin; the interpreter bytes must match their pin.
+The loader compiles those captured buffers directly. It never reads Python bytecode
+caches or falls through to another location for an unknown controller module.
+An existing protected `__pycache__` directory is retained but ignored. Extra package
+files, missing modules, changed identities/modes and ambiguous JSON stop startup.
+
+The configuration reader belongs to that snapshot. Public operations acquire the
+controller lease and recheck the captured generation before opening SQLite,
+constructing an App client or performing network activity. Internal steps recheck
+under the lease already held by their Core invocation. Source/configuration changes
+while a process obtains the lease therefore reject the old process. Success and
+failure remove the temporary import finder and controller module namespace.
+
+These are candidate startup guards, exercised with ordinary files and substituted
+Root admission in regression tests, including a real stale timestamp-cache case.
+They do not establish a live deployment or an atomic installation transaction.
+The Root bootstrap, interpreter and standard library remain trusted installation
+inputs. A reviewed installer must block new entry and drain existing processes
+while replacing them, hold the same controller lease, verify the complete new
+generation and provide durable recovery before releasing entry. The accepted
+659 pilot remains unchanged until that transaction and its acceptance are ready.
+
 The root-owned inbox is `/var/spool/gatehouse/inbox`, group `gatehouse-submit`,
 mode 1730. Only single files there, owned by the configured developer UID with a
 single hardlink, can supply a bundle or PR body. Reads use one no-follow file

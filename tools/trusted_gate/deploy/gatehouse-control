@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -I
+#!/usr/bin/python3.14 -I
 """The only entry eligible for a narrowly reviewed sudoers rule; never a root shell."""
 import os
 import sys
@@ -6,6 +6,6 @@ import sys
 allowed = {'validate', 'deliver', 'attach', 'publish', 'status', 'reconcile'}
 if os.geteuid() != 0 or len(sys.argv) < 2 or sys.argv[1] not in allowed:
     raise SystemExit('use a configured public GateHouse operation; internal step/admin operations are not delegated')
-os.execve('/usr/bin/python3', ['/usr/bin/python3', '-I',
+os.execve('/usr/bin/python3.14', ['/usr/bin/python3.14', '-I',
     '/opt/gatehouse/trusted_gate/host.py', *sys.argv[1:]],
     {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8'})

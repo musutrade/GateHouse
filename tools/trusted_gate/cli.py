@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import ExitStack
 import fcntl
 import json
 import os
@@ -10,7 +11,7 @@ import re
 import sys
 import urllib.parse
 
-from .common import Blocked, protected, read_json, read_submission, require, submission_inbox
+from .common import Blocked, controller_configuration, protected, read_submission, require, submission_inbox
 from .control import Control
 from .execution import Executor
 from .github import APIError, GitHub
@@ -27,7 +28,7 @@ CONFIG = Path('/etc/gatehouse/host.json')
 def configuration():
     require(os.geteuid() == 0, 'use the protected host service; a developer process cannot publish authoritative results')
     protected(Path(__file__))
-    config = read_json(protected(CONFIG, private=True))
+    config = controller_configuration(protected(CONFIG, private=True))
     require(config.get('schema') == 'gatehouse-trusted-host/v1', 'unsupported host configuration')
     require(re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', config['repository']), 'invalid repository')
     require(re.fullmatch(r'[A-Za-z0-9_.-]+', config['base_branch']), 'base branch must be an explicit simple ref')
@@ -80,58 +81,61 @@ def main(argv=None):
     os.umask(0o077)
     try:
         config = configuration()
-        journal = Journal(Path(config['records']) / 'journal.sqlite3')
-        try:
+        with ExitStack() as resources:
+            if args.action != 'step':
+                lock = resources.enter_context((Path(config['records']) / 'controller.lock').open('a'))
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            # A process can load the old generation before obtaining the installation
+            # lease. Recheck before any SQLite mutation, token or network activity.
+            controller_configuration(CONFIG)
+            journal = Journal(Path(config['records']) / 'journal.sqlite3')
+            resources.callback(journal.close)
             if args.action == 'step':
                 # Core is already under the controller's exclusive lock. The launcher may only
                 # execute a fixed step belonging to that running invocation, never acquire a new slot.
                 return launch(config, journal, os.environ.get('GATEHOUSE_RUN_ID', ''), args.step_id)
-            with (Path(config['records']) / 'controller.lock').open('a') as lock:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                executor = Executor(config, configuration_path=CONFIG)
-                github = GitHub(config['app_id'], config['installation_id'], config['app_key'], config['repository'])
-                control = Control(journal, github, executor, config)
-                if args.action == 'validate':
-                    # Repeated exact requests recover the recorded run without executing again.
-                    old = journal.latest(config['repository'], args.head)
-                    if old and old['remote'] != 'revoked':
-                        result = control.validate(old['input'])
-                    else:
-                        payload = read_submission(args.bundle, config['inbox'], config['developer_uid'], config['max_bundle_bytes'])
-                        inputs = prepare(config, github, journal, payload, args.head)
-                        inputs['policy'] = executor.policy_identity()
-                        result = control.validate(inputs)
-                elif args.action == 'attach':
-                    result = control.attach(args.run, args.pr)
-                elif args.action == 'deliver':
-                    settings = config['delivery']
-                    publisher = GitHub(settings['app_id'], settings['installation_id'], settings['app_key'],
-                        config['repository'], permissions={'contents': 'write', 'pull_requests': 'write'})
-                    result = deliver(control, publisher, args.run, args.title,
-                        read_submission(args.body_file, config['inbox'], config['developer_uid'], 16384).decode('utf-8'))
-                elif args.action == 'publish':
-                    require(config.get('coverage_acceptance') == 'complete',
-                            'coverage migration is not accepted; cannot publish an authoritative success')
-                    result = control.publish(args.run)
-                elif args.action == 'revoke':
-                    result = control.revoke(args.run, args.reason)
-                elif args.action == 'retire':
-                    result = retire(config, executor, journal, args.run)
-                elif args.action == 'reconcile':
-                    result = control.reconcile()
-                elif args.action == 'maintain-cache':
-                    require(not journal.outstanding(), 'cache maintenance requires an empty publication slot')
-                    from .cache import Cache
-                    settings = config['cache']
-                    protected(settings['root'], directory=True)
-                    result = Cache(settings['root'], settings['max_bytes'], settings['max_entries'],
-                                   settings['ttl_seconds']).maintain()
+            executor = Executor(config, configuration_path=CONFIG)
+            github = GitHub(config['app_id'], config['installation_id'], config['app_key'], config['repository'])
+            control = Control(journal, github, executor, config)
+            if args.action == 'validate':
+                # Repeated exact requests recover the recorded run without executing again.
+                old = journal.latest(config['repository'], args.head)
+                if old and old['remote'] != 'revoked':
+                    result = control.validate(old['input'])
                 else:
-                    result = journal.outstanding()
-                print(json.dumps(result, sort_keys=True))
-                return 0
-        finally:
-            journal.close()
+                    payload = read_submission(args.bundle, config['inbox'], config['developer_uid'], config['max_bundle_bytes'])
+                    inputs = prepare(config, github, journal, payload, args.head)
+                    inputs['policy'] = executor.policy_identity()
+                    result = control.validate(inputs)
+            elif args.action == 'attach':
+                result = control.attach(args.run, args.pr)
+            elif args.action == 'deliver':
+                settings = config['delivery']
+                publisher = GitHub(settings['app_id'], settings['installation_id'], settings['app_key'],
+                    config['repository'], permissions={'contents': 'write', 'pull_requests': 'write'})
+                result = deliver(control, publisher, args.run, args.title,
+                    read_submission(args.body_file, config['inbox'], config['developer_uid'], 16384).decode('utf-8'))
+            elif args.action == 'publish':
+                require(config.get('coverage_acceptance') == 'complete',
+                        'coverage migration is not accepted; cannot publish an authoritative success')
+                result = control.publish(args.run)
+            elif args.action == 'revoke':
+                result = control.revoke(args.run, args.reason)
+            elif args.action == 'retire':
+                result = retire(config, executor, journal, args.run)
+            elif args.action == 'reconcile':
+                result = control.reconcile()
+            elif args.action == 'maintain-cache':
+                require(not journal.outstanding(), 'cache maintenance requires an empty publication slot')
+                from .cache import Cache
+                settings = config['cache']
+                protected(settings['root'], directory=True)
+                result = Cache(settings['root'], settings['max_bytes'], settings['max_entries'],
+                               settings['ttl_seconds']).maintain()
+            else:
+                result = journal.outstanding()
+            print(json.dumps(result, sort_keys=True))
+            return 0
     except (Blocked, APIError, OSError, KeyError, ValueError) as error:
         # API errors intentionally omit remote bodies and headers. No secret/config dump.
         print(json.dumps({'status': 'blocked', 'reason': str(error)}), file=sys.stderr)

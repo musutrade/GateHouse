@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import stat
+import sys
 import tempfile
 from functools import wraps
 import subprocess
@@ -53,6 +54,15 @@ def unique(pairs):
         require(key not in result, 'duplicate JSON field')
         result[key] = value
     return result
+
+
+@checked
+def controller_configuration(path):
+    """Only the source-snapshot bootstrap can authorize installed configuration."""
+    package = sys.modules.get(__package__)
+    reader = getattr(package, '__host_configuration__', None)
+    require(callable(reader), 'controller requires a source-bound host bootstrap')
+    return json.loads(reader(path), object_pairs_hook=unique)
 
 
 @checked
