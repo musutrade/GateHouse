@@ -24,7 +24,7 @@ FILES = {ENTRY, 'tools/maintenance/restore_evidence.py', *(
         'preserve-pilot-state.py', 'prepare-linux-volume.py', 'stage-protected-source.py', 'bootstrap-release.py',
         'preflight-history-pilot.py', 'linux-transition-policy.py', 'seal-linux-inputs.py', 'compose-linux-host.py',
         'check-core-policy.py', 'install-transaction.py', 'controller-drain.py', 'admit-upgrade-journal.py',
-        'install-reviewed-files.py', 'admit-upgrade-effects.py'))}
+        'install-reviewed-files.py', 'admit-upgrade-effects.py', 'observe-installation-inputs.py'))}
 ENV = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'GIT_CONFIG_NOSYSTEM': '1',
        'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_TERMINAL_PROMPT': '0', 'GIT_OPTIONAL_LOCKS': '0'}
 

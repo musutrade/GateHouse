@@ -1452,6 +1452,44 @@ required; installation, administrator and production flags stay false. Installed
 659 is untouched. The source-only closure has 25 helpers and 77 members, without
 a Core binary.
 
+The twenty-sixth authenticated library, `observe-installation-inputs.py`, combines
+the disabled-entry prerequisites around one sealed, SHA-pinned Root recipe and
+the inherited original controller lease. The recipe has a closed schema for
+source/archive, host, volume and preservation paths plus preparation, seal, Core,
+configuration, inspection and retention pins. It also binds the explicit API
+route through the effect observer's transport digest. Unknown verdict fields,
+wrong revisions, pins, permissions or linked inputs reject observation.
+
+The observer replays completed preparation/passive inspection, reconstructs all
+27 file materials from authenticated release and capture bytes, and requires
+the old run's remote/copy observation to be in retired phase. It performs two
+bounded native process scans, rechecks namespace identity, and requires reconcile
+service/timer units and drop-ins to be absent on disk and absent/inactive in the
+manager without triggers or pending reload. It changes no units. Remote effects,
+preparation, materials, recipe, entry generation, worker state, lease and time
+budget are rechecked before return. These are momentary observations; no durable
+controller-drain claim or installation authorization is returned.
+
+Phase checks distinguish the original fenced generation before file installation,
+an immediately enclosing file-engine checkpoint, and full installed-disabled
+replay. Original `fenced()` is never reused after legitimate replacement or
+configuration changes. Inside a file checkpoint, the outer observer validates live
+prerequisites and generation context; the immediately enclosing engine retains
+responsibility for its complete file inventory and fresh temporary proof. The
+observer never creates or adopts that proof. Standalone completion instead runs
+the engine's full inspection with no temporary exception. A retained temporary
+therefore still blocks retry even when other live prerequisites pass.
+
+Twenty-seven new regressions bring the focused suite to 623 tests. They exercise
+the actual 27-file transaction with the live-observer callback, private proc-file
+parsing, sealed recipes, full source-release decode/materialization, file modes,
+receipts and recovery rejection. Preparation/capture authentication, Root/DAC,
+native namespaces, systemd and API responses are replaced within fixtures; this
+is not actual Root or remote acceptance. No administrator CLI or activation is
+exposed. Installation, administrator and production flags remain false, installed
+659 is untouched, and a complete coordinator plus live acceptance remains required.
+The source-only closure has 26 helpers and 78 members without a Core binary.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the
