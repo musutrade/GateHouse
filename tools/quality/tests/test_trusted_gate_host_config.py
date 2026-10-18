@@ -140,7 +140,9 @@ class HostConfigurationTests(unittest.TestCase):
     def test_small_input_configuration_roundtrip_pins_all_files_without_optional_old_overlays(self):
         before=self.config_path.read_bytes();result=self.compose()
         config=json.loads((self.output/'host.json').read_bytes());plan=json.loads((self.output/'install-plan.json').read_bytes())
-        self.assertEqual(result['state'],'composed');self.assertEqual(result['execution_pins'],29)
+        self.assertEqual(result['state'],'composed');self.assertEqual(result['execution_pins'],30)
+        self.assertEqual(config['protected_files']['/etc/systemd/system/srv-gatehouse-linux.mount'],
+                         C.digest(self.payload['files/'+R.DEPLOY+'srv-gatehouse-linux.mount']))
         self.assertEqual(result['runtime_verification']['linux_inputs']['packages'],1)
         self.assertFalse(result['administrator_ready']);self.assertFalse(result['captured_core_policy_checked'])
         self.assertFalse(result['production_gate_enabled']);self.assertEqual(result['authoritative_publish'],'blocked')

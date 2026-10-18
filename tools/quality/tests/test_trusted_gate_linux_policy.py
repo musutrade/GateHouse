@@ -116,7 +116,11 @@ class LinuxPolicyTests(unittest.TestCase):
         old_destinations={row[0] for row in R.old_source_map().values()}
         new_destinations={row[0] for row in R.source_map().values()}
         self.assertTrue(old_destinations<=new_destinations)
-        self.assertEqual(len(R.source_map()),25)
+        self.assertEqual(len(R.source_map()),26)
+        self.assertIn('/etc/systemd/system/srv-gatehouse-linux.mount',new_destinations)
+        self.assertNotIn('/etc/systemd/system/srv-gatehouse-linux.mount',old_destinations)
+        self.assertEqual(R.source_map()[R.DEPLOY+'srv-gatehouse-pilot.mount'],
+                         R.old_source_map()[R.DEPLOY+'srv-gatehouse-pilot.mount'])
         self.assertIn('/opt/gatehouse/linux-test/run-linux-test.py',new_destinations)
         self.assertIn('/opt/gatehouse/linux-test/prepare-linux-workspace.py',new_destinations)
 
