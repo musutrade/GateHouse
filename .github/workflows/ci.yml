@@ -537,13 +537,21 @@ jobs:
         run: |
           set -euo pipefail
           cd tools/harness-gate
-          export CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target/quality/fast-shard-${FAST_SHARD}"
+          # The archive bakes CARGO_BIN_EXE paths from the build job. Reuse
+          # that exact target path and make extracted debug binaries visible
+          # there before cargo-llvm-cov re-extracts the archive.
+          export CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target/quality/fast-build-target"
+          rm -rf "$CARGO_TARGET_DIR"
           mkdir -p "$CARGO_TARGET_DIR/llvm-cov-target"
+          archive="$GITHUB_WORKSPACE/target/quality/fast-archive/tests.tar.zst"
+          tar --zstd -xf "$archive" -C "$CARGO_TARGET_DIR/llvm-cov-target"
+          ln -s llvm-cov-target/target/debug "$CARGO_TARGET_DIR/debug"
           mkdir -p "$GITHUB_WORKSPACE/target/quality/fast-profdata"
           log="$GITHUB_WORKSPACE/target/quality/fast-profdata/fast-shard-${FAST_SHARD}.log"
           cargo llvm-cov nextest \
-            --archive-file "$GITHUB_WORKSPACE/target/quality/fast-archive/tests.tar.zst" \
+            --archive-file "$archive" \
             --workspace-remap "$GITHUB_WORKSPACE/tools/harness-gate" \
+            --extract-overwrite --no-fail-fast \
             --partition "count:${FAST_SHARD}/4" --no-report > "$log" 2>&1
           llvm_profdata="$(dirname "$(rustc --print target-libdir)")/bin/llvm-profdata"
           "$llvm_profdata" merge -sparse "$CARGO_TARGET_DIR"/llvm-cov-target/*.profraw \
