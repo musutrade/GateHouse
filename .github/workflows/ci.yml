@@ -20,6 +20,10 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  # CI only needs coverage mappings and panic messages, not full debug info.
+  # Disabling dev/test debuginfo reduces compile/link time and artifact size.
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_PROFILE_TEST_DEBUG: '0'
 
 jobs:
   classify:
@@ -105,6 +109,10 @@ jobs:
     name: Test
     needs: [classify]
     if: ${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.reuse_verified != 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -129,20 +137,35 @@ jobs:
         with:
           tool: cargo-nextest
 
-      - name: Run tests
+      - name: Run partitioned tests
+        run: >-
+          cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked
+          --no-fail-fast --partition hash:${{ matrix.shard }}/2
+          -E 'not test(configured_ci_acceptance_retains_parity_reuse_and_negative_evidence)
+          and not test(html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering)'
+
+      - name: Run CI acceptance and HTML example tests
+        if: matrix.shard == 1
         env:
           HARNESS_GATE_CI_ACCEPTANCE: ${{ github.workspace }}/target/quality/workflow-acceptance
           HG_HTML_ACCEPTANCE_DIR: ${{ runner.temp }}/gatehouse-html-example
           HG_HTML_ACCEPTANCE_COMMIT: ${{ github.sha }}
-        run: cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked
+        run: >-
+          cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked
+          --no-fail-fast
+          -E 'test(configured_ci_acceptance_retains_parity_reuse_and_negative_evidence)
+          or test(html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering)'
 
       - name: Test findings feedback integration without publishing
+        if: matrix.shard == 1
         run: node --test .github/actions/findings-feedback/feedback.test.cjs
 
       - name: Test optional HTML artifact transport without uploading
+        if: matrix.shard == 1
         run: node --test .github/actions/report-artifact/prepare.test.cjs
 
       - name: Pin the generated synthetic HTML export
+        if: matrix.shard == 1
         id: html-example
         env:
           HTML_EXPORT: ${{ runner.temp }}/gatehouse-html-example
@@ -155,6 +178,7 @@ jobs:
           JS
 
       - name: Upload synthetic report UI example (not repository quality evidence)
+        if: matrix.shard == 1
         id: html-artifact
         uses: ./.github/actions/report-artifact
         with:
@@ -165,10 +189,11 @@ jobs:
           retention-days: '7'
 
       - name: Validate configured workflow acceptance
+        if: matrix.shard == 1
         run: python3 tools/quality/ci_acceptance.py --directory target/quality/workflow-acceptance
 
       - name: Upload configured workflow acceptance
-        if: always()
+        if: always() && matrix.shard == 1
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: workflow-acceptance-${{ github.run_id }}-${{ github.run_attempt }}
@@ -177,12 +202,14 @@ jobs:
           retention-days: 30
 
       - name: Verify generated configuration schema
+        if: matrix.shard == 1
         run: |
           cargo run --manifest-path tools/harness-gate/Cargo.toml -- schema export
           cargo run --manifest-path tools/harness-gate/Cargo.toml --locked -- schema export --quality
           git diff --exit-code -- schema/flow.schema.json schema/quality.schema.json
 
       - name: Fetch reviewed GateProbes onboarding implementation
+        if: matrix.shard == 1
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           repository: musutrade/GateProbes
@@ -191,6 +218,7 @@ jobs:
           persist-credentials: false
 
       - name: Real locked Rust and Python onboarding against this Core
+        if: matrix.shard == 1
         run: |
           set -euo pipefail
           core_target="$(cargo metadata --manifest-path tools/harness-gate/Cargo.toml --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
@@ -198,7 +226,7 @@ jobs:
             --core "$core_target/debug/harness-gate" --work-dir "$RUNNER_TEMP/plugin-onboarding"
 
       - name: Retain real plugin onboarding evidence
-        if: always()
+        if: always() && matrix.shard == 1
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: plugin-onboarding-${{ github.run_id }}-${{ github.run_attempt }}
@@ -216,6 +244,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest]
+        # Preserve the existing required check name while splitting the test
+        # list across identical native runners. Windows has the larger compile
+        # and test cost, so it gets one extra worker.
+        shard: [1, 2, 3]
+        exclude:
+          - os: macos-latest
+            shard: 3
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
@@ -241,7 +276,7 @@ jobs:
           tool: cargo-nextest
 
       - name: Run tests
-        run: cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked --no-fail-fast
+        run: cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked --no-fail-fast --partition hash:${{ matrix.shard }}/${{ matrix.os == 'windows-latest' && 3 || 2 }}
 
   security-audit:
     name: Security Audit
@@ -430,11 +465,17 @@ jobs:
             !target/quality/candidate/snapshots
           if-no-files-found: error
 
-  # Risk analysis stage (most expensive, parallelized internally)
+  # Risk analysis stage. Base and head run in independent hosted runners so
+  # coverage compilation never competes with its sibling for two CPU cores.
   quality-risk:
-    name: Quality Risk Stage
+    name: Quality Risk Stage (${{ matrix.side }}, shard ${{ matrix.shard }}/2)
     needs: [classify]
     if: ${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        side: [base, head]
+        shard: [1, 2]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -467,30 +508,29 @@ jobs:
         with:
           tool: cargo-llvm-cov
 
-      - name: Collect risk stage
+      - name: Collect risk stage (${{ matrix.side }}, shard ${{ matrix.shard }}/2)
         env:
           GH_TOKEN: ${{ github.token }}
           BASE_SHA: ${{ needs.classify.outputs.base_sha }}
           HEAD_SHA: ${{ github.sha }}
           RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
-          CI_PARALLEL_RISK: '1'
         run: |
           BASE_SHA="$(python3 tools/maintenance/migration_baseline.py --base "$BASE_SHA" --head "$HEAD_SHA" --fetch)"
-          python3 tools/quality/ci_quality.py collect \
-            --stages risk \
+          python3 tools/quality/ci_quality.py collect-risk-shard \
+            --side "${{ matrix.side }}" --risk-shard "${{ matrix.shard }}" --partitions 2 \
             --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
             --output target/quality/candidate
 
-      - name: Record shard tool identity (risk)
+      - name: Record shard tool identity (risk-${{ matrix.side }}-${{ matrix.shard }})
         run: |
           python3 tools/quality/ci_quality.py tool-identity \
             --output target/quality/candidate/tool-identity.json
 
-      - name: Upload quality artifacts (risk)
+      - name: Upload quality artifacts (risk-${{ matrix.side }}-${{ matrix.shard }})
         if: ${{ always() }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: quality-artifacts-risk-${{ github.run_id }}-${{ github.run_attempt }}
+          name: quality-artifacts-risk-${{ matrix.side }}-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
           include-hidden-files: true
           path: |
             target/quality/candidate
@@ -601,17 +641,23 @@ jobs:
           name: quality-artifacts-fast-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/quality/candidate-fast
 
-      - name: Download quality artifacts (risk)
+      - name: Download quality artifacts (risk shards)
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
-          name: quality-artifacts-risk-${{ github.run_id }}-${{ github.run_attempt }}
-          path: target/quality/candidate-risk
+          pattern: quality-artifacts-risk-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/quality/risk-shards
 
       - name: Download quality artifacts (matrix)
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: quality-artifacts-matrix-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/quality/candidate-matrix
+
+      - name: Assemble risk shards and workers
+        run: |
+          python3 tools/quality/ci_quality.py assemble-risk-shards \
+            --shards-root target/quality/risk-shards \
+            --output target/quality/candidate-risk
 
       - name: Merge artifacts
         run: |

@@ -110,3 +110,188 @@ merge 作业保留显示名 `Quality Coverage and Critical Paths`，因为：
 ## 回滚
 
 单次 `git revert` 恢复单作业拓扑；分片与 merge 相互独立，无数据迁移。
+
+## 2026-10-17 进一步拆分：Risk base/head 独立 runner
+
+分片并行后，最新一次完整 PR 运行（run `39038404664`）的必需检查关键路径为：
+
+| 阶段 | 墙钟 |
+| --- | ---: |
+| Classify | 7s |
+| Quality Risk Stage | 412s |
+| Quality Coverage merge/verify/seal | 25s |
+| Required Quality Aggregate | 7s |
+| **必需检查合计（创建→aggregate 完成）** | **457s** |
+
+其中 Risk 的 `Collect risk stage` 为 377s，base/head 两条 coverage 命令在同一台 2 核
+runner 上并行时分别耗时 334.6s / 331.4s；其余 setup、cache restore、工具安装与 artifact
+上传约 35s。同一 runner 上两个 instrumented build 仍会争抢 CPU，因此风险阶段继续是
+必需检查关键路径。
+
+新拓扑不改变四阶段证据合同，只把 Risk 采集再拆成两个独立 worker：
+
+```
+quality-risk (matrix.side=base) ─┐
+quality-fast                    ─┼─> quality-coverage (assemble risk -> merge -> verify -> seal)
+quality-risk (matrix.side=head) ─┤
+quality-matrix                  ─┘
+```
+
+- 两个 worker 分别执行 `ci_quality.py collect-risk-side --side base|head`，只采集自己一侧；
+- 每个 worker 上传 `quality-artifacts-risk-<side>-<run>-<attempt>`；
+- `quality-coverage` 先执行 `ci_quality.py assemble-risk`，验证两侧 candidate、side identity、
+  artifact digest、tool identity 与 measurer pin，然后运行原有 risk compare；
+- assemble 后再走原有 fast/risk/matrix 三 shard `merge`、`verify` 和 `seal`，最终证据
+  schema、显示名和必需检查名称不变；
+- 两侧共有的下载/安装 telemetry 若字节相同只保留一份；若因耗时等正常原因不同，则分别
+  命名到 `shared/base/` 与 `shared/head/`，不会静默覆盖。
+
+这会增加一台 runner 的分钟数，用并发换墙钟。首个 hosted run 必须先验证两侧工具身份一致、
+artifact 完整、Risk 比较通过且无 OOM；在拿到该运行数据前，不把预期收益写成已实现收益。
+
+## 2026-10-17 Cross-platform 测试分片
+
+Risk 拆分后，最新观测的 macOS 测试会成为新的潜在关键路径：
+
+| Job | 总墙钟 | 编译 | 运行测试 |
+| --- | ---: | ---: | ---: |
+| Test (macos-latest) | 313s | 73s | 214s / 710 tests |
+| Test (windows-latest) | 266s | 78s | 132s / 562 tests |
+
+因此 `test-cross-platform` 在原有 OS matrix 上增加 shard：macOS 2 个 worker，
+Windows 3 个 worker。matrix 只生成 macOS `shard=1/2` 和 Windows `shard=1/3,2/3,3/3`：
+
+```bash
+cargo nextest run ... --no-fail-fast --partition hash:<shard>/<2|3>
+```
+
+约束与验证：
+
+- 保留作业显示名 `Test (${{ matrix.os }})`，避免改变仓库 ruleset 中的必需检查名；
+- matrix 中任一 shard 失败都会让 `test-cross-platform` job 失败，进而使
+  `Required Quality Aggregate` 失败；
+- `--no-fail-fast` 保持不变；
+- Windows 当前约 78s 编译 + 132s 测试；按该 run 的实际测试耗时估算，2-way hash
+  分区的测试耗时和约为 220s / 307s，3-way 为 122s / 179s / 227s，因此 Windows
+  使用 3 个 worker 以降低最重分片；
+- 本地对当前清单执行 `cargo nextest list --partition hash:1/2` 与 `hash:2/2`：
+  361 + 363 = 724；`hash:1/3`、`hash:2/3`、`hash:3/3` 为 245 + 221 + 258 = 724，
+  各集合交集均为 0，确认全部测试恰好覆盖一次；
+- 编译仍会在每个 shard 各发生一次，因此这是用额外 runner 分钟换墙钟；最终仍以
+  hosted 首次运行为准。
+
+## 2026-10-17 Generic Quality Shadow 投影加速
+
+最新 run `39038404664` 中 `Generic Quality Shadow` job 为 126s，其中
+`Project and compare retained evidence` 单步 117s。它是 advisory，但在
+`quality-coverage` 之后串行执行，因此直接延长整个 workflow 的完成时间。
+
+用该 run 的完整 candidate（约 239 MB）本地复现后，主要重复工作为：
+
+1. 每个 evidence record 都引用同一个大型 native report，但 `Projection.add`
+   在每条记录上重新计算一次该文件的 SHA-256 和大小；
+2. 每个 record 的验证都重复读取并校验同一个 artifact；
+3. `Projection.evaluate` 先验证一次 evidence，`policy_engine.evaluate` 内又验证一次；
+4. schema 文件与 Python 级逐字符 JSON 字符串检查在数千条 record 上重复执行。
+
+在不修改冻结的 `harness_evidence.py`、`policy_engine.py`、`project_model.py`
+的前提下，`rust_reference.py` 做了三项局部优化：
+
+- 每个 `Projection` 初始化时只对 native artifact 计算一次摘要和大小；
+- 移除 `Projection.evaluate` 外层重复的 evidence 验证，由
+  `policy_engine.evaluate` 单次验证；若验证失败而只得到无 head evidence link 的
+  measurement-error 结果，仍显式抛出错误；
+- 在一次 policy evaluation 期间安装作用域内 `_file` 去重包装：只有完全相同的
+  root/path/digest/size/stat 请求才跳过重复读取；文件 stat 改变会重新验证，包装器
+  在退出时恢复原函数。
+
+本地真实 candidate 对照：改动前 `rust_reference.py` 超过 300s 未完成；
+改动后为 **36.8s**。该 run 已上传的 10 个 shadow JSON 输出（production、
+base/head risk evidence/project/policy、shadow.json）与本地重算结果语义完全一致。
+hosted step 从 117s 能降到多少仍需首次 CI 运行确认，因此不在此记录为已实现 hosted 收益。
+
+验证：`test_rust_reference` 17 项通过；完整 `tools/quality/tests` 609 项通过。
+
+## 2026-10-17 Linux Test 分片
+
+Linux `Test` job 最新为 221s：约 56s 编译 + 124s nextest 运行 + 约 40s setup/后置校验。
+它与 Risk、Quality Fast 一起成为 Risk worker 拆分后的下一层候选关键路径。
+
+`test` job 现在使用两个 shard：
+
+- 其余 722 个测试按 `hash:<shard>/2` 分配；
+- shard 1 额外运行两个会生成后续 artifact/收据的测试：
+  - `configured_ci_acceptance_retains_parity_reuse_and_negative_evidence`
+  - `html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering`
+- acceptance 校验、HTML 上传、schema 校验、GateProbes onboarding 和所有 upload
+  只在 shard 1 执行，避免同名 artifact 冲突；
+- shard 2 只执行测试，任一 shard 失败都会使 matrix job 失败并阻塞
+  `Required Quality Aggregate`。
+
+本地 verifier：
+
+- 分区测试：361 + 361；
+- shard 1 独有测试：2；
+- 合计 724，交集 0，并集 724；
+- 保留作业显示名 `Test`，不改变 ruleset 必需检查名。
+
+预计 Linux Test 从 221s 降至约 150–180s；代价是每个 shard 各编译一次。最终以
+hosted 首次运行为准。
+
+## 2026-10-17 Risk coverage 再分片与证据合并
+
+Risk base/head 独立 worker 之后，每个 worker 仍要执行完整 instrumented test suite。
+现在每个 side 再按 `hash:<shard>/2` 拆成两个 test partition，共 4 个采集 job：
+
+```text
+quality-risk (base, 1/2) ─┐
+quality-risk (base, 2/2) ─┼─> quality-coverage
+quality-risk (head, 1/2) ─┤     assemble-risk-shards
+quality-risk (head, 2/2) ─┘     -> risk compare -> fast/risk/matrix merge
+```
+
+每个 shard 只执行对应测试集合，但仍完整执行 `source_measure.prepare`、
+`cargo llvm-cov nextest`、LCOV/Cobertura 导出和 partial risk measure。partition
+不完整导致的 `selected_failures` 不会让分片提前失败；最终 side 结果由合并后的
+coverage/line hits 重新计算。
+
+合并侧新增并测试了：
+
+- LLVM coverage JSON 的 function/region 计数合并；
+- LCOV 的 DA/FNDA/BRDA 计数合并与汇总重算；
+- Cobertura 的 class/method line hits 合并与 rate 重算；
+- partial risk report 的 raw region、line hits、instances 合并，并重新计算
+  line/region coverage、CRAP、passed、selected failures 和 debt；
+- 四个 shard 的 identity/tool identity/measurer pin/artifact digest 全部一致后才允许合并。
+
+本地用当前提交的两个真实 Risk head partition 验证：
+
+- shard 1 coverage 162.3s、measure 17.8s；
+- shard 2 coverage 174.3s、measure 20.3s；
+- 合并后 Risk report：2154 functions，selected failures 0，nonselected debt 361；
+- 与已有完整 report 对比，所有 2154 个同名函数的 `lines`、`regions`、
+  `crap_exact`、`passed` 一致；只有原始 region hit 计数因测试集合/提交不同而不同。
+
+## 2026-10-17 CI debuginfo 压缩
+
+CI 测试和 instrumented coverage 不需要完整 dev/test debuginfo。workflow 全局设置：
+
+```yaml
+CARGO_PROFILE_DEV_DEBUG: '0'
+CARGO_PROFILE_TEST_DEBUG: '0'
+```
+
+`CARGO_TERM_COLOR`、`RUST_BACKTRACE` 和 panic 错误仍保留。该设置降低编译/链接时间
+与测试二进制体积；coverage mapping 由 `-C instrument-coverage` 提供，不依赖完整
+debuginfo，已用 `cargo llvm-cov` 实际导出验证。
+
+## 未实施：legacy coverage 与 Risk head 复用
+
+评估后没有把 `legacy` 与 Risk head 的 coverage run 合并，因为二者不是同一测量：
+
+- `legacy` 在原始源码上执行 `cargo llvm-cov nextest --package harness-gate`；
+- Risk 先在 staged snapshot 上执行 `source_measure.prepare`，注入 closure black-box
+  边界，再执行 workspace coverage，并按 AST/instrumentation manifest 映射函数和区域。
+
+直接复用会改变 legacy 的源码/工具/区域语义，属于证据身份变更而不是纯性能优化；
+在未完成新的 measurement-series 与 acceptance 前不复用。

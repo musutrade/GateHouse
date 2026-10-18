@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from collections import defaultdict, deque
+from contextlib import contextmanager
 from decimal import Decimal
 from fractions import Fraction
 import hashlib
@@ -60,6 +61,39 @@ def fingerprint(value):
     return hashlib.sha256(json_text(value).encode()).hexdigest()
 
 
+@contextmanager
+def _memoized_file_validation():
+    """Deduplicate identical file reads during one evidence validation call.
+
+    Harness evidence validates every record independently, so a projection batch
+    that references one large native report would otherwise hash that report once
+    per record. The wrapper delegates every unique (path, digest, size, stat)
+    request to the frozen validator and only skips exact repeats. A stat change
+    forces a fresh read, preserving fail-closed behavior for mutating files.
+    """
+    original = evidence._file
+    verified = set()
+
+    def cached(root, path, digest, size=None):
+        try:
+            root_resolved = Path(root).resolve(strict=True)
+            candidate = (root_resolved / path).resolve(strict=True)
+            stat = candidate.stat()
+            key = (str(root_resolved), str(candidate), digest, size,
+                   stat.st_mtime_ns, stat.st_size, getattr(stat, 'st_ino', 0))
+        except (OSError, RuntimeError, TypeError):
+            return original(root, path, digest, size)
+        if key not in verified:
+            original(root, path, digest, size)
+            verified.add(key)
+
+    evidence._file = cached
+    try:
+        yield
+    finally:
+        evidence._file = original
+
+
 def risk_contract(series):
     if series == rust.SERIES:
         return rust.HOTSPOTS
@@ -77,6 +111,9 @@ class Projection:
         self.root, self.sources, self.expected = root, sources, context
         self.name, self.native_series = name, native_series
         self.records, self.rules = [], []
+        self.artifact = self.root / self.name
+        self.artifact_sha256 = sha256(self.artifact)
+        self.artifact_bytes = self.artifact.stat().st_size
         self.project = {'schema': 'harness-project/v1', 'id': 'harness-gate',
                         'metadata': {'adapter': 'rust-reference', 'rust_series': json_text(native_series)}, 'relationships': [],
                         'components': [{'id': 'rust', 'path': '.', 'metadata': {'language': 'rust'},
@@ -108,9 +145,9 @@ class Projection:
                               for m in sorted(states)]}
         series['id'] = evidence.series_id(series)
         source = {'path': path, 'sha256': digest}
-        artifact = self.root / self.name
-        artifact_ref = {'id': 'native', 'kind': 'raw', 'media_type': 'application/json', 'path': self.name, 'sha256': sha256(artifact),
-                        'bytes': artifact.stat().st_size, 'context': self.expected, 'source': source}
+        artifact_ref = {'id': 'native', 'kind': 'raw', 'media_type': 'application/json',
+                        'path': self.name, 'sha256': self.artifact_sha256,
+                        'bytes': self.artifact_bytes, 'context': self.expected, 'source': source}
         record = {'schema': 'harness-evidence/v1', 'id': key, 'project': self.project['id'],
                   'component': 'rust', 'collector': COLLECTOR, 'series': series,
                   'subject': subject, 'context': self.expected, 'source': source,
@@ -132,9 +169,17 @@ class Projection:
     def evaluate(self):
         context = {'project': self.project, 'source_root': self.sources,
                    'artifact_root': self.root, 'expected': self.expected}
-        evidence.validate_evidence(self.records, **context)
-        result = engine.evaluate({'schema': 'harness-policy/v1', 'rules': self.rules},
-                                 self.records, **context)
+        # engine.evaluate() owns record validation. Keep validation single-pass:
+        # an invalid batch is surfaced as measurement_error results with no head
+        # evidence link, which must not be mistaken for a policy violation.
+        with _memoized_file_validation():
+            result = engine.evaluate({'schema': 'harness-policy/v1', 'rules': self.rules},
+                                     self.records, **context)
+        evidence.require(not (result['results'] and
+                              all(gate['state'] == 'measurement_error' for gate in result['results']) and
+                              all(gate['record']['evidence_links']['head'] is None
+                                  for gate in result['results'])),
+                         'generic evidence validation failed')
         # Optional unsupported gates do not affect the aggregate. Their semantic
         # state must still agree, or an apparently green replay could hide drift.
         rules = {rule['id']: rule for rule in self.rules}

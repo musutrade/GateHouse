@@ -188,9 +188,12 @@
       "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "quality-risk": {
-      "name": "Quality Risk Stage",
+      "name": "Quality Risk Stage (${{ matrix.side }}, shard ${{ matrix.shard }}/2)",
       "check_names": [
-        "Quality Risk Stage"
+        "Quality Risk Stage (base, shard 1/2)",
+        "Quality Risk Stage (base, shard 2/2)",
+        "Quality Risk Stage (head, shard 1/2)",
+        "Quality Risk Stage (head, shard 2/2)"
       ],
       "runner_labels": [
         "ubuntu-latest"
@@ -203,7 +206,7 @@
       "needs": [
         "classify"
       ],
-      "outcome": "Base/head exact risk shard; not required directly, feeds the merge job.",
+      "outcome": "Base/head risk test partitions on independent hosted runners; the merge job validates every shard, merges LLVM-derived coverage/risk evidence, compares both sides and assembles the risk shard.",
       "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "quality-matrix": {

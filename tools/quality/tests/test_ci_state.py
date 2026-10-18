@@ -168,8 +168,18 @@ class WorkflowBoundaryTests(unittest.TestCase):
         self.assertEqual(owners, ['quality-fast', 'quality-risk', 'quality-matrix'])
         for name in owners:
             self.assertEqual(jobs[name].count('ci_quality.py collect'), 1)
+        risk = jobs['quality-risk']
+        self.assertIn('side: [base, head]', risk)
+        self.assertIn('shard: [1, 2]', risk)
+        self.assertIn('ci_quality.py collect-risk-shard', risk)
+        self.assertIn('--risk-shard "${{ matrix.shard }}" --partitions 2', risk)
+        self.assertIn('quality-artifacts-risk-${{ matrix.side }}-${{ matrix.shard }}-', risk)
+        self.assertNotIn('CI_PARALLEL_RISK', risk)
         merge = jobs['quality-coverage']
         self.assertEqual(merge.count('ci_quality.py collect'), 0)
+        self.assertIn('ci_quality.py assemble-risk-shards', merge)
+        self.assertIn('pattern: quality-artifacts-risk-*', merge)
+        self.assertLess(merge.index('assemble-risk-shards'), merge.index('ci_quality.py merge'))
         self.assertIn('ci_quality.py verify', merge)
         self.assertIn('needs: [classify, quality-fast, quality-risk, quality-matrix]', merge)
         consumer = jobs['quality-generic-shadow']
@@ -193,6 +203,38 @@ class WorkflowBoundaryTests(unittest.TestCase):
         self.assertIn('path: ${{ steps.state.outputs.target }}', action)
         self.assertNotIn('/bin/', action)
         self.assertNotIn('enableCrossOsArchive', action)
+
+    def test_linux_tests_are_partitioned_with_one_acceptance_owner(self):
+        workflow = (ROOT / '.github/workflows/ci.yml').read_text()
+        job = workflow.split('  test:\n', 1)[1].split('  test-cross-platform:\n', 1)[0]
+        self.assertIn('shard: [1, 2]', job)
+        self.assertIn('--partition hash:${{ matrix.shard }}/2', job)
+        self.assertIn('not test(configured_ci_acceptance_retains_parity_reuse_and_negative_evidence)', job)
+        self.assertIn('not test(html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering)', job)
+        acceptance = job.split('- name: Run CI acceptance and HTML example tests', 1)[1]
+        acceptance = acceptance.split('- name: Test findings feedback', 1)[0]
+        self.assertIn('if: matrix.shard == 1', acceptance)
+        self.assertIn('HARNESS_GATE_CI_ACCEPTANCE:', acceptance)
+        self.assertIn('HG_HTML_ACCEPTANCE_DIR:', acceptance)
+        upload = job.split('- name: Upload configured workflow acceptance', 1)[1]
+        upload = upload.split('- name: Verify generated configuration schema', 1)[0]
+        self.assertIn('if: always() && matrix.shard == 1', upload)
+        onboarding = job.split('- name: Retain real plugin onboarding evidence', 1)[1]
+        self.assertIn('if: always() && matrix.shard == 1', onboarding)
+
+    def test_cross_platform_tests_are_partitioned_without_changing_the_check_name(self):
+        workflow = (ROOT / '.github/workflows/ci.yml').read_text()
+        native = workflow.split('  test-cross-platform:\n')[1].split('  security-audit:\n')[0]
+        self.assertIn('name: Test (${{ matrix.os }})', native)
+        self.assertIn('os: [macos-latest, windows-latest]', native)
+        self.assertIn('shard: [1, 2, 3]', native)
+        self.assertIn('os: macos-latest\n            shard: 3', native)
+        self.assertIn('cargo nextest run --manifest-path tools/harness-gate/Cargo.toml '
+                      '--locked --no-fail-fast --partition hash:${{ matrix.shard }}/'
+                      "${{ matrix.os == 'windows-latest' && 3 || 2 }}", native)
+        self.assertIn('fail-fast: false', native)
+        regex = re.compile(r'^\s+if:', re.M)
+        self.assertNotRegex(native.split('    steps:\n', 1)[1], regex)
 
     def test_measurements_do_not_restore_compiled_state(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()

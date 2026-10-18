@@ -197,7 +197,8 @@ def closure_name(name: str) -> bool:
     return re.search(r"::(?:\{closure#\d+\}|\{\{closure\}\})$", name) is not None
 
 
-def measure(manifest: dict, llvm: dict, crate: Path, binary: Path) -> list[dict]:
+def measure(manifest: dict, llvm: dict, crate: Path, binary: Path, *,
+            include_line_hits: bool = False) -> list[dict]:
     require(manifest["series"] == SERIES, "incompatible measurement series")
     configuration = manifest["configuration"]
     require(configuration == compiler_configuration(configuration["target"]), "compiler target configuration changed")
@@ -268,17 +269,23 @@ def measure(manifest: dict, llvm: dict, crate: Path, binary: Path) -> list[dict]
         children = [k[1:] for k in symbols if k != key and k[0] == path and contains(tuple(span), k[1:])]
         children += [s for s in excluded[path] if contains(tuple(span), s)]
         regions = {r: n for r, n in symbol["regions"].items() if not any(contains(c, r[:4]) for c in children)}
-        lines = counts(own_lines(regions, children))
+        own = own_lines(regions, children)
+        lines = counts(own)
         code = counts({r: n for r, n in regions.items() if r[4] == 0})
         require(code["count"] > 0, "no executable original regions")
         cc = complexity(symbol["raw"])
         score = crap_line(cc, lines["covered"], lines["count"])
         passed = lines["covered"] * 5 >= lines["count"] * 4 and code["covered"] * 5 >= code["count"] * 4 and score <= 30
-        result.append({"source": path, **{k: symbol[k] for k in ("name", "kind", "span", "raw", "instances")},
-            "syntax_sha256": digest(symbol["syntax"].encode()),
-            "source_sha256": manifest["files"][path]["original_sha256"], "cc": cc, "lines": lines, "regions": code,
-            "crap_line": float(score), "crap_exact": [score.numerator, score.denominator], "passed": passed,
-            "raw_regions": [{"span": list(r[:4]), "kind": r[4], "count": n} for r, n in sorted(regions.items())]})
+        row = {"source": path, **{k: symbol[k] for k in ("name", "kind", "span", "raw", "instances")},
+               "syntax_sha256": digest(symbol["syntax"].encode()),
+               "source_sha256": manifest["files"][path]["original_sha256"], "cc": cc,
+               "lines": lines, "regions": code, "crap_line": float(score),
+               "crap_exact": [score.numerator, score.denominator], "passed": passed,
+               "raw_regions": [{"span": list(r[:4]), "kind": r[4], "count": n}
+                               for r, n in sorted(regions.items())]}
+        if include_line_hits:
+            row["line_hits"] = [[line, count] for line, count in sorted(own.items())]
+        result.append(row)
     return result
 
 
@@ -331,10 +338,29 @@ def compare(base: dict, head: dict, *, series=SERIES, hotspots=HOTSPOTS) -> dict
                 for rows in old.values() for r in rows]}
 
 
+def measure_report(manifest: dict, llvm: dict, crate: Path, binary: Path, *,
+                   manifest_sha256: str, llvm_sha256: str,
+                   include_line_hits: bool = False) -> dict:
+    """Build the retained risk report without deciding shard completeness."""
+    rows = measure(manifest, llvm, crate, binary, include_line_hits=include_line_hits)
+    for row in rows:
+        row["selected"] = row["name"] in HOTSPOTS.get(row["source"], [])
+    return {"series": SERIES, "configuration": manifest["configuration"],
+            "tools": provenance(binary), "functions": rows,
+            "source_inventory": {**{p: f["original_sha256"] for p, f in manifest["files"].items()},
+                                 **{p: None for p in manifest["absent_sources"]}},
+            "manifest_sha256": manifest_sha256,
+            "llvm_sha256": llvm_sha256,
+            "selected_failures": [f"{r['source']}::{r['name']}" for r in rows
+                                  if r["selected"] and not r["passed"]],
+            "nonselected_debt": [f"{r['source']}::{r['name']}" for r in rows
+                                 if not r["selected"] and not r["passed"]]}
+
+
 def main() -> None:
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operation", choices=("prepare", "measure", "compare"))
+    parser.add_argument("operation", choices=("prepare", "measure", "measure-partial", "compare"))
     parser.add_argument("--crate", type=Path, help="disposable workspace-local source snapshot")
     parser.add_argument("--binary", type=Path)
     parser.add_argument("--manifest", type=Path)
@@ -356,25 +382,21 @@ def main() -> None:
         manifest = prepare(args.crate, args.binary, target=args.target)
         args.manifest.write_text(json.dumps(manifest, indent=2) + "\n")
     else:
-        require(args.llvm is not None and args.output is not None, "measure needs --llvm and --output")
+        require(args.llvm is not None and args.output is not None,
+                "measure/measure-partial needs --llvm and --output")
         manifest = json.loads(args.manifest.read_text())
         require(set(manifest["files"]) | set(manifest["absent_sources"]) == set(SOURCE_FILES),
                 "incomplete production source manifest")
         require(not set(manifest["files"]) & set(manifest["absent_sources"]), "ambiguous source presence")
-        rows = measure(manifest, json.loads(args.llvm.read_text()), args.crate, args.binary)
-        for row in rows:
-            row["selected"] = row["name"] in HOTSPOTS.get(row["source"], [])
-        report = {"series": SERIES, "configuration": manifest["configuration"], "tools": provenance(args.binary), "functions": rows,
-                  "source_inventory": {**{p: f["original_sha256"] for p, f in manifest["files"].items()},
-                                       **{p: None for p in manifest["absent_sources"]}},
-                  "manifest_sha256": digest(args.manifest.read_bytes()),
-                  "llvm_sha256": digest(args.llvm.read_bytes()),
-                  "selected_failures": [f"{r['source']}::{r['name']}" for r in rows if r["selected"] and not r["passed"]],
-                  "nonselected_debt": [f"{r['source']}::{r['name']}" for r in rows if not r["selected"] and not r["passed"]]}
+        report = measure_report(manifest, json.loads(args.llvm.read_text()), args.crate, args.binary,
+                                manifest_sha256=digest(args.manifest.read_bytes()),
+                                llvm_sha256=digest(args.llvm.read_bytes()),
+                                include_line_hits=args.operation == "measure-partial")
         args.output.write_text(json.dumps(report, indent=2) + "\n")
-        print(json.dumps({"functions": len(rows), "selected_failures": report["selected_failures"],
+        print(json.dumps({"functions": len(report["functions"]),
+                          "selected_failures": report["selected_failures"],
                           "nonselected_debt_count": len(report["nonselected_debt"])}))
-        if report["selected_failures"]:
+        if args.operation == "measure" and report["selected_failures"]:
             raise SystemExit(1)
 
 

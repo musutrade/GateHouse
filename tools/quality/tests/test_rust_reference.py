@@ -118,6 +118,27 @@ class RustReferenceTests(unittest.TestCase):
         for metric, pair in HISTORY['retained_candidate']['aggregate'].items():
             self.assertEqual([production['aggregate'][metric][k] for k in ('covered', 'count')], pair)
 
+    def test_file_validation_memoization_only_skips_exact_successful_requests(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'raw').write_bytes(b'raw')
+            digest = sha256(root / 'raw')
+            calls = []
+            original = evidence._file
+
+            def counting(*args, **kwargs):
+                calls.append((args, kwargs))
+                return original(*args, **kwargs)
+
+            with patch.object(evidence, '_file', side_effect=counting):
+                with adapter._memoized_file_validation():
+                    evidence._file(root, 'raw', digest, 3)
+                    evidence._file(root, 'raw', digest, 3)
+                    self.assertEqual(len(calls), 1)
+                    with self.assertRaisesRegex(evidence.MeasurementError, 'digest mismatch'):
+                        evidence._file(root, 'raw', '0' * 64, 3)
+                    self.assertEqual(len(calls), 2)
+
     def test_accepted_phase_one_baseline_retains_its_original_incompatible_series(self):
         fixture = HISTORY['accepted_baseline']
         path = ROOT / fixture['path']
