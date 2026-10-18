@@ -2,7 +2,7 @@
   "schema": "repository-size-review/v1",
   "base": "8994cf53a44677ecb36acc6f9a9ce1d547c57728",
   "owner": "higoalespn",
-  "reason": "Issue98 trusted-host candidate source, tests and documentation; exact cumulative inventory including source-bound Linux mount installation, durable lease-bound enablement and expanded input inventory assertions. Thresholds and individual-file policy unchanged.",
+  "reason": "Issue98 trusted-host candidate source, tests and documentation; exact cumulative inventory including approved controller API/delivery/Git proxy route, immutable configuration replay and environment isolation. Thresholds and individual-file policy unchanged.",
   "blobs": [
     {
       "path": "docs/README.md",
@@ -13,6 +13,11 @@
       "path": "docs/trusted-host-administrator.md",
       "oid": "2d8033c41758a5f5c637c761d4dd18eeca684238",
       "bytes": 6905
+    },
+    {
+      "path": "docs/trusted-host-administrator.md",
+      "oid": "96ecbea8a04c6107b2dd48ad114177d92cfb99f1",
+      "bytes": 14839
     },
     {
       "path": "docs/trusted-host-administrator.md",
@@ -208,6 +213,11 @@
       "path": "docs/trusted-host-coverage.md",
       "oid": "e18b00ba9778914d126cf097bc36f779a8d6cd48",
       "bytes": 84098
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "e682aa0cea4b2acb3ae7c480e4f7f16d2ca99696",
+      "bytes": 121591
     },
     {
       "path": "docs/trusted-host-coverage.md",
@@ -516,6 +526,11 @@
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_core_inspection.py",
+      "oid": "7cde9ad70fb589567ef2f502a769bdf21ef17c5d",
+      "bytes": 14425
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_core_inspection.py",
       "oid": "c5064c0ee79cae60f1243ed6991db503a1083345",
       "bytes": 13727
     },
@@ -543,6 +558,11 @@
       "path": "tools/quality/tests/test_trusted_gate_file_install.py",
       "oid": "65380b605c280dc6d14fb52455b935be298e7924",
       "bytes": 22476
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_host_config.py",
+      "oid": "14d5e53f4c03ee19e2ff353b1a2cc97499de49bd",
+      "bytes": 22491
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_host_config.py",
@@ -591,6 +611,11 @@
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_installation_inputs.py",
+      "oid": "40f3c831b1d7a322225d053997bd5cf05d106a49",
+      "bytes": 22912
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_installation_inputs.py",
       "oid": "63677c599b8577405b543e8aad07d43885a4be21",
       "bytes": 22754
     },
@@ -635,6 +660,11 @@
       "bytes": 13343
     },
     {
+      "path": "tools/quality/tests/test_trusted_gate_network.py",
+      "oid": "d9dda54fe63214dab499f064e908400eebd742a6",
+      "bytes": 14618
+    },
+    {
       "path": "tools/quality/tests/test_trusted_gate_official_tools.py",
       "oid": "92c9dd99939826675ee11a96f7f489b0592ca4d9",
       "bytes": 11806
@@ -658,6 +688,11 @@
       "path": "tools/quality/tests/test_trusted_gate_preflight.py",
       "oid": "371f8cbf2101e005cd29c5318d4f20043f79781c",
       "bytes": 28042
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_prepared_replay.py",
+      "oid": "34c9b70da374100338b3d17a62afc3eeeefd6ccc",
+      "bytes": 19047
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_prepared_replay.py",
@@ -800,9 +835,19 @@
       "bytes": 7303
     },
     {
+      "path": "tools/trusted_gate/cli.py",
+      "oid": "dbea5ead5f106f637fb5e2791790a3bb3ddc1e06",
+      "bytes": 7938
+    },
+    {
       "path": "tools/trusted_gate/common.py",
       "oid": "070776e57bb900e757683abdd14807f9fad981b5",
       "bytes": 4864
+    },
+    {
+      "path": "tools/trusted_gate/common.py",
+      "oid": "78f9fd61cbe27284e9897bffde1245169b48fa9a",
+      "bytes": 6068
     },
     {
       "path": "tools/trusted_gate/common.py",
@@ -826,6 +871,11 @@
     },
     {
       "path": "tools/trusted_gate/deploy/activate-linux-controller.py",
+      "oid": "42ad207a2427dd1897b10302dadff8a783a3d38c",
+      "bytes": 13561
+    },
+    {
+      "path": "tools/trusted_gate/deploy/activate-linux-controller.py",
       "oid": "4680bd54afa1491cae28707deeceea9dc5efd126",
       "bytes": 13003
     },
@@ -843,6 +893,11 @@
       "path": "tools/trusted_gate/deploy/admit-upgrade-effects.py",
       "oid": "5416e67c7a147d289f85beb6415a190f108a5efa",
       "bytes": 13066
+    },
+    {
+      "path": "tools/trusted_gate/deploy/admit-upgrade-effects.py",
+      "oid": "c88dea8a73b0a1cfd3291bcf33eef4945c6997d8",
+      "bytes": 13488
     },
     {
       "path": "tools/trusted_gate/deploy/admit-upgrade-journal.py",
@@ -896,6 +951,11 @@
     },
     {
       "path": "tools/trusted_gate/deploy/check-core-policy.py",
+      "oid": "055c34ed8b7fda32e5d4603563f9172a4cb311ea",
+      "bytes": 30205
+    },
+    {
+      "path": "tools/trusted_gate/deploy/check-core-policy.py",
       "oid": "645fef15666ccdc54eb01b5cc1d48288bb3e240c",
       "bytes": 30049
     },
@@ -923,6 +983,11 @@
       "path": "tools/trusted_gate/deploy/compose-linux-host.py",
       "oid": "78e75de49d98df76c7043e9cea484d1899e90cdc",
       "bytes": 19181
+    },
+    {
+      "path": "tools/trusted_gate/deploy/compose-linux-host.py",
+      "oid": "c0d00346b7f2f0b655398d94dea4eb5eae2d68b3",
+      "bytes": 28230
     },
     {
       "path": "tools/trusted_gate/deploy/compose-linux-host.py",
@@ -983,6 +1048,11 @@
       "path": "tools/trusted_gate/deploy/host.example.json",
       "oid": "98f269004535743368aede843581fb8643d6ca7e",
       "bytes": 1490
+    },
+    {
+      "path": "tools/trusted_gate/deploy/host.example.json",
+      "oid": "af14e5279b241dfc80587863ac3fe5256187de93",
+      "bytes": 1513
     },
     {
       "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
@@ -1163,6 +1233,11 @@
       "path": "tools/trusted_gate/deploy/linux-transition.policy.json",
       "oid": "34017025bfdd629d3892bc980a40bd33d2170b4a",
       "bytes": 5506
+    },
+    {
+      "path": "tools/trusted_gate/deploy/observe-installation-inputs.py",
+      "oid": "6485d8a1e9fdc88942728f9bf8c55105223bde1e",
+      "bytes": 15139
     },
     {
       "path": "tools/trusted_gate/deploy/observe-installation-inputs.py",
@@ -1365,6 +1440,11 @@
       "bytes": 8736
     },
     {
+      "path": "tools/trusted_gate/github.py",
+      "oid": "b95426d22c32012df7dc9dc0db2b39fed2908e89",
+      "bytes": 9380
+    },
+    {
       "path": "tools/trusted_gate/history.py",
       "oid": "01d94117a4eeb1ae650549eaf78824a8069bb2a9",
       "bytes": 4327
@@ -1436,6 +1516,11 @@
     },
     {
       "path": "tools/trusted_gate/runtime.py",
+      "oid": "1a5843e5827dae0537c6a78f3c156b17cf455069",
+      "bytes": 19077
+    },
+    {
+      "path": "tools/trusted_gate/runtime.py",
       "oid": "529007d52c4287bc852bf44e19a8f893976bedf1",
       "bytes": 8455
     },
@@ -1458,6 +1543,11 @@
       "path": "tools/trusted_gate/source.py",
       "oid": "570dc7d9e6af256f17aaafa772f3f94e725bb928",
       "bytes": 6618
+    },
+    {
+      "path": "tools/trusted_gate/source.py",
+      "oid": "7457eef912737b2d9d571d8a32a535dbddb6465b",
+      "bytes": 7221
     },
     {
       "path": "tools/trusted_gate/source.py",
