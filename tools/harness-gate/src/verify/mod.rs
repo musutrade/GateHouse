@@ -368,6 +368,9 @@ fn run_selected(
         "policy_binding_complete": quality.as_ref().is_some_and(|result| result.inputs["quality_policy_identity"].is_string()),
         "current_applicability": "not_proven",
     });
+    // The scheduler's snapshot predates quality collection and evaluation.
+    // Observe cancellation again at the final result decision boundary.
+    let cancelled = cancelled || crate::process::cancelled();
     let passed = quality.as_ref().is_none_or(|result| result.passed())
         && !cancelled
         && failures.is_empty()

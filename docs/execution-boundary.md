@@ -15,6 +15,14 @@ execution error and cannot become a successful task or collector result.
 Normal completion uses no termination grace period: a command that exits has
 finished its declared work, so background descendants cannot continue that work.
 
+Cancellation is checked before an adapter is launched and again after its
+response/artifacts are validated. Workflow tasks check after output collection,
+and verification checks again when deciding the final result, after quality
+evaluation. The earlier scheduler cancellation snapshot is not sufficient for
+that decision. A cancellation observed at these boundaries cannot produce a
+successful result; this does not retroactively revoke a previously completed
+result when a later signal arrives.
+
 This is process-group cleanup, not a sandbox. A process that deliberately starts
 another session may escape the group. Sending a signal does not attest that all
 external effects have stopped. The portable non-Unix normal-completion path

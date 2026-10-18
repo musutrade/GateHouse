@@ -304,6 +304,7 @@ impl Task {
             .publish()
             .with_context(|| format!("publish log {}", self.log.display()))?;
 
+        let was_cancelled = was_cancelled || cancelled();
         let detail = if let Some(detail) = limit_detail {
             Some(detail)
         } else if was_cancelled {

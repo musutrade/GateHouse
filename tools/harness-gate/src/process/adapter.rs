@@ -267,6 +267,9 @@ pub fn run_with_cancel<F>(
 where
     F: Fn() -> bool,
 {
+    if is_cancelled() {
+        return Err(AdapterError::Protocol("adapter cancelled".into()));
+    }
     let PreparedRequest {
         artifact_root,
         executable,
@@ -283,7 +286,13 @@ where
         &is_cancelled,
     )?;
     validate_process_output(&output, policy)?;
-    finish_response(&request, policy, &artifact_root, output, started)
+    let outcome = finish_response(&request, policy, &artifact_root, output, started)?;
+    // Cancellation can arrive after leader exit while output and artifacts are
+    // being validated. A valid response must not erase that cancellation.
+    if is_cancelled() {
+        return Err(AdapterError::Protocol("adapter cancelled".into()));
+    }
+    Ok(outcome)
 }
 
 struct PreparedRequest {
