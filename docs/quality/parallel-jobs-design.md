@@ -180,16 +180,22 @@ cargo nextest run ... --no-fail-fast --partition hash:<shard>/<2|3>
 - 编译仍会在每个 shard 各发生一次，因此这是用额外 runner 分钟换墙钟；最终仍以
   hosted 首次运行为准。
 
-## Generic Quality Shadow 优化暂缓
+## Generic Quality Shadow 运行时缓存
 
-`Generic Quality Shadow` 的投影步骤仍有约 117s（hosted 观测），但
 `tools/quality/rust_reference.py` 是 `docs/quality/ci-plugin-test-handoff.json`
-中受冻结兼容性 inventory 约束的 Core consumer。任何源码变更都会使
-`run_core.py` 拒绝现有 GateProbes parity receipt；仅更新本地哈希也不满足
-executed-inventory 约束。
+中受冻结兼容性 inventory 约束的 Core consumer，因此不能直接改源码。
 
-因此本次没有保留对该文件的性能改动。若后续需要优化，必须先取得新的
-GateProbes compatibility 执行证据，而不是在当前 CI PR 中顺带修改。
+新增 `tools/quality/rust_reference_cached.py` 作为执行期适配器：
+
+- import 未修改的 `rust_reference.py`；
+- 只缓存 stat-bound 的 SHA-256 结果和精确 `(root, path, digest, size, inode, mtime, ctime)`
+  的文件校验；
+- 文件变化、digest 变化或校验失败时直接回退到冻结实现；
+- workflow 使用 `--show-stats` 输出 hit/miss 统计。
+
+hosted artifact 上验证 10 个 JSON 与未缓存 reference 完全一致；
+本地 Shadow 从约 141s 降到 61.2s：
+`file_hits=17653, file_misses=558, sha256_hits=4496, sha256_misses=11`。
 
 ## 2026-10-17 Linux Test 分片
 
@@ -330,3 +336,22 @@ hosted 成功 run `39094259393` 中 Risk shard 出现偏斜：
 本地 `cargo nextest list` 验证两种 side 的 partition + extra 路由都恰好覆盖
 724 个测试且交集为 0；两次 `--no-report` 后生成的 coverage union 为两次单独
 覆盖的并集。
+
+
+## 2026-10-18 四路 count partition 与 Shadow 缓存
+
+四个 native shard 现在使用 `--partition count:<shard>/4`，Risk 同样扩展为
+每 side 4 个 shard。count partition 只改变测试的分配方式；现有排除/额外测试
+路由仍保证每个测试恰好执行一次。
+
+本地用 `cargo nextest list` 验证：
+
+- Linux Test：191 + 180 + 178 + 173 + 2 个特殊测试 = 724，交集 0；
+- macOS：191 + 181 + 178 + 173 + 1 = 724，交集 0；
+- Windows：191 + 180 + 178 + 173 + 1 + 1 = 724，交集 0；
+- Risk base：191 + 180 + 178 + 172 + 3 = 724，交集 0；
+- Risk head：191 + 181 + 178 + 173 + 1 = 724，交集 0。
+
+four-way native/Risk sharding 增加 runner 数，以 wall-clock 换取并行度；
+最终取舍仍以 hosted PR 实测为准。Generic Shadow 使用上面的只读缓存适配器，
+不改变现有 advisory/required-status 语义。

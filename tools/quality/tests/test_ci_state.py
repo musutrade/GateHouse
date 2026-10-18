@@ -199,7 +199,7 @@ class WorkflowBoundaryTests(unittest.TestCase):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()
         consumer = workflow.split('  quality-generic-shadow:\n')[1].split('  quality-contracts:\n')[0]
         self.assertIn('needs.quality-coverage.outputs.manifest-sha256', consumer)
-        self.assertLess(consumer.index('ci_artifact.py verify'), consumer.index('rust_reference.py'))
+        self.assertLess(consumer.index('ci_artifact.py verify'), consumer.index('rust_reference_cached.py'))
         projection = consumer.split('- name: Project and compare retained evidence')[1].split('- name: Upload')[0]
         self.assertNotIn('always()', projection)
         self.assertNotIn('continue-on-error', consumer)

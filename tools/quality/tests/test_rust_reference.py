@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import harness_evidence as evidence
 import policy_engine as engine
 import rust_reference as adapter
+import rust_reference_cached as cached
 from quality_common import sha256, write_json
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -284,6 +285,50 @@ class RustReferenceTests(unittest.TestCase):
                 adapter.load_native(path)
         path.write_text('{"crap_line": 3.25}')
         self.assertEqual(adapter.load_native(path), {'crap_line': 3.25})
+
+
+
+class ShadowCacheTests(unittest.TestCase):
+    def test_hash_cache_is_stat_bound_and_recovers_original_function(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / 'artifact.json'
+            path.write_text('{"value": 1}')
+            with cached.caches() as stats:
+                first = adapter.sha256(path)
+                second = adapter.sha256(path)
+                self.assertEqual(first, second)
+                self.assertEqual(stats['sha256_misses'], 1)
+                self.assertEqual(stats['sha256_hits'], 1)
+                path.write_text('{"value": 2}')
+                changed = adapter.sha256(path)
+                self.assertNotEqual(first, changed)
+                self.assertEqual(stats['sha256_misses'], 2)
+            self.assertEqual(adapter.sha256(path), sha256(path))
+
+    def test_file_validation_cache_hits_only_exact_requests(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = root / 'artifact.json'
+            path.write_text('{}')
+            digest = sha256(path)
+            with cached.caches() as stats:
+                evidence._file(root, 'artifact.json', digest, path.stat().st_size)
+                evidence._file(root, 'artifact.json', digest, path.stat().st_size)
+                self.assertEqual(stats['file_misses'], 1)
+                self.assertEqual(stats['file_hits'], 1)
+                with self.assertRaises(evidence.MeasurementError):
+                    evidence._file(root, 'artifact.json', '0' * 64, path.stat().st_size)
+            self.assertIs(evidence._file, cached.harness_evidence._file)
+
+    def test_show_stats_is_consumed_before_frozen_argv(self):
+        seen = {}
+        def fake_main():
+            seen['argv'] = list(sys.argv)
+            return 0
+        with patch.object(cached.rust_reference, 'main', side_effect=fake_main), \
+                patch('sys.stdout'):
+            self.assertEqual(cached.main(['--show-stats', '--candidate', 'candidate.json']), 0)
+        self.assertEqual(seen['argv'][1:], ['--candidate', 'candidate.json'])
 
 
 class ExactRiskTests(unittest.TestCase):
