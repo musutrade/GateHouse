@@ -181,3 +181,32 @@ fn saved_result_verifies_after_source_cleanup_and_rejects_tampering() {
     fs::write(saved.join("logs/check.log"), "tampered").unwrap();
     assert!(!read().status.success());
 }
+
+#[test]
+fn configured_result_consumer_is_not_a_verification_completion_step() {
+    use std::net::TcpListener;
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let address = listener.local_addr().unwrap();
+    for (script, expected) in [("exit 0", "PASS"), ("exit 1", "FAIL")] {
+        let root = fixture(script);
+        let path = root.path().join(".harness-gate/flow.toml");
+        let mut flow = fs::read_to_string(&path).unwrap();
+        flow.push_str(&format!(
+            "\n[[notifications.webhooks]]\nurl = \"http://{address}/unavailable\"\nallowed_hosts = [\"127.0.0.1\"]\non_success = true\non_failure = true\n"
+        ));
+        fs::write(path, flow).unwrap();
+        let bin = TempDir::new().unwrap();
+        let output = verify(&root, &bin);
+        assert_eq!(output.status.success(), expected == "PASS", "{output:?}");
+        let result: Value = serde_json::from_slice(
+            &fs::read(root.path().join(".harness-gate/reports/test_result.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(result["status"], expected);
+        assert!(String::from_utf8_lossy(&output.stderr).contains("external consumer"));
+        assert!(
+            matches!(listener.accept(), Err(error) if error.kind() == std::io::ErrorKind::WouldBlock)
+        );
+    }
+}

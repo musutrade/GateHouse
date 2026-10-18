@@ -226,7 +226,7 @@ a subdirectory instead of adding a suffix to cwd.
 | [[steps]] | Yes | External commands or built-in gates. |
 | [report_templates] | No | Optional HTML and JUnit output. |
 | [report_history] | No | Opt-in local immutable report archive (`archive` path); see [automatic archiving](../README.md#automatically-archive-completed-local-reports). |
-| [notifications] | No | Optional HTTP(S) notifications. |
+| [notifications] | No | Deprecated configuration retained for migration; verification does not deliver webhooks. |
 
 Unknown fields fail parsing rather than being silently ignored.
 
@@ -801,24 +801,20 @@ and curl's `<`/`>` markers. Prefixes are preserved; arbitrary prose containing
 existing evidence limits, generated-JSON identity checks and required quality
 gate semantics described in the Engineering Policy.
 
-Webhooks run after report writing:
+Verification ends after local result and evidence output. It does not deliver
+webhooks or wait for an external consumer. Legacy `notifications.webhooks`
+configuration is still parsed and validated for compatibility, but is deprecated
+and produces a migration warning; no HTTP request is made. Remove that section
+when migrating. A remote endpoint's availability cannot change the gate's exit
+status or its saved quality conclusion.
 
-    [[notifications.webhooks]]
-    url = "https://hooks.example.test/events"
-    allowed_hosts = ["hooks.example.test"]
-    on_failure = true
-    on_success = false
-
-URLs must use http or https, have no userinfo or wildcard host, and list an
-exact host in allowed_hosts. Each connection re-resolves the host and rejects
-loopback, private, link-local, unspecified, multicast, shared (CGNAT
-100.64.0.0/10), benchmarking, documentation and reserved addresses, including
-IPv6 forms that embed a local IPv4 address (IPv4-mapped/compatible, NAT64
-`64:ff9b::/96`, 6to4). Redirects
-and proxy environment variables are disabled. Non-2xx responses, connection
-errors, and policy denials fail verification with E1404 without changing the
-written report. At least one result type must be enabled; webhooks run in
-declaration order and stop after the first failure.
+Deliver saved results from a separate consumer with its own destination settings,
+credentials, transport policy and delivery state. Use the pinned evidence reader
+in [saved results](saved-results.md) before consuming a historical result. Do not
+map evidence validation failure to success, and do not treat historical validity
+as applicability to a new candidate. Automatic delivery and its old transport
+implementation/tests were removed from Core; this is not a claim that an external
+webhook integration has been implemented or accepted.
 
 ## 16. Signed out-of-process adapters
 

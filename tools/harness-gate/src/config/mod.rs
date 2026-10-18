@@ -23,11 +23,13 @@ pub(crate) use loader::{read_config_source, MAX_CONFIG_BYTES};
 pub use migration::migrate_v1;
 #[cfg(unix)]
 pub(crate) use model::StepCacheConfig;
+#[cfg(test)]
+pub(crate) use model::WebhookConfig;
 pub(crate) use model::{
     BuiltinGateType, ContainerRuntimeKind, DoctorCheck, DoctorCheckKind, FlowConfig, ParserConfig,
     PathScope, PathType, RunnerConfig, RunnerResultFormat, ServiceCheck, ServiceConfig, StepConfig,
-    StepInput, StepKind, TestIsolation, UnmatchedScope, WaiverConfig, WebhookConfig,
-    CONFIG_VERSION, DEFAULT_CONFIG_PATH,
+    StepInput, StepKind, TestIsolation, UnmatchedScope, WaiverConfig, CONFIG_VERSION,
+    DEFAULT_CONFIG_PATH,
 };
 pub use path::resolve_config_path;
 #[cfg(unix)]
