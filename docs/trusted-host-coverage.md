@@ -1301,6 +1301,38 @@ revoked live journal and missing old source while the pinned historical snapshot
 remains pending. Root/release/mount/worker boundaries are replaced in these tests;
 they do not constitute a live installation or actual-995 workload acceptance.
 
+`check-core-policy.py` also provides an internal completed-inspection replay for
+the later coordinator. It requires the inherited original lease and repeats the
+prepared-configuration replay around inspection validation. It starts no parser
+units, stops no processes and writes no files. The original inspection producer
+and this reader share one deterministic command constructor for the three fixed
+configuration/full/hook commands and their complete systemd isolation, limits,
+mounts and clean environment. Retained invocations must have distinct canonical
+UUID4 unit names, exact command bytes, typed successful exit/stop fields and a
+fresh stopped-unit observation; a saved stop claim alone is insufficient.
+
+The reader checks the exact private file inventory and modes, externally pinned
+completed binding and canonical control record. It reparses bounded stdout with
+the existing strict configuration/plan validators and requires empty stderr. The
+copied source and independent Git store remain protected, the source is readonly,
+all five policy overlay files match the authenticated release, the working tree
+has only those deliberate additions and the candidate bundle matches. Its full
+view inventory must still match the retained manifest and bound receipt. Rehashed
+records cannot introduce weaker isolation, waived nodes, another policy, altered
+tracked inputs or authority flags. Time recorded by the producer is observational
+metadata and grants no acceptance.
+
+Twenty-four new regressions bring the focused suite to 511 tests. They include
+small actual Git-store/view checks and changed readonly modes, policies, tracked
+files and bundles, alongside invocation/reply/receipt/provenance/race cases. Root,
+prepared-state authentication and live unit boundaries are explicitly replaced.
+No Root inspection, actual executor workload or installation is accepted here.
+The result confirms passive inspection only and keeps installation admission,
+administrator readiness and production false. Phase/base/journal/entry/drain and
+publication-retention admission, guarded file installation, activation and recovery
+still precede a complete coordinator. The authenticated closure remains twenty-two
+helpers and 74 source-only members without a Core binary or administrator CLI.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the

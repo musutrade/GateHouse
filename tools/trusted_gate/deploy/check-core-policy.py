@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import fcntl
 import io
 import os
@@ -189,11 +190,14 @@ def limits():
     resource.setrlimit(resource.RLIMIT_NOFILE, (64, 64))
 
 
-def run_command(B, builder, destination, label, argv, env_program):
-    """A transient Root parser unit, with no project execution or credential access."""
+def unit_command(B, destination, label, argv, env_program, unit):
+    """One deterministic command contract for execution and retained-record replay."""
     allowed = dict(commands(B, '/work/inspection-core', '/work/source', '/work/source/.gatehouse-host/flow.toml'))
     B.need(label in allowed and argv == allowed[label], 'only fixed passive Core commands may run')
-    unit = 'gatehouse-core-inspection-' + str(uuid.uuid4()) + '.service'
+    identity = unit.removeprefix('gatehouse-core-inspection-').removesuffix('.service')
+    parsed = uuid.UUID(identity)
+    B.need(parsed.version == 4 and str(parsed) == identity
+           and unit == 'gatehouse-core-inspection-' + identity + '.service', 'Core inspection unit identity differs')
     properties = {'User': 'root', 'Group': 'root', 'SupplementaryGroups': '', 'UMask': '0077', 'NoNewPrivileges': 'yes',
         'CapabilityBoundingSet': '', 'AmbientCapabilities': '', 'ProtectSystem': 'strict',
         'ProtectHome': 'yes', 'PrivateNetwork': 'yes', 'PrivateDevices': 'yes', 'PrivateTmp': 'yes',
@@ -209,6 +213,13 @@ def run_command(B, builder, destination, label, argv, env_program):
     outer = ['/usr/bin/systemd-run', '--quiet', '--wait', '--pipe', '--collect', '--unit=' + unit]
     outer += ['--property=' + key + '=' + value for key, value in properties.items()]
     outer += ['--', str(B.path_operand(env_program)), '-i', *[key + '=' + val for key, val in B.ENV.items()], *argv]
+    return outer
+
+
+def run_command(B, builder, destination, label, argv, env_program):
+    """A transient Root parser unit, with no project execution or credential access."""
+    unit = 'gatehouse-core-inspection-' + str(uuid.uuid4()) + '.service'
+    outer = unit_command(B, destination, label, argv, env_program, unit)
     stdout, stderr = destination / (label + '.stdout'), destination / (label + '.stderr')
     invocation = {'unit': unit, 'argv': outer, 'state': 'starting', 'worker_stop_proven': False, 'exit_code': None}
     B.record(destination / (label + '.unit.json'), invocation)
@@ -225,6 +236,143 @@ def run_command(B, builder, destination, label, argv, env_program):
     raw, errors = B.read(stdout, MAX_REPLY), B.read(stderr, MAX_REPLY)
     B.need(not errors, 'captured Core inspection produced unexpected stderr')
     return raw
+
+
+def inspection_status(head, manifest_pin, configuration_pin, core_pin):
+    return {'schema': 'gatehouse-core-policy-inspection/v1', 'state': 'incomplete', 'head': head, 'base': BASE,
+        'helper_manifest_sha256': manifest_pin, 'configuration_binding_sha256': configuration_pin,
+        'core_build_record_sha256': core_pin, 'captured_core_policy_checked': False,
+        'administrator_ready': False, 'production_gate_enabled': False,
+        'coverage_acceptance': 'transition', 'authoritative_publish': 'blocked'}
+
+
+def verified_view(B, stage, contract, payload, destination, head, manifest_pin):
+    """Authenticate the independent Git/policy view, not just its saved manifest."""
+    entries, total = 0, 0
+    for name in ('source', 'mirror.git'):
+        root = B.owned(destination / name, directory=True)
+        for parent, directories, files in os.walk(root):
+            for child in (None, *directories, *files):
+                path = Path(parent) if child is None else Path(parent) / child
+                directory = child is None or child in directories
+                info = B.owned(path, directory=directory).stat()
+                entries += 1
+                total += 0 if directory else info.st_size
+                B.need(entries <= 40000 and total <= 512 * 1024**2, 'inspection view exceeds replay budget')
+                B.need(not info.st_mode & 0o7000, 'privileged inspection view mode')
+                if name == 'source':
+                    B.need(stat.S_IMODE(info.st_mode) == (0o555 if directory or info.st_mode & 0o111 else 0o444),
+                           'inspection source is no longer readonly')
+    contract.bind_source(B, payload, destination / 'source', head, manifest_pin)
+    overlay = destination / 'source/.gatehouse-host'
+    expected = {Path(target).name: (payload['files/' + source], 0o555 if mode & 0o111 else 0o444)
+                for source, (target, mode, action) in contract.source_map().items()
+                if target.startswith('/etc/gatehouse/policy/')}
+    B.need({path.name for path in B.owned(overlay, directory=True).iterdir()} == expected.keys(),
+           'inspection policy inventory changed')
+    for name, (raw, mode) in expected.items():
+        path = B.owned(overlay / name)
+        B.need(stat.S_IMODE(path.stat().st_mode) == mode and B.read(path, 1024**2) == raw,
+               'inspection policy differs from authenticated release')
+    B.need(hashlib.sha256(expected['flow.toml'][0]).hexdigest() == FLOW_SHA256,
+           'inspection flow differs from reviewed policy')
+    # The five policy files are the only deliberate additions to the pristine
+    # copied candidate. Include ignored files and force mode observation as well.
+    status = B.git(destination / 'source', '-c', 'core.filemode=true', 'status', '--porcelain=v1', '-z',
+                   '--untracked-files=all', '--ignored')
+    B.need(sorted(filter(None, status.split(b'\0'))) == sorted(
+        ('?? .gatehouse-host/' + name).encode() for name in expected), 'inspection working tree changed')
+    B.need(B.read(destination / 'candidate.bundle', 128 * 1024**2) == payload['source.bundle'],
+           'inspection bundle differs from authenticated release')
+    return view_inventory(B, stage, destination, head)
+
+
+def completed_inspection(B, builder, stage, contract, payload, destination, head, manifest_pin,
+                         configuration_pin, core_pin, prepared, inspection_pin, env_program):
+    """Revalidate retained passive replies and stopped invocations; execute nothing."""
+    B.owned(destination, directory=True, private=True)
+    labels = ['configuration', *PROFILES]
+    names = {'source', 'mirror.git', 'candidate.bundle', 'view.json', 'inspection.json', 'binding.json'}
+    names |= {label + suffix for label in labels for suffix in ('.stdout', '.stderr', '.unit.json')}
+    B.need({path.name for path in destination.iterdir()} == names, 'completed inspection inventory differs')
+    for name in names - {'source', 'mirror.git'}:
+        path = B.owned(destination / name, private=True)
+        B.need(stat.S_IMODE(path.stat().st_mode) == (0o400 if name in (
+            'view.json', 'binding.json', 'candidate.bundle') else 0o600), 'completed inspection mode differs')
+    saved = builder.json_pin(B, destination / 'binding.json', inspection_pin)
+    seconds = saved['seconds']
+    B.need(type(seconds) in (int, float) and math.isfinite(seconds) and seconds >= 0,
+           'inspection observation time differs')
+    view_raw = B.read(destination / 'view.json', 16 * 1024**2)
+    view = json.loads(view_raw, object_pairs_hook=B.unique)
+    B.need(view_raw == B.canonical(view), 'inspection view metadata is not canonical')
+    same(B, verified_view(B, stage, contract, payload, destination, head, manifest_pin), view,
+         'completed inspection view changed')
+    replies, units = {}, set()
+    for label, argv in commands(B, '/work/inspection-core', '/work/source', '/work/source/.gatehouse-host/flow.toml'):
+        response = B.read(destination / (label + '.stdout'), MAX_REPLY)
+        B.need(not B.read(destination / (label + '.stderr'), MAX_REPLY), 'retained inspection stderr is not empty')
+        reply = check_report(B, response) if label == 'configuration' else check_plan(
+            B, response, label, payload['files/tools/trusted_gate/deploy/linux-transition.flow.toml'])
+        raw = B.read(destination / (label + '.unit.json'), 64 * 1024)
+        invocation = json.loads(raw, object_pairs_hook=B.unique)
+        B.need(raw == B.canonical(invocation), 'inspection invocation is not canonical')
+        unit = invocation['unit']
+        B.need(unit not in units, 'inspection invocations reused a unit')
+        same(B, invocation, {'unit': unit, 'argv': unit_command(B, destination, label, argv, env_program, unit),
+            'state': 'stopped', 'worker_stop_proven': True, 'exit_code': 0}, 'inspection invocation contract differs')
+        builder.stopped(B, unit)
+        units.add(unit);reply['invocation_sha256'] = hashlib.sha256(raw).hexdigest();replies[label] = reply
+    status = inspection_status(head, manifest_pin, configuration_pin, core_pin)
+    result = {**status, 'state': 'checked', 'captured_core_policy_checked': True,
+        'configuration_sha256': prepared['configuration_sha256'], 'plan_sha256': prepared['plan_sha256'],
+        'view_sha256': hashlib.sha256(view_raw).hexdigest(), 'replies': replies, 'seconds': seconds,
+        'scope': 'captured-Core configuration and passive plans only; no runtime execution or quality acceptance'}
+    same(B, saved, result, 'completed inspection binding differs')
+    raw = B.read(destination / 'inspection.json', 1024**2)
+    expected = {**status, 'state': 'checked', 'captured_core_policy_checked': True, 'binding_sha256': inspection_pin}
+    B.need(raw == B.canonical(expected), 'inspection has no matching completed control record')
+    return result
+
+
+def verify_completed(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin, seal_pin, core_pin,
+                     configuration_pin, inspection_pin, host, host_pin, recipe, recipe_pin,
+                     preservation, preservation_pin, lock_fd):
+    """Internal immutable inspection replay; no CLI or current-phase admission."""
+    B.need(os.geteuid() == 0, 'administrator authentication required for inspection replay')
+    B.need(os.uname().sysname == 'Linux' and os.uname().machine == 'x86_64', 'unsupported inspection replay platform')
+    B.need(type(lock_fd) is int and lock_fd >= 0, 'inspection replay requires an inherited controller lease')
+    code = B.authenticate(helpers, manifest, manifest_pin);head = code['revision']
+    helpers, manifest, archive, host, recipe, preservation = map(B.path_operand,
+        (helpers, manifest, archive, host, recipe, preservation))
+    composer = B.load(helpers, 'compose-linux-host.py');builder = B.load(helpers, 'build-protected-core.py')
+    stage = B.load(helpers, 'stage-linux-inputs.py');contract = B.load(helpers, 'bootstrap-release.py')
+    fence = B.load(helpers, 'install-transaction.py')
+    destination = VOLUME / 'bootstrap-core-inspection'
+    fence.lease(B, lock_fd)
+    def review():
+        return composer.verify_prepared(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin, seal_pin,
+            core_pin, configuration_pin, host, host_pin, recipe, recipe_pin, preservation, preservation_pin, lock_fd)
+    initial = review()
+    archive_raw = B.read(archive, contract.MAX_ARCHIVE)
+    payload, _ = contract.decode(B, io.BytesIO(archive_raw), len(archive_raw), archive_pin, code,
+                                 B.read(manifest, 64 * 1024))
+    host_value = builder.host_inputs(B, host, host_pin)
+    def retained():
+        return completed_inspection(B, builder, stage, contract, payload, destination, head, manifest_pin,
+                                    configuration_pin, core_pin, initial, inspection_pin, host_value['env'])
+    result = retained()
+    same(B, review(), initial, 'prepared configuration changed during inspection replay')
+    same(B, retained(), result, 'retained inspection changed during replay')
+    B.need(B.read(archive, contract.MAX_ARCHIVE) == archive_raw, 'inspection source release changed')
+    B.authenticate(helpers, manifest, manifest_pin);fence.lease(B, lock_fd)
+    return {'schema': 'gatehouse-core-policy-replay/v1', 'state': 'verified', 'head': head,
+        'helper_manifest_sha256': manifest_pin, 'preservation_sha256': preservation_pin,
+        'configuration_binding_sha256': configuration_pin, 'inspection_binding_sha256': inspection_pin,
+        'configuration_sha256': result['configuration_sha256'], 'plan_sha256': result['plan_sha256'],
+        'captured_core_policy_checked': True, 'administrator_ready': False, 'production_gate_enabled': False,
+        'installation_admitted': False,
+        'scope': 'immutable passive inspection only; current phase, base, journal, entry and drain admission required'}
 
 
 def inspect(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin, seal_pin, core_pin,
@@ -255,11 +403,7 @@ def inspect(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin,
         contract.bind_source(B, payload, VOLUME / 'bootstrap-source/source', head, manifest_pin)
         host_value = builder.host_inputs(B, host, host_pin)
         destination.mkdir(mode=0o700)
-        status = {'schema': 'gatehouse-core-policy-inspection/v1', 'state': 'incomplete', 'head': head, 'base': BASE,
-            'helper_manifest_sha256': manifest_pin, 'configuration_binding_sha256': configuration_pin,
-            'core_build_record_sha256': core_pin, 'captured_core_policy_checked': False,
-            'administrator_ready': False, 'production_gate_enabled': False,
-            'coverage_acceptance': 'transition', 'authoritative_publish': 'blocked'}
+        status = inspection_status(head, manifest_pin, configuration_pin, core_pin)
         B.record(destination / 'inspection.json', status)
         try:
             view = copy_view(B, helpers, payload, head, destination)
