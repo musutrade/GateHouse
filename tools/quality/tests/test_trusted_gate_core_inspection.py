@@ -34,8 +34,7 @@ class CoreInspectionTests(unittest.TestCase):
         self.f=FIX.HostConfigurationTests();self.f.setUp();self.addCleanup(self.f.doCleanups)
         f=self.f;self.configuration=f.compose();self.pin=C.hashlib.sha256((f.output/'binding.json').read_bytes()).hexdigest()
         self.B=SimpleNamespace(**vars(f.B))
-        self.composer=SimpleNamespace(compose=Mock(side_effect=lambda *args,**kw:f.compose(
-            existing_pin=kw['existing_pin'],lock_fd=kw['lock_fd'])))
+        self.composer=SimpleNamespace(compose=Mock(side_effect=lambda *args,**kw:f.compose(**kw)))
         self.B.load=lambda helpers,name:{'compose-linux-host.py':self.composer,'build-protected-core.py':f.builder,
             'stage-linux-inputs.py':STAGE,'bootstrap-release.py':f.contract,'stage-protected-source.py':GIT}[name]
         self.destination=f.volume/'bootstrap-core-inspection';self.view={'fixture':'private source inventory'}
@@ -60,6 +59,13 @@ class CoreInspectionTests(unittest.TestCase):
         value=json.loads((self.destination/'inspection.json').read_bytes())
         self.assertEqual(value['state'],'blocked');self.assertFalse(value['captured_core_policy_checked'])
         self.assertFalse((self.destination/'binding.json').exists())
+
+    def test_inspection_forwards_root_api_route_to_both_composition_replays(self):
+        proxy='http://proxy.example.invalid:7890';self.f.preflight.observe.reset_mock()
+        self.inspect(api_proxy=proxy)
+        self.assertEqual(self.composer.compose.call_count,2)
+        self.assertTrue(all(call.kwargs['api_proxy']==proxy for call in self.composer.compose.call_args_list))
+        self.assertTrue(all(call.kwargs['api_proxy']==proxy for call in self.f.preflight.observe.call_args_list))
 
     def test_completed_configuration_is_reverified_and_only_three_passive_commands_are_checked(self):
         before={p:p.read_bytes() for p in self.f.output.iterdir()};result=self.inspect()

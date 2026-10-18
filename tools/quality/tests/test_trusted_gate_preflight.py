@@ -15,6 +15,7 @@ import tarfile
 import tempfile
 from types import SimpleNamespace
 import unittest
+import urllib.request
 from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -31,6 +32,7 @@ BOOT = load('preflight_entry_tests', 'import-protected-inputs.py')
 P = load('preflight_library_tests', 'preflight-history-pilot.py')
 R = load('preflight_contract_tests', 'bootstrap-release.py')
 KEEP = load('preflight_retention_tests', 'preserve-pilot-state.py')
+EFFECTS = load('preflight_transport_tests', 'admit-upgrade-effects.py')
 
 
 class PreflightTests(unittest.TestCase):
@@ -273,6 +275,33 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(cls.call_args.kwargs,{'permissions':{'contents':'read'}})
         self.assertEqual([c.args for c in client.repo.call_args_list],[('GET',''),('GET','/git/ref/heads/main')])
         self.assertIsNone(client.token)
+
+    def test_explicit_proxy_uses_authenticated_https_route_and_readonly_client(self):
+        proxy='http://proxy.example.invalid:7890'
+        client=Mock(token='private-token',expires=100,opener=urllib.request.build_opener(urllib.request.ProxyHandler({})))
+        client.repo.side_effect=[{'id':P.REPOSITORY_ID,'full_name':P.REPOSITORY,'default_branch':'main'},
+            {'ref':'refs/heads/main','object':{'type':'commit','sha':R.BASE}}]
+        cls=Mock(return_value=client)
+        with patch.object(P,'client_class',return_value=cls):
+            P.remote(self.B,self.config,self.payload,R,api_proxy=proxy,transport=EFFECTS.transport)
+        self.assertEqual(cls.call_args.kwargs,{'permissions':{'contents':'read'}})
+        self.assertTrue(any(isinstance(h,urllib.request.ProxyHandler) and h.proxies=={'https':proxy}
+                            for h in client.opener.handlers));self.assertIsNone(client.token)
+
+    def test_bad_explicit_route_or_missing_transport_never_falls_back_to_direct_api(self):
+        for proxy,transport in (('http://user:secret@proxy.invalid:7890',EFFECTS.transport),
+                                ('http://proxy.invalid:7890',None)):
+            client=Mock(token='private-token',expires=100,opener=urllib.request.build_opener(urllib.request.ProxyHandler({})))
+            with patch.object(P,'client_class',return_value=Mock(return_value=client)),self.assertRaises(ValueError):
+                P.remote(self.B,self.config,self.payload,R,api_proxy=proxy,transport=transport)
+            client.repo.assert_not_called();self.assertIsNone(client.token)
+
+    def test_observation_passes_explicit_recipe_proxy_to_authenticated_transport(self):
+        original=self.B.load;seen=[];proxy='http://proxy.example.invalid:7890'
+        def remote(*args,**kwargs):seen.append(kwargs);return {'base':R.BASE,'route':kwargs['api_proxy']}
+        with patch.object(self.B,'load',side_effect=lambda helpers,name:EFFECTS if name=='admit-upgrade-effects.py' else original(helpers,name)):
+            result=self.observe(remote_fn=remote,api_proxy=proxy)
+        self.assertEqual(result['remote']['route'],proxy);self.assertIs(seen[0]['transport'],EFFECTS.transport)
 
     def test_remote_wrong_repo_moved_base_transport_failure_block_no_fallback(self):
         good=[{'id':P.REPOSITORY_ID,'full_name':P.REPOSITORY,'default_branch':'main'},

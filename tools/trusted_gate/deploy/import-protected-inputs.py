@@ -25,7 +25,7 @@ FILES = {ENTRY, 'tools/maintenance/restore_evidence.py', *(
         'preflight-history-pilot.py', 'linux-transition-policy.py', 'seal-linux-inputs.py', 'compose-linux-host.py',
         'check-core-policy.py', 'install-transaction.py', 'controller-drain.py', 'admit-upgrade-journal.py',
         'install-reviewed-files.py', 'admit-upgrade-effects.py', 'observe-installation-inputs.py',
-        'coordinate-linux-upgrade.py', 'activate-linux-controller.py'))}
+        'coordinate-linux-upgrade.py', 'activate-linux-controller.py', 'administrator-upgrade.py'))}
 ENV = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'GIT_CONFIG_NOSYSTEM': '1',
        'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_TERMINAL_PROMPT': '0', 'GIT_OPTIONAL_LOCKS': '0'}
 
@@ -327,6 +327,25 @@ def import_inputs(root, manifest, manifest_pin, source, head, base, tool_archive
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    if sys.argv[1:2] == ['administrator-upgrade']:
+        for name in ('helper-root', 'manifest', 'recipe'):
+            parser.add_argument('--' + name, type=Path, required=True)
+        for name in ('manifest-sha256', 'recipe-sha256'):
+            parser.add_argument('--' + name, required=True)
+        args = parser.parse_args(sys.argv[2:])
+        try:
+            authenticate(args.helper_root, args.manifest, args.manifest_sha256)
+            dispatcher = load(args.helper_root, 'administrator-upgrade.py')
+            context = SimpleNamespace(**{name: globals()[name] for name in (
+                'need', 'owned', 'path_operand', 'read', 'write', 'record', 'canonical', 'unique',
+                'git', 'frozen_lock', 'load', 'authenticate', 'readonly', 'import_inputs', 'ENV')})
+            result = dispatcher.run(context, args.helper_root, args.manifest, args.manifest_sha256,
+                                    args.recipe, args.recipe_sha256)
+        except Exception as error:
+            parser.exit(1, 'administrator upgrade blocked (' + type(error).__name__ + '); retain private state\n')
+        print(json.dumps({key:result[key] for key in ('schema', 'head', 'phase', 'administrator_ready',
+                                                     'production_gate_enabled')}, sort_keys=True))
+        return
     if sys.argv[1:2] == ['inspect-core-policy']:
         for name in ('helper-root', 'manifest', 'release', 'host-recipe', 'tool-recipe'):
             parser.add_argument('--' + name, type=Path, required=True)

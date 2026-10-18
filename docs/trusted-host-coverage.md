@@ -1591,6 +1591,57 @@ identity, workload, recovery and resource acceptance are still required. Install
 659 remains untouched; the source-only closure has 28 helpers and 80 members,
 without a Core binary or administrator CLI.
 
+The twenty-ninth authenticated helper, `administrator-upgrade.py`, exposes a
+candidate `administrator-upgrade` action through the authenticated importer.
+It accepts a canonical Root-owned mode0400 recipe and explicit SHA, authenticates
+the entire helper closure before importing deployment code, and opens the original
+controller lease once. The same descriptor remains held across bounded storage,
+fixed-659 preservation, source staging, official/locked input import, Linux input
+sealing, protected Core build, configuration composition, passive Core inspection,
+installation-recipe sealing, file lifecycle and activation. It does not invoke a
+quality workload or change App/rules configuration.
+
+A separate private administrator receipt binds head, helper and recipe pins,
+transaction and lease. Preparation is an ordered prefix with a durable intent
+before each effect and an exact artifact digest after independent verification.
+Fresh entry rejects existing deployment state and outputs; an output appearing
+between the initial check and its stage intent also blocks. On restart, a stage
+with known intent can adopt only its completely verified artifact. It never
+repeats the Core build or continues a partial output just because a directory
+exists. Failed/foreign outputs, changed artifacts and unfinished artifact or
+transaction metadata remain retained and block dispatch. Preservation stays
+outside the new volume; the saved pending journal is never restored.
+
+Completed stages use the existing whole-source, archive-derived dependency/tool,
+sealed-role/runtime, captured-Core and passive-inspection verifiers. Every worker
+or inspection actor receives the inherited descriptor, while input import runs
+inside the outer lease without a second lock. The sealed installation recipe is
+derived from those verified pins and fixed destinations. Once activation state
+exists, dispatch resumes that transaction directly, avoiding the historical
+installed-disabled observer that correctly rejects an advanced barrier. Completed
+administrator replay checks recorded artifact hashes and the full activation
+prerequisites without preparing or building again.
+
+The explicit recipe API route also propagates through fixed-659 preflight,
+configuration composition and passive inspection rechecks, using the existing
+credential-free HTTPS-only proxy handler and accepted client's verified TLS and
+redirect policy. Invalid routes fail before API reads; no direct fallback is
+introduced. The default route remains unchanged. This does not configure the
+runtime controller or Git mirror: their actual transport still needs live
+acceptance with the final operator package.
+
+Thirty-one new regressions bring the focused suite to 697 tests: 26 administrator
+receipt/lease/recipe/CLI/wiring integrations and five explicit-route cases. They
+include real fsynced private records and locks plus the actual 27-file/Snapshot
+activation fixture. Preparation workers, Root/DAC/account admission, external
+archive/capture facts, native processes, systemd and API replies are replaced at
+explicit fixture borders; no live Root or quality acceptance is claimed.
+The [administrator interface](trusted-host-administrator.md) records the exact
+recipe and recovery boundaries. Operator staging/package assembly, restart/mount
+acceptance and real restricted-identity workloads remain pending. Installed659
+is untouched; administrator and production flags remain false. The source-only
+closure has 29 helpers and 81 members, without a Core binary.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the

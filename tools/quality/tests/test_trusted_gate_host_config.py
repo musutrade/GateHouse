@@ -132,6 +132,11 @@ class HostConfigurationTests(unittest.TestCase):
             return C.compose(self.B,self.root/'helpers',self.manifest,'a'*64,self.archive,C.digest(self.archive.read_bytes()),
                 'b'*64,self.seal_pin,self.core_pin,self.root/'host-recipe','c'*64,self.root/'volume-recipe','d'*64,**options)
 
+    def test_explicit_administrator_api_route_is_rechecked_on_both_preflights(self):
+        proxy='http://proxy.example.invalid:7890';self.compose(api_proxy=proxy)
+        self.assertEqual(self.preflight.observe.call_count,2)
+        self.assertTrue(all(call.kwargs['api_proxy']==proxy for call in self.preflight.observe.call_args_list))
+
     def test_small_input_configuration_roundtrip_pins_all_files_without_optional_old_overlays(self):
         before=self.config_path.read_bytes();result=self.compose()
         config=json.loads((self.output/'host.json').read_bytes());plan=json.loads((self.output/'install-plan.json').read_bytes())

@@ -376,7 +376,7 @@ def verify_completed(B, helpers, manifest, manifest_pin, archive, archive_pin, i
 
 
 def inspect(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin, seal_pin, core_pin,
-            configuration_pin, host, host_pin, recipe, recipe_pin, lock_fd=None):
+            configuration_pin, host, host_pin, recipe, recipe_pin, lock_fd=None, *, api_proxy=None):
     B.need(os.geteuid() == 0, 'administrator authentication required for Core inspection')
     os.umask(0o077)
     code = B.authenticate(helpers, manifest, manifest_pin);head = code['revision']
@@ -394,8 +394,9 @@ def inspect(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin,
                'Core inspection lease differs')
         fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         def review():
+            options = {} if api_proxy is None else {'api_proxy': api_proxy}
             return composer.compose(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin, seal_pin,
-                core_pin, host, host_pin, recipe, recipe_pin, lock_fd=lock_fd, existing_pin=configuration_pin)
+                core_pin, host, host_pin, recipe, recipe_pin, lock_fd=lock_fd, existing_pin=configuration_pin, **options)
         initial = review()
         B.need(not destination.exists() and not destination.is_symlink(), 'retain prior Core inspection; never reuse')
         raw = B.read(archive, contract.MAX_ARCHIVE)

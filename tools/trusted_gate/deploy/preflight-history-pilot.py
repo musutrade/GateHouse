@@ -307,10 +307,13 @@ def client_class(payload):
             sys.modules.pop(name, None)
 
 
-def remote(B, config, payload, contract):
+def remote(B, config, payload, contract, *, api_proxy=None, transport=None):
     client = client_class(payload)(config['app_id'], config['installation_id'], config['app_key'],
                                    config['repository'], permissions={'contents': 'read'})
     try:
+        if api_proxy is not None:
+            B.need(callable(transport), 'authenticated explicit API transport required')
+            transport(B, client, api_proxy)
         repository = client.repo('GET', '')
         branch = client.repo('GET', '/git/ref/heads/main')
         B.need(type(repository['id']) is int and repository['id'] == REPOSITORY_ID
@@ -322,7 +325,7 @@ def remote(B, config, payload, contract):
     return {'repository_id': REPOSITORY_ID, 'base': contract.BASE, 'permissions': {'contents': 'read'}}
 
 
-def observe(B, helpers, manifest, manifest_pin, lock_fd=None):
+def observe(B, helpers, manifest, manifest_pin, lock_fd=None, *, api_proxy=None):
     B.need(os.geteuid() == 0, 'administrator authentication required for pilot preflight')
     code = B.authenticate(helpers, manifest, manifest_pin)
     contract = B.load(helpers, 'bootstrap-release.py')
@@ -352,7 +355,11 @@ def observe(B, helpers, manifest, manifest_pin, lock_fd=None):
                             'journal': identity, 'source': frozen(B, inputs, payload, contract),
                             'mount': mount_identity(B, marker), 'keys': key_pins}
         config, before = snapshot()
-        observed = remote(B, config, payload, contract)
+        if api_proxy is None:
+            observed = remote(B, config, payload, contract)
+        else:
+            effects = B.load(helpers, 'admit-upgrade-effects.py')
+            observed = remote(B, config, payload, contract, api_proxy=api_proxy, transport=effects.transport)
         B.need(snapshot()[1] == before, 'pilot changed during preflight')
         B.need(accepted_release(B, contract) == payload, 'accepted stage changed during preflight')
         B.authenticate(helpers, manifest, manifest_pin)

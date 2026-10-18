@@ -333,7 +333,7 @@ def verify_prepared(B, helpers, manifest, manifest_pin, archive, archive_pin, in
 
 
 def compose(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin, seal_pin, core_pin,
-            host, host_pin, recipe, recipe_pin, lock_fd=None, *, existing_pin=None):
+            host, host_pin, recipe, recipe_pin, lock_fd=None, *, existing_pin=None, api_proxy=None):
     B.need(os.geteuid() == 0, 'administrator authentication required for host configuration')
     B.need(os.uname().sysname == 'Linux' and os.uname().machine == 'x86_64', 'unsupported configuration platform')
     os.umask(0o077)
@@ -358,7 +358,8 @@ def compose(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin,
         def guards():
             builder.pilot_slot(B);builder.worker_identity(B);builder.quiet_units(B);builder.idle(B)
             volume.admit(B, helpers, manifest, manifest_pin, recipe, recipe_pin)
-            return preflight.observe(B, helpers, manifest, manifest_pin, lock_fd=lock_fd)
+            options = {} if api_proxy is None else {'api_proxy': api_proxy}
+            return preflight.observe(B, helpers, manifest, manifest_pin, lock_fd=lock_fd, **options)
         before = guards()
         if existing_pin is None:
             B.need(not destination.exists() and not destination.is_symlink(), 'retain previous host configuration; never reuse')
