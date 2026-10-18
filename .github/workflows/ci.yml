@@ -776,10 +776,10 @@ jobs:
           RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           BASE_SHA="$(python3 tools/maintenance/migration_baseline.py --base "$BASE_SHA" --head "$HEAD_SHA")"
-          python3 tools/quality/rust_reference.py \
+          python3 tools/quality/rust_reference_cached.py \
             --candidate target/quality/candidate/candidate.json \
             --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
-            --output target/quality/generic-shadow
+            --output target/quality/generic-shadow --show-stats
 
       - name: Upload generic projection and compatibility evidence
         if: ${{ always() }}
