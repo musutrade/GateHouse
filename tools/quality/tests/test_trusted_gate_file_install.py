@@ -113,10 +113,10 @@ class ReviewedFileTransactionTests(unittest.TestCase):
         with patch.object(os,'replace',side_effect=replace),self.assertRaisesRegex(OSError,'file rename'):
             self.resume()
 
-    def test_complete27_file_transaction_retains_original_controls_disabled_and_never_activates(self):
+    def test_complete28_file_transaction_retains_original_controls_disabled_and_never_activates(self):
         retained = {path:Path(path).stat().st_ino for path,row in self.materials['files'].items() if row['action']=='retain'}
         barrier = self.f.barrier.read_bytes();self.prepare();result = self.resume()
-        self.assertEqual(result['phase'],'installed-disabled');self.assertEqual(len(result['files_done']),27)
+        self.assertEqual(result['phase'],'installed-disabled');self.assertEqual(len(result['files_done']),28)
         for path,row in self.materials['files'].items():
             self.assertEqual(self.f.B.read(Path(path),I.MAX_FILE),row['after'])
             self.assertEqual(stat.S_IMODE(Path(path).stat().st_mode),row['mode'])
@@ -144,11 +144,11 @@ class ReviewedFileTransactionTests(unittest.TestCase):
     def test_missing_extra_materials_or_wrong_modes_are_rejected_before_intent(self):
         original=copy.deepcopy(self.materials);key=self.first_replace()
         self.materials['files'].pop(key)
-        with self.assertRaisesRegex(ValueError,'27-file'):self.prepare()
+        with self.assertRaisesRegex(ValueError,'28-file'):self.prepare()
         self.materials=copy.deepcopy(original);self.materials['files'][key]['mode']=True
         with self.assertRaisesRegex(ValueError,'fields differ'):self.prepare()
         self.materials=copy.deepcopy(original);self.materials['files']['/tmp/unreviewed']=self.materials['files'][key]
-        with self.assertRaisesRegex(ValueError,'27-file'):self.prepare()
+        with self.assertRaisesRegex(ValueError,'28-file'):self.prepare()
         self.assertFalse(self.receipt.exists())
 
     def test_wrong_fenced_head_configuration_or_entry_bytes_rejects_intent(self):
@@ -330,8 +330,8 @@ class ReviewedFileMaterialTests(unittest.TestCase):
         return I.materialize(self.f.B,R,self.f.payload,self.f.head,kwargs.get('old_core',self.old_core),
             kwargs.get('core',self.core),self.old,kwargs.get('new_raw',BOOT.canonical(self.config)))
 
-    def test_source_release_maps_exact27_files_and_keeps_both_entries_zero_mode(self):
-        materials=self.materialize();self.assertEqual(len(materials['files']),27)
+    def test_source_release_maps_exact28_files_and_keeps_both_entries_zero_mode(self):
+        materials=self.materialize();self.assertEqual(len(materials['files']),28)
         for path in I.ENTRIES:self.assertEqual(materials['files'][str(path)]['mode'],0)
         self.assertEqual(materials['files'][str(I.CORE)]['mode'],0o555)
         self.assertEqual(materials['files'][str(I.CONFIG)]['mode'],0o600)

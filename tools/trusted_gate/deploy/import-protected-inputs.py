@@ -26,7 +26,7 @@ FILES = {ENTRY, 'tools/maintenance/restore_evidence.py', *(
         'check-core-policy.py', 'install-transaction.py', 'controller-drain.py', 'admit-upgrade-journal.py',
         'install-reviewed-files.py', 'admit-upgrade-effects.py', 'observe-installation-inputs.py',
         'coordinate-linux-upgrade.py', 'activate-linux-controller.py', 'administrator-upgrade.py',
-        'stage-administrator-inputs.py'))}
+        'stage-administrator-inputs.py', 'persist-linux-mount.py'))}
 ENV = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'GIT_CONFIG_NOSYSTEM': '1',
        'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_TERMINAL_PROMPT': '0', 'GIT_OPTIONAL_LOCKS': '0'}
 

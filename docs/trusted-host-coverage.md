@@ -1663,6 +1663,28 @@ The source-only closure is now 30 helpers and 82 members. Installed659 remains
 untouched, administrator/production flags stay false, and actual Root/995,
 transport, mount/restart, workload and complete issue98 acceptance remain pending.
 
+The persistent-storage candidate adds the source-bound
+`srv-gatehouse-linux.mount` to an exact28-file installation plan while retaining
+the old pilot mount unit. A thirty-first helper, `persist-linux-mount.py`, records
+reload/enable intents under the original lease and full activation guard after
+disabled installation. It verifies the registered mounted image, exact unit,
+absence of unit overrides and type/prefix/exact drop-ins, the one Root-owned
+absolute wanted link, manager state and false acceptance flags. Known link
+recovery requires prior intent; completion retries are read-only. It uses no
+`--now`, start/stop, format or unmount operation and performs no database restore.
+
+Activation requires completed persistence before and after each live observation,
+so a persistence failure precedes enabling either entry. Sixteen persistence and
+native offline-link tests plus two real file/activation boundary regressions add
+18 cases. The native `systemctl --root` test changes only a temporary ordinary
+directory. Root ownership/admission, mounted-image and live manager/API facts are
+explicit fixture boundaries. The source-only closure is31 helpers and84 members;
+there is no ordinary Core binary. No actual Root install, reboot, manager adoption
+or workload acceptance is claimed. Installed659 is untouched, and administrator
+and production flags remain false. Original durable device/inode identities are
+not rebound after reboot; actual boot mounting and controller/resource acceptance
+remain required before issue98 can be completed.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the

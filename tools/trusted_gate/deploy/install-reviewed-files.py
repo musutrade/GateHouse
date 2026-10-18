@@ -62,7 +62,7 @@ def descriptor(B, contract, materials):
     expected = {target: (0 if Path(target) in ENTRIES else mode, action)
                 for target, mode, action in contract.source_map().values()}
     expected.update({str(CORE): (0o555, 'replace'), str(CONFIG): (0o600, 'replace')})
-    B.need(len(expected) == 27 and materials['files'].keys() == expected.keys(), 'exact 27-file material inventory required')
+    B.need(len(expected) == 28 and materials['files'].keys() == expected.keys(), 'exact 28-file material inventory required')
     previous = {target: 0 if Path(target) in ENTRIES else mode
                 for target, mode, action in contract.old_source_map().values()}
     previous.update({str(CORE): 0o755, str(CONFIG): 0o600})

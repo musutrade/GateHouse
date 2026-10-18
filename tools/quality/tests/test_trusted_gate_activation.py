@@ -29,6 +29,7 @@ class ForwardActivationTests(unittest.TestCase):
     def setUp(self):
         self.m = FIX.ReviewedFileTransactionTests();self.m.setUp();self.addCleanup(self.m.doCleanups)
         f = self.f = self.m.f;self.B = f.B
+        self.patch('persist_storage', Mock());self.patch('observe_storage', Mock())
         self.source = f.root/'installed/opt/gatehouse/trusted_gate'
         self.interpreter = f.root/'python3.14'
         BASIC.write(self.interpreter, b'fixture interpreter, not executed', 0o755)
@@ -126,6 +127,23 @@ class ForwardActivationTests(unittest.TestCase):
         return A.resume(self.ctx)
 
     def state(self):return json.loads(self.receipt.read_bytes())
+
+    def test_storage_persistence_failure_precedes_active_marker_and_entry_enablement(self):
+        A.prepare(self.ctx)
+        with patch.object(A,'persist_storage',side_effect=ValueError('storage not persistent')):
+            with self.assertRaisesRegex(ValueError,'not persistent'):A.resume(self.ctx)
+        self.assertEqual(self.state()['phase'],'prepared')
+        self.assertEqual(json.loads(self.f.barrier.read_bytes())['phase'],'fenced')
+        self.assertTrue(all(stat.S_IMODE(path.stat().st_mode)==0 for path in self.f.entries))
+
+    def test_storage_persistence_rechecked_after_active_marker_before_entry_modes(self):
+        def storage(ctx,value):
+            if json.loads(self.f.barrier.read_bytes())['phase']=='active':raise ValueError('storage link disappeared')
+        with patch.object(A,'observe_storage',side_effect=storage),self.assertRaisesRegex(ValueError,'link disappeared'):
+            self.execute()
+        self.assertEqual(self.state()['phase'],'marker-intent')
+        self.assertTrue(all(stat.S_IMODE(path.stat().st_mode)==0 for path in self.f.entries))
+        self.assertEqual(self.execute()['phase'],'entries-enabled')
 
     def test_actual_snapshot_configuration_and_internal_first_public_last_modes(self):
         changes = [];real = os.fchmod

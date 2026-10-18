@@ -142,8 +142,18 @@ def snapshot_configuration(ctx, host):
             if name == 'trusted_gate' or name.startswith('trusted_gate.'):sys.modules.pop(name)
 
 
-def live(ctx, value):
+def persist_storage(ctx,value):
+    module=ctx.B.load(ctx.helpers,'persist-linux-mount.py')
+    return module.persist(ctx,value,lambda:live(ctx,value,storage=False))
+
+
+def observe_storage(ctx,value):
+    return ctx.B.load(ctx.helpers,'persist-linux-mount.py').observe(ctx,value)
+
+
+def live(ctx, value, *, storage=True):
     B = ctx.B;started = time.monotonic();ctx.guard()
+    if storage:observe_storage(ctx,value)
     first = generation(ctx, value);context = ctx.drain.proc_context()
     checked = ctx.inputs.inspection(B, ctx.helpers, ctx.manifest, ctx.manifest_pin, ctx.value, ctx.fd, ctx.checker)
     current = ctx.inputs.materials(B, ctx.helpers, ctx.manifest, ctx.manifest_pin, ctx.code, ctx.value, checked)
@@ -171,6 +181,7 @@ def live(ctx, value):
     same(B, one, two, 'activation native processes changed')
     same(B, ctx.drain.proc_context(), context, 'activation native namespace changed')
     ctx.guard();same(B, generation(ctx, value), first, 'activation generation changed during observation')
+    if storage:observe_storage(ctx,value)
     B.need(time.monotonic() - started <= MAX_SECONDS, 'activation observation exceeded time budget')
     return first
 
@@ -204,7 +215,7 @@ def enable(ctx, value, path):
 
 
 def resume(ctx):
-    value = receipt(ctx);live(ctx, value)
+    value = receipt(ctx);persist_storage(ctx,value);live(ctx, value)
     if value['phase'] == 'prepared':value = advance(ctx, value, 'marker-intent')
     if value['phase'] == 'marker-intent':
         observed = live(ctx, value)

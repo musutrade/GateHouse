@@ -151,7 +151,7 @@ class HostConfigurationTests(unittest.TestCase):
         self.assertEqual(config['steps']['linux-test']['cache_identity']['release_incremental'],'not-applicable')
         self.assertTrue(config['steps']['pilot-boundary']['run_arguments'])
         self.assertEqual(config['steps']['pilot-boundary']['argv'][-2:],['@gatehouse:head@','@gatehouse:base@'])
-        self.assertEqual(len(plan['files']),27);self.assertEqual(plan['files']['captured-Core']['after_sha256'],self.record['binary']['sha256'])
+        self.assertEqual(len(plan['files']),28);self.assertEqual(plan['files']['captured-Core']['after_sha256'],self.record['binary']['sha256'])
         for name in ['run-linux-test.py','prepare-linux-workspace.py']:
             self.assertIn('/opt/gatehouse/linux-test/'+name,config['protected_files'])
         for name,mode in [('host.json',0o600),('install-plan.json',0o400),('binding.json',0o400)]:

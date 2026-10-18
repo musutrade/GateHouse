@@ -103,7 +103,7 @@ class InstallationInputsTests(unittest.TestCase):
     def test_actual_file_engine_callback_allows_only_its_current_fresh_temporary_then_full_disabled_replay(self):
         guard=self.guarded_prepare()
         result=I.resume(self.B,FENCE,self.m.contract,self.m.materials,self.f.lease_fd,guard)
-        self.assertEqual(result['phase'],'installed-disabled');self.assertEqual(len(result['files_done']),27)
+        self.assertEqual(result['phase'],'installed-disabled');self.assertEqual(len(result['files_done']),28)
         observed=self.observe('installed-disabled');self.assertFalse(observed['enclosing_file_checkpoint_required'])
         for entry in self.f.entries:self.assertEqual(entry.stat().st_mode&0o777,0)
         for flag in ('installation_admitted','administrator_ready','production_gate_enabled'):self.assertIs(observed[flag],False)
@@ -314,8 +314,8 @@ class InstallationMaterialAssemblyTests(unittest.TestCase):
         with patch.object(A,'VOLUME',self.volume):
             return A.materials(self.B,f.helpers,f.manifest,f.manifest_pin,f.code,self.value,self.checked)
 
-    def test_full_release_decode_and_materialization_derive_exact27_disabled_destinations(self):
-        result=self.assemble();self.assertEqual(len(result['files']),27);self.assertEqual(result['head'],self.f.head)
+    def test_full_release_decode_and_materialization_derive_exact28_disabled_destinations(self):
+        result=self.assemble();self.assertEqual(len(result['files']),28);self.assertEqual(result['head'],self.f.head)
         for path in I.ENTRIES:self.assertEqual(result['files'][str(path)]['mode'],0)
         self.assertEqual(result['files'][str(I.CORE)]['after'],self.m.core)
 

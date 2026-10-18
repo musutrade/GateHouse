@@ -176,3 +176,45 @@ create the16GiB volume, start services, change entries, issue Checks or run qual
 workloads. The subsequent reviewed migration still needs actual Root/995
 validation and live transport, mount/restart and resource acceptance. Neither
 export nor staging changes the false administrator/production flags.
+
+## Candidate persistent Linux mount
+
+The source-only installation plan now has28 files. It retains the accepted
+`srv-gatehouse-pilot.mount` bytes and adds `srv-gatehouse-linux.mount` for the
+separate `/var/lib/gatehouse/linux.ext4` image at `/srv/gatehouse/linux`. The new
+unit uses ext4 with `loop,nodev,nosuid,noatime`, a60-second mount timeout and
+`WantedBy=multi-user.target`. Its bytes are part of the reviewed source payload,
+configuration pins and complete file transaction; an existing unregistered unit
+blocks initial installation.
+
+After disabled installation, activation calls `persist-linux-mount.py` under the
+same original lease and full live activation admission. This internal helper
+binds a private `mount-persistence.json` to the activation generation, helper,
+recipe, material, original lease, installation receipts, exact unit bytes and
+ready storage registration. It records reload intent before `daemon-reload`,
+then enable intent before `systemctl --no-reload enable srv-gatehouse-linux.mount`.
+The already mounted image must pass the existing full storage admission.
+
+Only the Root-owned absolute link from
+`/etc/systemd/system/multi-user.target.wants/srv-gatehouse-linux.mount` to the
+reviewed unit is accepted. Unit overrides, exact/type/prefix drop-ins, other
+enablement slots, foreign links, unknown manager properties and unfinished
+metadata block. The manager must show the exact loaded active/mounted fragment,
+no drop-ins or pending reload, and the expected disabled/enabled state. The link
+parents are synced before completion. A lost enable response can adopt only this
+known link under its prior durable enable intent. Completed retry is read-only;
+no prior intent means an existing link is not adopted.
+
+Activation rechecks completed persistence before and after each full live
+observation, including after the active barrier and before entry modes change.
+No persistence transaction may begin after activation has advanced. The helper
+does not use `--now`, start/stop units, format, remount or unmount an image, touch
+the old pilot mount, or restore saved database state. Partial state stays private
+for diagnosis. This changes candidate source only; installed659 remains untouched.
+
+Native unit syntax and an ordinary `systemctl --root` temporary-directory enable
+test establish parser/link behavior only. Actual Root manager adoption, enabled
+boot mounting, resources and post-boot controller validation still require live
+acceptance. Durable installation receipts keep their original device/inode
+identities: a reboot is not permission to rebind them or weaken recovery checks.
+Both administrator and production acceptance flags remain false.

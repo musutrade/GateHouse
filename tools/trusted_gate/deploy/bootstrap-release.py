@@ -56,6 +56,7 @@ def old_source_map():
 
 def source_map():
     values = _source_map(MODULES, 'linux-transition.flow.toml')
+    values[DEPLOY + 'srv-gatehouse-linux.mount'] = ('/etc/systemd/system/srv-gatehouse-linux.mount', 0o644, 'replace')
     values[LINUX.INVENTORY] = ('/etc/gatehouse/policy/linux-transition.json', 0o644, 'replace')
     for name in ('run-linux-test.py', 'prepare-linux-workspace.py'):
         values[DEPLOY + name] = ('/opt/gatehouse/linux-test/' + name, 0o644, 'replace')
