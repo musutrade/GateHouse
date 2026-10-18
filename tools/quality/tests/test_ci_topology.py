@@ -180,7 +180,7 @@ class TopologyTests(unittest.TestCase):
         self.assertIn('fail-fast: false', native)
         self.assertIn('shell: bash', native)
         self.assertIn('cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked \\', native)
-        self.assertIn('--no-fail-fast --partition "hash:${CI_SHARD}/${CI_PARTITIONS}"', native)
+        self.assertIn('--no-fail-fast --partition "count:${CI_SHARD}/${CI_PARTITIONS}"', native)
         self.assertIn('-E "$extra"', native)
         native_steps = native.split('    steps:\n', 1)[1]
         self.assertNotRegex(native_steps, re.compile(r'^\s+if:', re.M),

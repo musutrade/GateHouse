@@ -16,7 +16,9 @@
       "name": "${{ matrix.shard == 1 && 'Test' || format('Test (shard {0})', matrix.shard) }}",
       "check_names": [
         "Test",
-        "Test (shard 2)"
+        "Test (shard 2)",
+        "Test (shard 3)",
+        "Test (shard 4)"
       ],
       "runner_labels": [
         "ubuntu-latest"
@@ -40,9 +42,12 @@
       "check_names": [
         "Test (macos-latest)",
         "Test (macos-latest, shard 2)",
+        "Test (macos-latest, shard 3)",
+        "Test (macos-latest, shard 4)",
         "Test (windows-latest)",
         "Test (windows-latest, shard 2)",
-        "Test (windows-latest, shard 3)"
+        "Test (windows-latest, shard 3)",
+        "Test (windows-latest, shard 4)"
       ],
       "runner_labels": [
         "macos-latest",
@@ -192,12 +197,16 @@
       "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "quality-risk": {
-      "name": "Quality Risk Stage (${{ matrix.side }}, shard ${{ matrix.shard }}/2)",
+      "name": "Quality Risk Stage (${{ matrix.side }}, shard ${{ matrix.shard }}/4)",
       "check_names": [
-        "Quality Risk Stage (base, shard 1/2)",
-        "Quality Risk Stage (base, shard 2/2)",
-        "Quality Risk Stage (head, shard 1/2)",
-        "Quality Risk Stage (head, shard 2/2)"
+        "Quality Risk Stage (base, shard 1/4)",
+        "Quality Risk Stage (base, shard 2/4)",
+        "Quality Risk Stage (base, shard 3/4)",
+        "Quality Risk Stage (base, shard 4/4)",
+        "Quality Risk Stage (head, shard 1/4)",
+        "Quality Risk Stage (head, shard 2/4)",
+        "Quality Risk Stage (head, shard 3/4)",
+        "Quality Risk Stage (head, shard 4/4)"
       ],
       "runner_labels": [
         "ubuntu-latest"

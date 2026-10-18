@@ -138,9 +138,12 @@ jobs:
           tool: cargo-nextest
 
       - name: Run partitioned tests
+        env:
+          CI_SHARD: ${{ matrix.shard }}
+          CI_PARTITIONS: 4
         run: >-
           cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked
-          --no-fail-fast --partition count:${{ matrix.shard }}/4
+          --no-fail-fast --partition "count:${CI_SHARD}/${CI_PARTITIONS}"
           -E 'not test(configured_ci_acceptance_retains_parity_reuse_and_negative_evidence)
           and not test(html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering)'
 
