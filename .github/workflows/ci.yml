@@ -298,11 +298,11 @@ jobs:
           fi
           if [ -n "$excluded" ]; then
             cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked \
-              --no-fail-fast --partition "hash:${CI_SHARD}/${CI_PARTITIONS}" \
+              --no-fail-fast --partition "count:${CI_SHARD}/${CI_PARTITIONS}" \
               -E "not ($excluded)"
           else
             cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked \
-              --no-fail-fast --partition "hash:${CI_SHARD}/${CI_PARTITIONS}"
+              --no-fail-fast --partition "count:${CI_SHARD}/${CI_PARTITIONS}"
           fi
           if [ -n "$extra" ]; then
             cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked \

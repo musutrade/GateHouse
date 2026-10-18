@@ -238,7 +238,7 @@ class WorkflowBoundaryTests(unittest.TestCase):
         self.assertIn('CI_OS: ${{ matrix.os }}', native)
         self.assertIn('CI_SHARD: ${{ matrix.shard }}', native)
         self.assertIn("CI_PARTITIONS: 4", native)
-        self.assertIn('--partition "hash:${CI_SHARD}/${CI_PARTITIONS}"', native)
+        self.assertIn('--partition "count:${CI_SHARD}/${CI_PARTITIONS}"', native)
         self.assertIn('-E "not ($excluded)"', native)
         self.assertIn('-E "$extra"', native)
         self.assertIn("excluded='test(frozen_policy_and_reference_acceptance_match_python)'", native)
