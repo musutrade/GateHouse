@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has twenty-two files:
-the importer, Core builder, preservation, volume, source-staging, release-contract, preflight, Linux-policy, input-sealing, host-configuration, Core-inspection, installation-barrier and controller-observation libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has twenty-three files:
+the importer, Core builder, preservation, volume, source-staging, release-contract, preflight, Linux-policy, input-sealing, host-configuration, Core-inspection, installation-barrier, controller-observation and upgrade-journal libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -1330,8 +1330,43 @@ No Root inspection, actual executor workload or installation is accepted here.
 The result confirms passive inspection only and keeps installation admission,
 administrator readiness and production false. Phase/base/journal/entry/drain and
 publication-retention admission, guarded file installation, activation and recovery
-still precede a complete coordinator. The authenticated closure remains twenty-two
-helpers and 74 source-only members without a Core binary or administrator CLI.
+still precede a complete coordinator. That source-only release retained twenty-two
+helpers and 74 members without a Core binary or administrator CLI.
+
+The twenty-third authenticated library, `admit-upgrade-journal.py`, provides a
+read-only observation of the live old-run journal for the later coordinator.
+It requires the inherited original controller lease, matching protected helper
+release and pinned complete preservation, plus worker identity and stopped/idle
+checks. A query-only SQLite transaction reads committed WAL pages with physical,
+logical and time budgets. Missing WAL shared-memory state rejects observation
+before SQLite can create a sidecar. It never constructs the mutating `Journal`
+class or restores its saved backup over live state.
+
+The saved journal remains historical evidence. Its schema and complete event
+prefix must remain unchanged; the live run rows must exactly match replay of the
+appended suffix. Only the fixed old run may receive the reviewed invalid/revoking
+intent, a stable positive Check ID, revoked completion and ordered retirement
+intent/completion events. Another run, altered prior events or inputs, unknown
+fields/reasons/operations, sequence gaps, backwards transitions or row changes
+without matching events reject the observation. Retirement requires revoked state
+and the fixed retained-publication destination. Source, bundle and freeze removal
+may proceed only in the source-retirement implementation's order; pending states
+retain all three, while completed retirement requires all three absent. Present
+source inputs remain bound to the saved bundle/freeze and unchanged tracked Git
+source. The journal, source presence, preservation, helper closure and lease are
+rechecked before returning.
+
+Twenty-five new regressions bring the focused suite to 536 tests. Ordinary fixtures
+exercise real WAL/backup/history, a mocked API failure that leaves the actual
+Control in revoking state, and actual Control/Journal/Git worktree retirement
+while the saved database remains pending and raw failures remain retained. Root,
+helper identity and worker boundaries are replaced; GitHub calls are mocks.
+A locally recorded revoked state does not prove a remote API effect. Returned
+remote-confirmation, retained-publication, installation-admission, administrator
+and production flags remain false. Current remote state/base, full publication
+copy, entry generation/drain, file installation, activation and recovery still
+need coordinator integration. There is no administrator CLI or installed change.
+The source-only closure now has 23 helpers and 75 members, without a Core binary.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
