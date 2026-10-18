@@ -180,37 +180,16 @@ cargo nextest run ... --no-fail-fast --partition hash:<shard>/<2|3>
 - 编译仍会在每个 shard 各发生一次，因此这是用额外 runner 分钟换墙钟；最终仍以
   hosted 首次运行为准。
 
-## 2026-10-17 Generic Quality Shadow 投影加速
+## Generic Quality Shadow 优化暂缓
 
-最新 run `39038404664` 中 `Generic Quality Shadow` job 为 126s，其中
-`Project and compare retained evidence` 单步 117s。它是 advisory，但在
-`quality-coverage` 之后串行执行，因此直接延长整个 workflow 的完成时间。
+`Generic Quality Shadow` 的投影步骤仍有约 117s（hosted 观测），但
+`tools/quality/rust_reference.py` 是 `docs/quality/ci-plugin-test-handoff.json`
+中受冻结兼容性 inventory 约束的 Core consumer。任何源码变更都会使
+`run_core.py` 拒绝现有 GateProbes parity receipt；仅更新本地哈希也不满足
+executed-inventory 约束。
 
-用该 run 的完整 candidate（约 239 MB）本地复现后，主要重复工作为：
-
-1. 每个 evidence record 都引用同一个大型 native report，但 `Projection.add`
-   在每条记录上重新计算一次该文件的 SHA-256 和大小；
-2. 每个 record 的验证都重复读取并校验同一个 artifact；
-3. `Projection.evaluate` 先验证一次 evidence，`policy_engine.evaluate` 内又验证一次；
-4. schema 文件与 Python 级逐字符 JSON 字符串检查在数千条 record 上重复执行。
-
-在不修改冻结的 `harness_evidence.py`、`policy_engine.py`、`project_model.py`
-的前提下，`rust_reference.py` 做了三项局部优化：
-
-- 每个 `Projection` 初始化时只对 native artifact 计算一次摘要和大小；
-- 移除 `Projection.evaluate` 外层重复的 evidence 验证，由
-  `policy_engine.evaluate` 单次验证；若验证失败而只得到无 head evidence link 的
-  measurement-error 结果，仍显式抛出错误；
-- 在一次 policy evaluation 期间安装作用域内 `_file` 去重包装：只有完全相同的
-  root/path/digest/size/stat 请求才跳过重复读取；文件 stat 改变会重新验证，包装器
-  在退出时恢复原函数。
-
-本地真实 candidate 对照：改动前 `rust_reference.py` 超过 300s 未完成；
-改动后为 **36.8s**。该 run 已上传的 10 个 shadow JSON 输出（production、
-base/head risk evidence/project/policy、shadow.json）与本地重算结果语义完全一致。
-hosted step 从 117s 能降到多少仍需首次 CI 运行确认，因此不在此记录为已实现 hosted 收益。
-
-验证：`test_rust_reference` 17 项通过；完整 `tools/quality/tests` 609 项通过。
+因此本次没有保留对该文件的性能改动。若后续需要优化，必须先取得新的
+GateProbes compatibility 执行证据，而不是在当前 CI PR 中顺带修改。
 
 ## 2026-10-17 Linux Test 分片
 
