@@ -2,12 +2,17 @@
   "schema": "repository-size-review/v1",
   "base": "0d969e03ab2a58591eb39ca67d7dba4d5cf04581",
   "owner": "higoalespn",
-  "reason": "DRAFT PR127 interrupted-063 recovery adds an exact reviewed 063 Linux Test workflow fixture; cumulative inventory refreshed against current main",
+  "reason": "Issue98 trusted-host cumulative candidate inventory including real accepted659 GitHub client direct-parent ancestry proof, preserved first failed operator attempt, guarded separate r2 service and bounded progress checkpoints. Original request-path guard, source baseline, App permissions and all thresholds unchanged.",
   "blobs": [
     {
       "path": "docs/README.md",
       "oid": "c1eedff0f09d8e4da9e892377c8826a58ea5a531",
       "bytes": 3594
+    },
+    {
+      "path": "docs/trusted-host-administrator.md",
+      "oid": "295653dc8fc9e188c460d9fa76ae0c7c4d175867",
+      "bytes": 20702
     },
     {
       "path": "docs/trusted-host-administrator.md",
@@ -750,6 +755,16 @@
       "bytes": 12770
     },
     {
+      "path": "tools/quality/tests/test_trusted_gate_recovery_readmission.py",
+      "oid": "b7203a90b9f1b49a2199d282ad6ba3a520a302f5",
+      "bytes": 16412
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_recovery_service.py",
+      "oid": "186aae8e0a3dae2ff24869b25e299dde1c06ed36",
+      "bytes": 12312
+    },
+    {
       "path": "tools/quality/tests/test_trusted_gate_recovery_service.py",
       "oid": "a57313bb9215921964df8634195501063b75acfa",
       "bytes": 8159
@@ -1395,14 +1410,34 @@
       "bytes": 15562
     },
     {
+      "path": "tools/trusted_gate/deploy/recover-interrupted-installation.py",
+      "oid": "d7771e75810ab1f9f165c8d23082fe68108e3714",
+      "bytes": 16521
+    },
+    {
       "path": "tools/trusted_gate/deploy/recovery-worker.py",
       "oid": "a8f80ac411358c53931f60027250b71e0367cc82",
       "bytes": 7813
     },
     {
+      "path": "tools/trusted_gate/deploy/recovery-worker.py",
+      "oid": "b8ca1936bb979e8c15bcd100da7895f3d3366ce8",
+      "bytes": 8524
+    },
+    {
+      "path": "tools/trusted_gate/deploy/recovery-worker.py",
+      "oid": "f8b636bd6e87cdddfc69e180d39ad0af6e2cc034",
+      "bytes": 8515
+    },
+    {
       "path": "tools/trusted_gate/deploy/resume-interrupted-063.py",
       "oid": "dc2ba1184cc5458fe3eca793434bc8dafb4ca13c",
       "bytes": 6923
+    },
+    {
+      "path": "tools/trusted_gate/deploy/resume-interrupted-063.py",
+      "oid": "df4e72f8a820a515ff0549adfd429f7e7bcc1e0b",
+      "bytes": 7022
     },
     {
       "path": "tools/trusted_gate/deploy/run-linux-test.py",
@@ -1446,8 +1481,18 @@
     },
     {
       "path": "tools/trusted_gate/deploy/start-interrupted-recovery.py",
+      "oid": "afbdd6a2bd1eab2c3211725b054449e4f64f43b2",
+      "bytes": 7044
+    },
+    {
+      "path": "tools/trusted_gate/deploy/start-interrupted-recovery.py",
       "oid": "bd988409c9ea64384544950db8b8814f3172a50f",
       "bytes": 5580
+    },
+    {
+      "path": "tools/trusted_gate/deploy/start-interrupted-recovery.py",
+      "oid": "f9dbfcbacbd9243f4dfdb8c06440a8dcabee2914",
+      "bytes": 7044
     },
     {
       "path": "tools/trusted_gate/deploy/sudoers.example",
