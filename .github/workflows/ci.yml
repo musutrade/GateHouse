@@ -112,7 +112,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3, 4]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -140,7 +140,7 @@ jobs:
       - name: Run partitioned tests
         run: >-
           cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked
-          --no-fail-fast --partition hash:${{ matrix.shard }}/2
+          --no-fail-fast --partition count:${{ matrix.shard }}/4
           -E 'not test(configured_ci_acceptance_retains_parity_reuse_and_negative_evidence)
           and not test(html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering)'
 
@@ -499,14 +499,14 @@ jobs:
   # Risk analysis stage. Base and head run in independent hosted runners so
   # coverage compilation never competes with its sibling for two CPU cores.
   quality-risk:
-    name: Quality Risk Stage (${{ matrix.side }}, shard ${{ matrix.shard }}/2)
+    name: Quality Risk Stage (${{ matrix.side }}, shard ${{ matrix.shard }}/4)
     needs: [classify]
     if: ${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}
     strategy:
       fail-fast: false
       matrix:
         side: [base, head]
-        shard: [1, 2]
+        shard: [1, 2, 3, 4]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -539,7 +539,7 @@ jobs:
         with:
           tool: cargo-llvm-cov
 
-      - name: Collect risk stage (${{ matrix.side }}, shard ${{ matrix.shard }}/2)
+      - name: Collect risk stage (${{ matrix.side }}, shard ${{ matrix.shard }}/4)
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -561,7 +561,7 @@ jobs:
           fi
           BASE_SHA="$(python3 tools/maintenance/migration_baseline.py --base "$BASE_SHA" --head "$HEAD_SHA" --fetch)"
           python3 tools/quality/ci_quality.py collect-risk-shard \
-            --side "$RISK_SIDE" --risk-shard "$RISK_SHARD" --partitions 2 \
+            --side "$RISK_SIDE" --risk-shard "$RISK_SHARD" --partitions 4 \
             --exclude-tests "$excluded" --extra-tests "$extra" \
             --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --run-id "$RUN_ID" \
             --output target/quality/candidate

@@ -170,11 +170,11 @@ class WorkflowBoundaryTests(unittest.TestCase):
             self.assertEqual(jobs[name].count('ci_quality.py collect'), 1)
         risk = jobs['quality-risk']
         self.assertIn('side: [base, head]', risk)
-        self.assertIn('shard: [1, 2]', risk)
+        self.assertIn('shard: [1, 2, 3, 4]', risk)
         self.assertIn('ci_quality.py collect-risk-shard', risk)
         self.assertIn('RISK_SIDE: ${{ matrix.side }}', risk)
         self.assertIn('RISK_SHARD: ${{ matrix.shard }}', risk)
-        self.assertIn('--risk-shard "$RISK_SHARD" --partitions 2', risk)
+        self.assertIn('--risk-shard "$RISK_SHARD" --partitions 4', risk)
         self.assertIn('--exclude-tests "$excluded" --extra-tests "$extra"', risk)
         self.assertIn("excluded='test(frozen_policy_and_reference_acceptance_match_python)'", risk)
         self.assertIn('html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering', risk)
@@ -213,8 +213,8 @@ class WorkflowBoundaryTests(unittest.TestCase):
     def test_linux_tests_are_partitioned_with_one_acceptance_owner(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()
         job = workflow.split('  test:\n', 1)[1].split('  test-cross-platform:\n', 1)[0]
-        self.assertIn('shard: [1, 2]', job)
-        self.assertIn('--partition hash:${{ matrix.shard }}/2', job)
+        self.assertIn('shard: [1, 2, 3, 4]', job)
+        self.assertIn('--partition count:${{ matrix.shard }}/4', job)
         self.assertIn('not test(configured_ci_acceptance_retains_parity_reuse_and_negative_evidence)', job)
         self.assertIn('not test(html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering)', job)
         acceptance = job.split('- name: Run CI acceptance and HTML example tests', 1)[1]
