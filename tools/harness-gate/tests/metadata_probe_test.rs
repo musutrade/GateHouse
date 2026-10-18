@@ -291,7 +291,7 @@ fn failed_required_git_snapshot_is_not_optional_metadata() {
     script(root, "git", "exit 7");
     let output = Watchdog::start(root, &["verify", "--staged"]).finish();
     assert_eq!(output.status.code(), Some(1));
-    assert!(String::from_utf8_lossy(&output.stderr).contains("cannot materialize staged Git index"));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("cannot inspect staged Git index"));
     assert!(!root.join("executed").exists());
 }
 
@@ -381,4 +381,110 @@ fn staged_metadata_preserves_sampled_head_and_distinct_index_identity() {
         1
     );
     assert!(!root.join("rustc-called").exists());
+}
+
+#[test]
+fn staged_submodule_gitlink_is_rejected_before_step_execution() {
+    let root = fixture();
+    let root = root.path();
+    let git = real_git();
+    let source = TempDir::new().unwrap();
+    success(
+        Command::new(&git)
+            .args(["init", "--quiet"])
+            .current_dir(source.path())
+            .output()
+            .unwrap(),
+    );
+    fs::write(source.path().join("sub.txt"), "submodule\n").unwrap();
+    success(
+        Command::new(&git)
+            .args(["add", "sub.txt"])
+            .current_dir(source.path())
+            .output()
+            .unwrap(),
+    );
+    success(
+        Command::new(&git)
+            .args([
+                "-c",
+                "user.name=Metadata Test",
+                "-c",
+                "user.email=metadata@example.invalid",
+                "-c",
+                "commit.gpgsign=false",
+                "commit",
+                "--quiet",
+                "-m",
+                "submodule",
+            ])
+            .current_dir(source.path())
+            .output()
+            .unwrap(),
+    );
+    success(
+        Command::new(&git)
+            .args(["-c", "protocol.file.allow=always", "submodule", "add"])
+            .arg(source.path())
+            .arg("vendor/sub")
+            .current_dir(root)
+            .output()
+            .unwrap(),
+    );
+    let quoted = git.to_str().unwrap().replace('\'', "'\\''");
+    script(root, "git", &format!("exec '{quoted}' \"$@\""));
+    let output = Watchdog::start(root, &["verify", "--staged"]).finish();
+    assert_eq!(output.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("staged snapshot requires regular, resolved index entries"),
+        "{stderr}"
+    );
+    assert!(stderr.contains("vendor/sub"), "{stderr}");
+    assert!(!root.join("executed").exists());
+}
+
+#[test]
+fn checkout_step_that_mutates_the_index_does_not_yield_a_valid_snapshot() {
+    let root = fixture();
+    let root = root.path();
+    let git = real_git();
+    let quoted = git.to_str().unwrap().replace('\'', "'\\''");
+    script(
+        root,
+        "git",
+        &format!(
+            "for arg in \"$@\"; do\n\
+             if [ \"$arg\" = checkout-index ]; then\n\
+             '{quoted}' \"$@\"\n\
+             status=$?\n\
+             if [ \"$status\" -eq 0 ]; then\n\
+             printf 'mutated\\n' > index-mutation.txt\n\
+             '{quoted}' add index-mutation.txt\n\
+             fi\n\
+             exit \"$status\"\n\
+             fi\n\
+             done\n\
+             exec '{quoted}' \"$@\""
+        ),
+    );
+    let output = Watchdog::start(root, &["verify", "--staged"]).finish();
+    assert_eq!(output.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("staged Git index changed while materializing the candidate"),
+        "{stderr}"
+    );
+    assert!(!root.join("executed").exists());
+    let staged = success(
+        Command::new(&git)
+            .args(["diff", "--cached", "--name-only"])
+            .current_dir(root)
+            .output()
+            .unwrap(),
+    );
+    assert!(
+        String::from_utf8_lossy(&staged.stdout).contains("index-mutation.txt"),
+        "the checkout step must really change the index"
+    );
 }
