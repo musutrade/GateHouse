@@ -48,6 +48,7 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
         Commands::Audit { json } => run_audit(project, json),
         Commands::Verify {
             snapshot,
+            snapshot_source,
             scope: args,
             components,
             profile,
@@ -56,7 +57,11 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
         } => {
             let snapshot_project;
             let project = if snapshot {
-                snapshot_project = project.directory_snapshot()?;
+                snapshot_project =
+                    match snapshot_source.unwrap_or(crate::cli::SnapshotSource::Directory) {
+                        crate::cli::SnapshotSource::Directory => project.directory_snapshot()?,
+                        crate::cli::SnapshotSource::Index => project.clone(),
+                    };
                 &snapshot_project
             } else {
                 project
@@ -255,7 +260,7 @@ fn run_verify(
     let execution_project = match &mode {
         ScopeMode::Staged => project.staged_snapshot()?,
         ScopeMode::Base(_) => project.clone().with_input_mode(InputMode::Base),
-        ScopeMode::All if project.input().mode == InputMode::Directory => project.clone(),
+        ScopeMode::All if project.input().content.is_some() => project.clone(),
         ScopeMode::All => project.clone().with_input_mode(InputMode::All),
         ScopeMode::WorkingTree => project.clone(),
     };

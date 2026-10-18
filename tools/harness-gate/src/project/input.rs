@@ -19,6 +19,7 @@ pub(crate) enum InputMode {
     Base,
     All,
     Directory,
+    ContentIndex,
 }
 
 impl InputMode {
@@ -29,6 +30,7 @@ impl InputMode {
             Self::Base => "base",
             Self::All => "all",
             Self::Directory => "directory",
+            Self::ContentIndex => "content-index",
         }
     }
 }

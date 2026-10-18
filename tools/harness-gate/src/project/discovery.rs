@@ -21,6 +21,39 @@ impl Project {
         Self::discover_with_access(override_root, config_override, true)
     }
 
+    /// Discover the index adapter without parsing or trusting the working-tree
+    /// workflow. Unstaged configuration edits must not change the selected input.
+    pub(crate) fn discover_index_content(
+        override_root: Option<PathBuf>,
+        config_override: Option<PathBuf>,
+    ) -> Result<Self> {
+        let start = canonical_directory(&override_root.clone().unwrap_or(env::current_dir()?))?;
+        let top = crate::utils::git::capture_readonly(&start, ["rev-parse", "--show-toplevel"])?;
+        anyhow::ensure!(
+            top.status.success(),
+            "index snapshot requires a Git repository"
+        );
+        let root = canonical_directory(Path::new(
+            std::str::from_utf8(&top.stdout)?.trim_end_matches(['\r', '\n']),
+        ))?;
+        anyhow::ensure!(
+            override_root.is_none() || root == start,
+            "index snapshot project root must be the Git repository root"
+        );
+        let config = config_override.unwrap_or_else(|| PathBuf::from(DEFAULT_CONFIG_PATH));
+        let relative = if config.is_absolute() {
+            config.strip_prefix(&root)?.to_path_buf()
+        } else {
+            config
+        };
+        crate::utils::git::index_path(&relative)?;
+        let input = InvocationInput::materialize_staged(&root, &relative, "not-sampled")?;
+        let indexed = Self::from_input(root, &relative, input)?;
+        let mut snapshot = indexed.directory_snapshot()?;
+        snapshot.invocation_input.mode = super::InputMode::ContentIndex;
+        Ok(snapshot)
+    }
+
     fn discover_with_access(
         override_root: Option<PathBuf>,
         config_override: Option<PathBuf>,

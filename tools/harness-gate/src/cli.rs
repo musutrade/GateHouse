@@ -186,6 +186,9 @@ pub(crate) enum Commands {
         /// Copy a regular-file directory into a content-bound input (--all only).
         #[arg(long, requires = "all", conflicts_with_all = ["plan", "components"])]
         snapshot: bool,
+        /// Select directory bytes (default) or the validated Git index as snapshot input.
+        #[arg(long, value_enum, requires = "snapshot")]
+        snapshot_source: Option<SnapshotSource>,
         #[command(flatten)]
         scope: ScopeArgs,
         /// Override scope detection with a comma-separated component list.
@@ -254,6 +257,12 @@ pub(crate) enum Commands {
     },
     /// List the generic preset and an explicitly selected external catalog.
     Presets,
+}
+
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+pub(crate) enum SnapshotSource {
+    Directory,
+    Index,
 }
 
 #[derive(Debug, Subcommand)]

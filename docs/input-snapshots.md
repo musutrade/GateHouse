@@ -7,12 +7,22 @@ Configuration, required steps and quality evaluation retain their usual meaning.
 Reports stay in the original project's configured report directory.
 
 This is an explicit input mode. Ordinary working-tree and staged invocations
-retain their existing interfaces. `--snapshot` requires `--all`; staged, changed
+retain their existing interfaces. `--snapshot` requires `--all`; changed
 path, Git baseline, explicit component and plan-only selection are not supported
 in this first directory mode. A missing quality-policy baseline still fails under
 the existing quality contract. A directory snapshot does not invent a HEAD,
 changed-path set or baseline, and does not supply Git history to checks that need
 it. Such checks must use a supported Git input instead.
+
+For index bytes, use `verify --all --snapshot --snapshot-source index`.
+The Git adapter validates and materializes the index, then applies the same
+regular-file manifest and normalization as the directory adapter. Its reported
+input mode is `content-index`; both adapters use `content-v1:sha256:` identity.
+Identical supported files/configuration therefore have identical content identity.
+This verifies the whole selected index input, not a changed-path subset. It
+does not read or parse unstaged workflow edits, and does not invent a HEAD or
+use HEAD as the candidate identity. `--project-root`, when supplied, must be the
+Git repository root. Existing ordinary staged verification remains unchanged.
 
 ## Content identity
 
@@ -56,7 +66,6 @@ with the caller's privileges. Optional Git-based step reuse is bypassed in this 
 for other input modes is unchanged. No installer, cache manager or result publisher is
 started by selecting this mode.
 
-Issue #130 also tracks explicit non-SCM baseline support and shared content
-identities for the staged Git adapter. Those remain separate work; this change
-does not close #130 or the architecture umbrella #134. Plugin measurement
+Issue #130 also tracks explicit non-SCM baseline acceptance. This change does
+not close #130 or the architecture umbrella #134. Plugin measurement
 implementations remain in [GateProbes](https://github.com/musutrade/GateProbes).
