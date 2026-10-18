@@ -197,6 +197,22 @@ while True:
     }
 
     #[test]
+    fn ordinary_completion_cleans_descendants_before_releasing_leader() {
+        let mut fixture = Fixture::new();
+        fixture.start("exit-leader");
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let status = loop {
+            if let Some(status) = command::try_complete(fixture.leader.as_mut().unwrap()).unwrap() {
+                break status;
+            }
+            assert!(Instant::now() < deadline, "leader did not finish");
+            thread::sleep(Duration::from_millis(10));
+        };
+        assert_eq!(status.code(), Some(7));
+        fixture.assert_stopped();
+    }
+
+    #[test]
     fn leader_term_exit_still_kills_same_group_term_resistant_descendant() {
         let mut fixture = Fixture::new();
         fixture.start("term-leader");
@@ -632,5 +648,5 @@ fn windows_taskkill_termination_preserves_direct_child_behavior() {
     command::isolate_process_tree(&mut cmd);
     let mut child = cmd.spawn().unwrap();
     assert!(!command::terminate(&mut child).unwrap().success());
-    assert!(child.try_wait().unwrap().is_some());
+    assert!(command::try_complete(&mut child).unwrap().is_some());
 }

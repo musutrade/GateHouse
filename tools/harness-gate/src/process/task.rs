@@ -1,4 +1,4 @@
-use super::command::{isolate_process_tree, terminate};
+use super::command::{isolate_process_tree, terminate, try_complete};
 use super::isolation;
 use super::reader::{
     collect_limited_reader, spawn_limited_reader, LimitedOutput, DEFAULT_CAPTURE_BYTES,
@@ -352,7 +352,7 @@ fn wait_for_exit(
     let mut output_limited = None;
     let mut wait_round = 0_u32;
     let (status, timed_out, was_cancelled) = loop {
-        if let Some(status) = child.try_wait()? {
+        if let Some(status) = try_complete(child)? {
             if stdout_overflow.load(Ordering::Acquire) {
                 output_limited = Some("stdout");
             } else if stderr_overflow.load(Ordering::Acquire) {
@@ -374,8 +374,7 @@ fn wait_for_exit(
         if started.elapsed() >= timeout {
             break (terminate(child)?, true, false);
         }
-        // `Child::try_wait` is the portable API available on all supported
-        // platforms. Keep the initial delay short for fast commands, then
+        // Keep the initial delay short for fast commands, then
         // back off to cap wakeups while preserving timeout/cancellation checks.
         std::thread::sleep(wait_backoff(wait_round));
         wait_round = wait_round.saturating_add(1);

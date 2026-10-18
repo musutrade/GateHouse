@@ -3,7 +3,7 @@
 //! The host deliberately owns only the process boundary. Scheduler result
 //! mapping and report publication stay in the existing verification modules.
 
-use super::command::{isolate_process_tree, terminate};
+use super::command::{isolate_process_tree, terminate, try_complete};
 use super::reader::{
     collect_limited_reader, spawn_limited_reader, DEFAULT_CAPTURE_BYTES, DEFAULT_READER_DEADLINE,
 };
@@ -489,8 +489,7 @@ fn wait_for_adapter(
     let mut request_write_error: Option<AdapterError> = None;
     let mut request_write_done = false;
     let status = loop {
-        if let Some(status) = child
-            .try_wait()
+        if let Some(status) = try_complete(child)
             .map_err(|error| AdapterError::Protocol(format!("wait for adapter: {error}")))?
         {
             break status;
