@@ -16,8 +16,10 @@ fn fixture(script: &str) -> TempDir {
         .unwrap();
     assert!(initialized.status.success(), "{initialized:?}");
     fs::write(root.path().join("input"), "candidate").unwrap();
-    let flow = format!(
-        r#"
+    let tool = root.path().join("check-fixture");
+    fs::write(&tool, format!("#!/bin/sh\n{script}\n")).unwrap();
+    fs::set_permissions(tool, fs::Permissions::from_mode(0o755)).unwrap();
+    let flow = r#"
 version = 2
 [project]
 name = "directory-input"
@@ -29,24 +31,28 @@ audit_config = ".harness-gate/audit.toml"
 secrets_config = ".harness-gate/secrets.toml"
 [scope]
 unmatched = "fail"
-rules = [{{ patterns = ["**"], components = ["project"] }}]
+rules = [{ patterns = ["**"], components = ["project"] }]
 [[steps]]
 id = "project.check"
 label = "check"
 component = "project"
 profiles = ["full"]
-program = "/bin/sh"
-args = ["-c", {script:?}]
-cwd = "{{root}}"
+program = "check-fixture"
+args = []
+cwd = "{root}"
 log = "check.log"
 timeout_secs = 5
-"#
-    );
+"#;
     fs::write(root.path().join(".harness-gate/flow.toml"), flow).unwrap();
     root
 }
 
 fn verify(root: &TempDir, bin: &TempDir) -> Output {
+    fs::copy(
+        root.path().join("check-fixture"),
+        bin.path().join("check-fixture"),
+    )
+    .unwrap();
     Command::new(env!("CARGO_BIN_EXE_harness-gate"))
         .arg("--project-root")
         .arg(root.path())
