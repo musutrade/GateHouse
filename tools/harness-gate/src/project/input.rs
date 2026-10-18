@@ -165,6 +165,11 @@ impl InvocationInput {
         let root = repository_root
             .canonicalize()
             .with_context(|| format!("resolve project root {}", repository_root.display()))?;
+        // Reject entries checkout-index would silently omit (notably submodules)
+        // before creating a snapshot or running configured checkout filters.
+        let index = git::capture_readonly(&root, ["ls-files", "--stage", "-z"])?;
+        anyhow::ensure!(index.status.success(), "cannot inspect staged Git index");
+        validate_index_entries(&index.stdout)?;
         let tree = git::capture(&root, ["write-tree"]).context("materialize staged Git index")?;
         if !tree.status.success() {
             bail!(
@@ -204,6 +209,11 @@ impl InvocationInput {
             root: snapshot_root.clone(),
         });
         reject_snapshot_links(&snapshot_root)?;
+        let after = git::capture_readonly(&root, ["ls-files", "--stage", "-z"])?;
+        anyhow::ensure!(
+            after.status.success() && after.stdout == index.stdout,
+            "staged Git index changed while materializing the candidate"
+        );
         let config_bytes = fs::read(snapshot_root.join(configuration_path)).with_context(|| {
             format!(
                 "read staged workflow configuration {}",
@@ -227,10 +237,55 @@ impl InvocationInput {
     }
 }
 
+/// Validate all paths and entry kinds before materialization. Git normally
+/// guarantees uniqueness, but callers must not accept ambiguous input records.
+fn validate_index_entries(bytes: &[u8]) -> Result<()> {
+    anyhow::ensure!(
+        bytes.is_empty() || bytes.ends_with(&[0]),
+        "unterminated index entry"
+    );
+    let mut paths = std::collections::BTreeSet::new();
+    for entry in bytes
+        .split(|byte| *byte == 0)
+        .filter(|entry| !entry.is_empty())
+    {
+        let entry = std::str::from_utf8(entry).context("non-UTF-8 index entry")?;
+        let (metadata, path) = entry.split_once('\t').context("malformed index entry")?;
+        let fields = metadata.split_whitespace().collect::<Vec<_>>();
+        anyhow::ensure!(
+            fields.len() == 3 && fields[2] == "0" && matches!(fields[0], "100644" | "100755"),
+            "staged snapshot requires regular, resolved index entries: {path:?}"
+        );
+        anyhow::ensure!(
+            !path.contains('\\') && !path.split('/').any(|part| matches!(part, "" | "." | "..")),
+            "non-canonical indexed path: {path:?}"
+        );
+        anyhow::ensure!(
+            git::index_path(Path::new(path))? == path,
+            "invalid indexed path"
+        );
+        anyhow::ensure!(paths.insert(path), "duplicate indexed path: {path:?}");
+    }
+    for path in &paths {
+        let mut parent = Path::new(path).parent();
+        while let Some(value) = parent {
+            if let Some(value) = value.to_str() {
+                anyhow::ensure!(
+                    !paths.contains(value),
+                    "indexed file/directory conflict: {path:?}"
+                );
+            }
+            parent = value.parent();
+        }
+    }
+    Ok(())
+}
+
 fn inspect_index_entries(
     root: &Path,
     bytes: &[u8],
 ) -> Result<std::collections::BTreeMap<String, String>> {
+    validate_index_entries(bytes)?;
     let mut entries = std::collections::BTreeMap::new();
     for entry in bytes
         .split(|byte| *byte == 0)
@@ -451,6 +506,35 @@ mod tests {
         assert!(
             super::hydrate_index_config(root.path(), root.path(), &entries, "missing").is_err()
         );
+    }
+
+    #[test]
+    fn staged_index_validation_rejects_ambiguous_manifest_before_writes() {
+        for entries in [
+            "100644 abc 0\ta\0malformed",
+            "100644 abc 0\ta",
+            "100644 abc 0\ta\0100644 def 0\ta\0",
+            "100644 abc 0\ta\0100644 def 0\ta/b\0",
+            "100644 abc 0\ta/b\0100644 def 0\ta\0",
+            "100644 abc 0\ta//b\0",
+            "100644 abc 0\ta/./b\0",
+            "100644 abc 0\ta/../b\0",
+            "160000 abc 0\tsubmodule\0",
+            "120000 abc 0\tlink\0",
+        ] {
+            assert!(
+                super::validate_index_entries(entries.as_bytes()).is_err(),
+                "{entries:?}"
+            );
+        }
+        super::validate_index_entries(b"100644 abc 0\ta/b\0100755 def 0\ta/c\0").unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        assert!(super::inspect_index_entries(
+            directory.path(),
+            b"100644 abc 0\tfirst\0160000 def 0\tsubmodule\0"
+        )
+        .is_err());
+        assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 0);
     }
 
     #[test]
