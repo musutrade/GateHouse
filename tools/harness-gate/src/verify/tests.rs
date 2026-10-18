@@ -641,24 +641,39 @@ fn report_publication_error_precedes_gate_adapter_error_and_preserves_invocation
 }
 
 #[test]
-fn webhook_connection_failure_maps_to_e1404() {
+fn legacy_webhook_configuration_keeps_verification_local() {
     let (workspace, mut project) = generic_project("verify-webhook-failure");
     let listener = std::net::TcpListener::bind(("127.0.0.1", 0)).expect("bind listener");
+    listener
+        .set_nonblocking(true)
+        .expect("nonblocking listener");
     let address = listener.local_addr().expect("listener address");
-    drop(listener);
     project.config.notifications.webhooks = vec![crate::config::WebhookConfig {
         url: format!("http://{address}/notify"),
         allowed_hosts: vec![address.ip().to_string()],
         on_failure: true,
         on_success: true,
     }];
-    let error = run(&project, ScopeResult::all(&project), "full", false)
-        .expect_err("webhook connection failure must fail verification");
-    assert_eq!(error.code(), "E1404");
-    assert!(workspace
-        .root
-        .join(".harness-gate/reports/test_result.json")
-        .is_file());
+    let report = run(&project, ScopeResult::all(&project), "full", false).expect("local report");
+    let saved: serde_json::Value = serde_json::from_slice(
+        &fs::read(
+            workspace
+                .root
+                .join(".harness-gate/reports/test_result.json"),
+        )
+        .expect("saved result"),
+    )
+    .expect("parse saved result");
+    assert!(saved["evidence_complete"].as_bool().expect("evidence flag"));
+    assert_eq!(saved["passed"], report.passed);
+    assert_eq!(
+        saved["quality"],
+        serde_json::to_value(&report.quality).expect("quality report")
+    );
+    assert!(
+        matches!(listener.accept(), Err(error) if error.kind() == std::io::ErrorKind::WouldBlock),
+        "legacy webhook configuration must not contact its endpoint"
+    );
 }
 
 #[cfg(unix)]
