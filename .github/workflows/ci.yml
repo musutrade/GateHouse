@@ -245,12 +245,9 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest]
         # Preserve the existing required check name while splitting the test
-        # list across identical native runners. Windows has the larger compile
-        # and test cost, so it gets one extra worker.
-        shard: [1, 2, 3]
-        exclude:
-          - os: macos-latest
-            shard: 3
+        # list across 4 identical shards per OS to reduce wall-clock time.
+        # macOS and Windows native compile/test costs are balanced at 4 workers each.
+        shard: [1, 2, 3, 4]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
@@ -280,7 +277,7 @@ jobs:
         env:
           CI_OS: ${{ matrix.os }}
           CI_SHARD: ${{ matrix.shard }}
-          CI_PARTITIONS: ${{ matrix.os == 'windows-latest' && 3 || 2 }}
+          CI_PARTITIONS: 4
         run: |
           set -euo pipefail
           excluded=''
