@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has eighteen files:
-the importer, Core builder, preservation, volume, source-staging, release-contract, preflight, Linux-policy and input-sealing libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has nineteen files:
+the importer, Core builder, preservation, volume, source-staging, release-contract, preflight, Linux-policy, input-sealing and host-configuration libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -1018,7 +1018,7 @@ retain its exact lease descriptor for later reviewed composition. Failures retai
 the private data and old pilot; this helper does not revoke, retire, install,
 publish, create an App Check or grant quality authority. Complete configuration,
 transaction/recovery and host acceptance remain required; administrator readiness
-and production remain false. The source archive now has 70 members, including
+and production remain false. At `6130de6`, the source archive had 70 members, including
 eighteen helpers, with no Core binary; the normal pilot package is unchanged.
 
 Eighteen new regressions bring the focused suite to 332 tests, including a
@@ -1033,6 +1033,67 @@ production pins unchanged. This experiment invoked the copy/inventory primitives
 not the privileged entry or its authentication/lease/slot/import/source-Git/mount
 lifecycle. Neither it nor the fixtures establish live Root, UID995, workload,
 resource, deployment or quality acceptance. Installed 659 remains untouched.
+
+### Candidate complete Linux transition configuration
+
+The nineteenth authenticated helper, `compose-linux-host.py`, adds the
+administrator-only `compose-linux-host` entry. It generates an explicit host
+configuration and installation plan under the existing 659 controller lease.
+It does not overlay arbitrary old settings. The old journal, submission inbox,
+dedicated Apps and key paths remain fixed, and authoritative publication remains
+blocked in transition mode. The engineering-policy semantics are unchanged.
+
+Before composition, the helper rechecks the actual old-pilot preflight, current
+remote base, stopped worker identities and registered separate volume. It
+inspects the externally pinned source release and binds its helpers and installed
+file inputs to protected Git. The pristine staging record, freeze and captured
+bundle must match that release. Imported official tools/dependencies, sealed data
+and captured Core each need matching complete records, independent pins and the
+same candidate, helper, source and input identities. A binding file beside an
+incomplete or blocked sealing record cannot substitute for completion.
+
+Core must be the captured UID995/GID981 release build with incremental compilation
+disabled and a proven stopped worker. Its recorded sandbox arguments and
+environment must match the fixed build recipe. The source snapshot, host tools,
+captured binary bytes and readonly mode are checked again. The ordinary operator
+binary is never selected. The source-bound controller common/runtime modules run
+from a temporary in-memory namespace, using the bootstrap's strict ownership
+guard, to verify all official payload and Linux role bytes. They execute no
+project or package code.
+
+The generated configuration has 29 execution pins covering every controller
+module, both worker entry and sibling preparation module, policy, captured Core,
+OS Python/Git and runtime/data/Cargo metadata. Source, mirror, scratch and cache
+move to explicit disjoint paths on the separate volume; the three input roles
+remain readonly. The fixed full/hook coverage and 85 Linux captures are retained.
+The history probe resolves head/base from the protected run, rather than retaining
+659 literals. All thirteen cache dimensions use the existing resolver. The Linux
+workload uses its existing debug profile with release incremental marked
+not-applicable; adding compiler/profile environment overrides would violate its
+workflow parity guard. The separate Core build remains release/non-incremental.
+The proposed cache bound is 2 GiB, four entries and one day; it is a candidate
+capacity, not a measured resource or retention acceptance.
+
+Only a fresh private destination is accepted. Configuration and installation-plan
+digests bind the old configuration, fixed installed destinations and captured
+Core; scratch/cache directory creation is merely planned. All input, output and
+old-pilot facts are rechecked before an externally pinnable binding and complete
+record are emitted. Failures retain blocked private output. No revocation,
+retirement, installed configuration change, service startup or Check publication
+occurs. Captured-Core config/profile checks, preservation/revocation/retirement,
+guarded installation/recovery and live workload acceptance remain explicit
+prerequisites; `captured_core_policy_checked`, `administrator_ready` and
+production stay false.
+
+Twenty new regressions bring the focused suite to 352 tests. They exercise actual
+small Git/input preparation, metadata hashes and controller verification, with
+Root/source-release/import/kernel/worker proof boundaries explicitly replaced.
+Cases include incomplete records, rehashed identity/authority drift, wrong Core
+recipe/binary/mode, runtime data drift, changed OS pins/source freeze, repeated
+output, wrong/busy inherited leases and postcheck mutations. These fixtures are
+not Root deployment, UID995 workload or quality acceptance. The source-only
+release has nineteen helpers and 71 members with no Core binary; the normal
+pilot package and installed 659 are unchanged.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
