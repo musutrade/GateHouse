@@ -381,3 +381,23 @@ instrumented test run 组成。现在拆成：
 
 hosted 关键路径预计由 archive build + 最慢 shard + assembly 组成；最终数据
 以 GitHub runner 实测为准。
+
+## 2026-10-18 Fast coverage hosted 实测
+
+第一次修复 archive 目标路径后，hosted run `39110159895`：
+
+- `Build Fast Coverage Archive`：64s
+- 四个 `Fast Coverage Shard`：46s / 67s / 53s / 75s
+- `Quality Fast Stages (legacy, production)` assembly：36s
+- `Quality Coverage and Critical Paths`：29s
+- `Generic Quality Shadow`：39s
+- `Required Quality Aggregate` 完成：约 4分34秒
+- Workflow 总时长：约 4分53秒
+
+原先单个 Quality Fast collector 约 212–222s，现在同一条证据链约 194s；
+archive 目标路径通过 build/shard 共用的 `CARGO_TARGET_DIR`、预先解包和
+`--extract-overwrite` 保持 `CARGO_BIN_EXE` 可解析。
+
+剩余的关键路径主要不是单个测试，而是 archive build + 最慢 shard + assembly
+以及 GitHub job 调度；如需继续压缩，下一层是减少 assembly 启动/调度开销或
+把 fast coverage 的 build/merge 进一步并行化。
