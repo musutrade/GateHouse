@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has twenty files:
-the importer, Core builder, preservation, volume, source-staging, release-contract, preflight, Linux-policy, input-sealing, host-configuration and Core-inspection libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has twenty-one files:
+the importer, Core builder, preservation, volume, source-staging, release-contract, preflight, Linux-policy, input-sealing, host-configuration, Core-inspection and installation-barrier libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -1162,8 +1162,63 @@ plan checks in about 0.019/0.012/0.012 seconds, with matching view inventories.
 That experiment exercised copy/inventory and passive diagnostics only; it did
 not invoke Root authentication, record provenance, lease/slot/mount/cgroup or
 UID995 admission. It is not captured-Core, workload or quality acceptance. The
-source-only release has twenty helpers and 72 members with no Core binary;
+source-only release at `88e5932` had twenty helpers and 72 members with no Core binary;
 administrator readiness and production remain false, and installed 659 is untouched.
+
+### Candidate installation barrier primitives
+
+The twenty-first packaged helper,
+[`install-transaction.py`](../tools/trusted_gate/deploy/install-transaction.py),
+provides internal preparation and entry-fencing functions for a future authenticated
+installation coordinator. It has no administrator CLI, activation, revocation,
+retirement, file replacement or journal-restoration operation. That coordinator
+must first reverify the complete release, retained pilot state, captured Core,
+configuration/inspection receipts and current base under the continuous controller
+lease. These primitives alone do not admit an installation.
+
+Preparation requires the protected Root identity, exact existing lease inode,
+both explicit entry pins, original mode 0755 and single-link protected regular
+files. It records their original inode/owner/size/mtime and byte digests, current
+configuration digest and target generation in a private durable intent. A separate
+private barrier binds that intent's plan. Fencing validates every entry before
+mutation, records progress, removes all executable bits from the original inodes
+through checked descriptors and fsyncs them. It retains source bytes and paths.
+Recovery accepts only those original pinned entries in the exact known partial
+modes; changed configuration, unknown/replaced inputs, missing/advanced barriers
+or a reopened completed fence stop progress. Completed fencing is read-only on
+retry. No operation enables entry or restores an older transaction phase.
+
+Changing the original inode matters: an ordinary UID1000 experiment could execute
+an already open descriptor after its pathname was replaced with a mode-000 file.
+Removing the original inode's executable bits blocked that descriptor too.
+Linux documents descriptor execution in
+[`execveat(2)`](https://man7.org/linux/man-pages/man2/execveat.2.html), and its
+[permission rules](https://www.man7.org/linux/man-pages/man7/path_resolution.7.html)
+require an executable bit even for the usual Root capability override. Already
+running controllers and their children still require separate drain proof.
+The receipt therefore keeps `controller_drain_proven` and `administrator_ready`
+false. This experiment did not exercise sudo, Root process admission or deployment.
+
+The installed-source bootstrap now checks the fixed private installation barrier
+before reading configuration or importing controller modules, and rechecks it
+throughout snapshot use. Any incomplete/unknown phase, malformed/noncanonical
+record, link, wrong mode or changed identity rejects startup. An active-generation
+record must match the actual configuration bytes and source head. Appearance,
+disappearance or replacement of the barrier invalidates an existing snapshot.
+Ordinary clean installation with no transaction record remains supported.
+
+An independent SQLite fixture showed why installation recovery must preserve the
+current journal: the saved snapshot still held a pending slot after the current
+fixture advanced to revoked/retired. The barrier library never opens that database
+or restores it. Full coordination must use phase-specific applicability checks
+after retirement; fixed-659 occupied-slot preflight cannot be reused unchanged.
+Root process drain, complete guarded activation/recovery, actual UID995 workloads
+and the remaining issue-98 acceptance are pending. The focused suite has 438 tests,
+including seven new bootstrap-barrier cases and twenty fence/recovery cases.
+Root ownership and DAC admission are explicitly replaced in these ordinary tests;
+actual descriptor chmod/fsync, private records, inode changes and leases are exercised.
+The source-only release has twenty-one helpers and 73 members without a Core binary.
+Installed 659, delegated operations, Apps, services, rules and quality authority are unchanged.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,

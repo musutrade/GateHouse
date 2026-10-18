@@ -8,15 +8,18 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import stat
 import sys
 from types import MappingProxyType
+import uuid
 
 
 MODULES = ('__init__', 'cache', 'cli', 'common', 'control', 'execution', 'github', 'history',
            'host', 'isolation', 'journal', 'publication', 'runtime', 'source')
 CONFIG = Path('/etc/gatehouse/host.json')
 INTERPRETER = Path('/usr/bin/python3.14')
+BARRIER = Path('/var/lib/gatehouse/installation.json')
 MAX_SOURCE = 1024 * 1024
 
 
@@ -79,15 +82,44 @@ def inventory(root):
     need(names == {name + '.py' for name in MODULES})
 
 
+def installation_barrier(path):
+    protected(path.parent, directory=True)
+    try:
+        path.lstat()
+    except FileNotFoundError:
+        return None
+    raw, stamp = read(path, 4096, mode=0o600)
+    value = json.loads(raw, object_pairs_hook=unique, parse_constant=lambda _: need(False))
+    need(isinstance(value, dict) and set(value) == {'schema', 'transaction', 'phase', 'head',
+                                                  'configuration_sha256', 'plan_sha256'})
+    need(value['schema'] == 'gatehouse-installation-barrier/v1' and value['phase'] == 'active'
+         and all(isinstance(value[key], str) for key in value))
+    transaction = uuid.UUID(value['transaction'])
+    need(transaction.version == 4 and str(transaction) == value['transaction']
+         and re.fullmatch('[0-9a-f]{40}', value['head'])
+         and all(re.fullmatch('[0-9a-f]{64}', value[key]) for key in ('configuration_sha256', 'plan_sha256')))
+    need(raw == json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode() + b'\n')
+    return value, stamp
+
+
 class Snapshot:
-    def __init__(self, root, config_path=CONFIG, interpreter=INTERPRETER):
+    def __init__(self, root, config_path=CONFIG, interpreter=INTERPRETER, barrier_path=BARRIER):
         self.root = Path(root)
         self.config_path = Path(config_path)
         self.interpreter = Path(interpreter)
+        self.barrier_path = Path(barrier_path)
+        # Stop incomplete installations before reading configuration or importing
+        # any controller module, including direct administrative host invocation.
+        self.barrier = installation_barrier(self.barrier_path)
         inventory(self.root)
         raw, stamp = read(self.config_path, MAX_SOURCE, mode=0o600)
         config = json.loads(raw, object_pairs_hook=unique, parse_constant=lambda _: need(False))
         need(isinstance(config, dict) and isinstance(config.get('protected_files'), dict))
+        if self.barrier is not None:
+            value = self.barrier[0]
+            need(hashlib.sha256(raw).hexdigest() == value['configuration_sha256']
+                 and isinstance(config.get('environment'), dict)
+                 and config.get('environment', {}).get('source_revision') == value['head'])
         pins = config['protected_files']
         self.raw = raw
         self.stamps = {self.config_path: (stamp, 0o600)}
@@ -110,6 +142,7 @@ class Snapshot:
         self.verify()
 
     def verify(self):
+        need(installation_barrier(self.barrier_path) == self.barrier)
         inventory(self.root)
         for path, (stamp, mode) in self.stamps.items():
             need(protected(path, mode=mode) == stamp)

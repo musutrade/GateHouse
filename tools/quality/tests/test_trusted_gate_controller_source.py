@@ -14,6 +14,7 @@ import sys
 import tempfile
 from types import ModuleType, SimpleNamespace
 import unittest
+import uuid
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -40,6 +41,7 @@ class ControllerSourceTests(unittest.TestCase):
         self.interpreter.write_bytes(b'ordinary interpreter pin fixture, never executed')
         self.interpreter.chmod(0o755)
         self.config_path = self.directory / 'host.json'
+        self.barrier_path = self.directory / 'installation.json'
         self.pin()
         # Replace Root ownership/ancestor admission only. Real ordinary file, link,
         # mode, inode, timestamp, byte limits and loader operations remain exercised.
@@ -72,10 +74,71 @@ class ControllerSourceTests(unittest.TestCase):
         self.config_path.chmod(0o600)
 
     def snapshot(self):
-        return H.Snapshot(self.root, self.config_path, self.interpreter)
+        return H.Snapshot(self.root, self.config_path, self.interpreter, self.barrier_path)
 
     def execute(self):
         return H.run(self.snapshot(), [str(self.config_path)])
+
+    def barrier(self, phase='active'):
+        self.config['environment'] = {'source_revision': 'a' * 40}
+        self.config_path.write_text(json.dumps(self.config))
+        value = {'schema': 'gatehouse-installation-barrier/v1', 'transaction': str(uuid.uuid4()),
+                 'phase': phase, 'head': 'a' * 40, 'configuration_sha256': hashlib.sha256(self.config_path.read_bytes()).hexdigest(),
+                 'plan_sha256': 'b' * 64}
+        self.write_barrier(value)
+        return value
+
+    def write_barrier(self, value):
+        self.barrier_path.write_bytes(json.dumps(value, sort_keys=True, separators=(',', ':')).encode() + b'\n')
+        self.barrier_path.chmod(0o600)
+
+    def test_active_installation_barrier_matches_pinned_configuration_and_source_head(self):
+        self.barrier()
+        self.assertEqual(self.execute(), 7)
+
+    def test_every_incomplete_barrier_blocks_before_configuration_read(self):
+        original = H.read
+        for phase in ('fencing', 'fenced', 'retired', 'installing', 'installed-fenced', 'unknown'):
+            self.barrier(phase)
+            with self.subTest(phase=phase), patch.object(H, 'read', wraps=original) as reader, self.assertRaises(H.HostBlocked):
+                self.snapshot()
+            self.assertNotIn(self.config_path, [call.args[0] for call in reader.call_args_list])
+
+    def test_active_marker_wrong_generation_or_unknown_fields_rejected(self):
+        for mutate in (lambda v:v.update(head='c'*40), lambda v:v.update(configuration_sha256='c'*64),
+                       lambda v:v.update(plan_sha256=True), lambda v:v.update(transaction=str(uuid.uuid1())),
+                       lambda v:v.update(extra='unknown')):
+            value=self.barrier();mutate(value);self.write_barrier(value)
+            with self.assertRaises(H.HostBlocked):self.snapshot()
+
+    def test_new_barrier_after_snapshot_blocks_loaded_process(self):
+        snapshot=self.snapshot();self.barrier('fencing')
+        with self.assertRaises(H.HostBlocked):H.run(snapshot, [])
+        self.assertNotIn('trusted_gate', sys.modules)
+
+    def test_active_barrier_disappearance_or_replacement_rejects_existing_process(self):
+        self.barrier();snapshot=self.snapshot();raw=self.barrier_path.read_bytes()
+        self.barrier_path.unlink()
+        with self.assertRaises(H.HostBlocked):H.run(snapshot, [])
+        self.barrier_path.write_bytes(raw);self.barrier_path.chmod(0o600)
+        with self.assertRaises(H.HostBlocked):H.run(snapshot, [])
+
+    def test_barrier_bounds_mode_symlink_and_duplicate_json_fail_closed(self):
+        self.barrier();self.barrier_path.chmod(0o644)
+        with self.assertRaises(H.HostBlocked):self.snapshot()
+        self.barrier_path.chmod(0o600)
+        for raw in (b'x'*4097,b'{"phase":"active","phase":"fenced"}\n'):
+            self.barrier_path.write_bytes(raw)
+            with self.assertRaises((H.HostBlocked, ValueError)):self.snapshot()
+        self.barrier_path.unlink();self.barrier_path.symlink_to(self.config_path)
+        with self.assertRaises(H.HostBlocked):self.snapshot()
+
+    def test_active_barrier_noncanonical_bytes_or_bad_environment_rejected(self):
+        value=self.barrier();self.barrier_path.write_text(json.dumps(value))
+        with self.assertRaises(H.HostBlocked):self.snapshot()
+        value=self.barrier();self.config['environment']=[];self.config_path.write_text(json.dumps(self.config))
+        value['configuration_sha256']=hashlib.sha256(self.config_path.read_bytes()).hexdigest();self.write_barrier(value)
+        with self.assertRaises(H.HostBlocked):self.snapshot()
 
     def test_source_bound_configuration_returns_value_without_namespace_or_finder_leak(self):
         before = list(sys.meta_path)
