@@ -1403,6 +1403,55 @@ checks and guarded activation/recovery. Installation acceptance, administrator
 readiness and production remain false; installed 659 is untouched. The source-only
 closure has 24 helpers and 76 members without a Core binary.
 
+The twenty-fifth authenticated library, `admit-upgrade-effects.py`, observes the
+post-revocation prerequisites under the inherited controller lease. It replays
+the live journal against complete pinned preservation and requires a locally
+revoked, retiring or retired phase. Saved configuration and the accepted 659
+release are authenticated independently of installed controller modules. The
+old GitHub client is compiled from authenticated source buffers and receives
+only `contents:read` and `checks:read` token permissions. It retains its isolated
+transport without inheriting an environment proxy. Token references are cleared
+on both success and failure.
+
+The caller may supply an explicit canonical HTTP(S) proxy with host and port
+from its authenticated Root recipe. Credentials, paths, query/fragment components,
+unsupported schemes and malformed ports are rejected. Only HTTPS requests receive
+that proxy; existing TLS verification and redirect rejection remain intact. The
+returned route digest must be bound by the future coordinator receipt. Omitting
+the argument keeps the accepted client's direct transport, regardless of Agent
+or operator environment variables. No installed proxy configuration is changed.
+
+Two readbacks bind repository identity, current main baseline, old commit/tree
+and the old run's exact authoritative Check. A present Check must match App,
+name, head, run and any persisted ID, with completed/failure state. The separate
+accepted negative pilot Check cannot substitute for it. Absence is admissible
+only without a persisted ID; ambiguous, successful, running, changed or missing
+persisted Checks and API failures block observation. A local revoked event alone
+never establishes the remote effect.
+
+Registered publication is checked against the entire invocation subtree in
+pinned preservation, including private diagnostics and empty directories. The
+recorded invocation path, run, machine/manifest/registry digests and any saved
+configuration digest/policy must agree. The destination must contain the exact
+files, directories, modes and bytes without links, within entry and byte budgets.
+An existing partial copy is rejected before later source retirement. Without
+registered evidence, raw preservation is still required and an unexplained
+publication directory blocks observation. Copy equality confirms preservation
+only; it grants no Core quality verdict or delivery acceptance.
+
+Thirty-one new regressions bring the focused suite to 596 tests. They use real
+private preservation trees, WAL snapshots and Git worktree retirement, and the
+accepted source-loaded client's actual Check lookup with mocked API responses.
+Root ownership, accepted-stage/configuration authentication and worker admission
+are explicitly replaced. Remote state, copy contents, journal, retention,
+configuration, helper identity, lease, worker state and time budget are rechecked.
+No actual Root/GitHub effect acceptance is claimed. The observer performs no
+Check mutation, copying, retirement, installation or activation, and has no
+administrator CLI. Full preparation, storage and entry/drain admission remain
+required; installation, administrator and production flags stay false. Installed
+659 is untouched. The source-only closure has 25 helpers and 77 members, without
+a Core binary.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the
