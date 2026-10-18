@@ -2326,3 +2326,55 @@ fn verify_rejects_ledger_replaced_by_an_execution_step_before_collecting() {
         .next()
         .is_none());
 }
+
+#[test]
+fn cli_cancellation_during_quality_collection_cannot_emit_pass() {
+    let fixture = Fixture::workflow("cancel-parent", true, false);
+    let root = fixture.dir.path();
+    let binary = std::env::current_exe()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join(format!("harness-gate{}", std::env::consts::EXE_SUFFIX));
+    let output = std::process::Command::new(&binary)
+        .arg("--color")
+        .arg("never")
+        .arg("--project-root")
+        .arg(root)
+        .args(["verify", "--all"])
+        .output()
+        .unwrap();
+    let combined = format!(
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(!output.status.success(), "{combined}");
+    let report: Value = serde_json::from_slice(
+        &fs::read(root.join(".harness-gate/reports/test_result.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(report["passed"], false, "{combined}");
+    assert!(
+        report["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|step| step["passed"] == true),
+        "the execution step itself must have succeeded before cancellation: {combined}"
+    );
+    assert!(
+        report["quality"]["error"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("cancelled"),
+        "quality collection must fail from observed cancellation: {combined}"
+    );
+    assert_eq!(
+        fs::read_to_string(fixture.request.artifact_root.join("raw.json")).unwrap(),
+        fixture.payload["raw"].as_str().unwrap(),
+        "the collector emitted complete evidence before cancellation was observed"
+    );
+}
