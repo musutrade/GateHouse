@@ -74,9 +74,19 @@ the newer result. Reconciliation therefore requires the consumer operator to
 establish that no prior request remains in flight before repairing state. There
 is intentionally no automatic state-reset or retry-through-uncertainty command.
 
+For an independently determined applicability failure, use `--withdraw` with a
+newer generation, `current_use_review = "withdrawn"`, a bounded
+`withdrawal_reason`, and the same target/Check/App fields and approval expiry.
+No `--core` or `--index` is used: withdrawal updates only the platform Check to
+failure with an explicit applicability explanation. It neither reads nor edits
+the historical quality decision. Preview is still the default; `--apply` uses
+the same durable ordering and uncertainty protections as result mapping.
+
 Transport failure changes only consumer state and its exit status. It never
 modifies the saved report, reruns Core verification, or changes the historical
 quality conclusion. Rejected evidence produces no remote update; it does not
-implicitly revoke an earlier Check. Remote revocation and provisioned Check
-lifecycle still need a separately reviewed consumer operation. This increment
-does not yet close #131's full optional integration acceptance.
+implicitly revoke an earlier Check. Withdrawal requires the explicit independently
+authorized consumer configuration above. Provisioning a Check and configuring
+required App/name remain with the consumer owner; this tool updates only the
+given Check. Independent tests and review are still required before #131 can be
+considered complete.

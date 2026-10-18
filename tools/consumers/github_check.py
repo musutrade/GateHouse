@@ -64,8 +64,7 @@ def saved_result(core, core_sha256, index):
     return verified
 
 
-def mapping(config, verified, now=None):
-    """Compare operator-pinned current use to verified history; never evaluate quality."""
+def target(config, now=None):
     require(re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', config['repository']), 'repository')
     require(re.fullmatch(r'[a-f0-9]{40}', config['target_sha']), 'target SHA')
     for key in ('check_id', 'app_id', 'generation'):
@@ -75,6 +74,11 @@ def mapping(config, verified, now=None):
     expiry = dt.datetime.fromisoformat(config['expires_at'].replace('Z', '+00:00'))
     require(expiry.tzinfo is not None and expiry > (now or dt.datetime.now(dt.timezone.utc)),
             'current-use approval expired')
+
+
+def mapping(config, verified, now=None):
+    """Compare operator-pinned current use to verified history; never evaluate quality."""
+    target(config, now)
     # These pins must come from the consumer's trusted current-use review, not
     # from an event or candidate. The machine pin also binds baseline and coverage.
     for key in ('machine_sha256', 'manifest_sha256'):
@@ -108,6 +112,18 @@ def mapping(config, verified, now=None):
             'output': {'title': 'GateHouse ' + result['status'],
                        'summary': 'Core invocation ' + config['invocation_id'] + '\nMachine SHA256: '
                                   + config['machine_sha256'] + '\nMapped from independently reviewed current-use pins.'}}
+
+
+def withdrawal(config):
+    """Withdraw platform applicability, without modifying historical quality."""
+    target(config)
+    require(config['current_use_review'] == 'withdrawn', 'withdrawal review required')
+    reason = config['withdrawal_reason']
+    require(isinstance(reason, str) and 0 < len(reason) <= 1000, 'withdrawal reason')
+    return {'name': config['check_name'], 'status': 'completed', 'conclusion': 'failure',
+            'external_id': 'gate-withdrawal:' + str(config['generation']),
+            'output': {'title': 'GateHouse result applicability withdrawn',
+                       'summary': reason + '\nHistorical Core conclusions are unchanged.'}}
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -160,6 +176,7 @@ def deliver(config, payload, state, api):
         path = '/repos/' + config['repository'] + '/check-runs/' + str(config['check_id'])
         remote = api.request('GET', path)
         identity(remote, config)
+        target(config)  # A slow preflight must not outlive the approval.
         # Persist intent BEFORE mutation. A crash or ambiguous transport failure
         # leaves intent, and no later invocation can write through that fence.
         db.execute('INSERT OR REPLACE INTO deliveries VALUES (?,?,?,?,?)',
@@ -184,14 +201,20 @@ def deliver(config, payload, state, api):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', required=True, type=Path)
-    parser.add_argument('--index', required=True, type=Path)
-    parser.add_argument('--core', required=True, type=Path)
+    parser.add_argument('--index', type=Path)
+    parser.add_argument('--core', type=Path)
+    parser.add_argument('--withdraw', action='store_true')
     parser.add_argument('--state', type=Path)
     parser.add_argument('--apply', action='store_true')
     args = parser.parse_args()
     config = load(args.config)
-    verified = saved_result(args.core, config['verifier_sha256'], args.index)
-    payload = mapping(config, verified)
+    if args.withdraw:
+        require(args.core is None and args.index is None, 'withdrawal does not read or rewrite historical evidence')
+        payload = withdrawal(config)
+    else:
+        require(args.core is not None and args.index is not None, 'Core and saved index required')
+        verified = saved_result(args.core, config['verifier_sha256'], args.index)
+        payload = mapping(config, verified)
     if args.apply:
         require(args.state is not None, 'protected consumer state database required')
         remote = deliver(config, payload, args.state, GitHub(os.environ.get('GATEHOUSE_CHECK_TOKEN')))
@@ -203,7 +226,8 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except (Rejected, KeyError, ValueError, OSError, subprocess.SubprocessError, sqlite3.Error) as error:
+    except (Rejected, KeyError, ValueError, TypeError, AttributeError, OSError,
+            subprocess.SubprocessError, sqlite3.Error) as error:
         # Avoid echoing configuration, candidate strings, API bodies or credentials.
         print(json.dumps({'delivery': 'failed', 'error_type': type(error).__name__}))
         raise SystemExit(1)
