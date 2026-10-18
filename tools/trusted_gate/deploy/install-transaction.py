@@ -195,5 +195,21 @@ def fence(B, lease_fd):
     return value
 
 
+def fenced(B, lease_fd):
+    """Read-only pre-install prerequisite; never complete or mutate a partial fence."""
+    lease(B, lease_fd)
+    value = read_receipt(B)
+    B.need(value['phase'] == 'fenced', 'entry fencing is incomplete')
+    raw = B.read(B.owned(BARRIER, private=True), 4096)
+    B.need(stat.S_IMODE(BARRIER.stat().st_mode) == 0o600 and raw == B.canonical(marker(B, value, 'fenced')),
+           'completed installation barrier differs')
+    for path in ENTRIES:
+        row = value['entries'][str(path)]
+        B.need(file(B, path, row['sha256'], (0,)) == row['identity'], 'completed original entry fence differs')
+    B.need(digest(B.read(B.owned(CONFIG, private=True), MAX_FILE)) == value['before_configuration_sha256'],
+           'installed configuration changed after entry fencing')
+    return value
+
+
 if __name__ == '__main__':
     raise SystemExit('installation fencing is an internal library; no administrator entry is available')

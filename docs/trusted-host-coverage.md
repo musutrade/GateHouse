@@ -540,8 +540,8 @@ authority, thresholds, coverage requiredness and evidence budgets are unchanged.
 ### Candidate protected input import
 
 `package-bootstrap-inputs.py` exports an exact committed helper tree and a
-canonical manifest for separate administrator review. The closure has twenty-one files:
-the importer, Core builder, preservation, volume, source-staging, release-contract, preflight, Linux-policy, input-sealing, host-configuration, Core-inspection and installation-barrier libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
+canonical manifest for separate administrator review. The closure has twenty-two files:
+the importer, Core builder, preservation, volume, source-staging, release-contract, preflight, Linux-policy, input-sealing, host-configuration, Core-inspection, installation-barrier and controller-observation libraries, eight helper/schema resources under `tools/trusted_gate/deploy`
 and the archive-path helper under `tools/maintenance`. Relative layout is retained.
 This is a separate input-bootstrap package; the normal pilot package does not
 silently install it. Packaging rejects Root execution and dirty source, and keeps
@@ -1217,8 +1217,58 @@ and the remaining issue-98 acceptance are pending. The focused suite has 438 tes
 including seven new bootstrap-barrier cases and twenty fence/recovery cases.
 Root ownership and DAC admission are explicitly replaced in these ordinary tests;
 actual descriptor chmod/fsync, private records, inode changes and leases are exercised.
-The source-only release has twenty-one helpers and 73 members without a Core binary.
+The source-only release at `43ca6e2` had twenty-one helpers and 73 members without a Core binary.
 Installed 659, delegated operations, Apps, services, rules and quality authority are unchanged.
+
+### Candidate controller process observations
+
+The twenty-second packaged library,
+[`controller-drain.py`](../tools/trusted_gate/deploy/controller-drain.py), provides
+an authenticated read-only pre-install observation under the original controller
+lease. The entry fence must already be complete. Its new `fenced` reader verifies
+the original entry inodes are still mode 000, the private receipt/barrier agree
+and the old configuration is unchanged; it never completes a partial fence.
+The observer verifies the helper closure before and after, checks stopped
+Core/worker/bootstrap units, reads two process snapshots and rechecks the fence
+between and after them. It writes no record, changes no permissions and provides
+no administrator CLI, process signalling, installation or activation operation.
+
+The observer requires the native Linux/x86_64 Root context, kernel procfs type,
+matching PID/user/mount namespaces with PID1 and an initial UID map. Process
+counts, individual reads, total bytes and elapsed work are bounded. Each numeric
+PID directory is opened without following links; subsequent reads use that
+descriptor. The parser separates the parenthesized process name before locating
+start time, checks PID/Tgid/PPid/namespace consistency and reads all four UID/GID
+values. The Linux interfaces specify
+[start time in clock ticks](https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html)
+and [real/effective/saved/filesystem identities](https://www.man7.org/linux/man-pages/man5/proc_pid_status.5.html).
+The four-UID check covers sudo-launched Root controllers as well as active
+restricted identities 999/995. Kernel threads and dead processes have explicit
+rules; unreadable, disappeared, recycled or inconsistent processes stop admission.
+
+For Root or restricted processes, the classifier checks the reviewed host paths,
+Git working directories, signing-key operands, executable paths and fixed
+GateHouse unit names in argv/cgroup. It repeats relevant reads to reject exec,
+credential or path changes. Only the authenticated caller is excluded as a
+controller, after confirming its live Root identity. It never reads environments,
+and the returned snapshot uses identity digests instead of raw argv/paths.
+Changed PID membership or start times between scans, namespaces, populated units,
+changed fence or changed helper bytes reject the result. Unrelated processes are
+not terminated or silently added to a permissive whitelist.
+
+The result describes two empty observations at that moment. It keeps
+`controller_drain_proven`, `administrator_ready` and production false: the complete
+coordinator must repeat observations around later transitions and preserve the
+same lease/fence. Post-retirement/install applicability and activation require
+their own guards. An ordinary experiment with two owned child processes confirmed
+stable PID/start-time and parent observations; a name containing spaces and
+parentheses demonstrated why naive whitespace indexing is unsafe. It did not
+scan Root processes or prove host quiescence. Twenty-eight new regressions bring
+the focused suite to 466 tests, including parser/classification/race/budget/namespace
+and authenticated observation cases plus two read-only fence checks. Root/kernel
+admission is explicitly replaced in fixtures. The current source-only release
+has twenty-two helpers and 74 members, no Core binary, and no administrator-ready
+installer. Installed 659 and the remaining issue-98 acceptance are unchanged.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,

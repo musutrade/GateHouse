@@ -258,5 +258,20 @@ class InstallationFenceTests(unittest.TestCase):
         with self.assertRaises(ValueError):self.fence()
         self.assertTrue(all(stat.S_IMODE(p.stat().st_mode)==0o755 for p in self.entries))
 
+    def test_readonly_fenced_prerequisite_does_not_complete_partial_state(self):
+        self.prepare();before=self.receipt.read_bytes(),self.barrier.read_bytes()
+        with self.assertRaises(ValueError):T.fenced(self.B,self.lease_fd)
+        self.assertEqual((self.receipt.read_bytes(),self.barrier.read_bytes()),before)
+        self.assertTrue(all(stat.S_IMODE(p.stat().st_mode)==0o755 for p in self.entries))
+        completed=self.fence()
+        with patch.object(self.B,'record',side_effect=AssertionError('readonly observation wrote state')):
+            self.assertEqual(T.fenced(self.B,self.lease_fd),completed)
+
+    def test_readonly_fenced_prerequisite_rejects_reopened_entry_and_config_drift(self):
+        self.prepare();self.fence();self.entries[0].chmod(0o755)
+        with self.assertRaises(ValueError):T.fenced(self.B,self.lease_fd)
+        self.entries[0].chmod(0);self.config.write_bytes(b'changed')
+        with self.assertRaises(ValueError):T.fenced(self.B,self.lease_fd)
+
 
 if __name__=='__main__':unittest.main()
