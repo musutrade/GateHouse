@@ -10,7 +10,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from .common import Blocked, canonical, checked, protected, require
+from .common import Blocked, canonical, checked, protected, require, https_proxy as proxy_route
 
 
 def b64(value):
@@ -22,21 +22,33 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise Blocked('GitHub API redirect rejected')
 
 
+class ExplicitHTTPSProxy(urllib.request.ProxyHandler):
+    """An approved API route cannot be bypassed through inherited NO_PROXY."""
+    def proxy_open(self, request, proxy, kind):
+        require(kind=='https' and request.type=='https' and request.host=='api.github.com',
+                'explicit proxy is limited to the GitHub HTTPS API')
+        route=urllib.parse.urlsplit(proxy_route(proxy))
+        request.set_proxy(route.netloc,route.scheme)
+        return None
+
+
 class APIError(RuntimeError):
     """An unknown external outcome; keep the same operation for recovery."""
 
 
 class GitHub:
-    def __init__(self, app_id, installation_id, key, repository, permissions=None):
+    def __init__(self, app_id, installation_id, key, repository, permissions=None, *, https_proxy=None):
         require(type(app_id) is int and app_id > 0 and type(installation_id) is int
                 and installation_id > 0, 'App and installation IDs are required')
+        route=proxy_route(https_proxy)
         self.app_id, self.installation_id = app_id, installation_id
         self.key = protected(key, private=True)
         self.repository = repository
         self.permissions = permissions or {'checks': 'write', 'contents': 'read', 'pull_requests': 'read'}
         self.token = None
         self.expires = 0
-        self.opener = urllib.request.build_opener(NoRedirect(), urllib.request.ProxyHandler({}))
+        handler=urllib.request.ProxyHandler({}) if route is None else ExplicitHTTPSProxy({'https':route})
+        self.opener = urllib.request.build_opener(NoRedirect(), handler)
 
     def request(self, method, path, body=None, *, token=None):
         require(path.startswith('/') and not path.startswith('//') and '..' not in path,

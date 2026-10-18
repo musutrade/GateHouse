@@ -3,6 +3,7 @@
   "repository": "musutrade/GateHouse",
   "repository_id": 1414069625,
   "base_branch": "main",
+  "https_proxy": null,
   "profile": "full",
   "coverage_acceptance": "transition",
   "check_name": "GateHouse Trusted Verification",

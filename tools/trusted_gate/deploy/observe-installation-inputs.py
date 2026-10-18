@@ -84,6 +84,7 @@ def inspection(B, helpers, manifest, manifest_pin, value, lease_fd, checker):
            and result['preservation_sha256'] == pins['preservation']
            and result['configuration_binding_sha256'] == pins['configuration']
            and result['inspection_binding_sha256'] == pins['inspection']
+           and result.get('https_proxy') == value['api_proxy']
            and result['captured_core_policy_checked'] is True
            and result['installation_admitted'] is False and result['administrator_ready'] is False
            and result['production_gate_enabled'] is False, 'completed preparation/inspection binding differs')

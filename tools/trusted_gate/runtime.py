@@ -53,6 +53,8 @@ def input_relative_path(value):
 @checked
 def settings(config):
     """Optional fields are explicit, pinned and disjoint from writable domains."""
+    from .common import https_proxy
+    https_proxy(config.get('https_proxy'))
     paths = []
     if 'runtime' in config:
         value = config['runtime']

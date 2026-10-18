@@ -133,9 +133,11 @@ class HostConfigurationTests(unittest.TestCase):
                 'b'*64,self.seal_pin,self.core_pin,self.root/'host-recipe','c'*64,self.root/'volume-recipe','d'*64,**options)
 
     def test_explicit_administrator_api_route_is_rechecked_on_both_preflights(self):
-        proxy='http://proxy.example.invalid:7890';self.compose(api_proxy=proxy)
+        proxy='http://proxy.example.invalid:7890';result=self.compose(api_proxy=proxy)
         self.assertEqual(self.preflight.observe.call_count,2)
         self.assertTrue(all(call.kwargs['api_proxy']==proxy for call in self.preflight.observe.call_args_list))
+        self.assertEqual(result['https_proxy'],proxy)
+        self.assertEqual(json.loads((self.output/'host.json').read_bytes())['https_proxy'],proxy)
 
     def test_small_input_configuration_roundtrip_pins_all_files_without_optional_old_overlays(self):
         before=self.config_path.read_bytes();result=self.compose()
@@ -163,6 +165,10 @@ class HostConfigurationTests(unittest.TestCase):
         self.assertEqual(self.config_path.read_bytes(),before)
         self.assertFalse((self.volume/'scratch').exists());self.assertFalse((self.volume/'cache').exists())
         self.assertFalse(any(name.startswith('_gatehouse_config_') for name in sys.modules))
+
+    def test_invalid_runtime_route_blocks_configuration_outputs(self):
+        with self.assertRaises(ValueError):self.compose(api_proxy='http://private@proxy:80')
+        self.assertFalse(self.output.exists())
 
     def test_existing_output_is_never_reused(self):
         self.compose()

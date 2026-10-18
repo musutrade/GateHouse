@@ -1685,6 +1685,23 @@ and production flags remain false. Original durable device/inode identities are
 not rebound after reboot; actual boot mounting and controller/resource acceptance
 remain required before issue98 can be completed.
 
+The runtime-network candidate carries the reviewed administrator proxy through
+the pinned generated configuration, prepared/inspection replay and activation
+recipe equality. Normal Checks and delivery clients use the explicit HTTPS route
+with unchanged App scopes, TLS and redirect rejection. API routes, including
+accepted-old-client preparation/revocation, cannot be bypassed by inherited
+`NO_PROXY`. Independent Git baseline fetch uses exact-repository per-process
+proxy/TLS/redirect settings and a private token header environment; no mirror or
+global config is edited and no direct retry is added. Worker environments remain
+free of this route, Git configuration and credentials.
+
+Twenty new cases cover canonical/invalid routes, pre-state rejection, API handler
+boundaries and non-bypass, one-attempt error redaction, native Git URL-match
+precedence, client permissions, worker isolation and immutable proxy replay.
+The source-only closure remains31 helpers/84 members and the install plan28
+files/30 execution pins. Installed659 and actual Root networking are unchanged;
+live API/Git/Core/boot/workload and full issue98 acceptance remain pending.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the

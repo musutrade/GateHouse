@@ -11,6 +11,7 @@ import sys
 import tempfile
 from functools import wraps
 import subprocess
+import urllib.parse
 
 
 class Blocked(ValueError):
@@ -33,6 +34,21 @@ def checked(function):
 def require(condition, message):
     if not condition:
         raise Blocked(message)
+
+
+@checked
+def https_proxy(value):
+    """Only an explicit credential-free canonical route, never environment settings."""
+    if value is None:return None
+    require(type(value) is str and len(value)<=256,'invalid explicit HTTPS proxy')
+    parsed=urllib.parse.urlsplit(value)
+    require(parsed.scheme in ('http','https') and parsed.hostname
+            and re.fullmatch('[A-Za-z0-9.-]+',parsed.hostname) and parsed.port is not None
+            and 1<=parsed.port<=65535 and parsed.username is None and parsed.password is None
+            and not parsed.path and not parsed.query and not parsed.fragment
+            and value==parsed.scheme+'://'+parsed.hostname+':'+str(parsed.port),
+            'explicit HTTPS proxy requires a canonical credential-free host and port')
+    return value
 
 
 def canonical(value):

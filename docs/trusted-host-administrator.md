@@ -54,8 +54,9 @@ actual host. No output map, Core binary path or caller-supplied verdict is
 accepted. Input paths must remain separate from mutable pilot/staging storage.
 The API proxy may be null or the explicitly reviewed canonical credential-free
 HTTP(S) host and port, such as the operator-approved `http://192.168.0.2:7890`.
-It affects preparation preflight and the sealed revocation/readback route;
-runtime controller/Git transport needs separate live verification. It never
+It affects preparation preflight, the sealed revocation/readback route and the
+generated controller's explicit HTTPS transport. Actual live API/Git routing still
+needs acceptance. It never
 disables TLS verification or enables environment proxy inheritance in the
 accepted client.
 
@@ -218,3 +219,36 @@ boot mounting, resources and post-boot controller validation still require live
 acceptance. Durable installation receipts keep their original device/inode
 identities: a reboot is not permission to rebind them or weaken recovery checks.
 Both administrator and production acceptance flags remain false.
+
+## Candidate controller network route
+
+The sealed administrator `api_proxy` is also written as `https_proxy` in the
+generated protected host configuration and preparation binding. Immutable
+prepared/inspection replay recovers it from the externally pinned binding and
+reconstructs the exact configuration. Installation and activation require that
+route to match the sealed recipe. The normal configuration/policy digest binds
+it, and malformed routes block configuration before a journal or client is opened.
+
+Both the Checks and delivery clients receive this route, preserving their
+existing distinct App permissions. Explicit API proxy handlers retain normal
+destination TLS verification and redirect rejection. They do not consult inherited
+`NO_PROXY`; the same rule applies to accepted-old-client preflight/revocation
+transport. A failed route has no direct fallback. No proxy credentials, path,
+query, fragment or noncanonical host/port spelling is accepted.
+
+Independent baseline fetch passes only per-process Git configuration for the
+exact HTTPS repository URL: proxy, certificate verification enabled, redirects
+disabled and the installation token header. The token is in the private Git
+environment, never argv or persistent mirror configuration. New explicit null
+means direct access; legacy configurations without the field can retain the
+administrator-managed mirror proxy. Worker/history/Core environments do not
+inherit these settings or tokens. Neither operator global Git config nor installed
+mirror config is changed by this candidate.
+
+URL-specific overrides and redirect behavior follow the
+[Git configuration reference](https://git-scm.com/docs/git-config/2.54.0.html).
+Explicit null uses the empty proxy setting, consistent with
+[libcurl's proxy semantics](https://curl.se/libcurl/c/CURLOPT_PROXY.html).
+Native Git URL-match tests verify precedence over an existing exact-repository
+local proxy without changing that config. These are local routing/contract tests;
+actual Root API, baseline fetch and workload acceptance are still pending.

@@ -47,7 +47,7 @@ class PreparedConfigurationReplayTests(unittest.TestCase):
             ('source', 'source'), ('mirror', 'repository/mirror.git'), ('scratch', 'scratch'))})
         old['protected_files'] = P.accepted_pins(self.B, FIX.R, self.old_payload, f.builder)
         f.config_path.write_bytes(BOOT.canonical(old))
-        self.configuration = f.compose();self.config_pin = C.digest((f.output / 'binding.json').read_bytes())
+        self.configuration = f.compose(api_proxy=getattr(self,'proxy',None));self.config_pin = C.digest((f.output / 'binding.json').read_bytes())
         self.preservation = f.root / 'retention';self.preservation.mkdir(mode=0o700)
         self.accepted = {'head': P.HEAD, 'run': P.RUN, 'release_sha256': P.RELEASE,
             'coverage_acceptance': 'transition', 'production_gate_enabled': False,
@@ -122,6 +122,14 @@ class PreparedConfigurationReplayTests(unittest.TestCase):
     def snapshot(self):
         return {str(path): (path.stat().st_mode, path.read_bytes())
                 for path in self.f.root.rglob('*') if path.is_file()}
+
+    def test_proxy_survives_immutable_retired_replay_without_route_or_metadata_mutation(self):
+        fixture=PreparedConfigurationReplayTests();fixture.proxy='http://proxy.example.invalid:7890'
+        fixture.setUp();self.addCleanup(fixture.doCleanups)
+        before=fixture.snapshot();result=fixture.replay()
+        self.assertEqual(result['https_proxy'],fixture.proxy)
+        self.assertEqual(fixture.configuration['https_proxy'],fixture.proxy)
+        self.assertEqual(fixture.snapshot(),before)
 
     def test_retired_live_slot_and_missing_old_source_do_not_require_rollback_or_any_writes(self):
         f = self.f;self.assertFalse(Path(f.old['source']).exists())

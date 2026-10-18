@@ -95,7 +95,8 @@ def main(argv=None):
                 # execute a fixed step belonging to that running invocation, never acquire a new slot.
                 return launch(config, journal, os.environ.get('GATEHOUSE_RUN_ID', ''), args.step_id)
             executor = Executor(config, configuration_path=CONFIG)
-            github = GitHub(config['app_id'], config['installation_id'], config['app_key'], config['repository'])
+            github = GitHub(config['app_id'], config['installation_id'], config['app_key'], config['repository'],
+                            https_proxy=config.get('https_proxy'))
             control = Control(journal, github, executor, config)
             if args.action == 'validate':
                 # Repeated exact requests recover the recorded run without executing again.
@@ -112,7 +113,8 @@ def main(argv=None):
             elif args.action == 'deliver':
                 settings = config['delivery']
                 publisher = GitHub(settings['app_id'], settings['installation_id'], settings['app_key'],
-                    config['repository'], permissions={'contents': 'write', 'pull_requests': 'write'})
+                    config['repository'], permissions={'contents': 'write', 'pull_requests': 'write'},
+                    https_proxy=config.get('https_proxy'))
                 result = deliver(control, publisher, args.run, args.title,
                     read_submission(args.body_file, config['inbox'], config['developer_uid'], 16384).decode('utf-8'))
             elif args.action == 'publish':

@@ -158,6 +158,8 @@ class InstallationInputsTests(unittest.TestCase):
 
     def test_explicit_route_is_forwarded_and_bound_to_recipe(self):
         self.value['api_proxy']='http://proxy.example.invalid:7890';self.save_recipe()
+        with self.assertRaisesRegex(ValueError,'completed preparation/inspection'):self.observe()
+        self.checked['https_proxy']=self.value['api_proxy']
         with self.assertRaisesRegex(ValueError,'retired remote/publication'):self.observe()
         self.effect['api_transport_sha256']=A.digest(BOOT.canonical({'https_proxy':self.value['api_proxy']}))
         self.observe();self.assertEqual(self.effects.observe.call_args.kwargs,{'api_proxy':self.value['api_proxy']})

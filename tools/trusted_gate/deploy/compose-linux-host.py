@@ -82,7 +82,7 @@ def captured_core(B, builder, helpers, source, inputs, root, pin, head, manifest
 
 
 def configuration(B, policy, contract, payload, old, head, archive_pin, manifest_pin, input_pin, seal_pin, core_pin,
-                  imported, sealed, captured, os_pins):
+                  imported, sealed, captured, os_pins, *, api_proxy=None):
     """Pure composition over independently verified facts; callers must authenticate them."""
     source = VOLUME / 'bootstrap-source/source'
     inputs = VOLUME / 'bootstrap-inputs'
@@ -133,7 +133,8 @@ def configuration(B, policy, contract, payload, old, head, archive_pin, manifest
         'runtime': {'root': str(inputs / 'tools/toolchain'), 'inventory': tool_inventory,
                     'tool_lock_sha256': imported['tool_lock_sha256']},
         'cargo_config': sealed['cargo_config'], 'linux_inputs': dict(sealed['linux_inputs']),
-        'cache': {'root': str(VOLUME / 'cache'), 'max_bytes': 2 * 1024**3, 'max_entries': 4, 'ttl_seconds': 86400}}
+        'cache': {'root': str(VOLUME / 'cache'), 'max_bytes': 2 * 1024**3, 'max_entries': 4, 'ttl_seconds': 86400},
+        'https_proxy':api_proxy}
     B.need(old['records'] == config['records'] and old['inbox'] == config['inbox']
            and old['app_id'] == config['app_id'] and old['delivery'] == config['delivery']
            and old['coverage_acceptance'] == 'transition', 'old ingress, journal or App identity differs')
@@ -209,12 +210,12 @@ def preparation_facts(B, builder, contract, helpers, payload, old, head, manifes
 
 
 def candidate(B, policy, contract, payload, old, old_raw, head, archive_pin, manifest_pin,
-              input_pin, seal_pin, core_pin, facts):
+              input_pin, seal_pin, core_pin, facts, *, api_proxy=None):
     """Deterministic configuration and receipt from independently authenticated facts."""
     imported, sealed, captured, os_pins, _ = facts
     core_root = VOLUME / 'bootstrap-core';destination = VOLUME / 'bootstrap-host-config'
     config = configuration(B, policy, contract, payload, old, head, archive_pin, manifest_pin,
-                           input_pin, seal_pin, core_pin, imported, sealed, captured, os_pins)
+                           input_pin, seal_pin, core_pin, imported, sealed, captured, os_pins, api_proxy=api_proxy)
     verified = runtime_verification(B, payload, config)
     B.need(B.canonical([verified['linux_inputs']['files'], verified['linux_inputs']['bytes']]) ==
            B.canonical([sealed['files'], sealed['bytes']]), 'sealed Linux totals differ')
@@ -225,7 +226,7 @@ def candidate(B, policy, contract, payload, old, old_raw, head, archive_pin, man
     result = {**status, 'state': 'composed', 'configuration_sha256': digest(raw), 'plan_sha256': digest(plan_raw),
         'old_configuration_sha256': digest(old_raw), 'release_sha256': archive_pin,
         'input_binding_sha256': input_pin, 'linux_role_binding_sha256': seal_pin, 'core_build_record_sha256': core_pin,
-        'runtime_verification': verified, 'execution_pins': len(config['protected_files']),
+        'runtime_verification': verified, 'execution_pins': len(config['protected_files']), 'https_proxy':api_proxy,
         'scope': 'pinned configuration candidate only; no captured-Core policy check, installation or quality acceptance'}
     return config, verified, status, raw, plan_raw, result
 
@@ -313,8 +314,10 @@ def verify_prepared(B, helpers, manifest, manifest_pin, archive, archive_pin, in
                                  input_pin, seal_pin, core_pin, host, host_pin)
 
     initial = facts()
+    saved=builder.json_pin(B,B.owned(destination/'binding.json',private=True),configuration_pin)
+    B.need('https_proxy' in saved,'prepared configuration has no sealed HTTPS route')
     config, verified, status, raw, plan_raw, result = candidate(B, policy, contract, payload, old, old_raw,
-        head, archive_pin, manifest_pin, input_pin, seal_pin, core_pin, initial)
+        head, archive_pin, manifest_pin, input_pin, seal_pin, core_pin, initial, api_proxy=saved['https_proxy'])
     completed(B, builder, destination, configuration_pin, status, result, raw, plan_raw)
     B.need(facts() == initial and runtime_verification(B, payload, config) == verified,
            'prepared inputs changed during replay')
@@ -325,6 +328,7 @@ def verify_prepared(B, helpers, manifest, manifest_pin, archive, archive_pin, in
     B.authenticate(helpers, manifest, manifest_pin)
     B.need(B.canonical(guards()) == B.canonical(before), 'prepared storage changed during replay')
     return {'schema': 'gatehouse-prepared-configuration-replay/v1', 'state': 'verified', 'head': head,
+        'https_proxy':saved['https_proxy'],
         'helper_manifest_sha256': manifest_pin, 'preservation_sha256': preservation_pin,
         'configuration_binding_sha256': configuration_pin, 'configuration_sha256': result['configuration_sha256'],
         'plan_sha256': result['plan_sha256'], 'administrator_ready': False, 'production_gate_enabled': False,
@@ -376,7 +380,7 @@ def compose(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin,
                                      input_pin, seal_pin, core_pin, host, host_pin)
         initial = facts()
         config, verified, status, raw, plan_raw, result = candidate(B, policy, contract, payload, old, old_raw,
-            head, archive_pin, manifest_pin, input_pin, seal_pin, core_pin, initial)
+            head, archive_pin, manifest_pin, input_pin, seal_pin, core_pin, initial, api_proxy=api_proxy)
         def recheck():
             B.need(facts() == initial and runtime_verification(B, payload, config) == verified
                    and B.read(CONFIG, 1024**2) == old_raw and B.read(archive, contract.MAX_ARCHIVE) == archive_raw

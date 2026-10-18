@@ -7,13 +7,14 @@ from pathlib import Path
 import shutil
 import subprocess
 
-from .common import Blocked, atomic_json, checked, digest, protected, read_json, read_regular, require, sha
+from .common import Blocked, atomic_json, checked, digest, protected, read_json, read_regular, require, sha, https_proxy
 from .execution import HOST_DIRECTORY, clean_environment, git
 
 
 @checked
 def prepare(config, github, journal, bundle, head):
     sha(head)
+    route=https_proxy(config.get('https_proxy'))
     require(not journal.outstanding(), 'previous batch must be merged or fully revoked before freezing input')
     source = Path(config['source'])
     mirror = protected(config['mirror'], directory=True)
@@ -41,9 +42,17 @@ def prepare(config, github, journal, bundle, head):
                 'tree': sha(git(source, 'rev-parse', 'HEAD^{tree}')), 'base': base}
     env = clean_environment()
     # Token remains in a root-owned Git process environment, never in argv/logs/Agent namespace.
-    env.update(GIT_CONFIG_COUNT='1', GIT_CONFIG_KEY_0='http.https://github.com/.extraheader',
+    scope='http.https://github.com/'+config['repository']+'.git.'
+    env.update(GIT_CONFIG_COUNT='1', GIT_CONFIG_KEY_0=scope+'extraheader',
                GIT_CONFIG_VALUE_0='AUTHORIZATION: basic ' + base64.b64encode(
                    ('x-access-token:' + github.installation_token()).encode()).decode())
+    options={scope+'sslVerify':'true',scope+'followRedirects':'false'}
+    # Legacy configurations can keep their administrator-managed mirror route.
+    # New explicit null disables proxying; a configured route has no direct retry.
+    if 'https_proxy' in config:options[scope+'proxy']=route or ''
+    for index,(key,value) in enumerate(options.items(),1):
+        env['GIT_CONFIG_KEY_'+str(index)]=key;env['GIT_CONFIG_VALUE_'+str(index)]=value
+    env['GIT_CONFIG_COUNT']=str(1+len(options))
     try:
         result = subprocess.run(['/usr/bin/git', '-c', 'core.hooksPath=/dev/null',
             '-c', 'protocol.ext.allow=never', '-C', str(mirror), 'fetch', '--no-tags',

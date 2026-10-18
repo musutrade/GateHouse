@@ -161,6 +161,8 @@ def live(ctx, value, *, storage=True):
          'activation prepared materials changed')
     B.need(B.canonical(ctx.new_config) == ctx.material['files'][str(ctx.files.CONFIG)]['after'],
            'activation runtime configuration differs from installed materials')
+    B.need(ctx.new_config.get('https_proxy') == ctx.value['api_proxy'],
+           'activation HTTPS route differs from sealed installation recipe')
     effect = ctx.effect()
     B.need(effect['phase'] == 'retired' and effect['head'] == value['head']
            and effect['helper_manifest_sha256'] == ctx.manifest_pin

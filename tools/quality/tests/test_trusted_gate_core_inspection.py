@@ -32,7 +32,7 @@ GIT=load('core_inspection_git',ROOT/'tools/trusted_gate/deploy/stage-protected-s
 class CoreInspectionTests(unittest.TestCase):
     def setUp(self):
         self.f=FIX.HostConfigurationTests();self.f.setUp();self.addCleanup(self.f.doCleanups)
-        f=self.f;self.configuration=f.compose();self.pin=C.hashlib.sha256((f.output/'binding.json').read_bytes()).hexdigest()
+        f=self.f;self.configuration=f.compose(api_proxy=getattr(self,'proxy',None));self.pin=C.hashlib.sha256((f.output/'binding.json').read_bytes()).hexdigest()
         self.B=SimpleNamespace(**vars(f.B))
         self.composer=SimpleNamespace(compose=Mock(side_effect=lambda *args,**kw:f.compose(**kw)))
         self.B.load=lambda helpers,name:{'compose-linux-host.py':self.composer,'build-protected-core.py':f.builder,
@@ -61,11 +61,13 @@ class CoreInspectionTests(unittest.TestCase):
         self.assertFalse((self.destination/'binding.json').exists())
 
     def test_inspection_forwards_root_api_route_to_both_composition_replays(self):
-        proxy='http://proxy.example.invalid:7890';self.f.preflight.observe.reset_mock()
-        self.inspect(api_proxy=proxy)
-        self.assertEqual(self.composer.compose.call_count,2)
-        self.assertTrue(all(call.kwargs['api_proxy']==proxy for call in self.composer.compose.call_args_list))
-        self.assertTrue(all(call.kwargs['api_proxy']==proxy for call in self.f.preflight.observe.call_args_list))
+        proxy='http://proxy.example.invalid:7890';fixture=CoreInspectionTests();fixture.proxy=proxy
+        fixture.setUp();self.addCleanup(fixture.doCleanups);fixture.f.preflight.observe.reset_mock()
+        fixture.inspect(api_proxy=proxy)
+        self.assertEqual(json.loads((fixture.f.output/'host.json').read_bytes())['https_proxy'],proxy)
+        self.assertEqual(fixture.composer.compose.call_count,2)
+        self.assertTrue(all(call.kwargs['api_proxy']==proxy for call in fixture.composer.compose.call_args_list))
+        self.assertTrue(all(call.kwargs['api_proxy']==proxy for call in fixture.f.preflight.observe.call_args_list))
 
     def test_completed_configuration_is_reverified_and_only_three_passive_commands_are_checked(self):
         before={p:p.read_bytes() for p in self.f.output.iterdir()};result=self.inspect()

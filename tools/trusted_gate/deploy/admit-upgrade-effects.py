@@ -38,7 +38,14 @@ def transport(B, client, api_proxy):
                and not value.path and not value.query and not value.fragment
                and api_proxy == value.scheme + '://' + value.hostname + ':' + str(value.port),
                'explicit API proxy requires a canonical credential-free host and port')
-        client.opener.add_handler(urllib.request.ProxyHandler({'https': api_proxy}))
+        class ExplicitHTTPSProxy(urllib.request.ProxyHandler):
+            def proxy_open(self,request,proxy,kind):
+                B.need(kind=='https' and request.type=='https' and request.host=='api.github.com',
+                       'explicit proxy is limited to the GitHub HTTPS API')
+                route=urllib.parse.urlsplit(proxy)
+                request.set_proxy(route.netloc,route.scheme)
+                return None
+        client.opener.add_handler(ExplicitHTTPSProxy({'https': api_proxy}))
     return digest(B.canonical({'https_proxy': api_proxy}))
 
 

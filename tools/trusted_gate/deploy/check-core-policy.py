@@ -367,6 +367,7 @@ def verify_completed(B, helpers, manifest, manifest_pin, archive, archive_pin, i
     B.need(B.read(archive, contract.MAX_ARCHIVE) == archive_raw, 'inspection source release changed')
     B.authenticate(helpers, manifest, manifest_pin);fence.lease(B, lock_fd)
     return {'schema': 'gatehouse-core-policy-replay/v1', 'state': 'verified', 'head': head,
+        'https_proxy':initial.get('https_proxy'),
         'helper_manifest_sha256': manifest_pin, 'preservation_sha256': preservation_pin,
         'configuration_binding_sha256': configuration_pin, 'inspection_binding_sha256': inspection_pin,
         'configuration_sha256': result['configuration_sha256'], 'plan_sha256': result['plan_sha256'],
