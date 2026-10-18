@@ -15,6 +15,7 @@ import uuid
 
 VOLUME = Path('/srv/gatehouse/linux')
 CONTROL = Path('/srv/gatehouse/pilot/control')
+INBOX = Path('/srv/gatehouse/pilot/inbox')
 CONFIG = Path('/etc/gatehouse/host.json')
 BASE = '8994cf53a44677ecb36acc6f9a9ce1d547c57728'
 CARGO = (b'[source.crates-io]\nreplace-with = "gatehouse-locked"\n'
@@ -120,7 +121,7 @@ def configuration(B, policy, contract, payload, old, head, archive_pin, manifest
         'delivery': {'app_id': 5069731, 'installation_id': 164696480, 'app_key': '/etc/gatehouse/delivery.private-key.pem'},
         'core': '/opt/gatehouse/bin/harness-gate', 'policy_directory': '/etc/gatehouse/policy',
         'source': str(source), 'mirror': str(VOLUME / 'bootstrap-source/mirror.git'),
-        'records': str(CONTROL), 'inbox': '/srv/gatehouse/pilot/inbox',
+        'records': str(CONTROL), 'inbox': str(INBOX),
         'scratch': str(VOLUME / 'scratch'), 'executor_user': 'gatehouse-executor', 'developer_uid': 999,
         'executor_memory_bytes': 8 * 1024**3, 'executor_file_bytes': 1024**3,
         'max_bundle_bytes': 128 * 1024**2, 'max_source_files': 20000, 'max_source_bytes': 256 * 1024**2,
@@ -177,6 +178,160 @@ def artifact_bytes(B, contract, payload, config, old, old_raw, captured, core_ro
     return raw, B.canonical(plan_value)
 
 
+def preparation_facts(B, builder, contract, helpers, payload, old, head, manifest_pin,
+                      input_pin, seal_pin, core_pin, host, host_pin):
+    """Read immutable preparation facts; no installed-generation or slot admission."""
+    inputs, sealed_root, core_root, source_root = (VOLUME / name for name in (
+        'bootstrap-inputs', 'bootstrap-linux-inputs', 'bootstrap-core', 'bootstrap-source'))
+    source = source_root / 'source'
+    contract.bind_source(B, payload, source, head, manifest_pin)
+    B.need(not B.git(source, 'status', '--porcelain', '--untracked-files=all', '--ignored').strip(),
+           'staged source is not pristine')
+    stage = value(B, source_root / 'stage.json')
+    freeze = value(B, source_root / 'frozen.json')
+    B.need(stage['schema'] == 'gatehouse-bootstrap-source/v1' and stage['state'] == 'staged'
+           and stage['head'] == head and stage['base'] == BASE and stage['helper_manifest_sha256'] == manifest_pin
+           and stage['bundle_sha256'] == digest(payload['source.bundle'])
+           and stage['tree'] == B.git(source, 'rev-parse', 'HEAD^{tree}').decode().strip()
+           and B.canonical(freeze) == B.canonical({'repository': 'musutrade/GateHouse', 'repository_id': 1414069625,
+               'head': head, 'base': BASE, 'bundle_sha256': digest(payload['source.bundle'])})
+           and B.read(source_root / 'candidate.bundle', contract.MAX_BUNDLE) == payload['source.bundle'],
+           'staged source/freeze differs from reviewed release')
+    imported = builder.imported_inputs(B, inputs, input_pin, source, head, BASE, helpers)
+    B.need(imported['helper_revision'] == head and imported['helper_manifest_sha256'] == manifest_pin,
+           'imported inputs belong to another helper release')
+    sealed = sealed_inputs(B, builder, sealed_root, seal_pin, head, manifest_pin, input_pin, inputs)
+    captured = captured_core(B, builder, helpers, source, inputs, core_root, core_pin,
+                             head, manifest_pin, input_pin, host, host_pin)
+    os_pins = {name: digest(builder.host_file(name)) for name in ('/usr/bin/python3.14', '/usr/bin/git')}
+    B.need(all(old['protected_files'][name] == pin for name, pin in os_pins.items()), 'old OS tool pins changed')
+    return imported, sealed, captured, os_pins, stage
+
+
+def candidate(B, policy, contract, payload, old, old_raw, head, archive_pin, manifest_pin,
+              input_pin, seal_pin, core_pin, facts):
+    """Deterministic configuration and receipt from independently authenticated facts."""
+    imported, sealed, captured, os_pins, _ = facts
+    core_root = VOLUME / 'bootstrap-core';destination = VOLUME / 'bootstrap-host-config'
+    config = configuration(B, policy, contract, payload, old, head, archive_pin, manifest_pin,
+                           input_pin, seal_pin, core_pin, imported, sealed, captured, os_pins)
+    verified = runtime_verification(B, payload, config)
+    B.need(B.canonical([verified['linux_inputs']['files'], verified['linux_inputs']['bytes']]) ==
+           B.canonical([sealed['files'], sealed['bytes']]), 'sealed Linux totals differ')
+    status = {'schema': 'gatehouse-linux-host-config/v1', 'state': 'incomplete', 'head': head, 'base': BASE,
+              'helper_manifest_sha256': manifest_pin, 'administrator_ready': False, 'production_gate_enabled': False,
+              'captured_core_policy_checked': False, 'coverage_acceptance': 'transition', 'authoritative_publish': 'blocked'}
+    raw, plan_raw = artifact_bytes(B, contract, payload, config, old, old_raw, captured, core_root, destination, head)
+    result = {**status, 'state': 'composed', 'configuration_sha256': digest(raw), 'plan_sha256': digest(plan_raw),
+        'old_configuration_sha256': digest(old_raw), 'release_sha256': archive_pin,
+        'input_binding_sha256': input_pin, 'linux_role_binding_sha256': seal_pin, 'core_build_record_sha256': core_pin,
+        'runtime_verification': verified, 'execution_pins': len(config['protected_files']),
+        'scope': 'pinned configuration candidate only; no captured-Core policy check, installation or quality acceptance'}
+    return config, verified, status, raw, plan_raw, result
+
+
+def completed(B, builder, destination, existing_pin, status, result, raw, plan_raw):
+    B.owned(destination, directory=True, private=True)
+    modes = {'host.json': 0o600, 'install-plan.json': 0o400, 'binding.json': 0o400, 'compose.json': 0o600}
+    B.need({path.name for path in destination.iterdir()} == modes.keys(), 'composed configuration inventory differs')
+    for name, mode in modes.items():
+        path = B.owned(destination / name, private=True)
+        B.need(stat.S_IMODE(path.stat().st_mode) == mode, 'composed configuration mode differs')
+    saved = builder.json_pin(B, destination / 'binding.json', existing_pin)
+    B.need(B.canonical(saved) == B.canonical(result), 'composed configuration binding differs')
+    B.need(B.canonical(value(B, destination / 'compose.json')) == B.canonical(
+        {**status, 'state': 'composed', 'binding_sha256': existing_pin}), 'configuration has no complete control record')
+    B.need(B.read(destination / 'host.json', 1024**2) == raw
+           and B.read(destination / 'install-plan.json', 1024**2) == plan_raw, 'configuration outputs changed')
+
+
+def retained_configuration(B, keep, preflight, contract, builder, preservation, preservation_pin, head, manifest_pin):
+    saved = keep.verify(B, preservation, preservation_pin)
+    B.need(saved['helper_revision'] == head and saved['helper_manifest_sha256'] == manifest_pin,
+           'preservation belongs to another helper release')
+    raw = B.read(preservation / 'host.json', 1024**2)
+    old, marker, accepted = (json.loads(item, object_pairs_hook=B.unique) for item in (
+        raw, B.read(preservation / 'marker.json', 1024**2), B.read(preservation / 'acceptance.json', 1024**2)))
+    payload = preflight.accepted_release(B, contract)
+    pins = preflight.accepted_pins(B, contract, payload, builder)
+    preflight.configuration(B, old, marker, accepted, pins, contract)
+    database = keep.connect(preservation / 'journal.sqlite3')
+    try:
+        identity, rows = keep.database_identity(B, database)
+        B.need(identity == saved['journal'], 'retained configuration journal changed')
+        run = keep.old_run(B, rows)
+    finally:
+        database.close()
+    inputs = json.loads(run['input'], object_pairs_hook=B.unique)
+    policy = json.dumps(old, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
+    B.need(inputs['policy'] == digest(policy) and inputs['repository'] == preflight.REPOSITORY
+           and type(inputs['repository_id']) is int and inputs['repository_id'] == preflight.REPOSITORY_ID
+           and inputs['base'] == BASE, 'retained accepted configuration identity differs')
+    return raw
+
+
+def verify_prepared(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin, seal_pin, core_pin,
+                    configuration_pin, host, host_pin, recipe, recipe_pin, preservation, preservation_pin, lock_fd):
+    """Internal readonly replay, usable after retirement; not installation admission.
+
+    The caller must continuously hold the original controller lease and separately
+    admit the current installation phase, current journal/base, entry fence, drain,
+    passive Core inspection and retained publication before any mutation. Saved
+    pending journal state is evidence only and is never restored or compared to
+    the deliberately advanced live journal. There is no administrator entry point.
+    """
+    B.need(os.geteuid() == 0, 'administrator authentication required for prepared replay')
+    B.need(os.uname().sysname == 'Linux' and os.uname().machine == 'x86_64', 'unsupported replay platform')
+    B.need(type(lock_fd) is int and lock_fd >= 0, 'prepared replay requires an inherited controller lease')
+    code = B.authenticate(helpers, manifest, manifest_pin);head = code['revision']
+    helpers, manifest, archive, host, recipe, preservation = map(B.path_operand,
+        (helpers, manifest, archive, host, recipe, preservation))
+    builder = B.load(helpers, 'build-protected-core.py');volume = B.load(helpers, 'prepare-linux-volume.py')
+    contract = B.load(helpers, 'bootstrap-release.py');preflight = B.load(helpers, 'preflight-history-pilot.py')
+    policy = B.load(helpers, 'linux-transition-policy.py');keep = B.load(helpers, 'preserve-pilot-state.py')
+    fence = B.load(helpers, 'install-transaction.py')
+    destination = VOLUME / 'bootstrap-host-config'
+    B.need(preservation != VOLUME and VOLUME not in preservation.parents and preservation not in VOLUME.parents,
+           'preservation must remain separate from staging storage')
+
+    def guards():
+        fence.lease(B, lock_fd)
+        builder.worker_identity(B);builder.quiet_units(B);builder.idle(B)
+        return volume.admit(B, helpers, manifest, manifest_pin, recipe, recipe_pin)
+
+    before = guards()
+    old_raw = retained_configuration(B, keep, preflight, contract, builder, preservation,
+                                     preservation_pin, head, manifest_pin)
+    old = json.loads(old_raw, object_pairs_hook=B.unique)
+    contract.inspect(B, helpers, manifest, manifest_pin, archive, archive_pin)
+    archive_raw = B.read(archive, contract.MAX_ARCHIVE)
+    payload, _ = contract.decode(B, io.BytesIO(archive_raw), len(archive_raw), archive_pin, code,
+                                 B.read(manifest, 64 * 1024))
+
+    def facts():
+        return preparation_facts(B, builder, contract, helpers, payload, old, head, manifest_pin,
+                                 input_pin, seal_pin, core_pin, host, host_pin)
+
+    initial = facts()
+    config, verified, status, raw, plan_raw, result = candidate(B, policy, contract, payload, old, old_raw,
+        head, archive_pin, manifest_pin, input_pin, seal_pin, core_pin, initial)
+    completed(B, builder, destination, configuration_pin, status, result, raw, plan_raw)
+    B.need(facts() == initial and runtime_verification(B, payload, config) == verified,
+           'prepared inputs changed during replay')
+    B.need(retained_configuration(B, keep, preflight, contract, builder, preservation,
+        preservation_pin, head, manifest_pin) == old_raw and B.read(archive, contract.MAX_ARCHIVE) == archive_raw,
+        'retained configuration or source release changed during replay')
+    completed(B, builder, destination, configuration_pin, status, result, raw, plan_raw)
+    B.authenticate(helpers, manifest, manifest_pin)
+    B.need(B.canonical(guards()) == B.canonical(before), 'prepared storage changed during replay')
+    return {'schema': 'gatehouse-prepared-configuration-replay/v1', 'state': 'verified', 'head': head,
+        'helper_manifest_sha256': manifest_pin, 'preservation_sha256': preservation_pin,
+        'configuration_binding_sha256': configuration_pin, 'configuration_sha256': result['configuration_sha256'],
+        'plan_sha256': result['plan_sha256'], 'administrator_ready': False, 'production_gate_enabled': False,
+        'installation_admitted': False, 'captured_core_policy_checked': False,
+        'scope': 'immutable prepared configuration only; live phase, retirement, drain and passive inspection admission required'}
+
+
 def compose(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin, seal_pin, core_pin,
             host, host_pin, recipe, recipe_pin, lock_fd=None, *, existing_pin=None):
     B.need(os.geteuid() == 0, 'administrator authentication required for host configuration')
@@ -216,43 +371,11 @@ def compose(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin,
         payload, _ = contract.decode(B, io.BytesIO(archive_raw), len(archive_raw), archive_pin, code,
                                      B.read(manifest, 64 * 1024))
         def facts():
-            contract.bind_source(B, payload, source, head, manifest_pin)
-            B.need(not B.git(source, 'status', '--porcelain', '--untracked-files=all', '--ignored').strip(),
-                   'staged source is not pristine')
-            stage = value(B, source_root / 'stage.json')
-            freeze = value(B, source_root / 'frozen.json')
-            B.need(stage['schema'] == 'gatehouse-bootstrap-source/v1' and stage['state'] == 'staged'
-                   and stage['head'] == head and stage['base'] == BASE and stage['helper_manifest_sha256'] == manifest_pin
-                   and stage['bundle_sha256'] == digest(payload['source.bundle'])
-                   and stage['tree'] == B.git(source, 'rev-parse', 'HEAD^{tree}').decode().strip()
-                   and B.canonical(freeze) == B.canonical({'repository': 'musutrade/GateHouse', 'repository_id': 1414069625,
-                       'head': head, 'base': BASE, 'bundle_sha256': digest(payload['source.bundle'])})
-                   and B.read(source_root / 'candidate.bundle', contract.MAX_BUNDLE) == payload['source.bundle'],
-                   'staged source/freeze differs from reviewed release')
-            imported = builder.imported_inputs(B, inputs, input_pin, source, head, BASE, helpers)
-            B.need(imported['helper_revision'] == head and imported['helper_manifest_sha256'] == manifest_pin,
-                   'imported inputs belong to another helper release')
-            sealed = sealed_inputs(B, builder, sealed_root, seal_pin, head, manifest_pin, input_pin, inputs)
-            captured = captured_core(B, builder, helpers, source, inputs, core_root, core_pin,
-                                     head, manifest_pin, input_pin, host, host_pin)
-            os_pins = {name: digest(builder.host_file(name)) for name in ('/usr/bin/python3.14', '/usr/bin/git')}
-            B.need(all(old['protected_files'][name] == pin for name, pin in os_pins.items()), 'old OS tool pins changed')
-            return imported, sealed, captured, os_pins, stage
-        initial = facts();imported, sealed, captured, os_pins, _ = initial
-        config = configuration(B, policy, contract, payload, old, head, archive_pin, manifest_pin,
-                               input_pin, seal_pin, core_pin, imported, sealed, captured, os_pins)
-        verified = runtime_verification(B, payload, config)
-        B.need(B.canonical([verified['linux_inputs']['files'], verified['linux_inputs']['bytes']]) ==
-               B.canonical([sealed['files'], sealed['bytes']]), 'sealed Linux totals differ')
-        status = {'schema': 'gatehouse-linux-host-config/v1', 'state': 'incomplete', 'head': head, 'base': BASE,
-                  'helper_manifest_sha256': manifest_pin, 'administrator_ready': False, 'production_gate_enabled': False,
-                  'captured_core_policy_checked': False, 'coverage_acceptance': 'transition', 'authoritative_publish': 'blocked'}
-        raw, plan_raw = artifact_bytes(B, contract, payload, config, old, old_raw, captured, core_root, destination, head)
-        result = {**status, 'state': 'composed', 'configuration_sha256': digest(raw), 'plan_sha256': digest(plan_raw),
-            'old_configuration_sha256': digest(old_raw), 'release_sha256': archive_pin,
-            'input_binding_sha256': input_pin, 'linux_role_binding_sha256': seal_pin, 'core_build_record_sha256': core_pin,
-            'runtime_verification': verified, 'execution_pins': len(config['protected_files']),
-            'scope': 'pinned configuration candidate only; no captured-Core policy check, installation or quality acceptance'}
+            return preparation_facts(B, builder, contract, helpers, payload, old, head, manifest_pin,
+                                     input_pin, seal_pin, core_pin, host, host_pin)
+        initial = facts()
+        config, verified, status, raw, plan_raw, result = candidate(B, policy, contract, payload, old, old_raw,
+            head, archive_pin, manifest_pin, input_pin, seal_pin, core_pin, initial)
         def recheck():
             B.need(facts() == initial and runtime_verification(B, payload, config) == verified
                    and B.read(CONFIG, 1024**2) == old_raw and B.read(archive, contract.MAX_ARCHIVE) == archive_raw
@@ -262,13 +385,7 @@ def compose(B, helpers, manifest, manifest_pin, archive, archive_pin, input_pin,
             B.authenticate(helpers, manifest, manifest_pin)
             B.need(guards() == before, 'old pilot changed during configuration')
         if existing_pin is not None:
-            for name, mode in (('host.json', 0o600), ('install-plan.json', 0o400), ('binding.json', 0o400), ('compose.json', 0o600)):
-                path = B.owned(destination / name, private=True)
-                B.need(stat.S_IMODE(path.stat().st_mode) == mode, 'composed configuration mode differs')
-            saved = builder.json_pin(B, B.owned(destination / 'binding.json', private=True), existing_pin)
-            B.need(B.canonical(saved) == B.canonical(result), 'composed configuration binding differs')
-            B.need(B.canonical(value(B, destination / 'compose.json')) == B.canonical(
-                {**status, 'state': 'composed', 'binding_sha256': existing_pin}), 'configuration has no complete control record')
+            completed(B, builder, destination, existing_pin, status, result, raw, plan_raw)
             recheck()
             return result
         destination.mkdir(mode=0o700)

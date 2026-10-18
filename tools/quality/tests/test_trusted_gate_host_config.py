@@ -102,7 +102,7 @@ class HostConfigurationTests(unittest.TestCase):
         self.B.load=lambda helpers,name:{'build-protected-core.py':self.builder,'prepare-linux-volume.py':self.storage,
             'bootstrap-release.py':self.contract,'preflight-history-pilot.py':self.preflight,'linux-transition-policy.py':R.LINUX}[name]
         self.config_path=self.root/'host.json'
-        self.old={'records':str(self.control),'inbox':'/srv/gatehouse/pilot/inbox','app_id':4867361,
+        self.old={'records':str(self.control),'inbox':str(self.control.parent/'inbox'),'app_id':4867361,
             'delivery':{'app_id':5069731,'installation_id':164696480,'app_key':'/etc/gatehouse/delivery.private-key.pem'},
             'coverage_acceptance':'transition','protected_files':{'/opt/gatehouse/bin/harness-gate':'d'*64,
                 **{name:C.digest(raw) for name,raw in self.os_files.items()}},
@@ -127,7 +127,7 @@ class HostConfigurationTests(unittest.TestCase):
         return C.digest(path.read_bytes())
 
     def compose(self,**options):
-        with patch.multiple(C,VOLUME=self.volume,CONTROL=self.control,CONFIG=self.config_path), \
+        with patch.multiple(C,VOLUME=self.volume,CONTROL=self.control,INBOX=self.control.parent/'inbox',CONFIG=self.config_path), \
              patch.object(C.os,'geteuid',return_value=0):
             return C.compose(self.B,self.root/'helpers',self.manifest,'a'*64,self.archive,C.digest(self.archive.read_bytes()),
                 'b'*64,self.seal_pin,self.core_pin,self.root/'host-recipe','c'*64,self.root/'volume-recipe','d'*64,**options)

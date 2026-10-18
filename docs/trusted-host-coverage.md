@@ -1266,9 +1266,40 @@ parentheses demonstrated why naive whitespace indexing is unsafe. It did not
 scan Root processes or prove host quiescence. Twenty-eight new regressions bring
 the focused suite to 466 tests, including parser/classification/race/budget/namespace
 and authenticated observation cases plus two read-only fence checks. Root/kernel
-admission is explicitly replaced in fixtures. The current source-only release
+admission is explicitly replaced in fixtures. That source-only release
 has twenty-two helpers and 74 members, no Core binary, and no administrator-ready
 installer. Installed 659 and the remaining issue-98 acceptance are unchanged.
+
+The internal `compose-linux-host.py` prepared replay rechecks completed materials
+without replaying the live fixed-659 preflight. That preflight requires the old
+installed files and pending source slot; it cannot admit recovery after the
+coordinator has deliberately fenced entries, revoked the run or retired its source.
+The original composition path retains those live guards. Both paths now share
+the same source, imported-tool/dependency, sealed-data, captured-Core, runtime and
+deterministic configuration/27-file plan verification.
+
+Prepared replay requires an inherited original controller lease, authenticated
+helper closure and separate admitted staging storage, with worker identity and
+stopped/idle checks. It authenticates the externally pinned complete preservation,
+including sealed raw failures and the self-contained SQLite backup. Saved host
+configuration must match the authenticated accepted-659 release pins, App/storage
+identity, acceptance report and saved run policy digest. It rechecks these facts
+and all completed configuration outputs before returning; extra output files,
+incomplete control records, altered bytes/modes or authority flags reject replay.
+The current journal, installed configuration and retired old source are not read
+or restored by this operation. The retained pending journal is historical evidence;
+the coordinator must separately verify the live journal's forward transitions.
+
+The returned result explicitly keeps installation admission, captured-Core policy
+acceptance, administrator readiness and production false. It does not authorize
+revocation, file replacement, activation, quality publication or a rollback. Current
+base, current phase/entries, controller drain, completed passive inspection and
+retained publication still require independent admission. No administrator CLI is
+added. Twenty-one new ordinary-fixture regressions exercise real retained trees,
+SQLite state, accepted configuration semantics and runtime hashes, including a
+revoked live journal and missing old source while the pinned historical snapshot
+remains pending. Root/release/mount/worker boundaries are replaced in these tests;
+they do not constitute a live installation or actual-995 workload acceptance.
 
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,

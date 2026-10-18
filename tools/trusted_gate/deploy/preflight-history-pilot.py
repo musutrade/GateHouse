@@ -88,8 +88,19 @@ def accepted_release(B, contract):
     return payload
 
 
+def accepted_pins(B, contract, payload, builder):
+    """Expected pins from the authenticated old release, independent of installed paths."""
+    pins = {destination: digest(payload[member_name(destination)])
+            for destination, mode, action in contract.old_source_map().values()
+            if destination.startswith(('/opt/gatehouse/', '/etc/gatehouse/policy/'))}
+    pins['/opt/gatehouse/bin/harness-gate'] = digest(payload['bin/harness-gate'])
+    for path in ('/usr/bin/python3.14', '/usr/bin/git'):
+        pins[path] = digest(builder.host_file(path))
+    return pins
+
+
 def installed(B, contract, payload, builder):
-    expected, pins = {}, {}
+    expected = {}
     for source, (destination, mode, action) in contract.old_source_map().items():
         expected[destination] = (payload[member_name(destination)], mode)
     expected['/opt/gatehouse/bin/harness-gate'] = (payload['bin/harness-gate'], 0o755)
@@ -98,8 +109,6 @@ def installed(B, contract, payload, builder):
         path = B.owned(destination)
         B.need(stat.S_IMODE(path.stat().st_mode) == mode and B.read(path, 128 * 1024**2) == raw,
                'installed accepted input differs')
-        if destination.startswith(('/opt/gatehouse/', '/etc/gatehouse/policy/')):
-            pins[destination] = digest(raw)
     # Never import these files or their bytecode. Root-generated caches are data
     # here; unknown modules, unsafe cache types and delegated writes still block.
     modules = B.owned('/opt/gatehouse/trusted_gate', directory=True)
@@ -119,9 +128,7 @@ def installed(B, contract, payload, builder):
                               ('/etc/gatehouse/policy', {'flow.toml', 'audit.toml', 'secrets.toml', 'gatehouse-step'})):
         B.need({p.name for p in B.owned(directory, directory=True).iterdir()} == names,
                'installed code/policy inventory differs')
-    for path in ('/usr/bin/python3.14', '/usr/bin/git'):
-        pins[path] = digest(builder.host_file(path))
-    return pins
+    return accepted_pins(B, contract, payload, builder)
 
 
 def accounts(B):
