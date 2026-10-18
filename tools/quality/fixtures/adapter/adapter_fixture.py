@@ -46,6 +46,11 @@ def main() -> int:
             sort_keys=True,
         )
     )
+    if mode == "linger":
+        # Keep the leader alive after a fully valid response and artifact, so
+        # the host can observe cancellation with completed evidence.
+        sys.stdout.flush()
+        time.sleep(1.5)
     return 0
 
 

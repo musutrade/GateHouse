@@ -474,7 +474,15 @@ mod tests {
                 super::isolate_process_tree(&mut command);
                 let mut child = command.spawn().unwrap();
                 if finished {
-                    assert!(child.wait().unwrap().success());
+                    // Observe the natural exit without reaping it: the wait
+                    // boundary exclusively owns both group cleanup and reap,
+                    // so an external reap before the boundary is a violation
+                    // of ownership, not a cached success.
+                    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+                    while !crate::process::command::observe_exit(&child).unwrap() {
+                        assert!(std::time::Instant::now() < deadline, "child did not finish");
+                        std::thread::sleep(Duration::from_millis(10));
+                    }
                 }
                 let stdout_overflow = AtomicBool::new(stdout);
                 let stderr_overflow = AtomicBool::new(!stdout);
