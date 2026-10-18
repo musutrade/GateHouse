@@ -178,8 +178,10 @@ class TopologyTests(unittest.TestCase):
                     self.assertNotIn('continue-on-error:', body)
         native = jobs['test-cross-platform']
         self.assertIn('fail-fast: false', native)
-        self.assertIn('run: cargo nextest run --manifest-path tools/harness-gate/Cargo.toml '
-                      '--locked --no-fail-fast', native)
+        self.assertIn('shell: bash', native)
+        self.assertIn('cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked \\', native)
+        self.assertIn('--no-fail-fast --partition "count:${CI_SHARD}/${CI_PARTITIONS}"', native)
+        self.assertIn('-E "$extra"', native)
         native_steps = native.split('    steps:\n', 1)[1]
         self.assertNotRegex(native_steps, re.compile(r'^\s+if:', re.M),
                             msg='native test steps cannot be conditional within the job')
@@ -218,12 +220,19 @@ class SupplementalCadenceTests(unittest.TestCase):
         previous = json.loads((ROOT / 'tools/quality/fixtures/ci-topology-pre-cadence.json').read_text())
         self.assertEqual(set(previous['jobs']) - set(CONTRACT['jobs']), {'coverage', 'quality-baseline'})
         added = set(CONTRACT['jobs']) - set(previous['jobs'])
-        # The only post-cadence additions are the three split-collection shards.
-        self.assertEqual(added, {'quality-fast', 'quality-risk', 'quality-matrix'})
+        # Post-cadence additions are the split-collection and archive-backed
+        # fast-coverage workers.
+        self.assertEqual(added, {'quality-fast', 'quality-fast-build',
+                                 'quality-fast-shard', 'quality-risk', 'quality-matrix'})
         for name in sorted(added):
             row = CONTRACT['jobs'][name]
             self.assertEqual(row['required_events'], [], name)
-            self.assertEqual(row['needs'], ['classify'], name)
+            expected_needs = (['classify', 'quality-fast-build']
+                              if name == 'quality-fast-shard'
+                              else ['classify', 'quality-fast-build', 'quality-fast-shard']
+                              if name == 'quality-fast'
+                              else ['classify'])
+            self.assertEqual(row['needs'], expected_needs, name)
             self.assertEqual(row['runner_labels'], ['ubuntu-latest'], name)
             self.assertEqual(row['events'], ['pull_request', 'push'], name)
             self.assertEqual(row['condition'],
@@ -249,6 +258,12 @@ class SupplementalCadenceTests(unittest.TestCase):
                     "needs.classify.outputs.run_full == 'true'",
                     "needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_native != 'false'").replace(
                     "github.event_name == 'push'", "github.event_name != 'pull_request'")
+            if name in ('test', 'test-cross-platform'):
+                # Matrix shards retain the original shard 1 check names while
+                # additional shards get explicit suffixed display names.
+                expected['name'] = row['name']
+                expected['check_names'] = row['check_names']
+                expected['outcome'] = row['outcome']
             self.assertEqual(row, expected)
         self.assertEqual(set(previous['jobs']['quality-required']['needs']) -
                          set(CONTRACT['jobs']['quality-required']['needs']),

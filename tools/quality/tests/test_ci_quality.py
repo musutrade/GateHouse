@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+import xml.etree.ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import ci_quality as gate
@@ -364,7 +365,10 @@ class AggregateTests(unittest.TestCase):
             with self.subTest(shard=name):
                 self.assertNotIn("github.event_name == 'push'", body)
                 self.assertIn('fetch-depth: 0', body)
-                self.assertIn('ci_quality.py collect', body)
+                if name == 'quality-fast':
+                    self.assertIn('ci_quality.py assemble-fast-coverage', body)
+                else:
+                    self.assertIn('ci_quality.py collect', body)
         job = workflow.split('  quality-coverage:\n')[1].split('  quality-generic-shadow:\n')[0]
         self.assertIn('needs: [classify, quality-fast, quality-risk, quality-matrix]', job)
         self.assertIn('ci_quality.py verify', job)
@@ -451,6 +455,377 @@ class CandidateTests(unittest.TestCase):
         self.report['artifacts'] = original | {'../foreign.json': 'digest'}
         with self.assertRaises(ValueError):
             self.verify()
+
+
+class RiskAssemblyTests(unittest.TestCase):
+    TOOLS = {tool: f'{tool} version-fixture' for tool in ('rustc', 'cargo', 'nextest', 'llvm-cov')}
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.side_count = 0
+
+    def identity_json(self, digest='0' * 64):
+        return json.dumps({'schema': 1, 'tools': self.TOOLS, 'configuration_sha256': digest})
+
+    def side(self, name, *, base='b' * 40, head='a' * 40, run_id='risk-run',
+             measurer=None, tool=None):
+        self.side_count += 1
+        directory = self.root / f'candidate-{name}-{self.side_count}'
+        directory.mkdir(parents=True)
+        files = {relative: f'{name}:{relative}' for relative in gate.RISK_SIDE_ARTIFACTS[name]}
+        # Shared immutable payloads deduplicate; changing telemetry is namespaced.
+        files['measurer/asset.bin'] = 'same pinned asset'
+        files['measurer-download.log'] = f'{name}: download progress'
+        artifacts = {}
+        for relative, content in files.items():
+            path = directory / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content)
+            artifacts[relative] = sha256(path)
+        report = {'schema_version': 1, 'candidate': True, 'base_sha': base, 'commit': head,
+                  'run_id': run_id,
+                  'stages': {'risk': {'status': 'success', 'side': name, 'seconds': 10.0}},
+                  'commands': [{'name': f'{name}-cmd'}], 'artifacts': artifacts,
+                  'measurer': measurer or {'sha256': '1' * 64}}
+        (directory / 'candidate.json').write_text(json.dumps(report))
+        (directory / gate.SHARD_TOOL_IDENTITY).write_text(tool or self.identity_json())
+        return directory
+
+    def compare(self, command, **kwargs):
+        output = Path(command[command.index('--output') + 1])
+        output.write_text(json.dumps({'identities': ['base', 'head'], 'failures': []}))
+        return subprocess.CompletedProcess(command, 0)
+
+    def assemble(self, base, head, *, run=None):
+        with patch.object(gate, 'metadata', return_value={}), \
+                patch.object(gate.subprocess, 'run', side_effect=run or self.compare):
+            return gate.assemble_risk(base, head, self.root / 'candidate-risk')
+
+    def test_two_workers_assemble_one_risk_shard_without_overwriting_telemetry(self):
+        base = self.side('base')
+        head = self.side('head')
+        assembled = self.assemble(base, head)
+
+        self.assertEqual(set(assembled['stages']), {'risk'})
+        self.assertEqual(assembled['stages']['risk']['workers'], 2)
+        self.assertEqual(assembled['stages']['risk']['side_seconds'], {'base': 10.0, 'head': 10.0})
+        self.assertTrue(gate.RISK_REQUIRED_ARTIFACTS <= assembled['artifacts'].keys())
+        output = self.root / 'candidate-risk'
+        for relative, digest in assembled['artifacts'].items():
+            self.assertEqual(sha256(output / relative), digest)
+        self.assertEqual((output / 'shared/base/measurer-download.log').read_text(),
+                         'base: download progress')
+        self.assertEqual((output / 'shared/head/measurer-download.log').read_text(),
+                         'head: download progress')
+        self.assertTrue((output / 'measurer/asset.bin').is_file())
+        self.assertFalse((output / 'measurer-download.log').exists())
+        self.assertTrue((output / gate.SHARD_TOOL_IDENTITY).is_file())
+        self.assertTrue((output / 'risk.md').is_file())
+
+    def test_side_identity_evidence_and_tool_boundaries_fail_closed(self):
+        mutations = {}
+        base = self.side('base')
+        head = self.side('head')
+        report = json.loads((base / 'candidate.json').read_text())
+        report['stages']['risk']['side'] = 'head'
+        (base / 'candidate.json').write_text(json.dumps(report))
+        mutations['wrong-side'] = (base, head)
+
+        base = self.side('base')
+        head = self.side('head')
+        head_report = json.loads((head / 'candidate.json').read_text())
+        head_report['base_sha'] = 'c' * 40
+        (head / 'candidate.json').write_text(json.dumps(head_report))
+        mutations['identity'] = (base, head)
+
+        base = self.side('base')
+        head = self.side('head')
+        report = json.loads((base / 'candidate.json').read_text())
+        del report['artifacts']['base-risk.json']
+        (base / 'candidate.json').write_text(json.dumps(report))
+        mutations['missing-required'] = (base, head)
+
+        base = self.side('base')
+        head = self.side('head')
+        (base / 'base-risk.json').write_text('tampered')
+        mutations['tampered'] = (base, head)
+
+        base = self.side('base')
+        head = self.side('head', tool=self.identity_json('2' * 64))
+        mutations['tool'] = (base, head)
+
+        base = self.side('base')
+        head = self.side('head', measurer={'sha256': '2' * 64})
+        mutations['measurer'] = (base, head)
+
+        base = self.side('base')
+        head = self.side('head')
+        report = json.loads((base / 'candidate.json').read_text())
+        (base / 'risk.json').write_text('preclaimed comparison')
+        report['artifacts']['risk.json'] = sha256(base / 'risk.json')
+        (base / 'candidate.json').write_text(json.dumps(report))
+        mutations['preclaimed-comparison'] = (base, head)
+
+        for label, (base_candidate, head_candidate) in mutations.items():
+            with self.subTest(case=label):
+                with self.assertRaises(ValueError):
+                    self.assemble(base_candidate, head_candidate)
+
+    def test_comparison_failure_does_not_publish_a_candidate(self):
+        base = self.side('base')
+        head = self.side('head')
+
+        def failed(command, **kwargs):
+            return subprocess.CompletedProcess(command, 1)
+
+        with self.assertRaisesRegex(ValueError, 'risk comparison exited 1'):
+            self.assemble(base, head, run=failed)
+        output = self.root / 'candidate-risk'
+        self.assertTrue((output / 'risk-compare.log').is_file())
+        self.assertFalse((output / 'candidate.json').exists())
+
+    def test_risk_side_collection_never_compares_or_collects_the_other_commit(self):
+        collector = object.__new__(gate.Collector)
+        collector.report = {'base_sha': 'b' * 40, 'commit': 'a' * 40}
+        with patch.object(collector, '_validate_risk_scope') as scope, \
+                patch.object(collector, 'measurer', return_value=Path('binary')), \
+                patch.object(collector, 'snapshot', return_value=Path('snapshot')) as snapshot, \
+                patch.object(collector, '_collect_commit_coverage') as collect, \
+                patch.object(collector, '_compare_risk') as compare, \
+                patch.object(gate, 'compiler_configuration', return_value={'target': 'x86_64'}):
+            collector._risk_side('base')
+        scope.assert_called_once_with('b' * 40, 'a' * 40)
+        snapshot.assert_called_once_with('base', 'b' * 40)
+        self.assertEqual(collect.call_args.args[:2], ('base', 'b' * 40))
+        compare.assert_not_called()
+
+
+class RiskShardTests(unittest.TestCase):
+    def test_partition_artifacts_merge_with_exact_coverage_semantics(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            first = root / 'first.lcov'
+            second = root / 'second.lcov'
+            first.write_text('SF:a.rs\nFN:1,f\nFNDA:1,f\nDA:1,1\nDA:2,0\nLF:2\nLH:1\nend_of_record\n')
+            second.write_text('SF:a.rs\nFN:1,f\nFNDA:2,f\nDA:1,2\nDA:2,3\nLF:2\nLH:2\nend_of_record\n')
+            merged = gate._merge_lcov_files([first, second])
+            self.assertIn('FNDA:3,f', merged)
+            self.assertIn('DA:1,3', merged)
+            self.assertIn('DA:2,3', merged)
+            self.assertIn('LF:2', merged)
+            self.assertIn('LH:2', merged)
+
+            def cobertura(name):
+                path = root / name
+                hits = 1 if name == 'one.xml' else 2
+                path.write_text(
+                    '<coverage line-rate="0" branches-covered="0" branches-valid="0" version="2.0.3">'
+                    '<sources><source>/tmp</source></sources><packages>'
+                    '<package name="src" line-rate="0" branch-rate="0" complexity="0"><classes>'
+                    '<class filename="a.rs" name="a.rs" line-rate="0" branch-rate="0" complexity="0">'
+                    '<methods><method name="f" signature="" line-rate="0" branch-rate="0" complexity="0">'
+                    f'<lines><line hits="{hits}" number="1" branch="false"/></lines></method></methods>'
+                    f'<lines><line hits="{hits}" number="1" branch="false"/></lines></class>'
+                    '</classes></package></packages></coverage>')
+                return path
+            merged_xml = gate._merge_cobertura_files([cobertura('one.xml'), cobertura('two.xml')])
+            tree = ET.fromstring(merged_xml.split('\n', 2)[2])
+            self.assertEqual(tree.find('.//class/lines/line').get('hits'), '3')
+            self.assertEqual(tree.find('.//class/methods/method/lines/line').get('hits'), '3')
+            self.assertEqual(tree.get('lines-covered'), '1')
+
+            def coverage(path, count):
+                path.write_text(json.dumps({
+                    'type': 'llvm.coverage.json.export', 'version': '3.1.0',
+                    'data': [{'files': [], 'totals': {}, 'functions': [{
+                        'name': 'f', 'filenames': ['/tmp/a.rs'], 'count': count,
+                        'branches': [], 'mcdc_records': [],
+                        'regions': [[1, 1, 1, 8, count, 0, 1, 0]],
+                    }]}]}))
+                return path
+            merged_coverage = gate._merge_llvm_coverage_files([
+                coverage(root / 'one.json', 2), coverage(root / 'two.json', 3)])
+            function = merged_coverage['data'][0]['functions'][0]
+            self.assertEqual(function['count'], 5)
+            self.assertEqual(function['regions'][0][4], 5)
+
+    def side_candidate(self, root, run, side, shard):
+        directory = root / f'quality-artifacts-risk-{side}-{shard}-{run}'
+        directory.mkdir()
+        manifest = json.dumps({'files': {}, 'absent_sources': []})
+        contents = {
+            f'{side}-manifest.json': manifest,
+            f'{side}-source.tar': 'source archive',
+            f'{side}-coverage-{shard}.json': json.dumps({
+                'type': 'llvm.coverage.json.export', 'version': '3.1.0',
+                'data': [{'files': [], 'totals': {}, 'functions': [{
+                    'name': 'f', 'filenames': ['/tmp/a.rs'], 'count': shard,
+                    'branches': [], 'mcdc_records': [],
+                    'regions': [[1, 1, 1, 8, shard, 0, 1, 0]],
+                }]}]}),
+            f'{side}-coverage-{shard}.lcov':
+                f'SF:a.rs\nFN:1,f\nFNDA:{shard},f\nDA:1,{shard}\nLF:1\nLH:1\nend_of_record\n',
+            f'{side}-coverage-{shard}.cobertura.xml':
+                f'<coverage version="2.0.3"><sources><source>/tmp</source></sources>'
+                f'<packages><package name="src"><classes><class filename="a.rs" name="a.rs">'
+                f'<lines><line hits="{shard}" number="1" branch="false"/></lines>'
+                f'</class></classes></package></packages></coverage>',
+        }
+        for relative, content in contents.items():
+            (directory / relative).write_text(content)
+        row = {
+            'source': 'a.rs', 'kind': 'function', 'name': 'f', 'span': [1, 1, 1, 8],
+            'syntax_sha256': 'a' * 64, 'source_sha256': 'b' * 64, 'cc': 1,
+            'selected': True, 'instances': [{'index': 0, 'name': 'mangled', 'count': shard}],
+            'raw_regions': [{'span': [1, 1, 1, 8], 'kind': 0, 'count': shard}],
+            'line_hits': [[1, shard]], 'lines': {'covered': 0, 'count': 1},
+            'regions': {'covered': 0, 'count': 1}, 'crap_line': 0.0,
+            'crap_exact': [0, 1], 'passed': False, 'raw': {},
+        }
+        risk = {
+            'series': {'identity': 'fixture'}, 'configuration': {'target': 'fixture'},
+            'tools': {'fixture': True}, 'source_inventory': {'a.rs': 'b' * 64},
+            'manifest_sha256': gate.sha256(directory / f'{side}-manifest.json'),
+            'llvm_sha256': gate.sha256(directory / f'{side}-coverage-{shard}.json'),
+            'functions': [row], 'selected_failures': [], 'nonselected_debt': [],
+        }
+        (directory / f'{side}-risk-{shard}.json').write_text(json.dumps(risk))
+        artifacts = {path.name: gate.sha256(path) for path in directory.iterdir()}
+        report = {'schema_version': 1, 'candidate': True,
+                  'base_sha': 'b' * 40, 'commit': 'a' * 40, 'run_id': run,
+                  'stages': {'risk': {'status': 'success', 'side': side, 'shard': shard,
+                                      'partitions': 2, 'seconds': 10.0}},
+                  'commands': [{'name': f'{side}-{shard}'}],
+                  'artifacts': artifacts, 'measurer': {'sha256': '1' * 64}}
+        (directory / 'candidate.json').write_text(json.dumps(report))
+        (directory / 'tool-identity.json').write_text(json.dumps({
+            'schema': 1, 'tools': {tool: 'fixture' for tool in
+                                   ('rustc', 'cargo', 'nextest', 'llvm-cov')},
+            'configuration_sha256': '0' * 64}))
+        return directory
+
+    def test_risk_shard_collection_records_partition_identity_without_full_compare(self):
+        collector = object.__new__(gate.Collector)
+        collector.report = {'base_sha': 'b' * 40, 'commit': 'a' * 40, 'stages': {}}
+        collector.directory = Path('/tmp/test-risk-shard')
+        with patch.object(collector, 'save'), \
+                patch.object(collector, '_validate_risk_scope') as scope, \
+                patch.object(collector, 'measurer', return_value=Path('binary')), \
+                patch.object(collector, 'snapshot', return_value=Path('snapshot')) as snapshot, \
+                patch.object(collector, '_collect_commit_coverage_shard') as collect, \
+                patch.object(collector, '_record_artifacts'), \
+                patch.object(gate, 'compiler_configuration', return_value={'target': 'x86_64'}), \
+                patch.object(gate, 'git_sha', return_value='a' * 40), \
+                patch.object(gate, 'require_committed_sources'):
+            collector.collect_risk_shard(
+                'head', 2, 2, excluded_tests='test(slow)', extra_tests='test(extra)')
+        scope.assert_called_once_with('b' * 40, 'a' * 40)
+        snapshot.assert_called_once_with('head', 'a' * 40)
+        self.assertEqual(collect.call_args.args[:2], ('head', 'a' * 40))
+        self.assertEqual(collect.call_args.args[5:7], (2, 2))
+        self.assertEqual(collect.call_args.kwargs,
+                         {'excluded_tests': 'test(slow)', 'extra_tests': 'test(extra)'})
+        self.assertEqual(collector.report['stages']['risk']['side'], 'head')
+        self.assertEqual(collector.report['stages']['risk']['shard'], 2)
+        self.assertEqual(collector.report['stages']['risk']['partitions'], 2)
+
+    def test_risk_partition_filters_precede_one_final_report(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            collector = object.__new__(gate.Collector)
+            collector.directory = Path(temporary)
+            coverage = collector.directory / 'head-coverage-1.json'
+            coverage.write_text('{}')
+            manifest = collector.directory / 'head-manifest.json'
+            manifest.write_text(json.dumps({'files': {}, 'absent_sources': []}))
+            risk = collector.directory / 'head-risk-1.json'
+            risk.write_text(json.dumps({
+                'manifest_sha256': gate.sha256(manifest),
+                'llvm_sha256': gate.sha256(coverage),
+            }))
+            commands = []
+            with patch.object(collector, 'python'), \
+                    patch.object(collector, 'command',
+                                 side_effect=lambda name, argv, **kwargs: commands.append((name, argv))):
+                collector._collect_commit_coverage_shard(
+                    'head', 'a' * 40, Path('snapshot'), Path('binary'), 'x86_64', 1, 2,
+                    excluded_tests='test(slow) | test(other)', extra_tests='test(extra)')
+        self.assertEqual([name for name, _ in commands],
+                         ['head-coverage-1', 'head-coverage-extra-1', 'head-coverage-json-1',
+                          'head-lcov-1', 'head-cobertura.xml-1'])
+        partition = commands[0][1]
+        self.assertIn('--no-report', partition)
+        self.assertEqual(partition[-2:], ['-E', 'not (test(slow) | test(other))'])
+        self.assertIn('-E', commands[1][1])
+        self.assertIn('--json', commands[2][1])
+        self.assertIn('--output-path', commands[2][1])
+
+    def test_shard_assembly_discovers_and_merges_both_sides_before_risk_assembly(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            run = 'run-1'
+            for side in ('base', 'head'):
+                for shard in (1, 2):
+                    self.side_candidate(root, run, side, shard)
+            checked = {}
+
+            def fake_assemble(base, head, output):
+                checked['base'] = json.loads((base / 'base-risk.json').read_text())
+                checked['head'] = json.loads((head / 'head-risk.json').read_text())
+                return {'assembled': True}
+
+            with patch.object(gate, 'metadata', return_value={'fixture': True}), \
+                    patch.object(gate, 'assemble_risk', side_effect=fake_assemble):
+                result = gate.assemble_risk_shards(root, root / 'candidate-risk')
+            self.assertEqual(result, {'assembled': True})
+            self.assertEqual({k: checked['base']['functions'][0]['lines'][k] for k in ('covered', 'count')},
+                             {'covered': 1, 'count': 1})
+            self.assertEqual(checked['base']['functions'][0]['instances'][0]['count'], 3)
+            self.assertEqual({k: checked['head']['functions'][0]['regions'][k] for k in ('covered', 'count')},
+                             {'covered': 1, 'count': 1})
+
+
+
+class FastCoverageAssemblyTests(unittest.TestCase):
+    def test_archive_metadata_maps_to_extracted_debug_objects(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            target = root / 'target'
+            debug = root / 'debug'
+            (target / 'nextest').mkdir(parents=True)
+            (debug / 'deps').mkdir(parents=True)
+            (debug / 'harness-gate').write_text('main')
+            first = debug / 'deps' / 'one-test'
+            first.write_text('one')
+            second = debug / 'deps' / 'two-test'
+            second.write_text('two')
+            (target / 'nextest' / 'binaries-metadata.json').write_text(json.dumps({
+                'rust-binaries': {
+                    'one': {'binary-path': '/build/target/debug/deps/one-test'},
+                    'two': {'binary-path': '/build/target/debug/deps/two-test'},
+                    'missing': {'binary-path': '/build/target/debug/deps/missing-test'},
+                }
+            }))
+            self.assertEqual(gate._fast_archive_objects(target, debug),
+                             [first, second, debug / 'harness-gate'])
+
+    def test_lcov_to_cobertura_preserves_relative_line_hits(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            lcov = root / 'coverage.lcov'
+            lcov.write_text(
+                'SF:/repo/tools/harness-gate/src/verify/report.rs\n'
+                'DA:4,0\nDA:5,7\nend_of_record\n')
+            xml = gate._lcov_to_cobertura(lcov, Path('/repo/tools/harness-gate'))
+        parsed = gate.ET.fromstring(xml)
+        self.assertEqual(parsed.attrib['lines-valid'], '2')
+        self.assertEqual(parsed.attrib['lines-covered'], '1')
+        klass = parsed.find('.//class')
+        self.assertEqual(klass.attrib['filename'], 'src/verify/report.rs')
+        self.assertEqual([(line.attrib['number'], line.attrib['hits'])
+                          for line in klass.findall('./lines/line')],
+                         [('4', '0'), ('5', '7')])
 
 
 class MergeTests(unittest.TestCase):

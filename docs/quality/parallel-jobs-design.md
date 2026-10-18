@@ -110,3 +110,294 @@ merge 作业保留显示名 `Quality Coverage and Critical Paths`，因为：
 ## 回滚
 
 单次 `git revert` 恢复单作业拓扑；分片与 merge 相互独立，无数据迁移。
+
+## 2026-10-17 进一步拆分：Risk base/head 独立 runner
+
+分片并行后，最新一次完整 PR 运行（run `39038404664`）的必需检查关键路径为：
+
+| 阶段 | 墙钟 |
+| --- | ---: |
+| Classify | 7s |
+| Quality Risk Stage | 412s |
+| Quality Coverage merge/verify/seal | 25s |
+| Required Quality Aggregate | 7s |
+| **必需检查合计（创建→aggregate 完成）** | **457s** |
+
+其中 Risk 的 `Collect risk stage` 为 377s，base/head 两条 coverage 命令在同一台 2 核
+runner 上并行时分别耗时 334.6s / 331.4s；其余 setup、cache restore、工具安装与 artifact
+上传约 35s。同一 runner 上两个 instrumented build 仍会争抢 CPU，因此风险阶段继续是
+必需检查关键路径。
+
+新拓扑不改变四阶段证据合同，只把 Risk 采集再拆成两个独立 worker：
+
+```
+quality-risk (matrix.side=base) ─┐
+quality-fast                    ─┼─> quality-coverage (assemble risk -> merge -> verify -> seal)
+quality-risk (matrix.side=head) ─┤
+quality-matrix                  ─┘
+```
+
+- 两个 worker 分别执行 `ci_quality.py collect-risk-side --side base|head`，只采集自己一侧；
+- 每个 worker 上传 `quality-artifacts-risk-<side>-<run>-<attempt>`；
+- `quality-coverage` 先执行 `ci_quality.py assemble-risk`，验证两侧 candidate、side identity、
+  artifact digest、tool identity 与 measurer pin，然后运行原有 risk compare；
+- assemble 后再走原有 fast/risk/matrix 三 shard `merge`、`verify` 和 `seal`，最终证据
+  schema、显示名和必需检查名称不变；
+- 两侧共有的下载/安装 telemetry 若字节相同只保留一份；若因耗时等正常原因不同，则分别
+  命名到 `shared/base/` 与 `shared/head/`，不会静默覆盖。
+
+这会增加一台 runner 的分钟数，用并发换墙钟。首个 hosted run 必须先验证两侧工具身份一致、
+artifact 完整、Risk 比较通过且无 OOM；在拿到该运行数据前，不把预期收益写成已实现收益。
+
+## 2026-10-17 Cross-platform 测试分片
+
+Risk 拆分后，最新观测的 macOS 测试会成为新的潜在关键路径：
+
+| Job | 总墙钟 | 编译 | 运行测试 |
+| --- | ---: | ---: | ---: |
+| Test (macos-latest) | 313s | 73s | 214s / 710 tests |
+| Test (windows-latest) | 266s | 78s | 132s / 562 tests |
+
+因此 `test-cross-platform` 在原有 OS matrix 上增加 shard：macOS 2 个 worker，
+Windows 3 个 worker。matrix 只生成 macOS `shard=1/2` 和 Windows `shard=1/3,2/3,3/3`：
+
+```bash
+cargo nextest run ... --no-fail-fast --partition hash:<shard>/<2|3>
+```
+
+约束与验证：
+
+- 保留作业显示名 `Test (${{ matrix.os }})`，避免改变仓库 ruleset 中的必需检查名；
+- matrix 中任一 shard 失败都会让 `test-cross-platform` job 失败，进而使
+  `Required Quality Aggregate` 失败；
+- `--no-fail-fast` 保持不变；
+- Windows 当前约 78s 编译 + 132s 测试；按该 run 的实际测试耗时估算，2-way hash
+  分区的测试耗时和约为 220s / 307s，3-way 为 122s / 179s / 227s，因此 Windows
+  使用 3 个 worker 以降低最重分片；
+- 本地对当前清单执行 `cargo nextest list --partition hash:1/2` 与 `hash:2/2`：
+  361 + 363 = 724；`hash:1/3`、`hash:2/3`、`hash:3/3` 为 245 + 221 + 258 = 724，
+  各集合交集均为 0，确认全部测试恰好覆盖一次；
+- 编译仍会在每个 shard 各发生一次，因此这是用额外 runner 分钟换墙钟；最终仍以
+  hosted 首次运行为准。
+
+## Generic Quality Shadow 运行时缓存
+
+`tools/quality/rust_reference.py` 是 `docs/quality/ci-plugin-test-handoff.json`
+中受冻结兼容性 inventory 约束的 Core consumer，因此不能直接改源码。
+
+新增 `tools/quality/rust_reference_cached.py` 作为执行期适配器：
+
+- import 未修改的 `rust_reference.py`；
+- 只缓存 stat-bound 的 SHA-256 结果和精确 `(root, path, digest, size, inode, mtime, ctime)`
+  的文件校验；
+- 文件变化、digest 变化或校验失败时直接回退到冻结实现；
+- workflow 使用 `--show-stats` 输出 hit/miss 统计。
+
+hosted artifact 上验证 10 个 JSON 与未缓存 reference 完全一致；
+本地 Shadow 从约 141s 降到 61.2s：
+`file_hits=17653, file_misses=558, sha256_hits=4496, sha256_misses=11`。
+
+## 2026-10-17 Linux Test 分片
+
+Linux `Test` job 最新为 221s：约 56s 编译 + 124s nextest 运行 + 约 40s setup/后置校验。
+它与 Risk、Quality Fast 一起成为 Risk worker 拆分后的下一层候选关键路径。
+
+`test` job 现在使用两个 shard：
+
+- 其余 722 个测试按 `hash:<shard>/2` 分配；
+- shard 1 额外运行两个会生成后续 artifact/收据的测试：
+  - `configured_ci_acceptance_retains_parity_reuse_and_negative_evidence`
+  - `html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering`
+- acceptance 校验、HTML 上传、schema 校验、GateProbes onboarding 和所有 upload
+  只在 shard 1 执行，避免同名 artifact 冲突；
+- shard 2 只执行测试，任一 shard 失败都会使 matrix job 失败并阻塞
+  `Required Quality Aggregate`。
+
+本地 verifier：
+
+- 分区测试：361 + 361；
+- shard 1 独有测试：2；
+- 合计 724，交集 0，并集 724；
+- 保留作业显示名 `Test`，不改变 ruleset 必需检查名。
+
+预计 Linux Test 从 221s 降至约 150–180s；代价是每个 shard 各编译一次。最终以
+hosted 首次运行为准。
+
+## 2026-10-17 Risk coverage 再分片与证据合并
+
+Risk base/head 独立 worker 之后，每个 worker 仍要执行完整 instrumented test suite。
+现在每个 side 再按 `hash:<shard>/2` 拆成两个 test partition，共 4 个采集 job：
+
+```text
+quality-risk (base, 1/2) ─┐
+quality-risk (base, 2/2) ─┼─> quality-coverage
+quality-risk (head, 1/2) ─┤     assemble-risk-shards
+quality-risk (head, 2/2) ─┘     -> risk compare -> fast/risk/matrix merge
+```
+
+每个 shard 只执行对应测试集合，但仍完整执行 `source_measure.prepare`、
+`cargo llvm-cov nextest`、LCOV/Cobertura 导出和 partial risk measure。partition
+不完整导致的 `selected_failures` 不会让分片提前失败；最终 side 结果由合并后的
+coverage/line hits 重新计算。
+
+合并侧新增并测试了：
+
+- LLVM coverage JSON 的 function/region 计数合并；
+- LCOV 的 DA/FNDA/BRDA 计数合并与汇总重算；
+- Cobertura 的 class/method line hits 合并与 rate 重算；
+- partial risk report 的 raw region、line hits、instances 合并，并重新计算
+  line/region coverage、CRAP、passed、selected failures 和 debt；
+- 四个 shard 的 identity/tool identity/measurer pin/artifact digest 全部一致后才允许合并。
+
+本地用当前提交的两个真实 Risk head partition 验证：
+
+- shard 1 coverage 162.3s、measure 17.8s；
+- shard 2 coverage 174.3s、measure 20.3s；
+- 合并后 Risk report：2154 functions，selected failures 0，nonselected debt 361；
+- 与已有完整 report 对比，所有 2154 个同名函数的 `lines`、`regions`、
+  `crap_exact`、`passed` 一致；只有原始 region hit 计数因测试集合/提交不同而不同。
+
+## 2026-10-17 CI debuginfo 压缩
+
+CI 测试和 instrumented coverage 不需要完整 dev/test debuginfo。workflow 全局设置：
+
+```yaml
+CARGO_PROFILE_DEV_DEBUG: '0'
+CARGO_PROFILE_TEST_DEBUG: '0'
+```
+
+`CARGO_TERM_COLOR`、`RUST_BACKTRACE` 和 panic 错误仍保留。该设置降低编译/链接时间
+与测试二进制体积；coverage mapping 由 `-C instrument-coverage` 提供，不依赖完整
+debuginfo，已用 `cargo llvm-cov` 实际导出验证。
+
+## 未实施：legacy coverage 与 Risk head 复用
+
+评估后没有把 `legacy` 与 Risk head 的 coverage run 合并，因为二者不是同一测量：
+
+- `legacy` 在原始源码上执行 `cargo llvm-cov nextest --package harness-gate`；
+- Risk 先在 staged snapshot 上执行 `source_measure.prepare`，注入 closure black-box
+  边界，再执行 workspace coverage，并按 AST/instrumentation manifest 映射函数和区域。
+
+直接复用会改变 legacy 的源码/工具/区域语义，属于证据身份变更而不是纯性能优化；
+在未完成新的 measurement-series 与 acceptance 前不复用。
+
+## 2026-10-18 按实际耗时重新平衡 native shard
+
+hosted 成功 run `39092702264` 显示 hash partition 仍有明显偏斜：
+
+| Job | 墙钟 | 测试执行 |
+| --- | ---: | ---: |
+| Test (macos-latest) | 144s | 73s |
+| Test (macos-latest, shard 2) | 249s | 119s |
+| Test (windows-latest) | 206s | 49s |
+| Test (windows-latest, shard 2) | 198s | 71s |
+| Test (windows-latest, shard 3) | 230s | 75s |
+
+因此在不改变测试集合的前提下，把少量已知耗时测试从重分片移动到轻分片。每个
+平台的全部 shard 都先从 partition 中排除这些测试，再由唯一指定 shard 单独执行：
+
+- macOS：`frozen_policy_and_reference_acceptance_match_python`
+  从 shard 2 移到 shard 1；
+- Windows：`large_core_quality_json_is_redacted_and_finalized_without_truncation`
+  移到 shard 1，`frozen_evidence_and_integrity_matrix_matches_python` 移到 shard 2。
+
+本地用 `cargo nextest list` 验证：
+
+- macOS 路由：361 + 362 + 1 = 724，交集 0；
+- Windows 路由：245 + 221 + 256 + 1 + 1 = 724，交集 0。
+
+这只改变测试在 shard 间的分配，不改变测试集合、失败传播或必需检查名。
+
+## 2026-10-18 Risk shard 耗时平衡
+
+hosted 成功 run `39094259393` 中 Risk shard 出现偏斜：
+
+| Side / shard | 墙钟 | 测试执行 |
+| --- | ---: | ---: |
+| base 1/2 | 141s | 169.5s cumulative |
+| base 2/2 | 183s | 242.1s cumulative |
+| head 1/2 | 125s | 142.4s cumulative |
+| head 2/2 | 181s | 265.9s cumulative |
+
+将少量稳定重测试显式移出 hash partition，并由 shard 1 单独执行：
+
+- base 排除 `html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering`、
+  `cow_no_hit_borrows_and_mixed_replacements_match_frozen_g_bytes` 和
+  `waiter_terminates_on_writer_failure_and_observed_output_limits`；
+- head 排除 `frozen_policy_and_reference_acceptance_match_python`。
+
+移动量按 wall-clock 而不是测试时长总和估计：额外命令只执行少量可并行的重测试，
+避免把 base/head shard 1 变成新的串行长尾。
+
+`collect-risk-shard` 新增 `--exclude-tests` / `--extra-tests`。每个分片先以
+`cargo llvm-cov nextest --no-report` 执行 partition，再以同样方式执行额外测试，
+最后只生成一次 JSON/LCOV/Cobertura report，确保所有 profile 都进入同一份证据。
+
+本地 `cargo nextest list` 验证两种 side 的 partition + extra 路由都恰好覆盖
+724 个测试且交集为 0；两次 `--no-report` 后生成的 coverage union 为两次单独
+覆盖的并集。
+
+
+## 2026-10-18 四路 count partition 与 Shadow 缓存
+
+四个 native shard 现在使用 `--partition count:<shard>/4`，Risk 同样扩展为
+每 side 4 个 shard。count partition 只改变测试的分配方式；现有排除/额外测试
+路由仍保证每个测试恰好执行一次。
+
+本地用 `cargo nextest list` 验证：
+
+- Linux Test：191 + 180 + 178 + 173 + 2 个特殊测试 = 724，交集 0；
+- macOS：191 + 181 + 178 + 173 + 1 = 724，交集 0；
+- Windows：191 + 180 + 178 + 173 + 1 + 1 = 724，交集 0；
+- Risk base：191 + 180 + 178 + 172 + 3 = 724，交集 0；
+- Risk head：191 + 181 + 178 + 173 + 1 = 724，交集 0。
+
+four-way native/Risk sharding 增加 runner 数，以 wall-clock 换取并行度；
+最终取舍仍以 hosted PR 实测为准。Generic Shadow 使用上面的只读缓存适配器，
+不改变现有 advisory/required-status 语义。
+
+## 2026-10-18 Fast coverage archive 分片
+
+`Quality Fast Stages (legacy, production)` 的 188s collector 由一次完整
+instrumented test run 组成。现在拆成：
+
+1. `Build Fast Coverage Archive`：一次构建 instrumented nextest archive；
+2. `Fast Coverage Shard (1/4..4/4)`：四个独立 runner 从同一 archive 执行
+   `count:<shard>/4` partition，每个 shard 用 `llvm-profdata merge` 合并自己的
+   profraw 后上传约 0.6–0.7MB 的 profdata；
+3. `Quality Fast Stages (legacy, production)`：下载 archive + 四份 profdata，
+   合并 profile 后用 `llvm-cov export` 生成完整 `coverage.raw.json`、LCOV 和
+   Cobertura，再运行未修改的 `coverage.py --raw` legacy 评估与 production
+   评估，最后生成原有 fast candidate。
+
+本地验证：
+
+- archive 为 46MB，构建约 59s；
+- 四个 count partition 覆盖 724 个测试且无交集；
+- 四个 shard 的 profile 合并后生成的 raw/LCOV 与单进程完整 run 具有相同的
+  module aggregate 和 production aggregate；
+- LCOV Cobertura、candidate artifact inventory、legacy/production stages
+  均可被现有 merge 路径消费。
+
+hosted 关键路径预计由 archive build + 最慢 shard + assembly 组成；最终数据
+以 GitHub runner 实测为准。
+
+## 2026-10-18 Fast coverage hosted 实测
+
+第一次修复 archive 目标路径后，hosted run `39110159895`：
+
+- `Build Fast Coverage Archive`：64s
+- 四个 `Fast Coverage Shard`：46s / 67s / 53s / 75s
+- `Quality Fast Stages (legacy, production)` assembly：36s
+- `Quality Coverage and Critical Paths`：29s
+- `Generic Quality Shadow`：39s
+- `Required Quality Aggregate` 完成：约 4分34秒
+- Workflow 总时长：约 4分53秒
+
+原先单个 Quality Fast collector 约 212–222s，现在同一条证据链约 194s；
+archive 目标路径通过 build/shard 共用的 `CARGO_TARGET_DIR`、预先解包和
+`--extract-overwrite` 保持 `CARGO_BIN_EXE` 可解析。
+
+剩余的关键路径主要不是单个测试，而是 archive build + 最慢 shard + assembly
+以及 GitHub job 调度；如需继续压缩，下一层是减少 assembly 启动/调度开销或
+把 fast coverage 的 build/merge 进一步并行化。

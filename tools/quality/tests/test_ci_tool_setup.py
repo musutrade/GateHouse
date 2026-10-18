@@ -74,7 +74,7 @@ class ToolSetupTests(unittest.TestCase):
         self.assertIn('tool.sh" verify "$CI_TOOL"', action)
         self.assertNotIn('continue-on-error', action)
         self.assertNotIn('if:', action)
-        for name, count in [('ci.yml', 11), ('quality-trends.yml', 2), ('release.yml', 1), ('quality-baseline-refresh.yml', 1)]:
+        for name, count in [('ci.yml', 15), ('quality-trends.yml', 2), ('release.yml', 1), ('quality-baseline-refresh.yml', 1)]:
             workflow = (ROOT / '.github/workflows' / name).read_text()
             self.assertEqual(workflow.count('uses: ./.github/actions/install-ci-tool'), count)
             self.assertNotRegex(workflow, r'cargo install cargo-(nextest|llvm-cov|audit|tarpaulin)')

@@ -75,8 +75,15 @@ def run(output: Path, threshold: float, production: bool = False,
     if production:
         from production_coverage import run as production_run
         return production_run(raw, output.with_name("coverage.lcov"), output, Decimal(str(threshold)))
-    report = read_json(raw)
-    files = report["data"][0]["files"]
+    return report(raw, output, threshold, command, test_runner)
+
+
+def report(raw: Path, output: Path, threshold: float, command, test_runner: str = "nextest") -> int:
+    """Evaluate an existing LLVM JSON export through the legacy boundary report."""
+    command_text = command if isinstance(command, str) else subprocess.list2cmdline(command)
+
+    report_data = read_json(raw)
+    files = report_data["data"][0]["files"]
     totals: dict[str, list[int]] = defaultdict(lambda: [0, 0])
     for item in files:
         filename = item["filename"].replace("\\", "/")
@@ -122,7 +129,7 @@ def run(output: Path, threshold: float, production: bool = False,
     result = {
         **metadata(
             tool="cargo-llvm-cov",
-            command=subprocess.list2cmdline(command),
+            command=command_text,
             test_runner=test_runner,
             threshold=threshold,
             source_boundaries={**CORE_MODULES, **ADAPTER_MODULES},
@@ -166,12 +173,19 @@ if __name__ == "__main__":
     parser.add_argument("--production", action="store_true", help="Enforce the expanded production-source inventory (candidate until CI adoption)")
     parser.add_argument("--test-runner", choices=("cargo", "nextest"), default="cargo",
                         help="Fresh test execution backend; standalone default remains cargo")
-    parser.add_argument("--raw", type=Path, help="Evaluate an existing LLVM JSON export; requires --production and --lcov")
-    parser.add_argument("--lcov", type=Path, help="Matching LCOV export for --raw")
+    parser.add_argument("--raw", type=Path, help="Evaluate an existing LLVM JSON export")
+    parser.add_argument("--lcov", type=Path, help="Matching LCOV export; required with --production --raw")
     args = parser.parse_args()
-    if args.raw is not None or args.lcov is not None:
-        if not args.production or args.raw is None or args.lcov is None:
-            parser.error("--raw and --lcov require each other and --production")
-        from production_coverage import run as production_run
-        raise SystemExit(production_run(args.raw, args.lcov, args.output, Decimal(str(args.threshold))))
+    if args.raw is not None:
+        if args.production:
+            if args.lcov is None:
+                parser.error("--production --raw requires --lcov")
+            from production_coverage import run as production_run
+            raise SystemExit(production_run(args.raw, args.lcov, args.output, Decimal(str(args.threshold))))
+        if args.lcov is not None:
+            parser.error("--lcov is only valid with --production")
+        raise SystemExit(report(args.raw, args.output, args.threshold,
+                                "llvm-cov export merged profile shards", "nextest"))
+    if args.lcov is not None:
+        parser.error("--lcov requires --raw")
     raise SystemExit(run(args.output, args.threshold, args.production, args.test_runner))

@@ -13,9 +13,12 @@
   "aggregate_job": "quality-required",
   "jobs": {
     "test": {
-      "name": "Test",
+      "name": "${{ matrix.shard == 1 && 'Test' || format('Test (shard {0})', matrix.shard) }}",
       "check_names": [
-        "Test"
+        "Test",
+        "Test (shard 2)",
+        "Test (shard 3)",
+        "Test (shard 4)"
       ],
       "runner_labels": [
         "ubuntu-latest"
@@ -35,10 +38,16 @@
       "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "test-cross-platform": {
-      "name": "Test (${{ matrix.os }})",
+      "name": "${{ matrix.shard == 1 && format('Test ({0})', matrix.os) || format('Test ({0}, shard {1})', matrix.os, matrix.shard) }}",
       "check_names": [
         "Test (macos-latest)",
-        "Test (windows-latest)"
+        "Test (macos-latest, shard 2)",
+        "Test (macos-latest, shard 3)",
+        "Test (macos-latest, shard 4)",
+        "Test (windows-latest)",
+        "Test (windows-latest, shard 2)",
+        "Test (windows-latest, shard 3)",
+        "Test (windows-latest, shard 4)"
       ],
       "runner_labels": [
         "macos-latest",
@@ -55,7 +64,7 @@
       "needs": [
         "classify"
       ],
-      "outcome": "Full locked native macOS and Windows nextest suites with --no-fail-fast; both PR-required.",
+      "outcome": "Full locked native macOS and Windows nextest suites over partitioned shards, with duration-heavy tests explicitly balanced and every shard required.",
       "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_native != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "security-audit": {
@@ -182,15 +191,24 @@
       ],
       "required_events": [],
       "needs": [
-        "classify"
+        "classify",
+        "quality-fast-build",
+        "quality-fast-shard"
       ],
-      "outcome": "Legacy and production coverage shard; not required directly, feeds the merge job.",
+      "outcome": "Assemble archive-backed legacy and production coverage from four independent test shards; not required directly, feeds the merge job.",
       "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "quality-risk": {
-      "name": "Quality Risk Stage",
+      "name": "Quality Risk Stage (${{ matrix.side }}, shard ${{ matrix.shard }}/4)",
       "check_names": [
-        "Quality Risk Stage"
+        "Quality Risk Stage (base, shard 1/4)",
+        "Quality Risk Stage (base, shard 2/4)",
+        "Quality Risk Stage (base, shard 3/4)",
+        "Quality Risk Stage (base, shard 4/4)",
+        "Quality Risk Stage (head, shard 1/4)",
+        "Quality Risk Stage (head, shard 2/4)",
+        "Quality Risk Stage (head, shard 3/4)",
+        "Quality Risk Stage (head, shard 4/4)"
       ],
       "runner_labels": [
         "ubuntu-latest"
@@ -203,7 +221,7 @@
       "needs": [
         "classify"
       ],
-      "outcome": "Base/head exact risk shard; not required directly, feeds the merge job.",
+      "outcome": "Base/head risk test partitions on independent hosted runners; the merge job validates every shard, merges LLVM-derived coverage/risk evidence, compares both sides and assembles the risk shard.",
       "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}"
     },
     "quality-matrix": {
@@ -427,6 +445,48 @@
       "aggregate_required": true,
       "needs": [],
       "outcome": "Pure-docs vs full selection from changed paths; conservative for unknown or empty scope."
+    },
+    "quality-fast-build": {
+      "check_names": [
+        "Build Fast Coverage Archive"
+      ],
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}",
+      "events": [
+        "pull_request",
+        "push"
+      ],
+      "name": "Build Fast Coverage Archive",
+      "needs": [
+        "classify"
+      ],
+      "outcome": "Build one instrumented nextest archive for the fast coverage shards; not required directly.",
+      "required_events": [],
+      "runner_labels": [
+        "ubuntu-latest"
+      ]
+    },
+    "quality-fast-shard": {
+      "check_names": [
+        "Fast Coverage Shard (1/4)",
+        "Fast Coverage Shard (2/4)",
+        "Fast Coverage Shard (3/4)",
+        "Fast Coverage Shard (4/4)"
+      ],
+      "condition": "${{ needs.classify.outputs.run_full == 'true' && needs.classify.outputs.run_evidence != 'false' && needs.classify.outputs.reuse_verified != 'true' }}",
+      "events": [
+        "pull_request",
+        "push"
+      ],
+      "name": "Fast Coverage Shard (${{ matrix.shard }}/4)",
+      "needs": [
+        "classify",
+        "quality-fast-build"
+      ],
+      "outcome": "Run one count-partitioned legacy coverage shard from the shared instrumented archive and retain merged LLVM profile data; not required directly.",
+      "required_events": [],
+      "runner_labels": [
+        "ubuntu-latest"
+      ]
     }
   },
   "observed_pre_change_aggregate_gap": "test-cross-platform ran on both events but was mistakenly in ci_quality.PUSH_ONLY. GH-164 enforces the already specified PR requirement; no scheduling change.",

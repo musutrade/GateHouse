@@ -98,3 +98,11 @@ window](rust-equivalence-acceptance.md), [validation evidence](gh-118-validation
 and [ADR-0040](../adr/0040-language-agnostic-evidence-policy.md) record completed
 local equivalence validation. Rust remains the sole required release authority;
 changing that authority requires a separate reviewed rollout.
+
+
+## CI cached execution
+
+CI runs `rust_reference_cached.py`, which imports the frozen `rust_reference.py`
+and memoizes only stat-bound read/hash results for one process. It never changes
+the evidence schema or policy behavior; all ten hosted shadow JSON outputs were
+verified byte-semantically equal after enabling the cache.
