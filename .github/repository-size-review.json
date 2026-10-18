@@ -2,7 +2,7 @@
   "schema": "repository-size-review/v1",
   "base": "0d969e03ab2a58591eb39ca67d7dba4d5cf04581",
   "owner": "higoalespn",
-  "reason": "Issue98 trusted-host candidate source, tests and documentation, including narrowly pinned administrative readmission of the interrupted063 installation, complete batch Git byte binding and detached recovery/progress. Candidate synchronized with approved main0d969e03; exact cumulative inventory. Thresholds and individual-file policy unchanged.",
+  "reason": "DRAFT PR127 interrupted-063 recovery adds an exact reviewed 063 Linux Test workflow fixture; cumulative inventory refreshed against current main",
   "blobs": [
     {
       "path": "docs/README.md",
@@ -395,6 +395,11 @@
       "bytes": 6618
     },
     {
+      "path": "tools/quality/tests/fixtures/linux-test/ci-063.yml",
+      "oid": "7ab0ec46c6b597e261f54b47413fa62e538053af",
+      "bytes": 34363
+    },
+    {
       "path": "tools/quality/tests/test_trusted_gate.py",
       "oid": "02772fae10012d4fbeb00f872061ff0a5ba72f56",
       "bytes": 34272
@@ -658,6 +663,11 @@
       "path": "tools/quality/tests/test_trusted_gate_linux_test.py",
       "oid": "639643dd674dead43a19a0895e9d9e3803aec55a",
       "bytes": 6756
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_linux_test.py",
+      "oid": "dcf572f4844c7a4005b1e070ff24da4d226eafe3",
+      "bytes": 9338
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_mount_persistence.py",
