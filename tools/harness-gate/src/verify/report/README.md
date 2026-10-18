@@ -1,7 +1,8 @@
 # Report module boundaries
 
 `verify::publish_report` calls the report writer before quality publication,
-compatibility mirroring and notifications. The report module keeps ownership of
+and compatibility mirroring. Legacy webhook configuration produces a migration
+warning; verification performs no network delivery. The report module keeps ownership of
 filesystem evidence finalization; `rendering` supplies text without publishing it.
 
 | Responsibility | Implementation | Dependencies / callers |
@@ -11,7 +12,7 @@ filesystem evidence finalization; `rendering` supplies text without publishing i
 | Publication and evidence integrity | `report.rs`: `write`, registry/manifest assessment and verification | Declared artifacts, digests, redaction, report paths; called by verifier |
 | Templates and path checks | `report.rs`: `configured_html`, template loading, `report_target` | Repository files, Tera, path confinement; called during document publication |
 | Retention | `report.rs`: pruning and completion binding | Lease/guard ownership, completion certificates; runs after finalization |
-| Notification | `report.rs`: `notify`, policy transport/resolver | Webhook configuration and network policy; called after publication |
+| External delivery | Independent result consumer | Reads saved evidence after verification; cannot change its historical conclusion |
 | Pure text rendering | `rendering.rs`: `markdown`, `junit`, `escape` | Verification model, redaction, quality diagnostics; called by document writer |
 | Regression tests | `report.rs`: `tests`, additional `cfg(test)` helpers | Exercise rendering through parent imports and real publication boundaries |
 
