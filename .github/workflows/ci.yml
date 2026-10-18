@@ -289,9 +289,10 @@ jobs:
             fi
           elif [ "$CI_OS" = 'windows-latest' ]; then
             excluded='test(large_core_quality_json_is_redacted_and_finalized_without_truncation) | test(frozen_evidence_and_integrity_matrix_matches_python)'
+            # Distribute heavyweight tests across shards 1 and 3 to balance load
             if [ "$CI_SHARD" = '1' ]; then
               extra='test(large_core_quality_json_is_redacted_and_finalized_without_truncation)'
-            elif [ "$CI_SHARD" = '2' ]; then
+            elif [ "$CI_SHARD" = '3' ]; then
               extra='test(frozen_evidence_and_integrity_matrix_matches_python)'
             fi
           fi
