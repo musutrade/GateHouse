@@ -2,7 +2,7 @@
   "schema": "repository-size-review/v1",
   "base": "8994cf53a44677ecb36acc6f9a9ce1d547c57728",
   "owner": "higoalespn",
-  "reason": "Issue98 trusted-host candidate source, tests and documentation; exact cumulative inventory including source-bound Linux mount installation and durable lease-bound enablement before controller activation. Thresholds and individual-file policy unchanged.",
+  "reason": "Issue98 trusted-host candidate source, tests and documentation; exact cumulative inventory including source-bound Linux mount installation, durable lease-bound enablement and expanded input inventory assertions. Thresholds and individual-file policy unchanged.",
   "blobs": [
     {
       "path": "docs/README.md",
@@ -556,6 +556,11 @@
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_host_config.py",
+      "oid": "8f7868c13ab146df81157a86e51d45e4885c263a",
+      "bytes": 22120
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_host_config.py",
       "oid": "a7fed3c836c28beb72861510b44f65cb64eb94a7",
       "bytes": 21583
     },
@@ -598,6 +603,11 @@
       "path": "tools/quality/tests/test_trusted_gate_linux_inputs.py",
       "oid": "21d9f6b4fa0ff686aeccf46e95b16f35532b283b",
       "bytes": 14952
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_linux_policy.py",
+      "oid": "7991c20b70136791b9ceca77f47116f21482a0ea",
+      "bytes": 9593
     },
     {
       "path": "tools/quality/tests/test_trusted_gate_linux_policy.py",
