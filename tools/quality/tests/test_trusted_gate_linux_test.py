@@ -12,6 +12,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[3]
+WORKFLOW = ROOT / 'tools/quality/tests/fixtures/linux-test/ci-063.yml'
 SPEC = importlib.util.spec_from_file_location('linux_test_job',
     ROOT / 'tools/trusted_gate/deploy/run-linux-test.py')
 JOB = importlib.util.module_from_spec(SPEC)
@@ -37,9 +38,11 @@ class LinuxTestJobTests(unittest.TestCase):
                      self.plugin, '12345']
 
     def fake_prepare(self, source, history, destination, *args):
+        raw = WORKFLOW.read_bytes()
+        self.assertEqual(JOB.INPUTS.digest(raw), JOB.WORKFLOW_SHA256)
         destination.mkdir()
         (destination / '.github/workflows').mkdir(parents=True)
-        (destination / '.github/workflows/ci.yml').write_bytes((ROOT / '.github/workflows/ci.yml').read_bytes())
+        (destination / '.github/workflows/ci.yml').write_bytes(raw)
         return {'state': 'prepared'}
 
     def invoke(self, execution):
@@ -152,6 +155,21 @@ class LinuxTestJobTests(unittest.TestCase):
             (args[2] / '.github/workflows/ci.yml').write_text('changed workload\n')
             return result
         with patch.object(self, 'fake_prepare', side_effect=changed_workflow):
+            with self.assertRaisesRegex(ValueError, 'workflow changed'):
+                self.invoke(lambda *args, **kwargs: SimpleNamespace(returncode=0))
+        report = json.loads((self.output / 'result.json').read_text())
+        self.assertEqual(report['state'], 'blocked')
+        self.assertEqual(report['commands'], [])
+
+    def test_current_repository_workflow_is_rejected_until_the_candidate_reviews_it(self):
+        current = (ROOT / '.github/workflows/ci.yml').read_bytes()
+        self.assertNotEqual(JOB.INPUTS.digest(current), JOB.WORKFLOW_SHA256)
+        original = self.fake_prepare
+        def current_workflow(*args):
+            result = original(*args)
+            (args[2] / '.github/workflows/ci.yml').write_bytes(current)
+            return result
+        with patch.object(self, 'fake_prepare', side_effect=current_workflow):
             with self.assertRaisesRegex(ValueError, 'workflow changed'):
                 self.invoke(lambda *args, **kwargs: SimpleNamespace(returncode=0))
         report = json.loads((self.output / 'result.json').read_text())
