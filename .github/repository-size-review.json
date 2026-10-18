@@ -1,0 +1,1653 @@
+{
+  "schema": "repository-size-review/v1",
+  "base": "0d969e03ab2a58591eb39ca67d7dba4d5cf04581",
+  "owner": "higoalespn",
+  "reason": "Issue98 trusted-host cumulative candidate inventory including real accepted659 GitHub client direct-parent ancestry proof, preserved first failed operator attempt, guarded separate r2 service and bounded progress checkpoints. Original request-path guard, source baseline, App permissions and all thresholds unchanged.",
+  "blobs": [
+    {
+      "path": "docs/README.md",
+      "oid": "c1eedff0f09d8e4da9e892377c8826a58ea5a531",
+      "bytes": 3594
+    },
+    {
+      "path": "docs/trusted-host-administrator.md",
+      "oid": "295653dc8fc9e188c460d9fa76ae0c7c4d175867",
+      "bytes": 20702
+    },
+    {
+      "path": "docs/trusted-host-administrator.md",
+      "oid": "2d8033c41758a5f5c637c761d4dd18eeca684238",
+      "bytes": 6905
+    },
+    {
+      "path": "docs/trusted-host-administrator.md",
+      "oid": "96ecbea8a04c6107b2dd48ad114177d92cfb99f1",
+      "bytes": 14839
+    },
+    {
+      "path": "docs/trusted-host-administrator.md",
+      "oid": "a48400f43eaafd480d7f40b82100de2a4387a5f9",
+      "bytes": 10054
+    },
+    {
+      "path": "docs/trusted-host-administrator.md",
+      "oid": "adea8929ac6895270b4a1b8982304d60408bc05c",
+      "bytes": 18675
+    },
+    {
+      "path": "docs/trusted-host-administrator.md",
+      "oid": "fdb89197b5f6b8b8ee651dd4b86435803d979b98",
+      "bytes": 12738
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "0191ed47cbd7423e90e65686c0c683a726f137d2",
+      "bytes": 104257
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "1360003d7c7b0ed3bdaf50ffcaa9e5822d05fff5",
+      "bytes": 10102
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "20561fed14451b577a301c43b1effd95f3e8d8b7",
+      "bytes": 113945
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "274973a0d28772b2fd5695f557295a65a3e234e7",
+      "bytes": 75181
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "27a01ca7fff11a07ee94e371b15b2a4e6b6a7f2d",
+      "bytes": 28368
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "2e914af63fb6985104752280e94d8daa86a58cf3",
+      "bytes": 118887
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "332e9780047b584e435082e4f764238268e7cf7a",
+      "bytes": 68885
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "37c6df8bf3b8440697108e26136af0fb5d02e0e2",
+      "bytes": 65337
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "472bcf9e73c4b088bbb9d66b886303f02084f75e",
+      "bytes": 56059
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "492c1362bf1405cfa48e22ea5cd2e5016dbb9128",
+      "bytes": 93701
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "61bf926c24bc148c42a4d09f728784aa9d2b151e",
+      "bytes": 87953
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "6496b9a54a3fcf6cc16faa06e66b88d843b4073b",
+      "bytes": 17990
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "6a1a570099bf2080e69038d4dd17524f888c196c",
+      "bytes": 79276
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "6ea6b6f11a18781bc985c5a2f418e52f9d94cce3",
+      "bytes": 117464
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "6f4800adac3af0a493befc3236cc9532b5fb11dc",
+      "bytes": 30635
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "6fd11bd2d0ff8b209a03c131fd18db5f824f84bb",
+      "bytes": 23600
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "7082519c79249c40cc23d9ce96c2123fc5c2b9ef",
+      "bytes": 33960
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "7535b2ae53a5b0272182e88a4b4fc68a67533f78",
+      "bytes": 45098
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "76ca970f297d7f735335faa51a7a0f8174f90137",
+      "bytes": 49570
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "79fecddb5d79ec4972622264b3e9e482fe2cc9cf",
+      "bytes": 110349
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "7aeeeece583d18ece4b1adff328987a08b2cc922",
+      "bytes": 20209
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "7b838d9aef9b10d1d7bdc0e3713d29001e0d6b28",
+      "bytes": 100949
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "8c0fd73e8b278fc203fffe43fa8296e8983cfca7",
+      "bytes": 37294
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "9a668ddf0cc36186307dbc83157ff1fa793a4aa7",
+      "bytes": 58851
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "9af749f4799a21f27d843b9b610cf6ce8dec6c84",
+      "bytes": 11953
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "b52f94f7adf1533c96595cf0c16e49fc1687fc0e",
+      "bytes": 52873
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "b5ddf63a7ca3a39245299941c746320c769321af",
+      "bytes": 22939
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "b65146dcd196280aedb174fca647fb036868207a",
+      "bytes": 44281
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "b9258339fc9d23edfa8c73e5a9d3316c31725c79",
+      "bytes": 120436
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "bca498eb5eb699c19821664743b3b66df37c3953",
+      "bytes": 18270
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "c217822a463b061d7338bea9467386ad2483a00d",
+      "bytes": 40905
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "c5454cdbf2ba33f39bf6ad73c6a244a96f11ce20",
+      "bytes": 26129
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "c992e461c220b296f0809207a993e87a914e4483",
+      "bytes": 14627
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "d987dcb6d76b4750be54740579a1c2e194c533e8",
+      "bytes": 20819
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "db0dd9f180d2cb8c95023b636089d2177feb25b8",
+      "bytes": 8146
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "e1873498255b8c6c60f89479330ed95d0b9fefc8",
+      "bytes": 91469
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "e18b00ba9778914d126cf097bc36f779a8d6cd48",
+      "bytes": 84098
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "e682aa0cea4b2acb3ae7c480e4f7f16d2ca99696",
+      "bytes": 121591
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "e88b6a28fc2d6bea014af89e2261c0b5d40dc8b8",
+      "bytes": 95986
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "eed156eb1affd84f3ac8ea5c13f4b3eb6cbc6639",
+      "bytes": 72030
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "eef089301f6e02ab3bac88b3acff6aef52a92c8f",
+      "bytes": 106942
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "f297217cd28c6256383af89cbd5c882abccc8bf4",
+      "bytes": 98468
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "fd93d0f2b74cd581bad6577eb5ed71bf566ac54d",
+      "bytes": 62036
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "fe433a4455d917599b312482d52f91026e8d9d53",
+      "bytes": 45082
+    },
+    {
+      "path": "docs/trusted-host-deployment.md",
+      "oid": "04d71630ec243abf85a2497b0fd3011efd952619",
+      "bytes": 7587
+    },
+    {
+      "path": "docs/trusted-host-deployment.md",
+      "oid": "52ae17637432a7bae9e8b43df2a7b7a6afd9684b",
+      "bytes": 7893
+    },
+    {
+      "path": "docs/trusted-host-deployment.md",
+      "oid": "5e790e3532b02e0b4c1645532e808ee4d54c31e7",
+      "bytes": 9814
+    },
+    {
+      "path": "docs/trusted-host-pilot.md",
+      "oid": "073cedaf93b17749e8f95f407eb54bc9d1a5b85c",
+      "bytes": 8768
+    },
+    {
+      "path": "docs/trusted-host-pilot.md",
+      "oid": "4bf5cfc6dd4d29df2df52b67490b2e0fb59b8712",
+      "bytes": 7223
+    },
+    {
+      "path": "docs/trusted-host-pilot.md",
+      "oid": "99236255274f2b8552806c0a62a2e48760baa3bb",
+      "bytes": 12085
+    },
+    {
+      "path": "docs/trusted-host-pilot.md",
+      "oid": "a65411d68f000c921f31b03a2ec89bc9c5c65622",
+      "bytes": 13720
+    },
+    {
+      "path": "docs/trusted-host.md",
+      "oid": "6d6c8322cc6de8d3d901c1cd2c81f886828a21e4",
+      "bytes": 15846
+    },
+    {
+      "path": "docs/trusted-host.md",
+      "oid": "9b5bb384cc222edac6fa551f010e86c9a2177854",
+      "bytes": 16234
+    },
+    {
+      "path": "tools/harness-gate/src/config/tests.rs",
+      "oid": "8ee518204a27e1b4bae2f1ad8284bc0ddf3090c3",
+      "bytes": 73403
+    },
+    {
+      "path": "tools/harness-gate/src/source_links.rs",
+      "oid": "f808a516b17dbb22628eacf797ba70e0722f47fb",
+      "bytes": 10459
+    },
+    {
+      "path": "tools/harness-gate/src/utils/redaction.rs",
+      "oid": "f1af6ee87e4df658c688ac1ea0a4f8ae77c19269",
+      "bytes": 13904
+    },
+    {
+      "path": "tools/harness-gate/src/verify/report.rs",
+      "oid": "f4713e92d9e2a802aea7b45e4cb8ebbf403bb73e",
+      "bytes": 242170
+    },
+    {
+      "path": "tools/harness-gate/tests/failure_paths_test.rs",
+      "oid": "139e15d39ad26b2f063ebc1e7ef47250fa1e95ce",
+      "bytes": 46620
+    },
+    {
+      "path": "tools/quality/critical_paths.toml",
+      "oid": "15296b066feb53bfdd2dd2d866cda93d9735ace4",
+      "bytes": 18687
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/__init__.py",
+      "oid": "989ca8658ec1763f85f7aa9013b653ba05a4ecc0",
+      "bytes": 76
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/cache.py",
+      "oid": "28529752f8f4703145de26e82220f81a57cc4402",
+      "bytes": 5982
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/cli.py",
+      "oid": "366ed94c2ec2d606aaa1c733f50b1ba4a77486df",
+      "bytes": 7532
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/common.py",
+      "oid": "070776e57bb900e757683abdd14807f9fad981b5",
+      "bytes": 4864
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/control.py",
+      "oid": "a33d1a245b86ad04be21f364007f9064255599c5",
+      "bytes": 8509
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/execution.py",
+      "oid": "8547da87281032ffb2fbb9bf31fd2bb4303c7f2e",
+      "bytes": 15095
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/github.py",
+      "oid": "7a3b54f7621189fbf8e7efce10582a5a1b79ab9b",
+      "bytes": 8736
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/history.py",
+      "oid": "01d94117a4eeb1ae650549eaf78824a8069bb2a9",
+      "bytes": 4327
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/host.py",
+      "oid": "0a36fc0ec5f5e6f0ef6b4b10512e661ae24c0cf2",
+      "bytes": 625
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/isolation.py",
+      "oid": "b5fae5f2a8b5bdc141df8c2be64b2dadeadd5a9f",
+      "bytes": 8052
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/journal.py",
+      "oid": "b63e3d45ff70efac84c1d7369c5400617710e5a8",
+      "bytes": 4303
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/publication.py",
+      "oid": "e528592c73ce9132a5c46a905d23d987c761a926",
+      "bytes": 3265
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/source.py",
+      "oid": "570dc7d9e6af256f17aaafa772f3f94e725bb928",
+      "bytes": 6618
+    },
+    {
+      "path": "tools/quality/tests/fixtures/linux-test/ci-063.yml",
+      "oid": "7ab0ec46c6b597e261f54b47413fa62e538053af",
+      "bytes": 34363
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate.py",
+      "oid": "02772fae10012d4fbeb00f872061ff0a5ba72f56",
+      "bytes": 34272
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate.py",
+      "oid": "09bcf5ff667bb9c0115a8ff3e0fcbd968a9a57c4",
+      "bytes": 29274
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate.py",
+      "oid": "64bb3c931a3ff4152237ef9f38aa165cb1bd7d68",
+      "bytes": 54825
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate.py",
+      "oid": "bb7a97f42a84cf8348a7944b9dcd1ff255e3f734",
+      "bytes": 54831
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate.py",
+      "oid": "bc961ea085481d405f623680c2fb2ddebb1d9586",
+      "bytes": 37803
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate.py",
+      "oid": "cd59a803bfcb4bdb9175672be0804d1c3d13dbb3",
+      "bytes": 47169
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate.py",
+      "oid": "ce3104ed33e52d53290f8b11712e1fa9d9253f2b",
+      "bytes": 39946
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate.py",
+      "oid": "d2471bb01c360adbe91454f3cd682f214685f22e",
+      "bytes": 54584
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate.py",
+      "oid": "dfc6517e56a54244364ddb44b1973652b9d225e8",
+      "bytes": 38362
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_activation.py",
+      "oid": "91b3f2a9346954767c6fdf7488348001a47879b2",
+      "bytes": 18008
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_activation.py",
+      "oid": "aa8c91ae4148abf169dd3afd44fce80cf191c54b",
+      "bytes": 16765
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_administrator.py",
+      "oid": "fe99fe07199416a1b52cacc2c3b23f8046712309",
+      "bytes": 22885
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_administrator_staging.py",
+      "oid": "c1a51119f237f42b967fc3d116112a0d899e1329",
+      "bytes": 15813
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_bootstrap_release.py",
+      "oid": "5d984bb931b6cf80f1984e58f5bd21812fff020d",
+      "bytes": 11698
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_bootstrap_release.py",
+      "oid": "c974b67a54f2efdb5fbade3d3b34a76448495ca2",
+      "bytes": 11714
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_bootstrap_release.py",
+      "oid": "da6f71de3c3406755f2952a6dc4389a63acc956c",
+      "bytes": 11994
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_capture.py",
+      "oid": "199c5d60d12e2f1b3cddb3edf580766334d50a75",
+      "bytes": 9512
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_capture.py",
+      "oid": "d573541f4f5e2c5dea5e4c44a4f506b11689df37",
+      "bytes": 9721
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_controller_drain.py",
+      "oid": "065bc8afca863acaf212a91c20a44517fe2437e2",
+      "bytes": 14839
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_controller_source.py",
+      "oid": "1bcfec33595e7429669a9fab64fb9f8491517753",
+      "bytes": 21589
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_controller_source.py",
+      "oid": "422d942942eb6f8cb4ea5615f15c0eb7cf27dbd6",
+      "bytes": 25156
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_controller_source.py",
+      "oid": "8a98e8b0086a1026f1d51ea4dfc4a1a31002cf0d",
+      "bytes": 17902
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_core_bootstrap.py",
+      "oid": "3172e6caa05f509b4a192b8b33294c20e4d1baa3",
+      "bytes": 19205
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_core_bootstrap.py",
+      "oid": "65b783f38ff3fb9d5d16d7cfb473da4546c4c2b6",
+      "bytes": 20550
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_core_bootstrap.py",
+      "oid": "d5912a61fd54499e7dd72b15eef0bf704e6b322d",
+      "bytes": 20588
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_core_bootstrap.py",
+      "oid": "d7dc03edc17f4eee9b066d1bb6f17cec333fb173",
+      "bytes": 18593
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_core_inspection.py",
+      "oid": "0cb1e114251f0b47ef12e412cd0c460dd85d6996",
+      "bytes": 14161
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_core_inspection.py",
+      "oid": "7cde9ad70fb589567ef2f502a769bdf21ef17c5d",
+      "bytes": 14425
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_core_inspection.py",
+      "oid": "c5064c0ee79cae60f1243ed6991db503a1083345",
+      "bytes": 13727
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_core_policy.py",
+      "oid": "a692aef80acc3b362cec6af06e98b7d098399592",
+      "bytes": 9302
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_crates.py",
+      "oid": "7e44c4872d5fb17f90c0c6b6aa069cce865c4caf",
+      "bytes": 9908
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_directory.py",
+      "oid": "12c2863babbbc885bdafa48aaea6a8b56a192f60",
+      "bytes": 9780
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_file_install.py",
+      "oid": "5f50e59d6163eba91d86e52856d60e29caf7d7f7",
+      "bytes": 22476
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_file_install.py",
+      "oid": "65380b605c280dc6d14fb52455b935be298e7924",
+      "bytes": 22476
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_host_config.py",
+      "oid": "14d5e53f4c03ee19e2ff353b1a2cc97499de49bd",
+      "bytes": 22491
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_host_config.py",
+      "oid": "2c64ea0853399ad50e48ec6407de50aeb8139940",
+      "bytes": 21923
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_host_config.py",
+      "oid": "8f094cf74f32d6201a14b8a6b5c4db572bf1fbc0",
+      "bytes": 21545
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_host_config.py",
+      "oid": "8f7868c13ab146df81157a86e51d45e4885c263a",
+      "bytes": 22120
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_host_config.py",
+      "oid": "a7fed3c836c28beb72861510b44f65cb64eb94a7",
+      "bytes": 21583
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_host_config.py",
+      "oid": "a914f5f937c4efdbd06cfc419f5f0004870485db",
+      "bytes": 21923
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_host_config.py",
+      "oid": "f944299222097da753ba10512b29d7181391853e",
+      "bytes": 19510
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_inspection_replay.py",
+      "oid": "99ec5cf23c325da272c188946543037331a1c022",
+      "bytes": 18519
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_install_transaction.py",
+      "oid": "284a4150ee16f24049e22c0f741a03534dfe7672",
+      "bytes": 15355
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_install_transaction.py",
+      "oid": "ae0cf36587249b88826ccb10c29091e126b7cd4b",
+      "bytes": 14359
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_installation_inputs.py",
+      "oid": "40f3c831b1d7a322225d053997bd5cf05d106a49",
+      "bytes": 22912
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_installation_inputs.py",
+      "oid": "63677c599b8577405b543e8aad07d43885a4be21",
+      "bytes": 22754
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_installation_inputs.py",
+      "oid": "6c415463304335a9ad839b56a797ed92a2f8f378",
+      "bytes": 22754
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_linux_inputs.py",
+      "oid": "21d9f6b4fa0ff686aeccf46e95b16f35532b283b",
+      "bytes": 14952
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_linux_policy.py",
+      "oid": "7991c20b70136791b9ceca77f47116f21482a0ea",
+      "bytes": 9593
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_linux_policy.py",
+      "oid": "a0467c2a96a7398873309bfed61469cf68bf0205",
+      "bytes": 9252
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_linux_seal.py",
+      "oid": "15d1d5f1b0be93b0395eeb0614a70e21dfa4ce5d",
+      "bytes": 12347
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_linux_test.py",
+      "oid": "3e73953a2f90b1d8a15df174aa691504314b8f5d",
+      "bytes": 8353
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_linux_test.py",
+      "oid": "639643dd674dead43a19a0895e9d9e3803aec55a",
+      "bytes": 6756
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_linux_test.py",
+      "oid": "dcf572f4844c7a4005b1e070ff24da4d226eafe3",
+      "bytes": 9338
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_mount_persistence.py",
+      "oid": "c5b03c9830dd46a91f1201d54a553639341a51c2",
+      "bytes": 13343
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_network.py",
+      "oid": "d9dda54fe63214dab499f064e908400eebd742a6",
+      "bytes": 14618
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_official_tools.py",
+      "oid": "92c9dd99939826675ee11a96f7f489b0592ca4d9",
+      "bytes": 11806
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_official_tools.py",
+      "oid": "a4ba9a3d4c77e17ed92379afd95c9fffcb9ec283",
+      "bytes": 11023
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_preflight.py",
+      "oid": "2d5f994141b1484d6752a805ff372a68fba58621",
+      "bytes": 25792
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_preflight.py",
+      "oid": "306bcdd4c60465f45772270e840b9740018de179",
+      "bytes": 25756
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_preflight.py",
+      "oid": "371f8cbf2101e005cd29c5318d4f20043f79781c",
+      "bytes": 28042
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_prepared_replay.py",
+      "oid": "34c9b70da374100338b3d17a62afc3eeeefd6ccc",
+      "bytes": 19047
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_prepared_replay.py",
+      "oid": "5bafa6994d5aa6b5ea78df96a0d000b9a5a025e9",
+      "bytes": 18505
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_preservation.py",
+      "oid": "8a5aeb23471c419c67f850e6842596b4f40d8ddb",
+      "bytes": 18106
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_protected_import.py",
+      "oid": "220158be01ca756e1f6d8fe88107c89ebc1d0041",
+      "bytes": 17598
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_protected_import.py",
+      "oid": "2919c9df37eeca0a7538e4fd6fad80cd7cfc3c9f",
+      "bytes": 17889
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_protected_import.py",
+      "oid": "308e675f759e17c7b2632b60867642cdfe163f64",
+      "bytes": 15517
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_protected_import.py",
+      "oid": "86f00dbb0b70f5809bb69e3846ad271ad2eae001",
+      "bytes": 17605
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_recovery_batch.py",
+      "oid": "1c20d16c15522f4c4d7c9b07f85476a79b60041a",
+      "bytes": 5503
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_recovery_readmission.py",
+      "oid": "881f4fd3b92f3b5280819ec0d98492c507746b58",
+      "bytes": 12770
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_recovery_readmission.py",
+      "oid": "b7203a90b9f1b49a2199d282ad6ba3a520a302f5",
+      "bytes": 16412
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_recovery_service.py",
+      "oid": "186aae8e0a3dae2ff24869b25e299dde1c06ed36",
+      "bytes": 12312
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_recovery_service.py",
+      "oid": "a57313bb9215921964df8634195501063b75acfa",
+      "bytes": 8159
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_runtime.py",
+      "oid": "e35d177a885af605b1b2403fddd17a27f656522e",
+      "bytes": 10150
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_runtime_bindings.py",
+      "oid": "175ce1033b19b0ec84953e89270b846445509daf",
+      "bytes": 22008
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_runtime_bindings.py",
+      "oid": "49f1db9c37406503b3291693439bf56e90519b99",
+      "bytes": 21936
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_runtime_bindings.py",
+      "oid": "ae1d93990decdd41913f96aa9709177c64ab61a6",
+      "bytes": 22001
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_schema.py",
+      "oid": "4631ff34a11c2159a9283f632078cc6579e762b3",
+      "bytes": 7354
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_source_staging.py",
+      "oid": "8db2d918054629e125267acd3df9345ff58acb80",
+      "bytes": 9654
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_tool_inputs.py",
+      "oid": "c722bcac46b6a783f5b3babc04076f5bec03d756",
+      "bytes": 8914
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_upgrade_effects.py",
+      "oid": "16b205df8eb14cc1921f7681730d30053b0469d6",
+      "bytes": 24625
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_upgrade_effects.py",
+      "oid": "780fdf5afd9525def120e9b9bc0317b52bff5ce8",
+      "bytes": 24382
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_upgrade_journal.py",
+      "oid": "9d3cb406c8e80bc0d42abf5431a5e0a48d6fec71",
+      "bytes": 17546
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_upgrade_lifecycle.py",
+      "oid": "bea002611fad8a9a3a11136988f86bd622c644ff",
+      "bytes": 24055
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_volume.py",
+      "oid": "50852e555d91ab7a61a00cdb20c1e796e338deee",
+      "bytes": 15781
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_volume.py",
+      "oid": "9a660c83be8e1583af0a2c0c97743b41dc906d9a",
+      "bytes": 16432
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_workspace.py",
+      "oid": "5effc3f9de8256ec7c0644a6235cd88e3d79bcda",
+      "bytes": 11035
+    },
+    {
+      "path": "tools/quality/tests/test_trusted_gate_workspace.py",
+      "oid": "93177c0124b5f2619eeec008c75116962abf0112",
+      "bytes": 12069
+    },
+    {
+      "path": "tools/release/tests/test_generate_sbom.py",
+      "oid": "68d6883b65d9c3ccc9c8e8994fff33a507418ba9",
+      "bytes": 1226
+    },
+    {
+      "path": "tools/trusted_gate/__init__.py",
+      "oid": "989ca8658ec1763f85f7aa9013b653ba05a4ecc0",
+      "bytes": 76
+    },
+    {
+      "path": "tools/trusted_gate/cache.py",
+      "oid": "28529752f8f4703145de26e82220f81a57cc4402",
+      "bytes": 5982
+    },
+    {
+      "path": "tools/trusted_gate/cli.py",
+      "oid": "21112ff8c511c167756b676a8b8c4742ad986bf4",
+      "bytes": 7611
+    },
+    {
+      "path": "tools/trusted_gate/cli.py",
+      "oid": "366ed94c2ec2d606aaa1c733f50b1ba4a77486df",
+      "bytes": 7532
+    },
+    {
+      "path": "tools/trusted_gate/cli.py",
+      "oid": "6df5d177b9718d35106f71a13b1312619c773b52",
+      "bytes": 7812
+    },
+    {
+      "path": "tools/trusted_gate/cli.py",
+      "oid": "c26e5fda9ac41d47fe5f77f4ac135d38811e86fe",
+      "bytes": 7303
+    },
+    {
+      "path": "tools/trusted_gate/cli.py",
+      "oid": "dbea5ead5f106f637fb5e2791790a3bb3ddc1e06",
+      "bytes": 7938
+    },
+    {
+      "path": "tools/trusted_gate/common.py",
+      "oid": "070776e57bb900e757683abdd14807f9fad981b5",
+      "bytes": 4864
+    },
+    {
+      "path": "tools/trusted_gate/common.py",
+      "oid": "78f9fd61cbe27284e9897bffde1245169b48fa9a",
+      "bytes": 6068
+    },
+    {
+      "path": "tools/trusted_gate/common.py",
+      "oid": "d514492a54d17286a923bb190cdb24a0eab449b6",
+      "bytes": 3384
+    },
+    {
+      "path": "tools/trusted_gate/common.py",
+      "oid": "eecfd9af45da82afbd873e97e91e5bdef634f934",
+      "bytes": 5256
+    },
+    {
+      "path": "tools/trusted_gate/control.py",
+      "oid": "a33d1a245b86ad04be21f364007f9064255599c5",
+      "bytes": 8509
+    },
+    {
+      "path": "tools/trusted_gate/deploy/acquire-linux-tools.py",
+      "oid": "adad4517559c4eb25b59d797c4cb1549d04eec16",
+      "bytes": 8100
+    },
+    {
+      "path": "tools/trusted_gate/deploy/activate-linux-controller.py",
+      "oid": "42ad207a2427dd1897b10302dadff8a783a3d38c",
+      "bytes": 13561
+    },
+    {
+      "path": "tools/trusted_gate/deploy/activate-linux-controller.py",
+      "oid": "4680bd54afa1491cae28707deeceea9dc5efd126",
+      "bytes": 13003
+    },
+    {
+      "path": "tools/trusted_gate/deploy/activate-linux-controller.py",
+      "oid": "cf48eda46cc56b05141ede06c0f577e993193be9",
+      "bytes": 13412
+    },
+    {
+      "path": "tools/trusted_gate/deploy/administrator-upgrade.py",
+      "oid": "466864bd16abd99983cccb08568946fe31b1c3aa",
+      "bytes": 20913
+    },
+    {
+      "path": "tools/trusted_gate/deploy/admit-upgrade-effects.py",
+      "oid": "5416e67c7a147d289f85beb6415a190f108a5efa",
+      "bytes": 13066
+    },
+    {
+      "path": "tools/trusted_gate/deploy/admit-upgrade-effects.py",
+      "oid": "c88dea8a73b0a1cfd3291bcf33eef4945c6997d8",
+      "bytes": 13488
+    },
+    {
+      "path": "tools/trusted_gate/deploy/admit-upgrade-journal.py",
+      "oid": "5235eb5c26e3471453870e5cfcd4bddfdb800b24",
+      "bytes": 10441
+    },
+    {
+      "path": "tools/trusted_gate/deploy/bootstrap-release.py",
+      "oid": "060f80cd754f4a1714142e146fbe4395346ba615",
+      "bytes": 12488
+    },
+    {
+      "path": "tools/trusted_gate/deploy/bootstrap-release.py",
+      "oid": "25e3eb476ef012d65f3da567e4a9cd2e19698837",
+      "bytes": 12326
+    },
+    {
+      "path": "tools/trusted_gate/deploy/bootstrap-release.py",
+      "oid": "2de417dcb4c868ccdd1c09dd8dc307635fea3b26",
+      "bytes": 12369
+    },
+    {
+      "path": "tools/trusted_gate/deploy/bootstrap-release.py",
+      "oid": "32f05d820cc8a5e0fcdd05deaf7863f911acd3b7",
+      "bytes": 11245
+    },
+    {
+      "path": "tools/trusted_gate/deploy/bootstrap-release.py",
+      "oid": "feed60773c2c8baa9904caf2a5e9a1994085da9f",
+      "bytes": 12298
+    },
+    {
+      "path": "tools/trusted_gate/deploy/build-protected-core.py",
+      "oid": "4635cf7b9a0695fc5981fd75974d439059eea907",
+      "bytes": 24352
+    },
+    {
+      "path": "tools/trusted_gate/deploy/build-protected-core.py",
+      "oid": "98901cf247bdfed611669e29d2819ed15a58aa07",
+      "bytes": 24398
+    },
+    {
+      "path": "tools/trusted_gate/deploy/build-protected-core.py",
+      "oid": "c6b5a306304145a566857d46d1ed79e73227a764",
+      "bytes": 21935
+    },
+    {
+      "path": "tools/trusted_gate/deploy/build-protected-core.py",
+      "oid": "e4268622ffa9250a178af459cfa4e59fe3133678",
+      "bytes": 23026
+    },
+    {
+      "path": "tools/trusted_gate/deploy/check-core-policy.py",
+      "oid": "055c34ed8b7fda32e5d4603563f9172a4cb311ea",
+      "bytes": 30205
+    },
+    {
+      "path": "tools/trusted_gate/deploy/check-core-policy.py",
+      "oid": "645fef15666ccdc54eb01b5cc1d48288bb3e240c",
+      "bytes": 30049
+    },
+    {
+      "path": "tools/trusted_gate/deploy/check-core-policy.py",
+      "oid": "a74262c77ec06c50295fcb16bf1d3d78e6215fc0",
+      "bytes": 19897
+    },
+    {
+      "path": "tools/trusted_gate/deploy/check-core-policy.py",
+      "oid": "dbb1c3e00ffdda46ba3688cff576f763378b4019",
+      "bytes": 30155
+    },
+    {
+      "path": "tools/trusted_gate/deploy/check-schemas.py",
+      "oid": "443fd4630e99f71fa0586c1800138c622a507907",
+      "bytes": 6276
+    },
+    {
+      "path": "tools/trusted_gate/deploy/compose-linux-host.py",
+      "oid": "5c34beef54e12bcd0420da915a8474f5b1ba7aeb",
+      "bytes": 27730
+    },
+    {
+      "path": "tools/trusted_gate/deploy/compose-linux-host.py",
+      "oid": "78e75de49d98df76c7043e9cea484d1899e90cdc",
+      "bytes": 19181
+    },
+    {
+      "path": "tools/trusted_gate/deploy/compose-linux-host.py",
+      "oid": "c0d00346b7f2f0b655398d94dea4eb5eae2d68b3",
+      "bytes": 28230
+    },
+    {
+      "path": "tools/trusted_gate/deploy/compose-linux-host.py",
+      "oid": "cda46b396bb3cc874a6160fa39c45731c8acde4b",
+      "bytes": 27833
+    },
+    {
+      "path": "tools/trusted_gate/deploy/compose-linux-host.py",
+      "oid": "df3d814cf32ad36a7b13068f26ce0d924a02e6e6",
+      "bytes": 20289
+    },
+    {
+      "path": "tools/trusted_gate/deploy/controller-drain.py",
+      "oid": "ebaea487eef12692a6fa8c10ea3f903716917224",
+      "bytes": 9930
+    },
+    {
+      "path": "tools/trusted_gate/deploy/coordinate-linux-upgrade.py",
+      "oid": "9a6239c71594d0e5bae1beb112b51f277cc8f983",
+      "bytes": 22636
+    },
+    {
+      "path": "tools/trusted_gate/deploy/gatehouse-control",
+      "oid": "31e09c460c15ed9914afa94d1b0630b8e2f4ec97",
+      "bytes": 576
+    },
+    {
+      "path": "tools/trusted_gate/deploy/gatehouse-control",
+      "oid": "8db91c873eaf933384a80d82a691da54d6e4ed34",
+      "bytes": 567
+    },
+    {
+      "path": "tools/trusted_gate/deploy/gatehouse-reconcile.service",
+      "oid": "8636599c9627bd1ec28f36eb6801c5b33cc4b6cd",
+      "bytes": 434
+    },
+    {
+      "path": "tools/trusted_gate/deploy/gatehouse-reconcile.timer",
+      "oid": "0be7b2b18893426933c376d5e850a2e84d0001e2",
+      "bytes": 199
+    },
+    {
+      "path": "tools/trusted_gate/deploy/gatehouse-step",
+      "oid": "88f5dc07cfc604dfd38a6a9edc72d631fc5466ab",
+      "bytes": 326
+    },
+    {
+      "path": "tools/trusted_gate/deploy/gatehouse-step",
+      "oid": "e751bdd31e83d4f654417379f522a53872fb5ec1",
+      "bytes": 335
+    },
+    {
+      "path": "tools/trusted_gate/deploy/host.example.json",
+      "oid": "89a9d84e168618cb02a8f5b8aaba465ed4cc68d7",
+      "bytes": 1444
+    },
+    {
+      "path": "tools/trusted_gate/deploy/host.example.json",
+      "oid": "98f269004535743368aede843581fb8643d6ca7e",
+      "bytes": 1490
+    },
+    {
+      "path": "tools/trusted_gate/deploy/host.example.json",
+      "oid": "af14e5279b241dfc80587863ac3fe5256187de93",
+      "bytes": 1513
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "01e3297b19b9f01d0e361a291d55a892a4635633",
+      "bytes": 24095
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "0acbcda8000f7186b47b3bff671020f219633ea6",
+      "bytes": 19207
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "1f02ba7205544b86cac05faed3c632216ac349d1",
+      "bytes": 29641
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "230ae6576244ceb8126e602eb2c66cf99ab2fa78",
+      "bytes": 29570
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "263237eb34d37341dd84342b891088b79149a943",
+      "bytes": 31038
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "2ad43f10adc954578f388b02c8d1aa7a9ecde041",
+      "bytes": 21836
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "2b0ccfcacf40a7de4821c47d479c98ea0d58abf0",
+      "bytes": 31064
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "3b8af2021819dbc2fd4a66fc56ac6fbf9d5b0ae3",
+      "bytes": 16067
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "572ef77354bd7f304ca75f5e61bc116d8572f028",
+      "bytes": 23010
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "5bc82c8b700a6d9bfbb79843d0f88242a064feb6",
+      "bytes": 30997
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "6b090df263f08a2c6d01e5539bb2d8b078af1e04",
+      "bytes": 29471
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "6f938c54651ce0afd21dd0c0ec54fec7874adc83",
+      "bytes": 16098
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "7bf796dc5e6e7446da068142d801a107f493b358",
+      "bytes": 25676
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "7ec5a9bbe76c1533cf7cc70034ee6e263786d854",
+      "bytes": 29609
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "82ea8a2c576f5907cad87289bd86f6b09482964f",
+      "bytes": 29443
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "850d00d5704a847b09d9fd146f1c7d1a87f23b47",
+      "bytes": 14014
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "92b00ab50e74e15e8ad97823dd1f5ce03ea4eb94",
+      "bytes": 24065
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "a78533df8f4abdd0004319fc758d89c99722b6c5",
+      "bytes": 29536
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "b729d6e175425a148f9f99080423b895c7d02ae6",
+      "bytes": 29394
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "c99036cd7c6d93ea60ec430ce04054eeaecef680",
+      "bytes": 29508
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "cd3c25a42378360b58fdfe189d4e9ca7b83c4115",
+      "bytes": 27519
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "df4af3e4bab668f5fb2207d019f5be4efe76d823",
+      "bytes": 17888
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "e3e74bd8489860290f322d4d479a3d3d271b22d2",
+      "bytes": 29420
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "eb539f0d97c2057a6864ec2d64e63a4e105cb09c",
+      "bytes": 20485
+    },
+    {
+      "path": "tools/trusted_gate/deploy/install-pilot.py",
+      "oid": "068d7a6076260bf7d73c497e94455b09f2151489",
+      "bytes": 18364
+    },
+    {
+      "path": "tools/trusted_gate/deploy/install-pilot.py",
+      "oid": "35e0e4fc579310f4ff728b3c0d0e3d1e63677496",
+      "bytes": 18741
+    },
+    {
+      "path": "tools/trusted_gate/deploy/install-pilot.py",
+      "oid": "85c263b715fa3ce2dd8bfca910031bf34a986329",
+      "bytes": 18375
+    },
+    {
+      "path": "tools/trusted_gate/deploy/install-pilot.py",
+      "oid": "a04869cd7e8461b099257b7a83327a3fb647d7bd",
+      "bytes": 18730
+    },
+    {
+      "path": "tools/trusted_gate/deploy/install-reviewed-files.py",
+      "oid": "25ae0c1d76ed3aa1b1d5fd59df437a99685fc8e4",
+      "bytes": 18935
+    },
+    {
+      "path": "tools/trusted_gate/deploy/install-reviewed-files.py",
+      "oid": "f555c95adc84fceb597e1c9423e87e6967d6c28f",
+      "bytes": 18935
+    },
+    {
+      "path": "tools/trusted_gate/deploy/install-transaction.py",
+      "oid": "47f9ffe4fa365869d1c48273c35afc69de182836",
+      "bytes": 11084
+    },
+    {
+      "path": "tools/trusted_gate/deploy/install-transaction.py",
+      "oid": "7039f24a9596cbdd319a02edd64d17e9d34c9a43",
+      "bytes": 10261
+    },
+    {
+      "path": "tools/trusted_gate/deploy/linux-tools.lock.json",
+      "oid": "f5ec271a17439b43b6a1ea413c280023e332ef57",
+      "bytes": 3076
+    },
+    {
+      "path": "tools/trusted_gate/deploy/linux-transition-policy.py",
+      "oid": "720b3f91a17c9bffde36d8269c4fbac4601760a4",
+      "bytes": 6116
+    },
+    {
+      "path": "tools/trusted_gate/deploy/linux-transition.flow.toml",
+      "oid": "372a006d25e01d27cd78a73a33ca84011795643d",
+      "bytes": 1234
+    },
+    {
+      "path": "tools/trusted_gate/deploy/linux-transition.policy.json",
+      "oid": "34017025bfdd629d3892bc980a40bd33d2170b4a",
+      "bytes": 5506
+    },
+    {
+      "path": "tools/trusted_gate/deploy/observe-installation-inputs.py",
+      "oid": "6485d8a1e9fdc88942728f9bf8c55105223bde1e",
+      "bytes": 15139
+    },
+    {
+      "path": "tools/trusted_gate/deploy/observe-installation-inputs.py",
+      "oid": "caa033e2c9fe69ad130550dcc169c234deb09971",
+      "bytes": 15076
+    },
+    {
+      "path": "tools/trusted_gate/deploy/package-administrator-inputs.py",
+      "oid": "1faa7af08687f2c063b8e1b0158c4f5ed91696e9",
+      "bytes": 12402
+    },
+    {
+      "path": "tools/trusted_gate/deploy/package-bootstrap-inputs.py",
+      "oid": "e032d9a4db347f2b25636c70c421cc258310a87d",
+      "bytes": 2834
+    },
+    {
+      "path": "tools/trusted_gate/deploy/package-bootstrap-release.py",
+      "oid": "9fbecbea025e9f4009ba2f3620b437a424cc1586",
+      "bytes": 4983
+    },
+    {
+      "path": "tools/trusted_gate/deploy/package-pilot.py",
+      "oid": "804d1cfc903fad3032de0ddfd8bb2932660b8d86",
+      "bytes": 4533
+    },
+    {
+      "path": "tools/trusted_gate/deploy/package-pilot.py",
+      "oid": "ca4648a8183c11ed26908debcf2bb2eb3ba9de14",
+      "bytes": 5180
+    },
+    {
+      "path": "tools/trusted_gate/deploy/package-pilot.py",
+      "oid": "d36b6f2cb88a68eda5c9a5eadee1f2fb96707050",
+      "bytes": 5561
+    },
+    {
+      "path": "tools/trusted_gate/deploy/persist-linux-mount.py",
+      "oid": "bfe85b3493faff70ad31da92587c7938ad56adf4",
+      "bytes": 7571
+    },
+    {
+      "path": "tools/trusted_gate/deploy/pilot-probe.py",
+      "oid": "aefa16da972151ce37186c1f9ad621d5809ea8c5",
+      "bytes": 7854
+    },
+    {
+      "path": "tools/trusted_gate/deploy/pilot-probe.py",
+      "oid": "f8cf1a79b21f4e3e08ce8701e0b94bf1c3c2487a",
+      "bytes": 4492
+    },
+    {
+      "path": "tools/trusted_gate/deploy/pilot.flow.toml",
+      "oid": "57adc556250a99b2747d33a5398bf701833f7dca",
+      "bytes": 908
+    },
+    {
+      "path": "tools/trusted_gate/deploy/pilot.flow.toml",
+      "oid": "c865e7ef4b49ce27f4d8eddb9cd0e0183cba4c0a",
+      "bytes": 924
+    },
+    {
+      "path": "tools/trusted_gate/deploy/preflight-history-pilot.py",
+      "oid": "362749601008294f17ef43e006211ab415e4541c",
+      "bytes": 20650
+    },
+    {
+      "path": "tools/trusted_gate/deploy/preflight-history-pilot.py",
+      "oid": "49ea43da2f630f488bf42ca9aa52f6dabb180d55",
+      "bytes": 20997
+    },
+    {
+      "path": "tools/trusted_gate/deploy/preflight-history-pilot.py",
+      "oid": "62bb571ac41e88d7d48f36e96ce250f640ed3d04",
+      "bytes": 21442
+    },
+    {
+      "path": "tools/trusted_gate/deploy/preflight-history-pilot.py",
+      "oid": "b68eeef46762d7ee031563e9c9bbe1d124ba5af3",
+      "bytes": 20618
+    },
+    {
+      "path": "tools/trusted_gate/deploy/prepare-linux-volume.py",
+      "oid": "9e65efdaae7c4b98fbc89421420ebfff8d374d9b",
+      "bytes": 13764
+    },
+    {
+      "path": "tools/trusted_gate/deploy/prepare-linux-volume.py",
+      "oid": "dbb9c129c46fea378ca4d7f506525b3f74691d16",
+      "bytes": 12646
+    },
+    {
+      "path": "tools/trusted_gate/deploy/prepare-linux-workspace.py",
+      "oid": "ad3d5171fbfce428034e08916ccf148af6941d27",
+      "bytes": 11844
+    },
+    {
+      "path": "tools/trusted_gate/deploy/prepare-linux-workspace.py",
+      "oid": "ec1f2f35a1ae7c8ee3031e51c8ed22d183837226",
+      "bytes": 13592
+    },
+    {
+      "path": "tools/trusted_gate/deploy/prepare-locked-directory.py",
+      "oid": "0321719185668da5a5a6aad28ff897243b9c471c",
+      "bytes": 10297
+    },
+    {
+      "path": "tools/trusted_gate/deploy/prepare-official-tools.py",
+      "oid": "f950b68c300f5c129033112bc14979aadbe17011",
+      "bytes": 14814
+    },
+    {
+      "path": "tools/trusted_gate/deploy/preserve-pilot-state.py",
+      "oid": "45a7e42f5c00c55ec954705d187c70186baf8676",
+      "bytes": 16080
+    },
+    {
+      "path": "tools/trusted_gate/deploy/provision-identities",
+      "oid": "3ed4163e20a34658a94e1d6b8e873df6756ad121",
+      "bytes": 2671
+    },
+    {
+      "path": "tools/trusted_gate/deploy/recover-interrupted-installation.py",
+      "oid": "342b40ba8b263d7e1f06c832afe665388cd0baac",
+      "bytes": 15562
+    },
+    {
+      "path": "tools/trusted_gate/deploy/recover-interrupted-installation.py",
+      "oid": "d7771e75810ab1f9f165c8d23082fe68108e3714",
+      "bytes": 16521
+    },
+    {
+      "path": "tools/trusted_gate/deploy/recovery-worker.py",
+      "oid": "a8f80ac411358c53931f60027250b71e0367cc82",
+      "bytes": 7813
+    },
+    {
+      "path": "tools/trusted_gate/deploy/recovery-worker.py",
+      "oid": "b8ca1936bb979e8c15bcd100da7895f3d3366ce8",
+      "bytes": 8524
+    },
+    {
+      "path": "tools/trusted_gate/deploy/recovery-worker.py",
+      "oid": "f8b636bd6e87cdddfc69e180d39ad0af6e2cc034",
+      "bytes": 8515
+    },
+    {
+      "path": "tools/trusted_gate/deploy/resume-interrupted-063.py",
+      "oid": "dc2ba1184cc5458fe3eca793434bc8dafb4ca13c",
+      "bytes": 6923
+    },
+    {
+      "path": "tools/trusted_gate/deploy/resume-interrupted-063.py",
+      "oid": "df4e72f8a820a515ff0549adfd429f7e7bcc1e0b",
+      "bytes": 7022
+    },
+    {
+      "path": "tools/trusted_gate/deploy/run-linux-test.py",
+      "oid": "7442659783bf40112071078215934ca433b2f5f4",
+      "bytes": 13094
+    },
+    {
+      "path": "tools/trusted_gate/deploy/run-linux-test.py",
+      "oid": "b6e8b5bc2c70d30f680e937b19c4e07651f10800",
+      "bytes": 14183
+    },
+    {
+      "path": "tools/trusted_gate/deploy/seal-linux-inputs.py",
+      "oid": "ba89176350233f5e08b4515742c395523ecd49e7",
+      "bytes": 11774
+    },
+    {
+      "path": "tools/trusted_gate/deploy/srv-gatehouse-linux.mount",
+      "oid": "652b2b1c9bba3ebb37d6d836c97f2552e5a1f870",
+      "bytes": 277
+    },
+    {
+      "path": "tools/trusted_gate/deploy/srv-gatehouse-pilot.mount",
+      "oid": "da3550db4961697432c54987987570b2cb357f7e",
+      "bytes": 274
+    },
+    {
+      "path": "tools/trusted_gate/deploy/stage-administrator-inputs.py",
+      "oid": "c16ccd89809107cd7c598cd0bb663e4de3589777",
+      "bytes": 13187
+    },
+    {
+      "path": "tools/trusted_gate/deploy/stage-linux-inputs.py",
+      "oid": "d4c224565359a16f955f151f947629f7ac77c23b",
+      "bytes": 13595
+    },
+    {
+      "path": "tools/trusted_gate/deploy/stage-protected-source.py",
+      "oid": "be1fa2cefcfec4c740da3eafbf1fc983cdd3fefc",
+      "bytes": 8610
+    },
+    {
+      "path": "tools/trusted_gate/deploy/start-interrupted-recovery.py",
+      "oid": "afbdd6a2bd1eab2c3211725b054449e4f64f43b2",
+      "bytes": 7044
+    },
+    {
+      "path": "tools/trusted_gate/deploy/start-interrupted-recovery.py",
+      "oid": "bd988409c9ea64384544950db8b8814f3172a50f",
+      "bytes": 5580
+    },
+    {
+      "path": "tools/trusted_gate/deploy/start-interrupted-recovery.py",
+      "oid": "f9dbfcbacbd9243f4dfdb8c06440a8dcabee2914",
+      "bytes": 7044
+    },
+    {
+      "path": "tools/trusted_gate/deploy/sudoers.example",
+      "oid": "2fffbcfac11be16fa419af7d7a1b0b04201fdb4e",
+      "bytes": 331
+    },
+    {
+      "path": "tools/trusted_gate/deploy/upgrade-history-pilot.py",
+      "oid": "0e34317a37c5aec9c1913ee518a941bd7c8a5344",
+      "bytes": 21325
+    },
+    {
+      "path": "tools/trusted_gate/deploy/upgrade-history-pilot.py",
+      "oid": "9c095ea3385566b9bdca9643c2b0c7e68e1088aa",
+      "bytes": 21340
+    },
+    {
+      "path": "tools/trusted_gate/deploy/verify-locked-crates.py",
+      "oid": "16d54ef0f56b405d39f8f3a590a7d9a1ca98c6f6",
+      "bytes": 11129
+    },
+    {
+      "path": "tools/trusted_gate/execution.py",
+      "oid": "2a4c7e5b21e7f2ffcb95725c685225119ab34f93",
+      "bytes": 15382
+    },
+    {
+      "path": "tools/trusted_gate/execution.py",
+      "oid": "8547da87281032ffb2fbb9bf31fd2bb4303c7f2e",
+      "bytes": 15095
+    },
+    {
+      "path": "tools/trusted_gate/execution.py",
+      "oid": "ce7f4d593c453d324b2e39ba451510618f36e013",
+      "bytes": 15300
+    },
+    {
+      "path": "tools/trusted_gate/github.py",
+      "oid": "7a3b54f7621189fbf8e7efce10582a5a1b79ab9b",
+      "bytes": 8736
+    },
+    {
+      "path": "tools/trusted_gate/github.py",
+      "oid": "b95426d22c32012df7dc9dc0db2b39fed2908e89",
+      "bytes": 9380
+    },
+    {
+      "path": "tools/trusted_gate/history.py",
+      "oid": "01d94117a4eeb1ae650549eaf78824a8069bb2a9",
+      "bytes": 4327
+    },
+    {
+      "path": "tools/trusted_gate/history.py",
+      "oid": "f3c25e37099db5a89bccc9f769575dd0ba8fba59",
+      "bytes": 4255
+    },
+    {
+      "path": "tools/trusted_gate/host.py",
+      "oid": "0a36fc0ec5f5e6f0ef6b4b10512e661ae24c0cf2",
+      "bytes": 625
+    },
+    {
+      "path": "tools/trusted_gate/host.py",
+      "oid": "454cc858fcf21a072be8bf6a28f631e4676a64f8",
+      "bytes": 11147
+    },
+    {
+      "path": "tools/trusted_gate/host.py",
+      "oid": "976df605029bade7e3d3ae9c9020b51d133230be",
+      "bytes": 8754
+    },
+    {
+      "path": "tools/trusted_gate/host.py",
+      "oid": "ae646783870112814df008b34bdff7680cdf3227",
+      "bytes": 6932
+    },
+    {
+      "path": "tools/trusted_gate/isolation.py",
+      "oid": "0c8165d6df27cf750f2c804e1c0af059a56a58a3",
+      "bytes": 12053
+    },
+    {
+      "path": "tools/trusted_gate/isolation.py",
+      "oid": "23e2d28761b775102acecdb19fe3161e7dd695de",
+      "bytes": 6932
+    },
+    {
+      "path": "tools/trusted_gate/isolation.py",
+      "oid": "4cb67d5736bcc7d2ceb3dbe97b761ed1889c23f9",
+      "bytes": 14427
+    },
+    {
+      "path": "tools/trusted_gate/isolation.py",
+      "oid": "9e560a73664d655b2b84124c5f5cecb84d6860d5",
+      "bytes": 14621
+    },
+    {
+      "path": "tools/trusted_gate/isolation.py",
+      "oid": "b5fae5f2a8b5bdc141df8c2be64b2dadeadd5a9f",
+      "bytes": 8052
+    },
+    {
+      "path": "tools/trusted_gate/journal.py",
+      "oid": "b63e3d45ff70efac84c1d7369c5400617710e5a8",
+      "bytes": 4303
+    },
+    {
+      "path": "tools/trusted_gate/publication.py",
+      "oid": "e528592c73ce9132a5c46a905d23d987c761a926",
+      "bytes": 3265
+    },
+    {
+      "path": "tools/trusted_gate/runtime.py",
+      "oid": "0a03b663e82d5453941a228b2ce4e2cf131fdc89",
+      "bytes": 8486
+    },
+    {
+      "path": "tools/trusted_gate/runtime.py",
+      "oid": "1a5843e5827dae0537c6a78f3c156b17cf455069",
+      "bytes": 19077
+    },
+    {
+      "path": "tools/trusted_gate/runtime.py",
+      "oid": "529007d52c4287bc852bf44e19a8f893976bedf1",
+      "bytes": 8455
+    },
+    {
+      "path": "tools/trusted_gate/runtime.py",
+      "oid": "d4ccb042e12e02346eb1da103b8f10f95b2f6faa",
+      "bytes": 8410
+    },
+    {
+      "path": "tools/trusted_gate/runtime.py",
+      "oid": "facd38864c5bea72708284052d1421413e0b1c9e",
+      "bytes": 18998
+    },
+    {
+      "path": "tools/trusted_gate/source.py",
+      "oid": "2c85ccd6dadb45cf3b00a64801affabd78f30454",
+      "bytes": 5983
+    },
+    {
+      "path": "tools/trusted_gate/source.py",
+      "oid": "570dc7d9e6af256f17aaafa772f3f94e725bb928",
+      "bytes": 6618
+    },
+    {
+      "path": "tools/trusted_gate/source.py",
+      "oid": "7457eef912737b2d9d571d8a32a535dbddb6465b",
+      "bytes": 7221
+    },
+    {
+      "path": "tools/trusted_gate/source.py",
+      "oid": "be2b81a9a4e6b28412c1e3c0002ed07e13a96ad7",
+      "bytes": 6401
+    }
+  ]
+}

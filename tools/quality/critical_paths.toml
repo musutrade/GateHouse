@@ -56,7 +56,7 @@ path = "tests/failure_paths_test.rs"
 symbol = "verification_cleanup_cancel_and_report_precedence_retains_resource_evidence"
 start = 580
 end = 817
-sha256 = "cba73087dac7f6d1667a733b75e26c8921648c0805d5ba43eeaf9abd5fafd993"
+sha256 = "a6c5113f0460b4ae6a9294bd6ed3564f1af986080716b00c507d557b83bc749a"
 
 [[paths.probes]]
 line = 372
@@ -266,7 +266,7 @@ path = "src/verify/report.rs"
 symbol = "write_report_file"
 start = 1269
 end = 1279
-sha256 = "f2d138a067a427b8c3da6e36708c1eac159a3d6a1fc4b947db7d886c98b1d9a6"
+sha256 = "0ddee42ab4b2f7a41cfc1b2b2689a7d9507bcd688a1e115e962e3e72c09ea02d"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
@@ -297,14 +297,14 @@ path = "src/verify/report.rs"
 symbol = "verify_manifest_without_result_at"
 start = 1852
 end = 1938
-sha256 = "f2d138a067a427b8c3da6e36708c1eac159a3d6a1fc4b947db7d886c98b1d9a6"
+sha256 = "0ddee42ab4b2f7a41cfc1b2b2689a7d9507bcd688a1e115e962e3e72c09ea02d"
 
 [paths.test_source]
 path = "src/verify/report.rs"
 symbol = "manifest_records_digests_and_detects_tampering"
 start = 3374
 end = 3427
-sha256 = "f2d138a067a427b8c3da6e36708c1eac159a3d6a1fc4b947db7d886c98b1d9a6"
+sha256 = "0ddee42ab4b2f7a41cfc1b2b2689a7d9507bcd688a1e115e962e3e72c09ea02d"
 
 [[paths.probes]]
 line = 1934

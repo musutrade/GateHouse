@@ -1,0 +1,13 @@
+[Unit]
+Description=Bounded persistent GateHouse Linux verification storage
+Before=gatehouse-reconcile.service
+
+[Mount]
+What=/var/lib/gatehouse/linux.ext4
+Where=/srv/gatehouse/linux
+Type=ext4
+Options=loop,nodev,nosuid,noatime
+TimeoutSec=60
+
+[Install]
+WantedBy=multi-user.target

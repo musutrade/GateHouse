@@ -1,0 +1,11 @@
+[Unit]
+Description=Check applicability of outstanding GateHouse results
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=30s
+AccuracySec=5s
+Unit=gatehouse-reconcile.service
+
+[Install]
+WantedBy=timers.target
