@@ -16,6 +16,26 @@ pub(crate) use query::Query;
 use anyhow::{ensure, Context, Result};
 use std::path::Path;
 
+/// Read a historical result using the same pinned evidence resolver as reports.
+/// Success means integrity verification, not a new quality decision or current applicability.
+pub(crate) fn verify_saved(path: &Path) -> Result<serde_json::Value> {
+    let (root, index, _) = input::index(path)?;
+    ensure!(
+        index.samples.len() == 1,
+        "report-verify requires exactly one invocation"
+    );
+    let report = input::completed(&root, index.samples.into_iter().next().unwrap())?;
+    let invocation = input::invocation_id(&report.machine)?;
+    Ok(serde_json::json!({
+        "historical_integrity": "verified",
+        "current_applicability": "not_evaluated",
+        "invocation_id": invocation,
+        "machine_sha256": report.machine_sha256,
+        "manifest_sha256": report.manifest_sha256,
+        "result": report.machine,
+    }))
+}
+
 #[cfg(test)]
 pub(crate) fn run(
     index: &Path,

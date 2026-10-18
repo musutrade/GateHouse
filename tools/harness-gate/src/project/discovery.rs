@@ -49,6 +49,25 @@ impl Project {
         Self::from_input(root, &config_relative, input)
     }
 
+    pub(crate) fn directory_snapshot(&self) -> Result<Self> {
+        let relative = self.config_path.strip_prefix(&self.execution_root)?;
+        let output = self.reports.strip_prefix(&self.root)?;
+        let input = InvocationInput::directory_snapshot(&self.execution_root, output)?;
+        let mut project = Self::from_input(self.root.clone(), relative, input)?;
+        anyhow::ensure!(
+            project
+                .config
+                .steps
+                .iter()
+                .all(|step| step.input != crate::config::StepInput::Repository),
+            "directory input does not support repository-bound steps"
+        );
+        project.replay_state_dir = self.replay_state_dir.clone();
+        project.step_cache_dir = self.step_cache_dir.clone();
+        project.plugins = self.plugins.clone();
+        Ok(project)
+    }
+
     pub(crate) fn staged_snapshot(&self) -> Result<Self> {
         let config_relative = self
             .config_path

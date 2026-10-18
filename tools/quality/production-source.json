@@ -159,6 +159,7 @@
     "project": {
       "blocking": true,
       "files": [
+        "src/project/content.rs",
         "src/project/discovery.rs",
         "src/project/input.rs",
         "src/project/mod.rs",
@@ -413,7 +414,7 @@
     {
       "path": "src/config/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "6fc5ff455b49e26c6ab2a07203d41a6f6922424b077e95f15477d634fa8b7817"
+      "sha256": "6647c5f3219e640447ef0e52e29fdf9dc9c9495b6e5add62202ea741f7da40a3"
     },
     {
       "path": "src/doctor/mod.rs",

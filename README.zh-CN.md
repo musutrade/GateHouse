@@ -83,7 +83,7 @@ Git 变更文件
   -> 按配置顺序执行 steps
   -> 配置的质量采集 + 可信 baseline + Rust 策略评估
   -> 一个项目决策 + JSON / Markdown / 可选 HTML/JUnit 报告
-  -> 可选 HTTP(S) Webhook 通知
+  -> 输出本地结论与证据，供独立消费者使用
 ```
 
 component、profile、命令、路径、parser 和 service 都来自 TOML。常规项目迁移不需要在 Rust 中增加枚举或修改匹配分支。
@@ -679,11 +679,9 @@ harness-gate verify --all
 
 无论成功或失败，都建议上传 `[paths].reports` 目录作为 artifact。这样可以保留审计行号、步骤耗时和完整日志。
 
-可选的 `[[notifications.webhooks]]` 会在报告文件写入后发送 JSON。每个 URL 必须配置精确匹配的
-`allowed_hosts`；凭据、通配符、解析后的 loopback/private/link-local/unspecified/multicast 地址和重定向都会
-在配置或连接时拒绝。`on_failure` 默认开启，`on_success` 默认关闭；非 2xx 响应、连接错误或策略拒绝返回
-报告错误 `E1404`，但不会删除已生成的报告。目的地证据只保留 scheme 和规范化主机。完整字段、模板路径
-约束和 JUnit 示例见[配置参考](https://github.com/musutrade/GateHouse/blob/main/docs/configuration.zh-CN.md#报告模板junit-和通知)。多个 webhook 按配置顺序发送，首个失败会停止后续通知。
+验证不再发送 Webhook。旧 `notifications.webhooks` 配置暂保留解析兼容并提示迁移，
+不会发出 HTTP 请求或影响质量结论。结果投递由独立消费者负责，可先使用
+[保存结果核验](docs/saved-results.md)检查输入证据。
 
 ## 故障排查
 

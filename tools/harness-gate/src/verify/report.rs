@@ -1,14 +1,10 @@
 mod quality_view;
 mod rendering;
 
-#[cfg(test)]
-use rendering::escape;
 use rendering::{junit, markdown};
 
 use super::VerificationReport;
-use crate::config::WebhookConfig;
 use crate::failure::FailureCode;
-use crate::net_policy::{is_local_only, normalize_host};
 use crate::project::Project;
 use crate::service::{ReportDirectoryGuard, ResourceLease};
 use crate::utils::redaction::{redact_text, REDACTION_TEXT_LIMIT};
@@ -22,8 +18,6 @@ use std::io::Read;
 use std::path::{Component, Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
-use ureq::unversioned::resolver::{DefaultResolver, ResolvedSocketAddrs, Resolver};
-use ureq::unversioned::transport::NextTimeout;
 
 static INVOCATION_COUNTER: AtomicU64 = AtomicU64::new(1);
 pub(super) const MACHINE_RESULT_SCHEMA_VERSION: &str = "1";
@@ -581,6 +575,7 @@ pub(super) struct Invocation {
 #[derive(Debug, Serialize)]
 struct InvocationMetadata<'a> {
     metadata_version: u32,
+    candidate_manifest: &'a Option<crate::project::content::ContentManifest>,
     invocation_id: &'a str,
     created_at: String,
     profile: &'a str,
@@ -663,6 +658,7 @@ pub(super) fn write_invocation_metadata_with_request(
 ) -> Result<()> {
     let metadata = InvocationMetadata {
         metadata_version: 2,
+        candidate_manifest: &project.input().content,
         invocation_id: &invocation.id,
         created_at: chrono::Utc::now().to_rfc3339(),
         profile,
@@ -789,7 +785,7 @@ pub(crate) fn dashboard_document(machine: &serde_json::Value, dashboard: &str) -
 }
 
 /// Report output boundary. The verifier produces a report model; this module
-/// owns serialization and optional result delivery.
+/// owns local serialization and evidence publication.
 pub(super) fn write(report: &VerificationReport, project: &Project) -> Result<()> {
     let mut generated = BTreeMap::new();
     if let Some(quality) = &report.quality {
@@ -1908,6 +1904,9 @@ fn verify_manifest_without_result_at(reports: &Path) -> Result<()> {
         .iter()
         .map(|artifact| artifact.path.clone())
         .collect::<BTreeSet<_>>();
+    if manifest_paths.len() != manifest.artifacts.len() {
+        bail!("duplicate artifact path in manifest");
+    }
     if manifest_paths != disk {
         bail!("manifest and publishable disk artifact sets differ");
     }
@@ -2286,286 +2285,19 @@ fn resolve_report_root(project: &Project, repository: &Path) -> Result<PathBuf> 
     Ok(reports)
 }
 
-pub(super) fn notify(report: &VerificationReport, project: &Project) -> Result<()> {
-    notify_with(report, project, &PolicyWebhookTransport)
-}
-
-trait WebhookTransport {
-    fn send(&self, config: &WebhookConfig, body: &[u8]) -> Result<()>;
-}
-
-struct PolicyWebhookTransport;
-
-impl WebhookTransport for PolicyWebhookTransport {
-    fn send(&self, config: &WebhookConfig, body: &[u8]) -> Result<()> {
-        post_json_with_policy(&config.url, &config.allowed_hosts, body).with_context(|| {
-            format!(
-                "send verification report to {}",
-                destination_summary(config)
-            )
-        })
-    }
-}
-
-fn notify_with<T: WebhookTransport>(
-    report: &VerificationReport,
-    project: &Project,
-    transport: &T,
-) -> Result<()> {
-    let body = redact_text(&serde_json::to_string(report)?).into_bytes();
-    for webhook in &project.config.notifications.webhooks {
-        if (report.passed && !webhook.on_success) || (!report.passed && !webhook.on_failure) {
-            continue;
-        }
-        transport.send(webhook, &body)?;
-    }
-    Ok(())
-}
-
-fn destination_summary(config: &WebhookConfig) -> String {
-    url::Url::parse(&config.url)
-        .ok()
-        .and_then(|url| {
-            url.host_str()
-                .map(|host| format!("{}://{}", url.scheme(), normalize_host(host)))
-        })
-        .unwrap_or_else(|| "webhook destination".into())
-}
-
-#[derive(Debug)]
-struct WebhookPolicyError {
-    code: FailureCode,
-    host: String,
-    reason: &'static str,
-}
-
-impl std::fmt::Display for WebhookPolicyError {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            formatter,
-            "{} (host {:?}: {})",
-            self.code, self.host, self.reason
-        )
-    }
-}
-
-impl std::error::Error for WebhookPolicyError {}
-
-#[derive(Debug)]
-struct PolicyResolver {
-    allowed_hosts: Vec<String>,
-}
-
-impl PolicyResolver {
-    fn allows_host(&self, host: &str) -> bool {
-        let host = normalize_host(host);
-        self.allowed_hosts
-            .iter()
-            .map(|allowed| normalize_host(allowed))
-            .any(|allowed| allowed == host)
-    }
-
-    fn check_addresses(
-        &self,
-        host: &str,
-        addresses: &ResolvedSocketAddrs,
-    ) -> Result<ResolvedSocketAddrs, ureq::Error> {
-        if !self.allows_host(host) {
-            return Err(ureq::Error::Other(Box::new(WebhookPolicyError {
-                code: FailureCode::WebhookDestinationDenied,
-                host: normalize_host(host),
-                reason: "host is not in the explicit allowlist",
-            })));
-        }
-        let mut permitted = <Self as Resolver>::empty(self);
-        for address in addresses {
-            if is_local_only(address.ip()) {
-                return Err(ureq::Error::Other(Box::new(WebhookPolicyError {
-                    code: FailureCode::WebhookDestinationDenied,
-                    host: normalize_host(host),
-                    reason: "resolved address is local-only",
-                })));
-            }
-            permitted.push(*address);
-        }
-        if permitted.is_empty() {
-            return Err(ureq::Error::HostNotFound);
-        }
-        Ok(permitted)
-    }
-}
-
-impl Resolver for PolicyResolver {
-    fn resolve(
-        &self,
-        uri: &ureq::http::Uri,
-        config: &ureq::config::Config,
-        timeout: NextTimeout,
-    ) -> Result<ResolvedSocketAddrs, ureq::Error> {
-        let host = uri.host().ok_or_else(|| {
-            ureq::Error::Other(Box::new(WebhookPolicyError {
-                code: FailureCode::WebhookDestinationDenied,
-                host: "<missing>".into(),
-                reason: "URL has no host",
-            }))
-        })?;
-        let resolved = DefaultResolver::default().resolve(uri, config, timeout)?;
-        self.check_addresses(host, &resolved)
-    }
-}
-
-#[cfg(test)]
-fn render_html(template: &str, report: &VerificationReport) -> String {
-    let summary = if report.passed && report.steps.iter().any(|step| step.waived) {
-        "WAIVED"
-    } else if report.passed {
-        "PASS"
-    } else {
-        "FAIL"
-    };
-    template
-        .replace("{{ timestamp }}", &escape(&report.timestamp))
-        .replace("{{ profile }}", &escape(&report.profile))
-        .replace("{{ summary }}", summary)
-        .replace(
-            "{{ components }}",
-            &escape(
-                &report
-                    .scope
-                    .components
-                    .iter()
-                    .cloned()
-                    .collect::<Vec<_>>()
-                    .join(","),
-            ),
-        )
-}
-
-#[cfg(test)]
-fn post_json(raw_url: &str, body: &[u8]) -> Result<()> {
-    let response = ureq::post(raw_url)
-        .config()
-        .timeout_global(Some(Duration::from_secs(10)))
-        .build()
-        .content_type("application/json")
-        .send(body)
-        .context("send webhook request")?;
-    if !response.status().is_success() {
-        bail!("webhook returned HTTP status {}", response.status());
-    }
-    Ok(())
-}
-
-fn post_json_with_policy(raw_url: &str, allowed_hosts: &[String], body: &[u8]) -> Result<()> {
-    let parsed = url::Url::parse(raw_url).context("parse webhook URL")?;
-    let host = parsed
-        .host_str()
-        .ok_or_else(|| anyhow::anyhow!("WEBHOOK_DESTINATION_DENIED: webhook URL has no host"))?;
-    if !matches!(parsed.scheme(), "http" | "https")
-        || !parsed.username().is_empty()
-        || parsed.password().is_some()
-    {
-        bail!("WEBHOOK_DESTINATION_DENIED: webhook URL must be credential-free HTTP(S)");
-    }
-    let resolver = PolicyResolver {
-        allowed_hosts: allowed_hosts.to_vec(),
-    };
-    if !resolver.allows_host(host) {
-        return Err(anyhow::Error::new(WebhookPolicyError {
-            code: FailureCode::WebhookDestinationDenied,
-            host: normalize_host(host),
-            reason: "host is not in the explicit allowlist",
-        }));
-    }
-    let config = ureq::Agent::config_builder()
-        .timeout_global(Some(Duration::from_secs(10)))
-        .timeout_resolve(Some(Duration::from_secs(5)))
-        .max_redirects(0)
-        .proxy(None)
-        .build();
-    let agent = ureq::Agent::with_parts(
-        config,
-        ureq::unversioned::transport::DefaultConnector::default(),
-        resolver,
-    );
-    let response = agent
-        .post(raw_url)
-        .content_type("application/json")
-        .send(body)
-        .context("send webhook request")?;
-    validate_webhook_status(response.status(), host)
-}
-
-fn validate_webhook_status(status: ureq::http::StatusCode, host: &str) -> Result<()> {
-    if status.is_redirection() {
-        return Err(anyhow::Error::new(WebhookPolicyError {
-            code: FailureCode::WebhookRedirectDenied,
-            host: normalize_host(host),
-            reason: "redirects are disabled for webhook delivery",
-        }));
-    }
-    if !status.is_success() {
-        bail!("webhook returned HTTP status {status}");
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::{
         allocate_invocation, configured_html, ensure_supported_machine_result, junit,
-        machine_result, markdown, notify, notify_with, post_json, redact_invocation_files,
-        redact_text, render_html, report_target, validate_webhook_status, verify_manifest, write,
-        write_invocation_metadata, PolicyResolver, ARTIFACT_REGISTRY_FILE, MACHINE_RESULT_FILE,
-        MANIFEST_FILE, REDACTION_TEXT_LIMIT,
+        machine_result, markdown, redact_invocation_files, redact_text, report_target,
+        verify_manifest, write, write_invocation_metadata, ARTIFACT_REGISTRY_FILE,
+        MACHINE_RESULT_FILE, MANIFEST_FILE, REDACTION_TEXT_LIMIT,
     };
-    use crate::config::WebhookConfig;
     use crate::process::TaskResult;
     use crate::scope::ScopeResult;
     use crate::verify::{SkippedStep, VerificationReport};
-    use std::io::{Read, Write};
-    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener};
-    use std::thread;
+    use std::io::Write;
     use std::time::Duration;
-    use ureq::unversioned::resolver::Resolver;
-
-    struct LocalWebhookTransport;
-
-    impl super::WebhookTransport for LocalWebhookTransport {
-        fn send(&self, config: &WebhookConfig, body: &[u8]) -> anyhow::Result<()> {
-            super::post_json(&config.url, body)
-        }
-    }
-
-    fn read_http_request(stream: &mut std::net::TcpStream) -> Vec<u8> {
-        stream
-            .set_read_timeout(Some(Duration::from_secs(5)))
-            .expect("set request read timeout");
-        let mut request = Vec::new();
-        let mut chunk = [0_u8; 1024];
-        loop {
-            let size = stream.read(&mut chunk).expect("read webhook request");
-            if size == 0 {
-                break;
-            }
-            request.extend_from_slice(&chunk[..size]);
-            let Some(header_end) = request.windows(4).position(|window| window == b"\r\n\r\n")
-            else {
-                continue;
-            };
-            let headers = String::from_utf8_lossy(&request[..header_end]);
-            let content_length = headers
-                .lines()
-                .filter_map(|line| line.split_once(':'))
-                .find(|(name, _)| name.eq_ignore_ascii_case("content-length"))
-                .and_then(|(_, value)| value.trim().parse::<usize>().ok())
-                .unwrap_or(0);
-            if request.len() >= header_end + 4 + content_length {
-                break;
-            }
-        }
-        request
-    }
 
     fn report() -> VerificationReport {
         VerificationReport {
@@ -3421,6 +3153,25 @@ mod tests {
             "[REDACTED]\n"
         );
         verify_manifest(&invocation_project).expect("manifest should verify");
+        // Mirrored duplicates in both controls must not disappear into a set.
+        let mut original_controls = Vec::new();
+        for name in ["manifest.json", "artifact-registry.json"] {
+            let path = invocation.root.join(name);
+            let bytes = std::fs::read(&path).unwrap();
+            let mut value: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+            let entries = value["artifacts"].as_array_mut().unwrap();
+            entries.push(entries[0].clone());
+            std::fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+            original_controls.push((path, bytes));
+        }
+        let error = verify_manifest(&invocation_project).unwrap_err();
+        assert!(
+            error.to_string().contains("duplicate artifact path"),
+            "{error:#}"
+        );
+        for (path, bytes) in original_controls {
+            std::fs::write(path, bytes).unwrap();
+        }
         std::fs::write(invocation.root.join("logs/unit.log"), "tampered\n").expect("tamper log");
         assert!(verify_manifest(&invocation_project).is_err());
         drop(invocation);
@@ -3864,15 +3615,6 @@ mod tests {
     }
 
     #[test]
-    fn html_template_replaces_only_supported_fields() {
-        let output = render_html(
-            "{{ profile }} {{ summary }} {{ components }} {{ unknown }}",
-            &report(),
-        );
-        assert_eq!(output, "full FAIL api {{ unknown }}");
-    }
-
-    #[test]
     fn configured_html_supports_include_and_inheritance() {
         let workspace = crate::test_support::TestWorkspace::new("report-template-tera");
         crate::preset::init(&workspace.root, "generic", false).expect("initialize fixture");
@@ -4056,256 +3798,6 @@ mod tests {
         assert!(error.to_string().contains("report directory escapes"));
         assert!(!outside.join("new-reports").exists());
         let _ = std::fs::remove_dir_all(outside);
-    }
-
-    #[test]
-    fn webhook_accepts_success_response() {
-        let listener = TcpListener::bind(("127.0.0.1", 0)).expect("bind listener");
-        let address = listener.local_addr().expect("listener address");
-        let handle = thread::spawn(move || {
-            let (mut stream, _) = listener.accept().expect("accept webhook");
-            let request = read_http_request(&mut stream);
-            assert!(String::from_utf8_lossy(&request).contains("POST /notify"));
-            stream
-                .write_all(b"HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n")
-                .expect("write response");
-        });
-        post_json(&format!("http://{address}/notify"), br#"{"passed":true}"#)
-            .expect("webhook should succeed");
-        handle.join().expect("webhook thread");
-    }
-
-    #[test]
-    fn webhook_policy_rejects_local_address_before_connecting() {
-        let listener = TcpListener::bind(("127.0.0.1", 0)).expect("bind listener");
-        listener
-            .set_nonblocking(true)
-            .expect("set listener nonblocking");
-        let address = listener.local_addr().expect("listener address");
-        let error = super::post_json_with_policy(
-            &format!("http://{address}/notify"),
-            &[address.ip().to_string()],
-            br#"{"passed":true}"#,
-        )
-        .expect_err("loopback webhook must be denied");
-        assert!(format!("{error:#}").contains("WEBHOOK_DESTINATION_DENIED"));
-        assert!(matches!(
-            listener.accept(),
-            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock
-        ));
-    }
-
-    #[test]
-    fn webhook_policy_rechecks_every_resolution_and_fails_closed_on_rebinding() {
-        let resolver = PolicyResolver {
-            allowed_hosts: vec!["hooks.example.test".into()],
-        };
-        let mut public = <PolicyResolver as Resolver>::empty(&resolver);
-        public.push(SocketAddr::new(
-            IpAddr::V4(Ipv4Addr::new(93, 184, 216, 34)),
-            443,
-        ));
-        public.push(SocketAddr::new(
-            "2001:4860:4860::8888"
-                .parse::<IpAddr>()
-                .expect("public IPv6 fixture"),
-            443,
-        ));
-        let permitted = resolver
-            .check_addresses("hooks.example.test", &public)
-            .expect("public resolution is permitted");
-        assert_eq!(permitted.iter().count(), 2);
-
-        for address in [
-            IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-            IpAddr::V4(Ipv4Addr::LOCALHOST),
-            IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)),
-            IpAddr::V4(Ipv4Addr::new(169, 254, 1, 1)),
-            IpAddr::V4(Ipv4Addr::new(224, 0, 0, 1)),
-            IpAddr::V6(Ipv6Addr::UNSPECIFIED),
-            IpAddr::V6(Ipv6Addr::LOCALHOST),
-            IpAddr::V6("fc00::1".parse().expect("unique-local fixture")),
-            IpAddr::V6("fe80::1".parse().expect("link-local fixture")),
-            IpAddr::V6("ff00::1".parse().expect("multicast fixture")),
-        ] {
-            let mut rebound = <PolicyResolver as Resolver>::empty(&resolver);
-            rebound.push(SocketAddr::new(address, 443));
-            let error = resolver
-                .check_addresses("hooks.example.test", &rebound)
-                .expect_err("rebound local address must be denied");
-            assert!(
-                error.to_string().contains("WEBHOOK_DESTINATION_DENIED"),
-                "unexpected error for {address}: {error}"
-            );
-        }
-    }
-
-    #[test]
-    fn webhook_policy_rejects_unlisted_hosts_without_exposing_secrets() {
-        let resolver = PolicyResolver {
-            allowed_hosts: vec!["hooks.example.test".into()],
-        };
-        let mut addresses = <PolicyResolver as Resolver>::empty(&resolver);
-        addresses.push(SocketAddr::new(
-            IpAddr::V4(Ipv4Addr::new(93, 184, 216, 34)),
-            443,
-        ));
-        let error = resolver
-            .check_addresses("other.example.test", &addresses)
-            .expect_err("unlisted host must be denied");
-        assert!(error.to_string().contains("WEBHOOK_DESTINATION_DENIED"));
-
-        let body_secret = "body-secret-must-not-appear";
-        let error = super::post_json_with_policy(
-            "https://operator:url-secret@example.test/hook?token=query-secret",
-            &["example.test".into()],
-            body_secret.as_bytes(),
-        )
-        .expect_err("credential-bearing URL must be denied");
-        let rendered = format!("{error:#}");
-        for secret in ["operator", "url-secret", "query-secret", body_secret] {
-            assert!(!rendered.contains(secret), "policy error leaked {secret}");
-        }
-    }
-
-    #[test]
-    fn webhook_redirects_are_a_typed_policy_failure() {
-        let error = validate_webhook_status(ureq::http::StatusCode::FOUND, "hooks.example.test")
-            .expect_err("redirect must be denied");
-        assert!(format!("{error:#}").contains("WEBHOOK_REDIRECT_DENIED"));
-    }
-
-    #[test]
-    fn webhook_redacts_sensitive_report_details() {
-        let listener = TcpListener::bind(("127.0.0.1", 0)).expect("bind listener");
-        let address = listener.local_addr().expect("listener address");
-        let handle = thread::spawn(move || {
-            let (mut stream, _) = listener.accept().expect("accept webhook");
-            let request = read_http_request(&mut stream);
-            let body = String::from_utf8_lossy(&request);
-            assert!(!body.contains("webhook-secret"));
-            assert!(body.contains("[REDACTED]"));
-            stream
-                .write_all(b"HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n")
-                .expect("write response");
-        });
-        let workspace = crate::test_support::TestWorkspace::new("webhook-redaction");
-        crate::preset::init(&workspace.root, "generic", false).expect("initialize fixture");
-        workspace.init_git();
-        let mut project = crate::project::Project::discover(Some(workspace.root.clone()), None)
-            .expect("discover fixture");
-        project.config.notifications.webhooks = vec![WebhookConfig {
-            url: format!("http://{address}/notify"),
-            allowed_hosts: vec![address.ip().to_string()],
-            on_failure: true,
-            on_success: false,
-        }];
-        let mut sensitive = report();
-        let token_key = ["tok", "en"].concat();
-        sensitive.steps[0].detail = Some(format!("{token_key}=opaque-value"));
-        notify_with(&sensitive, &project, &LocalWebhookTransport)
-            .expect("redacted webhook should succeed");
-        handle.join().expect("webhook thread");
-    }
-
-    #[test]
-    fn webhook_rejects_non_success_response() {
-        let listener = TcpListener::bind(("127.0.0.1", 0)).expect("bind listener");
-        let address = listener.local_addr().expect("listener address");
-        let handle = thread::spawn(move || {
-            let (mut stream, _) = listener.accept().expect("accept webhook");
-            let _ = read_http_request(&mut stream);
-            stream
-                .write_all(b"HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\n\r\n")
-                .expect("write response");
-        });
-        let error = post_json(&format!("http://{address}/notify"), br#"{"passed":false}"#)
-            .expect_err("webhook failure should be reported");
-        assert!(format!("{error:#}").contains("503"), "{error:#}");
-        handle.join().expect("webhook thread");
-    }
-
-    #[test]
-    fn webhook_reports_connection_failure() {
-        let listener = TcpListener::bind(("127.0.0.1", 0)).expect("bind listener");
-        let address = listener.local_addr().expect("listener address");
-        drop(listener);
-        let workspace = crate::test_support::TestWorkspace::new("webhook-connection-failure");
-        crate::preset::init(&workspace.root, "generic", false).expect("initialize fixture");
-        workspace.init_git();
-        let mut project = crate::project::Project::discover(Some(workspace.root.clone()), None)
-            .expect("discover fixture");
-        project.config.notifications.webhooks = vec![WebhookConfig {
-            url: format!("http://{address}/notify"),
-            allowed_hosts: vec![address.ip().to_string()],
-            on_failure: true,
-            on_success: false,
-        }];
-        let error = notify(&report(), &project).expect_err("connection failure should be reported");
-        assert!(format!("{error:#}").contains("webhook"), "{error:#}");
-    }
-
-    #[test]
-    fn webhook_stops_after_the_first_failure_in_configured_order() {
-        let first = TcpListener::bind(("127.0.0.1", 0)).expect("bind first listener");
-        let first_address = first.local_addr().expect("first listener address");
-        let second = TcpListener::bind(("127.0.0.1", 0)).expect("bind second listener");
-        second
-            .set_nonblocking(true)
-            .expect("set second listener nonblocking");
-        let second_address = second.local_addr().expect("second listener address");
-        let first_handle = thread::spawn(move || {
-            let (mut stream, _) = first.accept().expect("accept first webhook");
-            let _ = read_http_request(&mut stream);
-            stream
-                .write_all(b"HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\n\r\n")
-                .expect("write first response");
-        });
-
-        let workspace = crate::test_support::TestWorkspace::new("webhook-order");
-        crate::preset::init(&workspace.root, "generic", false).expect("initialize fixture");
-        workspace.init_git();
-        let mut project = crate::project::Project::discover(Some(workspace.root.clone()), None)
-            .expect("discover fixture");
-        project.config.notifications.webhooks = vec![
-            WebhookConfig {
-                url: format!("http://{first_address}/first"),
-                allowed_hosts: vec![first_address.ip().to_string()],
-                on_failure: true,
-                on_success: false,
-            },
-            WebhookConfig {
-                url: format!("http://{second_address}/second"),
-                allowed_hosts: vec![second_address.ip().to_string()],
-                on_failure: true,
-                on_success: false,
-            },
-        ];
-        let error = notify_with(&report(), &project, &LocalWebhookTransport)
-            .expect_err("first webhook should fail");
-        assert!(format!("{error:#}").contains("503"), "{error:#}");
-        first_handle.join().expect("first webhook thread");
-        assert!(
-            matches!(second.accept(), Err(error) if error.kind() == std::io::ErrorKind::WouldBlock)
-        );
-    }
-
-    #[test]
-    fn webhook_filters_success_notifications_without_contacting_the_endpoint() {
-        let workspace = crate::test_support::TestWorkspace::new("webhook-filter");
-        crate::preset::init(&workspace.root, "generic", false).expect("initialize fixture");
-        workspace.init_git();
-        let mut project = crate::project::Project::discover(Some(workspace.root.clone()), None)
-            .expect("discover fixture");
-        project.config.notifications.webhooks = vec![WebhookConfig {
-            url: "http://127.0.0.1:1/should-not-be-called".into(),
-            allowed_hosts: vec!["127.0.0.1".into()],
-            on_failure: true,
-            on_success: false,
-        }];
-        let mut success = report();
-        success.passed = true;
-        notify(&success, &project).expect("disabled success notification is skipped");
     }
 
     fn retention_child_exit_diagnostic(

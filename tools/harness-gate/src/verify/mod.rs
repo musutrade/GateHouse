@@ -319,6 +319,10 @@ fn run_selected(
     if let Some(result) = &quality {
         println!("{}", quality::diagnostics(result));
     }
+    invocation_project
+        .input()
+        .verify_content()
+        .map_err(VerifyError::execution)?;
     let passed = quality.as_ref().is_none_or(|result| result.passed())
         && !cancelled
         && failures.is_empty()
@@ -487,7 +491,9 @@ fn publish_report(
     report::write(report, invocation_project).map_err(VerifyError::report)?;
     quality::publish(report, project).map_err(VerifyError::report)?;
     report::mirror_legacy_outputs(invocation_project, project).map_err(VerifyError::report)?;
-    report::notify(report, invocation_project).map_err(VerifyError::report)?;
+    if !project.config.notifications.webhooks.is_empty() {
+        eprintln!("notifications.webhooks is deprecated: verification only writes results; deliver saved results through an external consumer");
+    }
     progress.finish();
     terminal::print(report);
     println!(

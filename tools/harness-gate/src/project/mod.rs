@@ -1,3 +1,4 @@
+pub(crate) mod content;
 mod discovery;
 mod input;
 mod paths;

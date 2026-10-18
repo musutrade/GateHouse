@@ -18,6 +18,7 @@ pub(crate) enum InputMode {
     Staged,
     Base,
     All,
+    Directory,
 }
 
 impl InputMode {
@@ -27,6 +28,7 @@ impl InputMode {
             Self::Staged => "staged",
             Self::Base => "base",
             Self::All => "all",
+            Self::Directory => "directory",
         }
     }
 }
@@ -42,6 +44,7 @@ pub(crate) struct InvocationInput {
     pub(crate) configuration_digest: String,
     #[serde(skip)]
     snapshot: Option<Arc<SnapshotGuard>>,
+    pub(crate) content: Option<super::content::ContentManifest>,
 }
 
 #[derive(Debug)]
@@ -128,6 +131,7 @@ impl InvocationInput {
             execution_root: snapshot_root,
             configuration_digest: String::new(),
             snapshot: Some(guard),
+            content: None,
         })
     }
 
@@ -154,6 +158,7 @@ impl InvocationInput {
             execution_root: root,
             configuration_digest: digest_bytes(config_bytes),
             snapshot: None,
+            content: None,
         })
     }
 
@@ -229,7 +234,41 @@ impl InvocationInput {
             execution_root: snapshot_root,
             configuration_digest: config_digest,
             snapshot: Some(guard),
+            content: None,
         })
+    }
+
+    pub(crate) fn directory_snapshot(root: &Path, output: &Path) -> Result<Self> {
+        let manifest = super::content::ContentManifest::capture(root, Some(output))?;
+        let snapshot_root = allocate_snapshot_root()?;
+        let guard = Arc::new(SnapshotGuard {
+            root: snapshot_root.clone(),
+        });
+        manifest.materialize(root, &snapshot_root)?;
+        anyhow::ensure!(
+            super::content::ContentManifest::capture(root, Some(output))? == manifest,
+            "candidate changed while materializing directory input"
+        );
+        Ok(Self {
+            mode: InputMode::Directory,
+            project_identity: root.to_string_lossy().into_owned(),
+            source_identity: manifest.identity()?,
+            commit: "not-sampled".into(),
+            execution_root: snapshot_root,
+            configuration_digest: String::new(),
+            snapshot: Some(guard),
+            content: Some(manifest),
+        })
+    }
+
+    pub(crate) fn verify_content(&self) -> Result<()> {
+        if let Some(expected) = &self.content {
+            anyhow::ensure!(
+                super::content::ContentManifest::capture(&self.execution_root, None)? == *expected,
+                "materialized candidate changed during verification"
+            );
+        }
+        Ok(())
     }
 
     pub(crate) fn is_snapshot(&self) -> bool {

@@ -153,7 +153,7 @@ version = 2
 | `[[steps]]`         | 是   | 实际执行的命令步骤          |
 | `[report_templates]` | 否  | 可选 HTML 模板和 JUnit 输出配置 |
 | `[report_history]` | 否 | 本地不可变报告自动归档，`archive` 指定仓库相对路径；见[自动归档](../README.zh-CN.md#自动归档已完成的本地报告) |
-| `[notifications]`   | 否   | 可选 HTTP Webhook 通知         |
+| `[notifications]`   | 否   | 已弃用的通知配置；验证不再发送 Webhook         |
 
 未知字段会直接导致解析失败，避免拼写错误被静默忽略。
 
@@ -1044,23 +1044,13 @@ kind = "docker"
 runtime = "podman" # docker | podman
 ```
 
-Webhook 在报告写入成功后发送报告 JSON。仅启用的结果类型会发送；URL 主机必须列入精确的
-`allowed_hosts`，不能包含用户名、密码或通配符：
+验证在本地结论与证据写入后完成，不再发送 Webhook，也不等待外部消费者。
+旧 `notifications.webhooks` 字段暂保留解析与格式校验兼容，但只提示迁移，不产生网络请求；
+迁移时应删除该配置段。远端服务不可用不会改变门禁退出码或已形成的质量结论。
 
-```toml
-[[notifications.webhooks]]
-url = "https://hooks.example.test/events"
-allowed_hosts = ["hooks.example.test"]
-on_failure = true
-on_success = false
-```
-
-Webhook 只支持 `http` 和 `https`，发送前会再次解析并拒绝 loopback、RFC1918/private、link-local、
-unspecified、multicast、共享地址（CGNAT 100.64.0.0/10）、基准测试、文档及保留地址，并对内嵌
-IPv4 的 IPv6 形式（IPv4-mapped/compatible、NAT64 `64:ff9b::/96`、6to4）按内嵌地址判定；重定向被禁用。非 2xx 响应、连接错误或目的地策略拒绝会使本次验证
-返回报告错误（`E1404`），但不会改写已经生成的报告。`on_failure` 默认开启，`on_success` 默认关闭；
-至少启用一个结果类型。多个 webhook 按配置文件中的顺序发送；第一个请求失败后立即停止，后续 endpoint
-不会被调用。日志只保留 scheme 和规范化主机，不记录凭据或报告 body。
+由独立消费者管理目的地、凭据、传输策略和投递状态。消费前可使用
+[保存结果核验](saved-results.md)检查完整性与输入绑定；历史结果有效不代表适用于新的候选。
+Core 已移除自动投递实现及其专属传输测试，这不表示外部 Webhook 集成已经交付。
 
 ### v1 到 v2 配置迁移和安全修复
 

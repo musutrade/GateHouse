@@ -106,6 +106,10 @@ pub(super) fn outputs(project: &Project, step: &StepConfig) -> Result<BTreeMap<S
 
 pub(super) fn build(project: &Project, step: &StepConfig) -> Result<Vec<u8>> {
     ensure!(
+        project.input().content.is_none(),
+        "directory input executes without Git-based step reuse"
+    );
+    ensure!(
         step.input == StepInput::Snapshot,
         "repository-bound commands cannot be cached"
     );

@@ -88,7 +88,7 @@ Git changed files
   -> execute steps in configured order
   -> configured quality collectors + trusted baseline + Rust policy evaluation
   -> one project decision + JSON / Markdown / optional HTML/JUnit reports
-  -> optional HTTP(S) Webhook notification
+  -> completed local result and evidence for independent consumers
 ```
 
 Execution mechanics live in `flow.toml`; quality intent lives in `quality.toml`.
@@ -488,7 +488,7 @@ synthetic unknown-ecosystem end-to-end fixture.
 - Path aliases and placeholders
 - Environment variable overrides
 - Custom test parsers
-- Optional HTML/JUnit reports and HTTP(S) Webhook notifications
+- Optional HTML/JUnit reports and independently consumable result evidence
 
 ## Git Hook Integration
 
@@ -577,12 +577,9 @@ passwords, private-key blocks, and common database connection strings are replac
 retention policy keeps the newest 50 invocation directories and only removes older directories after the 15-minute
 lease window; active or recently modified invocations are retained.
 
-Optional `[[notifications.webhooks]]` entries send the serialized report to HTTP(S) endpoints after all report
-files are written. Each URL must have an exact `allowed_hosts` entry; credentials, wildcards, local-only resolved
-addresses, and redirects are rejected at configuration or connection time. `on_failure` defaults to `true`,
-`on_success` defaults to `false`; a non-2xx response, connection error, or policy denial returns `E1404` while
-preserving the generated reports. Entries are sent in configuration order; the first failure stops notification
-delivery to later endpoints. Destination evidence is limited to scheme and normalized host.
+Verification does not deliver webhooks. Legacy `notifications.webhooks` entries are parsed for migration
+and emit a warning, but cannot make an HTTP request or change the result. Configure an independent
+consumer for delivery and use [saved-result verification](docs/saved-results.md) to validate its input.
 
 Service cleanup is part of verification success. If a started service cannot be stopped, verification remains
 failed and the cleanup error is included in `test_result.json`/`test_result.md` so a leaked container is not hidden.

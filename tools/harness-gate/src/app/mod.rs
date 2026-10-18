@@ -19,6 +19,14 @@ pub(crate) fn run() -> Result<bool, CliError> {
 
 fn run_report(command: &Commands) -> Result<bool, CliError> {
     match command {
+        Commands::ReportVerify { input } => {
+            let result = crate::report_history::verify_saved(input)?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&result).map_err(anyhow::Error::from)?
+            );
+            Ok(true)
+        }
         Commands::ReportDashboard {
             input,
             output,
@@ -47,7 +55,8 @@ fn run_report(command: &Commands) -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
-        Commands::ReportDashboard { .. }
+        Commands::ReportVerify { .. }
+        | Commands::ReportDashboard { .. }
         | Commands::ReportHistory { .. }
         | Commands::ReportExport { .. } => run_report(&cli.command),
         Commands::Explain {
@@ -141,6 +150,7 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             },
         } => check_config_json(cli.project_root.clone(), cli.config.clone(), &cli.plugins),
         Commands::Verify {
+            snapshot: _,
             plan: true,
             scope,
             components,
@@ -489,7 +499,13 @@ fn run_project(
             action: ConfigAction::Check { .. }
         }
     );
-    let mut project = match Project::discover(root, config) {
+    let discovered = if matches!(&command, Commands::Verify { snapshot: true, .. }) {
+        // Directory snapshots do not consult optional Git context at all.
+        Project::discover_for_plan(root, config)
+    } else {
+        Project::discover(root, config)
+    };
+    let mut project = match discovered {
         Ok(project) => project,
         Err(error) if is_config_check => {
             print_human_config_error(&error);
