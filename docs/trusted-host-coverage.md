@@ -1368,6 +1368,41 @@ copy, entry generation/drain, file installation, activation and recovery still
 need coordinator integration. There is no administrator CLI or installed change.
 The source-only closure now has 23 helpers and 75 members, without a Core binary.
 
+The twenty-fourth authenticated library, `install-reviewed-files.py`, supplies
+internal file replacement primitives for the later coordinator. Source-release
+validation maps exactly 25 reviewed destinations plus captured Core and host
+configuration. It binds before/after bytes, modes, retained inputs, source head
+and Core/configuration hashes with bounded buffers. The inherited controller
+lease, original completed entry fence and unchanged inactive barrier bind a
+durable installation receipt. Both delegated entries remain mode `000`, including
+their original inodes held by existing descriptors. Core and configuration are
+installed after ordinary source files; the two disabled entry files come last.
+
+Before each transition the caller must repeat authenticated live remote,
+publication, journal, storage, process and generation admission. The library
+then checks the entire recorded generation: original identities for future
+files, ordered completed identities, and at most one durable inflight intent.
+Three fresh directories have fixed modes and bounded known contents. Exclusive
+temporary writes are rechecked before replacement; file and parent-directory
+sync precede completion records. Recovery accepts only the known before state,
+an empty directory covered by its intent, or exact intended file bytes/mode
+after an interrupted rename. It syncs an adopted rename before recording it.
+Unknown files, changed identities, altered materials, symlinks, metadata
+temporaries, retained file temporaries, exposed receipts, reopened entries and
+advanced barriers block further mutation and remain available for diagnosis.
+
+Twenty-nine new ordinary regressions bring the focused suite to 565 tests.
+They exercise actual exclusive writes, modes, fsync, replacement, receipts and
+crashes around intent, directory creation, temporary creation and rename, plus
+changed fresh temporaries and a Core larger than the source-file limit. Root
+ownership/DAC and coordinator admission are replaced within private fixtures.
+Completion is `installed-disabled`; completed retry is read-only. The library
+does not authenticate remote or publication effects and exposes no administrator
+CLI, activation or quality acceptance. A complete coordinator must supply those
+checks and guarded activation/recovery. Installation acceptance, administrator
+readiness and production remain false; installed 659 is untouched. The source-only
+closure has 24 helpers and 76 members without a Core binary.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the
