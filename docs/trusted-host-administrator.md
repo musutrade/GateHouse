@@ -252,3 +252,60 @@ Explicit null uses the empty proxy setting, consistent with
 Native Git URL-match tests verify precedence over an existing exact-repository
 local proxy without changing that config. These are local routing/contract tests;
 actual Root API, baseline fetch and workload acceptance are still pending.
+
+## Interrupted063 operator recovery candidate
+
+The operator's bounded read-only snapshot places the interrupted063 transition
+after all nine preparation stages and old-source retirement, in file installation
+with two directories and zero replaced files. Both delegated entry modes remain
+000. No activation or mount-persistence receipt exists. This is an interrupted,
+fenced installation, not an accepted new controller or an untouched659 pilot.
+
+The separate `recover-interrupted-installation.py` operator add-on authenticates
+the original063 helper tree and recipes, acquires the original controller lease,
+and checks the administrator/lifecycle/file/fence generation and completed stage
+digests. It calls the original administrator Context and resume function once;
+it cannot begin preparation or rebuild Core. Unknown intents, temporary metadata,
+material changes and a foreign lease remain blocking. The31 original helpers,
+their source release and preparation artifacts are not replaced by this add-on.
+
+During the interruption, main advanced from8994cf53 to0d969e03. Ordinary063
+administrative admission would therefore reject recovery. A separately reviewed,
+externally pinned operator program explicitly authorizes that exact new live
+baseline only for finishing this already retired transition pilot. Before writing
+an immutable private readmission record, it requires a real API comparison proving
+forward ancestry from8994cf53 and identical `tools/harness-gate` and
+`tools/trusted_gate` subtree identities at both main commits. Every subsequent
+remote observation still reads the real repository/ref, old commit/tree, dedicated
+App and revoked failure Check, and requires main to remain exactly0d969e03.
+API responses are never rewritten. The original source contract remains8994cf53;
+quality verification, delivery and production baseline guards are unchanged.
+This explicit administrative readmission is not quality evidence or permission
+to follow another future main commit automatically.
+
+The same operator add-on batches the57 independent Git blob reads used by each
+source-binding observation into one `cat-file --batch` invocation. It retains
+payload authentication and every byte comparison, also checking each Git object
+ID/type/size, framing and exact EOF. Frozen source checks run before and after;
+no source, filesystem, API or admission result is cached. An ordinary-user native
+measurement over622,451 bytes took a median0.157 seconds for individual reads
+and0.0195 seconds for the batch (about8 times faster for that substep). This is
+not a total migration timing claim; live hashing, storage, process and API checks
+still run.
+
+`start-interrupted-recovery.py` verifies external digests and copies three operator
+programs into a separate Root-private directory as0400 files. It starts one native
+system-manager service with Type=exec, Restart=no, no terminal/stdin attachment,
+private stdout/stderr and no synchronous workload wait. An existing service causes
+status reporting without another dispatch. Ambiguous staging/start output is
+retained; there is no automatic retry. The worker runs the original safe-summary
+wrapper with the reviewed recovery dispatch and saves its bounded final result.
+
+A thread publishes phase, completed-file count and elapsed time every10 seconds.
+The private progress/result records stay0600; a separate0644 file under `/run`
+contains only whitelisted progress fields, no journal, keys, raw errors or private
+result. Progress is informational, never installation or quality acceptance.
+Ordinary-user file/thread tests and a transient user-manager service smoke test
+cover staging, one dispatch, quick start and detached manager behavior. Root
+recovery, actual login loss, workload and boot acceptance remain unperformed.
+Administrator and production readiness remain false.
