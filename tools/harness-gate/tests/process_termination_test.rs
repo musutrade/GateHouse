@@ -55,10 +55,10 @@ if pid == 0:
             os.killpg(os.getpgrp(), signal.SIGKILL)
         (root / 'heartbeat').write_text(str(time.monotonic_ns()))
         time.sleep(.02)
-if mode == 'exit-leader':
+if mode in ('exit-leader', 'exit-zero-leader'):
     while not (root / 'ready').exists():
         time.sleep(.01)
-    os._exit(7)
+    os._exit(7 if mode == 'exit-leader' else 0)
 while True:
     time.sleep(.02)
 "#;
@@ -210,6 +210,54 @@ while True:
         };
         assert_eq!(status.code(), Some(7));
         fixture.assert_stopped();
+    }
+
+    #[test]
+    fn zero_exit_completion_reports_success_after_cleaning_descendants() {
+        let mut fixture = Fixture::new();
+        fixture.start("exit-zero-leader");
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let status = loop {
+            if let Some(status) = command::try_complete(fixture.leader.as_mut().unwrap()).unwrap() {
+                break status;
+            }
+            assert!(Instant::now() < deadline, "leader did not finish");
+            thread::sleep(Duration::from_millis(10));
+        };
+        assert!(
+            status.success(),
+            "leader's zero exit code must be preserved"
+        );
+        fixture.assert_stopped();
+    }
+
+    #[test]
+    fn completed_leader_cleanup_failure_is_not_a_success_status() {
+        let mut fixture = Fixture::new();
+        fixture.start("exit-leader");
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while !command::observe_exit(fixture.leader.as_ref().unwrap()).unwrap() {
+            assert!(Instant::now() < deadline, "leader did not finish");
+            thread::sleep(Duration::from_millis(10));
+        }
+        let error = command::terminate_with_signal(
+            fixture.leader.as_mut().unwrap(),
+            both_signals_fail,
+            Duration::ZERO,
+        )
+        .unwrap_err();
+        assert_eq!(error.raw_os_error(), Some(libc::EACCES));
+        assert_eq!(
+            fixture
+                .leader
+                .as_mut()
+                .unwrap()
+                .try_wait()
+                .unwrap()
+                .and_then(|status| status.code()),
+            Some(7),
+            "the exited leader was reaped, but the cleanup error still dominates"
+        );
     }
 
     #[test]
@@ -637,6 +685,100 @@ timeout_secs = {timeout}
                 .iter()
                 .any(|step| step[if cancel { "cancelled" } else { "timed_out" }] == true));
         }
+    }
+
+    fn run_cli_leader_completion(mode: &str) -> (std::process::Output, Fixture) {
+        let fixture = Fixture::new();
+        let root = &fixture.root;
+        let binary = env!("CARGO_BIN_EXE_harness-gate");
+        assert!(Command::new(binary)
+            .arg("--project-root")
+            .arg(root)
+            .args(["init", "--preset", "generic"])
+            .output()
+            .unwrap()
+            .status
+            .success());
+        assert!(Command::new("git")
+            .arg("init")
+            .current_dir(root)
+            .output()
+            .unwrap()
+            .status
+            .success());
+        let flow = format!(
+            r#"
+version = 2
+[project]
+name = "completion"
+default_profile = "full"
+hook_profile = "full"
+[paths]
+reports = ".harness-gate/reports"
+audit_config = ".harness-gate/audit.toml"
+secrets_config = ".harness-gate/secrets.toml"
+[scope]
+unmatched = "all"
+rules = [{{ patterns = ["**"], components = ["project"] }}]
+[[steps]]
+id = "project.process"
+label = "process"
+component = "project"
+profiles = ["full"]
+program = "python3"
+args = ["worker.py", ".", "{mode}"]
+cwd = "{{root}}"
+log = "process.log"
+timeout_secs = 30
+"#
+        );
+        fs::write(root.join(".harness-gate/flow.toml"), flow).unwrap();
+        let output = Command::new(binary)
+            .arg("--project-root")
+            .arg(root)
+            .args(["verify", "--all"])
+            .output()
+            .unwrap();
+        (output, fixture)
+    }
+
+    #[test]
+    fn cli_verify_passes_and_reaps_group_when_leader_exits_zero_with_live_descendant() {
+        let (output, fixture) = run_cli_leader_completion("exit-zero-leader");
+        assert!(
+            output.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let report: serde_json::Value = serde_json::from_slice(
+            &fs::read(fixture.root.join(".harness-gate/reports/test_result.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(report["passed"], true);
+        assert!(report["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|step| step["passed"] == true));
+        fixture.assert_stopped();
+    }
+
+    #[test]
+    fn cli_verify_fails_and_reaps_group_when_leader_exits_nonzero_with_live_descendant() {
+        let (output, fixture) = run_cli_leader_completion("exit-leader");
+        assert_eq!(output.status.code(), Some(1));
+        let report: serde_json::Value = serde_json::from_slice(
+            &fs::read(fixture.root.join(".harness-gate/reports/test_result.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(report["passed"], false);
+        assert!(report["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|step| step["passed"] == false));
+        fixture.assert_stopped();
     }
 }
 
