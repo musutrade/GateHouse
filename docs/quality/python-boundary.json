@@ -925,6 +925,20 @@
       "purpose": "Record PR equivalence receipts and verify tree-equivalent main merges before inheriting three job conclusions.",
       "release_impact": "Not packaged in release binary. Cannot approve or replace required Rust release checks.",
       "sha256": "6d5e9a209d417367d2978c51fa9ebbc7ab0b5c41714a90c81674fa41a9cc13c7"
+    },
+    {
+      "module": "tools/quality/rust_reference_cached.py",
+      "category": "D",
+      "purpose": "Run the frozen Rust shadow reference with stat-bound read-only hash and evidence-file caching.",
+      "callers": [
+        ".github/workflows/ci.yml",
+        "tools/quality/tests/test_rust_reference.py"
+      ],
+      "ci_role": "Quality Script Tests and advisory Generic Quality Shadow only; cache restores to frozen behavior on every file identity change or validation miss.",
+      "release_impact": "Not packaged in release binaries; cannot approve or replace required Rust release checks.",
+      "authoritative_status": "Non-authoritative advisory Shadow wrapper; frozen rust_reference.py remains the semantic implementation.",
+      "final_disposition": "Retain as Core-owned performance-only adapter with exact output-equivalence coverage.",
+      "sha256": "4cd2d4a5140c00d1dfe767b90a39fc8d942d7a9ffc99181fb1296e250c31a4bc"
     }
   ],
   "schema": "python-product-boundary/v1",

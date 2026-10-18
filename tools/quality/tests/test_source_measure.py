@@ -722,7 +722,13 @@ fn main() {
                 (evidence / f'{mode}.llvm.json').write_bytes(exported)
                 llvm = json.loads(exported)
                 rows = measure(manifest, llvm, crate, self.binary)
+                rows_with_hits = measure(manifest, llvm, crate, self.binary, include_line_hits=True)
                 self.assertEqual(len(rows), 3)
+                for plain, detailed in zip(rows, rows_with_hits):
+                    hits = dict(detailed.pop('line_hits'))
+                    self.assertEqual(detailed, plain)
+                    self.assertEqual(plain['lines']['count'], len(hits))
+                    self.assertEqual(plain['lines']['covered'], sum(count > 0 for count in hits.values()))
                 parent, initializer, fold = rows
                 self.assertEqual([r['kind'] for r in rows], ['function', 'closure', 'closure'])
                 expected = [1, int(mode.startswith('fresh')), 0 if mode.endswith('zero') else 2]
