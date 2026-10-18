@@ -2,7 +2,7 @@
   "schema": "repository-size-review/v1",
   "base": "8994cf53a44677ecb36acc6f9a9ce1d547c57728",
   "owner": "higoalespn",
-  "reason": "DRAFT PR127 trusted-host candidate requires the exact cumulative blob inventory for files rewritten across reviewed batches",
+  "reason": "Issue98 trusted-host candidate source, tests and documentation; exact cumulative blob inventory including the fixed659 lifecycle coordinator and byte-pinned test controller fixtures. Thresholds and individual-file policy unchanged.",
   "blobs": [
     {
       "path": "docs/README.md",
@@ -88,6 +88,11 @@
       "path": "docs/trusted-host-coverage.md",
       "oid": "76ca970f297d7f735335faa51a7a0f8174f90137",
       "bytes": 49570
+    },
+    {
+      "path": "docs/trusted-host-coverage.md",
+      "oid": "79fecddb5d79ec4972622264b3e9e482fe2cc9cf",
+      "bytes": 110349
     },
     {
       "path": "docs/trusted-host-coverage.md",
@@ -275,14 +280,69 @@
       "bytes": 18687
     },
     {
+      "path": "tools/quality/tests/fixtures/accepted-659/__init__.py",
+      "oid": "989ca8658ec1763f85f7aa9013b653ba05a4ecc0",
+      "bytes": 76
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/cache.py",
+      "oid": "28529752f8f4703145de26e82220f81a57cc4402",
+      "bytes": 5982
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/cli.py",
+      "oid": "366ed94c2ec2d606aaa1c733f50b1ba4a77486df",
+      "bytes": 7532
+    },
+    {
       "path": "tools/quality/tests/fixtures/accepted-659/common.py",
       "oid": "070776e57bb900e757683abdd14807f9fad981b5",
       "bytes": 4864
     },
     {
+      "path": "tools/quality/tests/fixtures/accepted-659/control.py",
+      "oid": "a33d1a245b86ad04be21f364007f9064255599c5",
+      "bytes": 8509
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/execution.py",
+      "oid": "8547da87281032ffb2fbb9bf31fd2bb4303c7f2e",
+      "bytes": 15095
+    },
+    {
       "path": "tools/quality/tests/fixtures/accepted-659/github.py",
       "oid": "7a3b54f7621189fbf8e7efce10582a5a1b79ab9b",
       "bytes": 8736
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/history.py",
+      "oid": "01d94117a4eeb1ae650549eaf78824a8069bb2a9",
+      "bytes": 4327
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/host.py",
+      "oid": "0a36fc0ec5f5e6f0ef6b4b10512e661ae24c0cf2",
+      "bytes": 625
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/isolation.py",
+      "oid": "b5fae5f2a8b5bdc141df8c2be64b2dadeadd5a9f",
+      "bytes": 8052
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/journal.py",
+      "oid": "b63e3d45ff70efac84c1d7369c5400617710e5a8",
+      "bytes": 4303
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/publication.py",
+      "oid": "e528592c73ce9132a5c46a905d23d987c761a926",
+      "bytes": 3265
+    },
+    {
+      "path": "tools/quality/tests/fixtures/accepted-659/source.py",
+      "oid": "570dc7d9e6af256f17aaafa772f3f94e725bb928",
+      "bytes": 6618
     },
     {
       "path": "tools/quality/tests/test_trusted_gate.py",
@@ -575,6 +635,11 @@
       "bytes": 17546
     },
     {
+      "path": "tools/quality/tests/test_trusted_gate_upgrade_lifecycle.py",
+      "oid": "bea002611fad8a9a3a11136988f86bd622c644ff",
+      "bytes": 24055
+    },
+    {
       "path": "tools/quality/tests/test_trusted_gate_volume.py",
       "oid": "50852e555d91ab7a61a00cdb20c1e796e338deee",
       "bytes": 15781
@@ -740,6 +805,11 @@
       "bytes": 9930
     },
     {
+      "path": "tools/trusted_gate/deploy/coordinate-linux-upgrade.py",
+      "oid": "9a6239c71594d0e5bae1beb112b51f277cc8f983",
+      "bytes": 22636
+    },
+    {
       "path": "tools/trusted_gate/deploy/gatehouse-control",
       "oid": "31e09c460c15ed9914afa94d1b0630b8e2f4ec97",
       "bytes": 576
@@ -823,6 +893,11 @@
       "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
       "oid": "7bf796dc5e6e7446da068142d801a107f493b358",
       "bytes": 25676
+    },
+    {
+      "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
+      "oid": "7ec5a9bbe76c1533cf7cc70034ee6e263786d854",
+      "bytes": 29609
     },
     {
       "path": "tools/trusted_gate/deploy/import-protected-inputs.py",
