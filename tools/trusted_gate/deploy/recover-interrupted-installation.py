@@ -22,6 +22,7 @@ MANIFEST = 'eeab28487397d64dcd7690c8692b94fa55aabfbcfc1db097645c8fe21e966438'
 RECIPE = 'beac6ca0e956ae9c9a32be0810f6ba53f8717e1097e9d889d9a5d2a4028739a6'
 SOURCE_BASE = '8994cf53a44677ecb36acc6f9a9ce1d547c57728'
 APPROVED_MAIN = '0d969e03ab2a58591eb39ca67d7dba4d5cf04581'
+APPROVED_PARENTS = [SOURCE_BASE, '5d906b0b98089467efd8f6a2fc0189cd03c7e332']
 OLD_HEAD = '659803a2f144926997e56d072c7fe8760d6ed176'
 OLD_RUN = 'ce86a2a4-ff18-435f-bb5d-aafc313ceca6'
 STAGE = Path('/root/gatehouse-issue98-linux-063eac64c53b')
@@ -30,6 +31,8 @@ ADMISSION = Path('/var/lib/gatehouse/operator-runs/063eac64c53b/readmission.json
 STEPS = ('volume','preservation','source','input','seal','core','configuration','inspection','recipe')
 CONTEXT_NAMES = ('need','owned','path_operand','read','write','record','canonical','unique',
                  'git','frozen_lock','load','authenticate','readonly','import_inputs','ENV')
+# Informational only: the separately pinned worker supplies a bounded reporter.
+CHECKPOINT = lambda label:None
 
 
 def sha(value):return hashlib.sha256(value).hexdigest()
@@ -180,7 +183,8 @@ class Readmission:
         return result
 
     def validate_proof(self, ancestry, subtrees):
-        self.B.need(ancestry == {'base':SOURCE_BASE,'head':APPROVED_MAIN,'status':'ahead','behind_by':0}
+        self.B.need(ancestry == {'base':SOURCE_BASE,'head':APPROVED_MAIN,
+                                'method':'exact-direct-first-parent','parents':APPROVED_PARENTS}
                     and set(subtrees) == {'source_base','approved_main'}
                     and subtrees['source_base'] == subtrees['approved_main']
                     and set(subtrees['source_base']) == {'harness-gate','trusted_gate'}
@@ -190,12 +194,15 @@ class Readmission:
                     'approved main is not a forward baseline with unchanged host subtrees')
 
     def prove(self, client):
-        B = self.B;comparison = client.repo('GET','/compare/'+SOURCE_BASE+'...'+APPROVED_MAIN)
-        B.need(comparison['status'] == 'ahead' and comparison['behind_by'] == 0
-               and comparison['ahead_by'] > 0 and comparison['base_commit']['sha'] == SOURCE_BASE
-               and comparison['merge_base_commit']['sha'] == SOURCE_BASE,
-               'readmission baseline is not a descendant of the original source base')
-        ancestry = {'base':SOURCE_BASE,'head':APPROVED_MAIN,'status':'ahead','behind_by':0}
+        # The accepted client forbids '..' in every request path. Use the exact
+        # reviewed merge's direct first parent, never an encoded compare route
+        # or a relaxation of the original path/traversal guard.
+        B = self.B;commit = client.repo('GET','/git/commits/'+APPROVED_MAIN)
+        B.need(commit['sha'] == APPROVED_MAIN and type(commit['parents']) is list
+               and [row['sha'] for row in commit['parents']] == APPROVED_PARENTS,
+               'readmission baseline does not have the exact reviewed direct parents')
+        ancestry = {'base':SOURCE_BASE,'head':APPROVED_MAIN,
+                    'method':'exact-direct-first-parent','parents':list(APPROVED_PARENTS)}
         subtrees = {'source_base':self.host_subtrees(client,SOURCE_BASE),
                     'approved_main':self.host_subtrees(client,APPROVED_MAIN)}
         self.validate_proof(ancestry,subtrees)
@@ -210,10 +217,12 @@ class Readmission:
         # Only the administrative remote observer sees the new expected baseline.
         # The original observer still checks the real repository/ref/old commit,
         # tree, dedicated App and completed failure Check without altered replies.
+        CHECKPOINT('github-repository-and-check')
         result = original(B,client,config,run,SimpleNamespace(BASE=APPROVED_MAIN),preflight)
         B.need(result['base'] == APPROVED_MAIN and result['head'] == OLD_HEAD,
                'readmission remote result is not the truthful approved baseline')
         if not ADMISSION.exists() and not ADMISSION.is_symlink():
+            CHECKPOINT('github-direct-parent-and-trees')
             ancestry,subtrees = self.prove(client)
             B.need(self.identity() == self.initial,'generation changed during baseline readmission')
             B.owned(ADMISSION.parent,directory=True,private=True)
@@ -221,6 +230,7 @@ class Readmission:
             fd = os.open(ADMISSION.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
             try:os.fsync(fd)
             finally:os.close(fd)
+        CHECKPOINT('immutable-readmission-record')
         return {**result,'administrative_readmission_sha256':self.saved()}
 
     def load(self, root, name):
@@ -230,6 +240,12 @@ class Readmission:
             module.remote = lambda *args:self.remote(original,*args)
         elif name == 'bootstrap-release.py':
             module.bind_source = lambda B,*args:bind_source(B,module,*args)
+        elif name == 'check-core-policy.py':
+            original = module.verify_completed
+            def checked(*args,**kwargs):
+                CHECKPOINT('retained-core-verification')
+                return original(*args,**kwargs)
+            module.verify_completed = checked
         return module
 
 
@@ -244,12 +260,14 @@ def dispatch(B, A):
         fence.lease(B,fd);readmission = Readmission(B,fd)
         context = SimpleNamespace(**{name:getattr(B,name) for name in CONTEXT_NAMES})
         context.load = readmission.load
+        CHECKPOINT('administrator-context')
         ctx = A.Context(context,STAGE/'helpers',STAGE/'helper-manifest.json',MANIFEST,
                         STAGE/'administrator.json',RECIPE,fd)
         value = A.receipt(ctx)
         B.need(value['phase'] in ('dispatching','complete') and value['inflight'] is None
                and [row['step'] for row in value['completed']] == list(STEPS),
                'recovery cannot rebuild or restart incomplete preparation')
+        CHECKPOINT('installation-resume')
         return A.resume(ctx)
     finally:os.close(fd)
 

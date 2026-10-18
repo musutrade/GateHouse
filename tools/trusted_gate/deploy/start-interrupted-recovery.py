@@ -8,14 +8,17 @@ import stat
 import subprocess
 import sys
 
-SOURCE = Path('/mnt/dev-ssd/gatehouse-issue98-operator-review-observation')
-OPERATION = Path('/root/gatehouse-issue98-detached-063eac64c53b')
-OUTPUT = Path('/var/lib/gatehouse/operator-runs/063eac64c53b')
-UNIT = 'gatehouse-issue98-recovery-063eac64c53b.service'
+SOURCE = Path('/mnt/dev-ssd/gatehouse-issue98-ancestor-transport-observation/reviewed-recovery')
+OPERATION = Path('/root/gatehouse-issue98-detached-063eac64c53b-r2')
+OUTPUT = Path('/var/lib/gatehouse/operator-runs/063eac64c53b-r2')
+UNIT = 'gatehouse-issue98-recovery-063eac64c53b-r2.service'
+PREVIOUS_UNIT = 'gatehouse-issue98-recovery-063eac64c53b.service'
+PREVIOUS_OUTPUT = Path('/var/lib/gatehouse/operator-runs/063eac64c53b')
+HEAD = '063eac64c53b69371ce603f87396f5b2710c8cbb'
 PINS = {
-    'resume.py':('resume-reviewed-linux.py','6f441f33be9668024a327237657f4fc91a508c8cffaa979c7660d6e9fbeef09d'),
-    'worker.py':('detached-linux-worker.py','bddefa79a2e14be5e41628d02018092d958546dcd614e5e450e9bd37dd73b52d'),
-    'recovery.py':('recover-interrupted-installation.py','e00d7678dcbb603d647d54f2ae96a76a5c126ceafdca38a04edf3c31863ec75c'),
+    'resume.py':('resume-reviewed-linux.py','a75d76caeeb5a7d692b2f89d25c3e6679e43bcbc5c99d5a7672ec04fd07b8429'),
+    'worker.py':('detached-linux-worker.py','1b921bc9bfe05ffe09ae307723b6fe4bc33e1849ba19a688ed071ff9527c169d'),
+    'recovery.py':('recover-interrupted-installation.py','faf879f3f6474f11bbe8f402597501786931483252523ec1457398fdf8e8a6a6'),
 }
 ENV = {'PATH':'/usr/bin:/bin','LANG':'C.UTF-8'}
 
@@ -70,14 +73,34 @@ def write(path, raw, mode):
     sync(path.parent)
 
 
-def manager():
-    result = subprocess.run(['/usr/bin/systemctl','show',UNIT,
+def manager(unit=None):
+    unit = UNIT if unit is None else unit
+    result = subprocess.run(['/usr/bin/systemctl','show',unit,
         '--property=Id,LoadState,ActiveState,SubState,Result,ExecMainStatus'],
         env=ENV,capture_output=True,timeout=10)
     need(len(result.stdout) <= 65536 and not result.stderr,'ambiguous recovery service observation')
     rows = dict(line.partition('=')[::2] for line in result.stdout.decode('ascii').splitlines())
-    need(rows.get('Id') == UNIT and rows.get('LoadState') in ('loaded','not-found'),'unknown recovery unit identity')
+    need(rows.get('Id') == unit and rows.get('LoadState') in ('loaded','not-found'),'unknown recovery unit identity')
     return rows
+
+
+def previous_failure():
+    """An explicit new attempt, retaining the failed service, code and outputs."""
+    old = manager(PREVIOUS_UNIT)
+    need(all(old.get(k) == v for k,v in {'LoadState':'loaded','ActiveState':'failed','SubState':'failed',
+         'Result':'exit-code','ExecMainStatus':'1'}.items()),'previous recovery must be stopped at its known failure')
+    path = PREVIOUS_OUTPUT/'result.json'
+    need(stat.S_IMODE(inspect(path).st_mode) == 0o600,'previous private result mode differs')
+    value = json.loads(read(path))
+    need(value.get('head') == HEAD and value.get('status') == 'blocked'
+         and value.get('dispatch_attempted') is True and value.get('automatic_retries') == 0
+         and value.get('failure',{}).get('type') == 'Blocked'
+         and {'file':'<accepted659-github>','function':'request','line':42}
+             in value['failure'].get('helper_frames',[]),
+         'previous result is not the reviewed request-path rejection')
+    for name in ('readmission.json','.readmission.json.tmp'):
+        path = PREVIOUS_OUTPUT/name
+        need(not path.exists() and not path.is_symlink(),'retain unexpected earlier baseline admission')
 
 
 def command():
@@ -95,6 +118,7 @@ def main():
     before = manager()
     if before['LoadState'] != 'not-found':
         print(json.dumps({'action':'existing-unit-no-new-dispatch','unit':UNIT,'manager':before},indent=2));return
+    previous_failure()
     programs = {}
     for target,(name,pin) in PINS.items():
         raw = read(SOURCE/name,root_only=False)

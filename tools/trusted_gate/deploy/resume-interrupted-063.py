@@ -19,7 +19,8 @@ ENTRY = 'tools/trusted_gate/deploy/import-protected-inputs.py'
 ENTRY_PIN = 'ed041a7a60be365219efafae4d1963e05a4a7aa83b1cd4312902f465b03411fa'
 CONTEXT_NAMES = ('need', 'owned', 'path_operand', 'read', 'write', 'record', 'canonical', 'unique',
                  'git', 'frozen_lock', 'load', 'authenticate', 'readonly', 'import_inputs', 'ENV')
-SAFE = set()
+# Exact static accepted659 guard; no dynamic exception strings are admitted.
+SAFE = {'invalid GitHub API path'}
 
 
 def need(condition, message):

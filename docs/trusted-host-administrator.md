@@ -273,8 +273,8 @@ During the interruption, main advanced from8994cf53 to0d969e03. Ordinary063
 administrative admission would therefore reject recovery. A separately reviewed,
 externally pinned operator program explicitly authorizes that exact new live
 baseline only for finishing this already retired transition pilot. Before writing
-an immutable private readmission record, it requires a real API comparison proving
-forward ancestry from8994cf53 and identical `tools/harness-gate` and
+an immutable private readmission record, it requires the real API commit to have
+exact reviewed parents8994cf53 and5d906b0b, with8994cf53 first, and identical `tools/harness-gate` and
 `tools/trusted_gate` subtree identities at both main commits. Every subsequent
 remote observation still reads the real repository/ref, old commit/tree, dedicated
 App and revoked failure Check, and requires main to remain exactly0d969e03.
@@ -309,3 +309,31 @@ Ordinary-user file/thread tests and a transient user-manager service smoke test
 cover staging, one dispatch, quick start and detached manager behavior. Root
 recovery, actual login loss, workload and boot acceptance remain unperformed.
 Administrator and production readiness remain false.
+
+The first operator service started successfully but stopped after158.4 seconds,
+with no replaced files or activation. The accepted659 client's request-path guard
+rejected the compare endpoint's `...` separator before that comparison reached
+the network. The initial tests had replaced `repo` and therefore missed this
+transport constraint. The corrected proof reads the exact approved merge commit
+and checks its complete, ordered direct-parent list; it uses no compare endpoint,
+encoded separator or change to the accepted client's path guard. Regressions load
+the byte-pinned accepted659 client and retain its actual `repo`, `request` and
+Check lookup, mocking only the HTTP opener and cached fixture authentication.
+The old compare request still fails before HTTP; foreign/reordered/missing/extra
+parents and changed host subtrees cannot create an admission record.
+
+A separately reviewed r2 service and operator directory retain the first failed
+service, programs and private outputs. Its launcher requires that exact earlier
+service to be failed/stopped with exit1, a protected0600 result for this generation
+at accepted659 request line42, and no prior readmission record. An active, unknown
+or completed earlier service, another error or existing admission blocks launch.
+The original transaction, lease,28-file plan and nine preparation artifacts remain
+fixed. There is no automatic retry or deletion. The old operator programs are not
+overwritten, and starting an existing r2 unit only reports its status. Public
+progress additionally reports a fixed-label last checkpoint and its age; this
+does not cache checks or change admission results. The safe summary recognizes
+only the exact static accepted path-guard text, never arbitrary exception text.
+
+The correction and r2 package remain candidate code until exact-head CI and
+explicit operator startup. The failed first attempt is deployment evidence of a
+blocked path, not successful recovery, quality coverage or issue98 acceptance.

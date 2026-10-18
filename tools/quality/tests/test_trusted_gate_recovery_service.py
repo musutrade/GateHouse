@@ -25,6 +25,7 @@ def load(name,file):
 
 W=load('recovery_service_worker','recovery-worker.py')
 S=load('recovery_service_launcher','start-interrupted-recovery.py')
+RESUME=load('recovery_safe_summary','resume-interrupted-063.py')
 
 
 class RecoveryServiceTests(unittest.TestCase):
@@ -74,6 +75,7 @@ class RecoveryServiceTests(unittest.TestCase):
         with patch.object(S.os,'geteuid',return_value=0),patch.object(S,'inspect',
                 side_effect=lambda p,root_only=True,directory=False:self.protected(p,directory)),\
              patch.object(S,'manager',side_effect=[{'LoadState':'not-found'},{'LoadState':'loaded'}]),\
+             patch.object(S,'previous_failure'),\
              patch.object(S.subprocess,'run',return_value=SimpleNamespace(returncode=0)) as run,patch('builtins.print'):
             S.main();run.assert_called_once()
         for target,(_,pin) in S.PINS.items():
@@ -86,6 +88,7 @@ class RecoveryServiceTests(unittest.TestCase):
         with patch.object(S.os,'geteuid',return_value=0),patch.object(S,'inspect',
                 side_effect=lambda p,root_only=True,directory=False:self.protected(p,directory)),\
              patch.object(S,'manager',return_value={'LoadState':'not-found'}),\
+             patch.object(S,'previous_failure'),\
              patch.object(S,'read',return_value=b''),patch.object(S,'PINS',{}),\
              patch.object(S.subprocess,'run') as run:
             with self.assertRaisesRegex(ValueError,'unknown private'):S.main()
@@ -105,6 +108,14 @@ class RecoveryServiceTests(unittest.TestCase):
         value['phase']='unexpected-secret';(self.control/'file-install.json').write_text(json.dumps(value))
         with patch.object(W,'protected',side_effect=self.protected):
             self.assertEqual(W.snapshot()['files'],{'read_error_type':'ValueError'})
+
+    def test_checkpoint_progress_has_only_fixed_labels_and_no_authority_effect(self):
+        with patch.object(W,'protected',side_effect=self.protected):
+            monitor=W.Monitor();monitor.checkpoint('retained-core-verification');monitor.update()
+            self.assertEqual(json.loads(self.public.read_bytes())['last_checkpoint'],'retained-core-verification')
+            self.assertFalse(json.loads(self.public.read_bytes())['administrator_ready'])
+            with self.assertRaisesRegex(ValueError,'unknown operator'):monitor.checkpoint('private-key-content')
+            monitor.update();self.assertNotIn('private-key-content',self.public.read_text())
 
     def test_worker_runs_exactly_once_joins_observer_and_persists_blocked_result(self):
         wrapper=b'''import json
@@ -137,6 +148,52 @@ def main():
         with patch.object(S.os,'geteuid',return_value=1000),patch.object(S,'manager') as manager:
             with self.assertRaises(SystemExit):S.main()
             manager.assert_not_called()
+
+    def previous_result(self):
+        self.previous=self.root/'previous';self.previous.mkdir(mode=0o700)
+        self.patching(S,'PREVIOUS_OUTPUT',self.previous)
+        self.old_manager={'LoadState':'loaded','ActiveState':'failed','SubState':'failed',
+                          'Result':'exit-code','ExecMainStatus':'1'}
+        self.old_result={'head':S.HEAD,'status':'blocked','dispatch_attempted':True,'automatic_retries':0,
+            'failure':{'type':'Blocked','guard':'unlisted exception text omitted','helper_frames':[
+                {'file':'<accepted659-github>','function':'request','line':42}]}}
+        path=self.previous/'result.json';path.write_text(json.dumps(self.old_result));path.chmod(0o600)
+        return path
+
+    def test_explicit_new_attempt_requires_exact_stopped_previous_failure_and_retains_bytes(self):
+        path=self.previous_result();raw=path.read_bytes()
+        with patch.object(S,'manager',return_value=self.old_manager) as manager,\
+             patch.object(S,'inspect',side_effect=lambda p,root_only=True,directory=False:self.protected(p,directory)):
+            S.previous_failure();manager.assert_called_once_with(S.PREVIOUS_UNIT)
+        self.assertEqual(path.read_bytes(),raw)
+        self.assertNotEqual(S.UNIT,S.PREVIOUS_UNIT);self.assertNotEqual(S.OUTPUT,S.PREVIOUS_OUTPUT)
+
+    def test_running_ambiguous_or_foreign_previous_failure_cannot_start_new_attempt(self):
+        path=self.previous_result()
+        with patch.object(S,'inspect',side_effect=lambda p,root_only=True,directory=False:self.protected(p,directory)):
+            for key,value in (('LoadState','not-found'),('ActiveState','active'),('SubState','running'),
+                              ('Result','success'),('ExecMainStatus','0')):
+                manager={**self.old_manager,key:value}
+                with patch.object(S,'manager',return_value=manager),self.assertRaises(ValueError):S.previous_failure()
+            for key,value in (('head','f'*40),('status','component-complete'),('automatic_retries',1),
+                              ('failure',{'type':'APIError','helper_frames':[]})):
+                path.write_text(json.dumps({**self.old_result,key:value}))
+                with patch.object(S,'manager',return_value=self.old_manager),self.assertRaises(ValueError):S.previous_failure()
+
+    def test_prior_admission_or_changed_private_mode_is_not_rebound(self):
+        path=self.previous_result()
+        with patch.object(S,'manager',return_value=self.old_manager),\
+             patch.object(S,'inspect',side_effect=lambda p,root_only=True,directory=False:self.protected(p,directory)):
+            path.chmod(0o644)
+            with self.assertRaises(ValueError):S.previous_failure()
+            path.chmod(0o600);(self.previous/'readmission.json').write_text('retain')
+            with self.assertRaisesRegex(ValueError,'unexpected earlier'):S.previous_failure()
+        self.assertEqual((self.previous/'readmission.json').read_text(),'retain')
+
+    def test_new_summary_only_admits_exact_static_path_guard(self):
+        self.assertEqual(RESUME.failure(RuntimeError('invalid GitHub API path'))['guard'],'invalid GitHub API path')
+        self.assertEqual(RESUME.failure(RuntimeError('private-token=never-display'))['guard'],
+                         'unlisted exception text omitted')
 
 
 if __name__=='__main__':unittest.main()

@@ -13,13 +13,13 @@ import time
 from types import ModuleType
 
 HEAD = '063eac64c53b69371ce603f87396f5b2710c8cbb'
-RECOVERY_PIN = 'e00d7678dcbb603d647d54f2ae96a76a5c126ceafdca38a04edf3c31863ec75c'
-RESUME_PIN = '6f441f33be9668024a327237657f4fc91a508c8cffaa979c7660d6e9fbeef09d'
-OPERATION = Path('/root/gatehouse-issue98-detached-063eac64c53b')
-OUTPUT = Path('/var/lib/gatehouse/operator-runs/063eac64c53b')
+RECOVERY_PIN = 'faf879f3f6474f11bbe8f402597501786931483252523ec1457398fdf8e8a6a6'
+RESUME_PIN = 'a75d76caeeb5a7d692b2f89d25c3e6679e43bcbc5c99d5a7672ec04fd07b8429'
+OPERATION = Path('/root/gatehouse-issue98-detached-063eac64c53b-r2')
+OUTPUT = Path('/var/lib/gatehouse/operator-runs/063eac64c53b-r2')
 PUBLIC = Path('/run/gatehouse-issue98-upgrade-063eac64c53b.json')
 CONTROL = Path('/srv/gatehouse/pilot/control')
-UNIT = 'gatehouse-issue98-recovery-063eac64c53b.service'
+UNIT = 'gatehouse-issue98-recovery-063eac64c53b-r2.service'
 RECORDS = {'preparation':'administrator-upgrade.json','lifecycle':'linux-upgrade.json',
            'files':'file-install.json','activation':'controller-activation.json',
            'mount':'mount-persistence.json'}
@@ -28,6 +28,8 @@ PHASES = {'prepared','preparing','dispatching','complete','fenced','revoking','r
           'internal-intent','internal-enabled','public-intent','entries-enabled','reload-intent',
           'reloaded','enable-intent','enabled'}
 STEPS = {'volume','preservation','source','input','seal','core','configuration','inspection','recipe'}
+CHECKPOINTS = {'administrator-context','installation-resume','retained-core-verification',
+               'github-repository-and-check','github-direct-parent-and-trees','immutable-readmission-record'}
 
 
 def need(value, message):
@@ -97,6 +99,12 @@ class Monitor:
     def __init__(self):
         self.started = time.monotonic();self.stop = threading.Event();self.history = []
         self.last = None;self.changed = self.started;self.error = None
+        self.last_checkpoint = None;self.checkpoint_changed = self.started
+
+    def checkpoint(self, label):
+        need(label in CHECKPOINTS,'unknown operator progress checkpoint')
+        if label != self.last_checkpoint:
+            self.last_checkpoint = label;self.checkpoint_changed = time.monotonic()
 
     def update(self, status='running', final=None):
         now = time.monotonic();progress = snapshot()
@@ -108,6 +116,8 @@ class Monitor:
         value = {'schema':'gatehouse-operation-progress/v1','head':HEAD,'unit':UNIT,'status':status,
                  'elapsed_seconds':round(now-self.started,1),'current_phase_seconds':round(now-self.changed,1),
                  'updated_unix':round(time.time(),3),
+                 'last_checkpoint':self.last_checkpoint,
+                 'last_checkpoint_age_seconds':round(now-self.checkpoint_changed,1),
                  'progress':progress,'administrator_ready':False,'production_gate_enabled':False,
                  'acceptance':'operator progress only; installation/quality acceptance is separate'}
         if final is not None:
@@ -143,7 +153,7 @@ def main():
     recovery = ModuleType('detached_reviewed_recovery');recovery.__file__ = str(OPERATION/'recovery.py')
     exec(compile(recovery_source,recovery.__file__,'exec'),recovery.__dict__)
     module.literals(recovery_source);module.dispatch = recovery.dispatch
-    monitor = Monitor();monitor.update()
+    monitor = Monitor();recovery.CHECKPOINT = monitor.checkpoint;monitor.update()
     observer = threading.Thread(target=monitor.observe,name='operator-progress',daemon=True);observer.start()
     output = BoundedOutput()
     try:
