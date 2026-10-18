@@ -1490,6 +1490,56 @@ exposed. Installation, administrator and production flags remain false, installe
 659 is untouched, and a complete coordinator plus live acceptance remains required.
 The source-only closure has 26 helpers and 78 members without a Core binary.
 
+The twenty-seventh authenticated library, `coordinate-linux-upgrade.py`, connects
+those primitives under the same inherited lease and sealed input recipe. Its
+private durable receipt binds the revision, helper manifest, recipe, reconstructed
+27-file materials, fixed old run, transaction and original entry fence. Phases
+advance through preparation, fencing, revocation, complete publication copy,
+source retirement and installation, ending at `installed-disabled`. Unknown
+receipts, generations and unfinished metadata are retained and rejected. Replaying
+completion changes no journal or installation record and leaves both entries at
+mode 000.
+
+The coordinator authenticates all 13 accepted-659 controller source buffers before
+compiling them in a temporary private import namespace. It blocks entry-point and
+publication imports, removes the namespace on exit, and never imports the installed
+controller. The old mutating Journal constructor runs only after durable intent
+and repeated entry/native prerequisites. The revocation adapter exposes only the
+fixed run's completed/failure Check update; the separate negative pilot Check is
+excluded. Unknown API outcomes remain in revoking phase. Independent readback of
+the exact Check, repository, base and candidate is still required before source
+retirement; a local journal transition alone cannot satisfy it.
+
+Registered invocation evidence is copied from the authenticated preservation tree
+to a private transaction-specific temporary directory. The entire inventory,
+including raw diagnostics, empty directories, modes and file digests, is verified
+and synced before atomic rename and parent sync. A complete known temporary or
+renamed copy can be reverified after interruption. Partial, foreign or changed
+copies remain in place and block progress. Copying bytes never accepts their
+quality verdict. The exact old retirement implementation then removes only the
+revoked source slot, bundle and freeze in its known order; immutable preservation
+and the live forward journal remain separate. File installation uses the live
+observer inside each existing engine checkpoint, preserving its fresh-temporary
+rules and full standalone completion inspection.
+
+Twenty-two new regressions bring the focused suite to 645 tests. They combine
+real WAL/journal mutations, actual accepted controller code, Git worktree removal,
+complete publication copying and the 27-file engine. Cases cover lost API replies,
+a remote success after local revocation, interrupted copies/renames/retirement,
+file recovery and completed replay. Root/DAC, preparation/configuration admission,
+native process isolation, systemd and API boundaries are replaced in these private
+fixtures; they provide no live Root, remote or installation acceptance. All 13 old
+module fixtures are byte-pinned in the repository, so tests do not require their
+historical Git objects in shallow CI checkouts.
+
+This remains an internal lifecycle library without an administrator CLI or
+activation. Snapshot/runtime validation, known forward activation/recovery and a
+complete reviewed administrator package plus live restricted-identity acceptance
+remain required. Repeated full-observer cost has not been measured under Root.
+Installation, administrator and production acceptance remain false, and installed
+659 is untouched. The source-only closure has 27 helpers and 79 members without a
+Core binary.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the
