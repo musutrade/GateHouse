@@ -4,6 +4,7 @@ Root ownership, accepted-stage/configuration authentication and worker admission
 are replaced inside private fixtures. No actual remote or installation acceptance.
 """
 import copy
+import hashlib
 import importlib.util
 import json
 import os
@@ -69,9 +70,13 @@ class UpgradeEffectsTests(unittest.TestCase):
         self.B=SimpleNamespace(**vars(f.B));self.B.authenticate=Mock(return_value={'revision':'a'*40})
         self.builder=SimpleNamespace(worker_identity=Mock(),quiet_units=Mock(),idle=Mock())
         self.compose=SimpleNamespace(retained_configuration=Mock(side_effect=lambda *args:self.old_raw))
-        payload={f'trusted_gate/{name}.py':subprocess.check_output(['/usr/bin/git','show',
-            '659803a2f144926997e56d072c7fe8760d6ed176:tools/trusted_gate/'+name+'.py'],cwd=ROOT)
-            for name in ('common','github')}
+        accepted={'common':'8596d8b9595d9a27870ca61dc37bb36b5cc23971244d57810a240bade7726d7c',
+                  'github':'ebc151fe3e562ff31f0b967efc06317371dcc8720b0532f20073d641732263b9'}
+        payload={}
+        for name,pin in accepted.items():
+            raw=(ROOT/'tools/quality/tests/fixtures/accepted-659'/f'{name}.py').read_bytes()
+            self.assertEqual(hashlib.sha256(raw).hexdigest(),pin)
+            payload[f'trusted_gate/{name}.py']=raw
         cls=P.client_class(payload);self.client=cls.__new__(cls)
         self.client.app_id=config['app_id'];self.client.token='private-test-token';self.client.expires=123
         self.client.opener=E.urllib.request.build_opener(cls.__init__.__globals__['NoRedirect'](),
