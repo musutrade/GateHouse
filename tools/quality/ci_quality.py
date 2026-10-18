@@ -1262,6 +1262,7 @@ class Collector:
                     'tools/harness-gate/src/process/tests.rs',
                     'tools/harness-gate/src/doctor/tests.rs',
                     'tools/harness-gate/src/service/tests.rs',
+                    'tools/harness-gate/src/test_support.rs',
                     'tools/harness-gate/src/recipes/tests.rs',
                     'tools/harness-gate/src/config/quality/collectors/tests.rs',
                     'tools/harness-gate/src/config/quality/collectors/tests/dogfood_acceptance.rs',

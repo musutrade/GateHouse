@@ -171,9 +171,9 @@ assertions = ["assert!(!report.passed);", "step.label == \"secret scan\" && !ste
 [paths.source]
 path = "src/verify/mod.rs"
 symbol = "run_selected"
-start = 208
-end = 374
-sha256 = "851807105a29e160dab51227614152da89497b2dbe60a53296536180046209ad"
+start = 210
+end = 416
+sha256 = "865dbc5aa850a4bd9bc015333650e3252eee887e8c0a242af89f732e694500d4"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
@@ -183,7 +183,7 @@ end = 575
 sha256 = "98270bae01dcbdb09af62a6ecd4cad1c56ab60f567505a64da197053b78cde9b"
 
 [[paths.probes]]
-line = 356
+line = 398
 column = 5
 text = "publish_report(&report, &invocation_project, project, &mut progress)?;"
 
@@ -264,9 +264,9 @@ assertions = ["assert!(matches!(error, VerifyError::Report { .. }));"]
 [paths.source]
 path = "src/verify/report.rs"
 symbol = "write_report_file"
-start = 1265
-end = 1275
-sha256 = "66e28a521839a21b7c528adb92c3382d5d666d7ae50d8967b841c52cfb3bf3d7"
+start = 1267
+end = 1277
+sha256 = "ce8a64954f6fd6136bf118a0f906c6ffcf72e02e5c930d90e33a43404fa68418"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
@@ -276,7 +276,7 @@ end = 614
 sha256 = "98270bae01dcbdb09af62a6ecd4cad1c56ab60f567505a64da197053b78cde9b"
 
 [[paths.probes]]
-line = 1266
+line = 1268
 column = 5
 text = "report_target(project, relative)?;"
 
@@ -295,19 +295,19 @@ assertions = ["assert!(verify_manifest(&invocation_project).is_err());"]
 [paths.source]
 path = "src/verify/report.rs"
 symbol = "verify_manifest_without_result_at"
-start = 1848
-end = 1937
-sha256 = "66e28a521839a21b7c528adb92c3382d5d666d7ae50d8967b841c52cfb3bf3d7"
+start = 1850
+end = 1939
+sha256 = "ce8a64954f6fd6136bf118a0f906c6ffcf72e02e5c930d90e33a43404fa68418"
 
 [paths.test_source]
 path = "src/verify/report.rs"
 symbol = "manifest_records_digests_and_detects_tampering"
-start = 3106
-end = 3178
-sha256 = "66e28a521839a21b7c528adb92c3382d5d666d7ae50d8967b841c52cfb3bf3d7"
+start = 3109
+end = 3181
+sha256 = "ce8a64954f6fd6136bf118a0f906c6ffcf72e02e5c930d90e33a43404fa68418"
 
 [[paths.probes]]
-line = 1933
+line = 1935
 column = 13
 text = "bail!(\"artifact digest or size changed: {}\", artifact.path);"
 
