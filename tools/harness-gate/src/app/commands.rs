@@ -76,6 +76,7 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
         | Commands::Schema { .. }
         | Commands::Plugins { .. }
         | Commands::Hooks { .. }
+        | Commands::ReportVerify { .. }
         | Commands::ReportDashboard { .. }
         | Commands::ReportHistory { .. }
         | Commands::ReportExport { .. } => {

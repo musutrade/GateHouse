@@ -19,6 +19,14 @@ pub(crate) fn run() -> Result<bool, CliError> {
 
 fn run_report(command: &Commands) -> Result<bool, CliError> {
     match command {
+        Commands::ReportVerify { input } => {
+            let result = crate::report_history::verify_saved(input)?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&result).map_err(anyhow::Error::from)?
+            );
+            Ok(true)
+        }
         Commands::ReportDashboard {
             input,
             output,
@@ -47,7 +55,8 @@ fn run_report(command: &Commands) -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
-        Commands::ReportDashboard { .. }
+        Commands::ReportVerify { .. }
+        | Commands::ReportDashboard { .. }
         | Commands::ReportHistory { .. }
         | Commands::ReportExport { .. } => run_report(&cli.command),
         Commands::Explain {

@@ -116,3 +116,68 @@ fn mutated_materialized_input_cannot_publish_success() {
         .join(".harness-gate/reports/test_result.json")
         .exists());
 }
+
+fn copy_evidence(source: &std::path::Path, destination: &std::path::Path) {
+    fs::create_dir(destination).unwrap();
+    for entry in fs::read_dir(source).unwrap() {
+        let entry = entry.unwrap();
+        let target = destination.join(entry.file_name());
+        if entry.file_type().unwrap().is_dir() {
+            copy_evidence(&entry.path(), &target);
+        } else {
+            fs::copy(entry.path(), target).unwrap();
+        }
+    }
+}
+
+#[test]
+fn saved_result_verifies_after_source_cleanup_and_rejects_tampering() {
+    use sha2::{Digest, Sha256};
+    let root = fixture("printf measured");
+    let bin = TempDir::new().unwrap();
+    let output = verify(&root, &bin);
+    assert!(output.status.success(), "{output:?}");
+    let result: Value = serde_json::from_slice(
+        &fs::read(root.path().join(".harness-gate/reports/test_result.json")).unwrap(),
+    )
+    .unwrap();
+    let invocation = result["invocation_id"].as_str().unwrap();
+    let archive = TempDir::new().unwrap();
+    let saved = archive.path().join("saved");
+    copy_evidence(
+        &root
+            .path()
+            .join(".harness-gate/reports/invocations")
+            .join(invocation),
+        &saved,
+    );
+    let pin = |name| format!("{:x}", Sha256::digest(fs::read(saved.join(name)).unwrap()));
+    let index = archive.path().join("index.json");
+    fs::write(&index, serde_json::to_vec(&serde_json::json!({
+        "schema":"harness-report-history/v1",
+        "samples":[{"directory":"saved", "machine_sha256":pin("test_result.json"), "manifest_sha256":pin("manifest.json")}]
+    })).unwrap()).unwrap();
+    let removed_root = root.path().to_path_buf();
+    root.close().unwrap();
+    assert!(!removed_root.exists());
+    let read = || {
+        Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+            .args(["report-verify", "--input"])
+            .arg(&index)
+            .arg("--project-root")
+            .arg(&removed_root)
+            .env("PATH", bin.path())
+            .env_remove("GH_TOKEN")
+            .env_remove("GITHUB_TOKEN")
+            .output()
+            .unwrap()
+    };
+    let output = read();
+    assert!(output.status.success(), "{output:?}");
+    let verified: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(verified["historical_integrity"], "verified");
+    assert_eq!(verified["current_applicability"], "not_evaluated");
+    assert_eq!(verified["result"], result);
+    fs::write(saved.join("logs/check.log"), "tampered").unwrap();
+    assert!(!read().status.success());
+}

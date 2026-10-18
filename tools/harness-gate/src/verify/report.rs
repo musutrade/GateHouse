@@ -1910,6 +1910,9 @@ fn verify_manifest_without_result_at(reports: &Path) -> Result<()> {
         .iter()
         .map(|artifact| artifact.path.clone())
         .collect::<BTreeSet<_>>();
+    if manifest_paths.len() != manifest.artifacts.len() {
+        bail!("duplicate artifact path in manifest");
+    }
     if manifest_paths != disk {
         bail!("manifest and publishable disk artifact sets differ");
     }
@@ -3423,6 +3426,25 @@ mod tests {
             "[REDACTED]\n"
         );
         verify_manifest(&invocation_project).expect("manifest should verify");
+        // Mirrored duplicates in both controls must not disappear into a set.
+        let mut original_controls = Vec::new();
+        for name in ["manifest.json", "artifact-registry.json"] {
+            let path = invocation.root.join(name);
+            let bytes = std::fs::read(&path).unwrap();
+            let mut value: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+            let entries = value["artifacts"].as_array_mut().unwrap();
+            entries.push(entries[0].clone());
+            std::fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+            original_controls.push((path, bytes));
+        }
+        let error = verify_manifest(&invocation_project).unwrap_err();
+        assert!(
+            error.to_string().contains("duplicate artifact path"),
+            "{error:#}"
+        );
+        for (path, bytes) in original_controls {
+            std::fs::write(path, bytes).unwrap();
+        }
         std::fs::write(invocation.root.join("logs/unit.log"), "tampered\n").expect("tamper log");
         assert!(verify_manifest(&invocation_project).is_err());
         drop(invocation);

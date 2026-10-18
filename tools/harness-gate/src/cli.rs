@@ -43,6 +43,12 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
+    /// Verify one pinned saved result and its evidence without loading a project.
+    ReportVerify {
+        /// Existing v1/v2 history index containing exactly one invocation and trusted pins.
+        #[arg(long)]
+        input: PathBuf,
+    },
     /// Combine latest report hot spots, selected trends and observed commit changes, offline.
     ReportDashboard {
         #[arg(long)]
