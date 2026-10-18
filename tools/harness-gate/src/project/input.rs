@@ -513,9 +513,9 @@ mod tests {
         for entries in [
             "100644 abc 0\ta\0malformed",
             "100644 abc 0\ta",
-            "100644 abc 0\ta\0100644 def 0\ta\0",
-            "100644 abc 0\ta\0100644 def 0\ta/b\0",
-            "100644 abc 0\ta/b\0100644 def 0\ta\0",
+            "100644 abc 0\ta\x00100644 def 0\ta\0",
+            "100644 abc 0\ta\x00100644 def 0\ta/b\0",
+            "100644 abc 0\ta/b\x00100644 def 0\ta\0",
             "100644 abc 0\ta//b\0",
             "100644 abc 0\ta/./b\0",
             "100644 abc 0\ta/../b\0",
@@ -527,11 +527,11 @@ mod tests {
                 "{entries:?}"
             );
         }
-        super::validate_index_entries(b"100644 abc 0\ta/b\0100755 def 0\ta/c\0").unwrap();
+        super::validate_index_entries(b"100644 abc 0\ta/b\x00100755 def 0\ta/c\0").unwrap();
         let directory = tempfile::tempdir().unwrap();
         assert!(super::inspect_index_entries(
             directory.path(),
-            b"100644 abc 0\tfirst\0160000 def 0\tsubmodule\0"
+            b"100644 abc 0\tfirst\x00160000 def 0\tsubmodule\0"
         )
         .is_err());
         assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 0);
