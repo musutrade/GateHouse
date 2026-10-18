@@ -250,7 +250,7 @@ fn evaluate(project: &Project, work: Prepared, result: &mut QualityResult) -> Re
     result.producers = serde_json::to_value(collection.producers)?;
     super::runtime::bind_collection(
         &mut result.runtime,
-        &result.inputs,
+        &serde_json::to_value(&work.state.series)?,
         &result.producers,
         &serde_json::to_value(collection.runtime_bindings)?,
     )?;

@@ -77,7 +77,7 @@ pub(super) fn facts(project: &Project, host: &HostPolicy) -> Result<Value> {
 
 pub(super) fn bind_collection(
     runtime: &mut Value,
-    inputs: &Value,
+    series: &Value,
     producers: &Value,
     collectors: &Value,
 ) -> Result<()> {
@@ -85,7 +85,7 @@ pub(super) fn bind_collection(
     // Bind collector tool/runtime/source series, selected adapter settings and
     // collected/retained origin states together. The origin labels are not
     // signatures or an independent host attestation.
-    facts["series"] = inputs["project"]["series"].clone();
+    facts["series"] = series.clone();
     facts["collectors"] = collectors.clone();
     facts["collector_producers"] = producers.clone();
     let identity = digest("runtime-bundle/v1", facts)?;
