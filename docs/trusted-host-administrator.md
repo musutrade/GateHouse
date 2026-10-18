@@ -18,9 +18,9 @@ inputs. The input import verifies their existing official/locked inventories;
 the Core release is built under the existing995 worker before installation.
 
 The entry requires these inputs already staged under Root-protected paths.
-Preparing an ordinary source export is not ownership approval or permission to
-copy arbitrary files into a protected stage. The complete operator staging
-package and its live acceptance are still pending.
+The candidate transport exporter and stager described below prepare that boundary;
+an ordinary source export is not ownership approval. Actual protected staging,
+migration and restart acceptance remain pending.
 
 The sealed administrator recipe is canonical compact sorted JSON with one final
 newline, mode0400, no links, Root ownership and protected ancestors. Its SHA is
@@ -128,3 +128,51 @@ quiet migration operation; it is not a concurrent workload or status API.
 No source-recipe verdict or successful preparation substitutes for actual Core
 verification. Publishing authoritative success remains blocked in transition
 coverage, and native required checks remain in force.
+
+## Candidate input transport
+
+`package-administrator-inputs.py` runs as the ordinary operator from a clean
+committed checkout. It takes reviewed host/tool recipes, official tool archives,
+locked crate archives, test archives and onboarding source. The host recipes are
+checked against the actual protected OS files before export. Tools, crates and
+test archives are selected by the committed locks and manifests and streamed
+against their expected digests; onboarding is checked against its existing fixed
+source digest. No reconstructed compiler tree or ordinary Core is transported.
+
+The exporter produces `inputs/`, a source export, `package.json` and
+`stage-reviewed-inputs.sh`. Only `inputs/` is the closed transport tree. Its
+canonical `transport.json` pins every file's size, SHA-256 and intended private
+mode. It includes the exact helper closure and its manifest, source-only release,
+host/tool recipes, external data and a generated administrator recipe. That
+recipe uses the fixed destination `/root/gatehouse-issue98-linux-<first12head>`;
+caller-supplied deployment outputs and verdicts are not accepted. The explicit
+API proxy remains part of the reviewed recipe.
+
+Review the exported head, helper/release/transport/recipe/program/launcher pins
+and the launcher text before administrator use. The launcher authenticates through
+sudo, then copies at most1MiB of the stager into its fixed private Root loader
+directory. It checks the literal reviewed program SHA before executing that Root
+copy with isolated Python and a minimal environment. It never executes project
+Python from a mutable operator path. An existing loader requires the same private
+file and digest; partial or unknown files block and remain available for diagnosis.
+
+The stager opens source ancestors through directory descriptors without following
+links. Each file is streamed from a stable regular single-link descriptor and
+checked against the externally pinned transport manifest. It rejects special or
+privileged files, unknown/empty directories, file/directory collisions, missing
+members, byte/count/metadata budget excess and a changed source. The transport
+budgets are1GiB total,256MiB per file,4096 files plus directories and2MiB manifest.
+
+Copies first go into a fresh sibling `.tmp` directory, with directories0700,
+data/code0400 and only reviewed onboarding executables0500. Files and directories
+are synced. The complete protected tree and the helper/administrator bindings are
+verified again before the fixed final rename and parent sync. A completion record
+binds the exact transport. A completed retry verifies the entire private tree
+without copying again. An interrupted copy is retained and blocks retry; no
+partial stage is adopted or deleted automatically.
+
+This launcher only stages inputs. It does not invoke `administrator-upgrade`,
+create the16GiB volume, start services, change entries, issue Checks or run quality
+workloads. The subsequent reviewed migration still needs actual Root/995
+validation and live transport, mount/restart and resource acceptance. Neither
+export nor staging changes the false administrator/production flags.

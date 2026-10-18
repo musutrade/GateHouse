@@ -1642,6 +1642,27 @@ acceptance and real restricted-identity workloads remain pending. Installed659
 is untouched; administrator and production flags remain false. The source-only
 closure has 29 helpers and 81 members, without a Core binary.
 
+The thirtieth helper, `stage-administrator-inputs.py`, adds bounded private
+staging of externally pinned inputs. The ordinary
+`package-administrator-inputs.py` exporter selects official/locked archives and
+the fixed onboarding source, verifies host/tool recipes and exports the helper
+closure, source-only release and fixed administrator recipe. Its transport
+manifest binds every copied byte and private mode. The reviewed launcher first
+copies and authenticates a bounded stager into a private Root loader and then
+executes that copy with isolated Python. It does not execute mutable operator
+code as Root or invoke the upgrade dispatcher.
+
+The stager uses no-follow directory descriptors, regular single-link bounded
+file streams, exact inventories, fsync and a fresh private sibling directory
+before final rename. Completed retries verify the whole stage; unknown/partial
+copies are retained and block. Twenty-two new cases cover these boundaries,
+CLI redaction, recipe/helper binding and the exporter bootstrap. These tests use
+real ordinary filesystem copies and replace Root ownership/admission only;
+they do not establish actual protected staging or live migration acceptance.
+The source-only closure is now 30 helpers and 82 members. Installed659 remains
+untouched, administrator/production flags stay false, and actual Root/995,
+transport, mount/restart, workload and complete issue98 acceptance remain pending.
+
 Record actual executor identity/platform, exact command/profile/configuration,
 policy/toolchain digest, expected step IDs, evidence location, negative cases,
 acceptance revision and responsible owner for each migrated cell. Update the
