@@ -177,6 +177,9 @@ pub(crate) enum Commands {
     /// Run configured execution and quality gates for one blocking project decision.
     #[command(visible_alias = "check")]
     Verify {
+        /// Copy a regular-file directory into a content-bound input (--all only).
+        #[arg(long, requires = "all", conflicts_with_all = ["plan", "components"])]
+        snapshot: bool,
         #[command(flatten)]
         scope: ScopeArgs,
         /// Override scope detection with a comma-separated component list.

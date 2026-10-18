@@ -47,12 +47,22 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
         Commands::Secrets { staged, json } => run_secrets(project, staged, json),
         Commands::Audit { json } => run_audit(project, json),
         Commands::Verify {
+            snapshot,
             scope: args,
             components,
             profile,
             plan: _,
             json: _,
-        } => run_verify(project, args.mode(), components, profile),
+        } => {
+            let snapshot_project;
+            let project = if snapshot {
+                snapshot_project = project.directory_snapshot()?;
+                &snapshot_project
+            } else {
+                project
+            };
+            run_verify(project, args.mode(), components, profile)
+        }
         Commands::Hook => run_hook(project),
         Commands::ParseLogs { input, output } => {
             crate::audit::parse_logs(&input, &output)?;
@@ -244,6 +254,7 @@ fn run_verify(
     let execution_project = match &mode {
         ScopeMode::Staged => project.staged_snapshot()?,
         ScopeMode::Base(_) => project.clone().with_input_mode(InputMode::Base),
+        ScopeMode::All if project.input().mode == InputMode::Directory => project.clone(),
         ScopeMode::All => project.clone().with_input_mode(InputMode::All),
         ScopeMode::WorkingTree => project.clone(),
     };

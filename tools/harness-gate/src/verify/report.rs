@@ -581,6 +581,7 @@ pub(super) struct Invocation {
 #[derive(Debug, Serialize)]
 struct InvocationMetadata<'a> {
     metadata_version: u32,
+    candidate_manifest: &'a Option<crate::project::content::ContentManifest>,
     invocation_id: &'a str,
     created_at: String,
     profile: &'a str,
@@ -663,6 +664,7 @@ pub(super) fn write_invocation_metadata_with_request(
 ) -> Result<()> {
     let metadata = InvocationMetadata {
         metadata_version: 2,
+        candidate_manifest: &project.input().content,
         invocation_id: &invocation.id,
         created_at: chrono::Utc::now().to_rfc3339(),
         profile,

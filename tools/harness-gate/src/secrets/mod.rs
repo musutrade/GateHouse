@@ -116,29 +116,37 @@ fn scanner_for_mode(project: &Project, mode: SecretMode) -> Result<SecretScanner
 }
 
 pub fn scan(project: &Project, mode: SecretMode) -> std::result::Result<Vec<String>, SecretsError> {
-    let files = match mode {
-        SecretMode::WorkingTree => git::null_terminated_paths(
-            &project.root,
-            [
-                "ls-files",
-                "--cached",
-                "--others",
-                "--exclude-standard",
-                "-z",
-            ],
-        )
-        .map_err(SecretsError::scan)?,
-        SecretMode::Staged => git::null_terminated_paths(
-            &project.root,
-            [
-                "diff",
-                "--cached",
-                "--diff-filter=ACMR",
-                "--name-only",
-                "-z",
-            ],
-        )
-        .map_err(SecretsError::scan)?,
+    let files = if let Some(manifest) = &project.input().content {
+        manifest
+            .files
+            .iter()
+            .map(|file| file.path.clone())
+            .collect()
+    } else {
+        match mode {
+            SecretMode::WorkingTree => git::null_terminated_paths(
+                &project.root,
+                [
+                    "ls-files",
+                    "--cached",
+                    "--others",
+                    "--exclude-standard",
+                    "-z",
+                ],
+            )
+            .map_err(SecretsError::scan)?,
+            SecretMode::Staged => git::null_terminated_paths(
+                &project.root,
+                [
+                    "diff",
+                    "--cached",
+                    "--diff-filter=ACMR",
+                    "--name-only",
+                    "-z",
+                ],
+            )
+            .map_err(SecretsError::scan)?,
+        }
     };
     let patterns = scanner_for_mode(project, mode).map_err(SecretsError::configuration)?;
     let mut findings = Vec::new();

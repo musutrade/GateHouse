@@ -99,7 +99,7 @@ pub(super) fn prepare(
     // An execution-only partial profile has no signed collector mount paths.
     // Its host-owned state/keys must stay outside the Git index, while all
     // configuration and source pins are still checked against the staged tree.
-    let staged_partial = project.invocation_input.is_snapshot()
+    let staged_partial = project.input().mode == crate::project::InputMode::Staged
         && participation.assurance == Assurance::Partial
         && participation.collectors.is_empty()
         && participation.policies.is_empty();

@@ -319,6 +319,10 @@ fn run_selected(
     if let Some(result) = &quality {
         println!("{}", quality::diagnostics(result));
     }
+    invocation_project
+        .input()
+        .verify_content()
+        .map_err(VerifyError::execution)?;
     let passed = quality.as_ref().is_none_or(|result| result.passed())
         && !cancelled
         && failures.is_empty()

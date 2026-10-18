@@ -141,6 +141,7 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
             },
         } => check_config_json(cli.project_root.clone(), cli.config.clone(), &cli.plugins),
         Commands::Verify {
+            snapshot: _,
             plan: true,
             scope,
             components,
@@ -489,7 +490,13 @@ fn run_project(
             action: ConfigAction::Check { .. }
         }
     );
-    let mut project = match Project::discover(root, config) {
+    let discovered = if matches!(&command, Commands::Verify { snapshot: true, .. }) {
+        // Directory snapshots do not consult optional Git context at all.
+        Project::discover_for_plan(root, config)
+    } else {
+        Project::discover(root, config)
+    };
+    let mut project = match discovered {
         Ok(project) => project,
         Err(error) if is_config_check => {
             print_human_config_error(&error);
