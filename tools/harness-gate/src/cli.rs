@@ -214,11 +214,6 @@ pub(crate) enum Commands {
     },
     /// Run the staged, fast verification profile used by pre-commit.
     Hook,
-    /// Explicitly manage thin repository hooks without running verification.
-    Hooks {
-        #[command(subcommand)]
-        action: crate::hooks::HookAction,
-    },
     /// Extract one trace's error context from JSON Lines logs.
     ParseLogs {
         #[arg(short, long)]
@@ -288,18 +283,6 @@ pub(crate) enum CompatAction {
         new: PathBuf,
         #[arg(short, long, value_name = "PATH")]
         output: PathBuf,
-    },
-    /// Enable a bounded migration canary slice.
-    Canary {
-        #[arg(long, value_name = "PATH")]
-        state: PathBuf,
-        #[arg(long)]
-        slice: String,
-    },
-    /// Disable the launcher and record a rollback event.
-    Rollback {
-        #[arg(long, value_name = "PATH")]
-        state: PathBuf,
     },
 }
 

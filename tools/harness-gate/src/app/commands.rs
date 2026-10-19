@@ -83,7 +83,6 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
         | Commands::Presets
         | Commands::Schema { .. }
         | Commands::Plugins { .. }
-        | Commands::Hooks { .. }
         | Commands::ReportVerify { .. }
         | Commands::ReportDashboard { .. }
         | Commands::ReportHistory { .. }

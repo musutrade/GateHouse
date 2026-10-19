@@ -605,8 +605,8 @@ minimum = 1
 ```bash
 harness-gate compat run --input request.json --output result.json --old-result frozen.json
 harness-gate compat compare --old frozen.json --new result.json --output comparison.json
-harness-gate compat canary --state migration-canary.json --slice team-a
-harness-gate compat rollback --state migration-canary.json
+gateprobes-operator canary --state migration-canary.json --slice team-a
+gateprobes-operator rollback --state migration-canary.json
 ```
 
 这些命令保留原始摘要和 invocation 证据，不会删除已有报告。
