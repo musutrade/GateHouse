@@ -78,6 +78,13 @@ REVIEWED_REMOVED_SOURCES = (
     # GitHub-only source_links module was deleted. Reviewed removal; the
     # remaining risk inventory and thresholds are unchanged.
     'tools/harness-gate/src/source_links.rs',
+    # Operator lifecycle extraction: hook installation/status/uninstall now
+    # belong to the verified external operator, so the three lifecycle modules
+    # were deleted after the release acceptance. Reviewed removal; remaining
+    # measured sources and thresholds are unchanged.
+    'tools/harness-gate/src/hooks/filesystem.rs',
+    'tools/harness-gate/src/hooks/mod.rs',
+    'tools/harness-gate/src/hooks/paths.rs',
 )
 
 

@@ -53,24 +53,6 @@ pub(crate) struct ComparisonReport {
     pub new_sha256: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct CanaryState {
-    pub schema_version: u32,
-    pub enabled: bool,
-    pub slice: String,
-    pub updated_at: String,
-    #[serde(default)]
-    pub history: Vec<CanaryEvent>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct CanaryEvent {
-    pub action: String,
-    pub slice: String,
-    pub at: String,
-}
-
 pub(crate) fn run(
     project: &Project,
     input: &Path,
@@ -252,55 +234,6 @@ fn diff_values(old: &Value, new: &Value, path: &str, differences: &mut Vec<Strin
     }
 }
 
-pub(crate) fn set_canary(path: &Path, slice: &str) -> Result<CanaryState> {
-    let mut state = read_canary(path)?.unwrap_or(CanaryState {
-        schema_version: COMPAT_SCHEMA_VERSION,
-        enabled: false,
-        slice: String::new(),
-        updated_at: String::new(),
-        history: Vec::new(),
-    });
-    state.enabled = true;
-    state.slice = slice.into();
-    state.updated_at = chrono::Utc::now().to_rfc3339();
-    state.history.push(CanaryEvent {
-        action: "enable".into(),
-        slice: slice.into(),
-        at: state.updated_at.clone(),
-    });
-    write_canary(path, &state)?;
-    Ok(state)
-}
-
-pub(crate) fn rollback(path: &Path) -> Result<CanaryState> {
-    let mut state =
-        read_canary(path)?.ok_or_else(|| anyhow::anyhow!("canary state does not exist"))?;
-    state.enabled = false;
-    state.updated_at = chrono::Utc::now().to_rfc3339();
-    state.history.push(CanaryEvent {
-        action: "rollback".into(),
-        slice: state.slice.clone(),
-        at: state.updated_at.clone(),
-    });
-    write_canary(path, &state)?;
-    Ok(state)
-}
-
-fn read_canary(path: &Path) -> Result<Option<CanaryState>> {
-    match fs::read(path) {
-        Ok(bytes) => Ok(Some(
-            serde_json::from_slice(&bytes).context("parse canary state")?,
-        )),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(error) => Err(error).with_context(|| format!("read canary state {}", path.display())),
-    }
-}
-
-fn write_canary(path: &Path, state: &CanaryState) -> Result<()> {
-    crate::utils::fs::atomic_write(path, serde_json::to_vec_pretty(state)?, true)
-        .with_context(|| format!("publish canary state {}", path.display()))
-}
-
 fn digest(bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(bytes);
@@ -352,17 +285,5 @@ mod tests {
         )
         .unwrap();
         assert!(compare_files(&old, &new).unwrap().equivalent);
-    }
-
-    #[test]
-    fn canary_enable_and_rollback_are_auditable() {
-        let directory = tempdir().unwrap();
-        let path = directory.path().join("canary.json");
-        let enabled = set_canary(&path, "team-a").unwrap();
-        assert!(enabled.enabled);
-        assert_eq!(enabled.slice, "team-a");
-        let rolled_back = rollback(&path).unwrap();
-        assert!(!rolled_back.enabled);
-        assert_eq!(rolled_back.history.len(), 2);
     }
 }

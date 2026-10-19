@@ -68,7 +68,6 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
         .map_err(Into::into),
         Commands::Findings { action } => crate::findings::run(action).map_err(Into::into),
         Commands::CacheClear { json } => run_cache_clear(&cli, *json),
-        Commands::Hooks { action } => run_hooks(&cli, *action),
         Commands::Plugins { lock, json } => run_plugin_check(lock, *json, &cli.plugins),
         Commands::Quality { action } => {
             quality::run(action, cli.replay_state_dir.as_deref()).map_err(Into::into)
@@ -92,20 +91,6 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
         Commands::Compat {
             action: CompatAction::Compare { old, new, output },
         } => compare_files(old, new, output),
-        Commands::Compat {
-            action: CompatAction::Canary { state, slice },
-        } => {
-            let state = crate::compat::set_canary(state, slice)?;
-            println!("Canary enabled for {}: {}", state.slice, state.updated_at);
-            Ok(true)
-        }
-        Commands::Compat {
-            action: CompatAction::Rollback { state },
-        } => {
-            let state = crate::compat::rollback(state)?;
-            println!("Canary rolled back: {}", state.updated_at);
-            Ok(true)
-        }
         Commands::Schema {
             action: SchemaAction::Export { output, quality },
         } => export_schema(standalone_root(&cli)?, output.as_deref(), *quality),
@@ -200,16 +185,6 @@ fn run_cache_clear(cli: &Cli, json: bool) -> Result<bool, CliError> {
         println!("Step cache: {}", report);
     }
     Ok(report["retained"] == 0)
-}
-
-fn run_hooks(cli: &Cli, action: crate::hooks::HookAction) -> Result<bool, CliError> {
-    if cli.config.is_some() {
-        return Err(anyhow::anyhow!(
-            "hooks use the default project configuration; --config is unsupported"
-        )
-        .into());
-    }
-    crate::hooks::run(&standalone_root(cli)?, action).map_err(Into::into)
 }
 
 fn run_presets(directory: Option<std::path::PathBuf>) -> Result<bool, CliError> {

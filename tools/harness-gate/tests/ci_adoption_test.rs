@@ -43,8 +43,8 @@ fn fixture() -> TempDir {
 }
 
 #[test]
-fn compatibility_cli_preserves_comparison_and_rollback_evidence() {
-    let root = TempDir::new().unwrap();
+fn compatibility_cli_preserves_comparison_and_retires_lifecycle_state() {
+    let root = fixture();
     let old = root.path().join("old.json");
     let new = root.path().join("new.json");
     let comparison = root.path().join("comparison.json");
@@ -69,25 +69,133 @@ fn compatibility_cli_preserves_comparison_and_rollback_evidence() {
             equivalent
         );
     }
-    success(
-        command(root.path())
-            .args(["compat", "canary", "--slice", "ci", "--state"])
-            .arg(&state)
-            .output()
-            .unwrap(),
+    // Retired lifecycle commands are rejected and change no state: no canary
+    // file, installed hook or lock may appear.
+    for args in [
+        vec!["compat", "canary", "--slice", "ci", "--state"],
+        vec!["compat", "rollback", "--state"],
+        vec!["hooks", "install"],
+        vec!["hooks", "status"],
+        vec!["hooks", "uninstall"],
+    ] {
+        let mut invocation = command(root.path());
+        invocation.args(&args);
+        if args[0] == "compat" {
+            invocation.arg(&state);
+        }
+        let output = invocation.output().unwrap();
+        assert!(!output.status.success(), "{args:?}");
+        assert!(!state.exists(), "{args:?}");
+        assert!(
+            !root.path().join(".git/hooks/pre-commit").exists(),
+            "{args:?}"
+        );
+        assert!(
+            !root
+                .path()
+                .join(".git/hooks/.harness-gate-hooks.lock")
+                .exists(),
+            "{args:?}"
+        );
+    }
+}
+
+fn assert_gate_failed(root: &Path, expected_step: &str) {
+    let report: Value = serde_json::from_slice(
+        &fs::read(root.join(".harness-gate/reports/test_result.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(report["status"], "FAIL", "{report}");
+    assert!(
+        report["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|step| step["step_id"] == expected_step && step["status"] == "FAIL"),
+        "{report}"
     );
-    let enabled: Value = serde_json::from_slice(&fs::read(&state).unwrap()).unwrap();
-    assert_eq!(enabled["enabled"], true);
-    success(
-        command(root.path())
-            .args(["compat", "rollback", "--state"])
-            .arg(&state)
+}
+
+#[cfg(unix)]
+#[test]
+fn existing_managed_hooks_still_invoke_core_hook_and_verify() {
+    use std::os::unix::fs::PermissionsExt;
+    let root = fixture();
+    let binary_dir = Path::new(env!("CARGO_BIN_EXE_harness-gate"))
+        .parent()
+        .unwrap()
+        .to_path_buf();
+    let git = |args: &[&str]| {
+        let path = std::env::join_paths(std::iter::once(binary_dir.clone()).chain(
+            std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default()),
+        ))
+        .unwrap();
+        Command::new("git")
+            .arg("-C")
+            .arg(root.path())
+            .args(args)
+            .env("PATH", path)
+            .env("GIT_CONFIG_GLOBAL", root.path().join("no-global-config"))
+            .env("GIT_CONFIG_NOSYSTEM", "1")
+            .env("GIT_TERMINAL_PROMPT", "0")
             .output()
-            .unwrap(),
+            .unwrap()
+    };
+    success(git(&["config", "user.email", "hooks@example.invalid"]));
+    success(git(&["config", "user.name", "Retired Lifecycle"]));
+    success(git(&["config", "commit.gpgsign", "false"]));
+    // The hook command reads the staged workflow configuration, so the
+    // initialized project must be committed before hooks are exercised.
+    success(git(&["add", ".harness-gate"]));
+    success(git(&["commit", "-qm", "initial config"]));
+    let hooks = root.path().join(".git/hooks");
+    for (name, body) in [
+        (
+            "pre-commit",
+            "#!/bin/sh\n# harness-gate managed hook v1\nexec harness-gate hook\n",
+        ),
+        (
+            "pre-push",
+            "#!/bin/sh\n# harness-gate managed hook v1\nexec harness-gate verify --all\n",
+        ),
+    ] {
+        let path = hooks.join(name);
+        fs::write(&path, body).unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    // Existing exact managed hook bytes still execute Core hook/verify even
+    // though Core no longer owns lifecycle commands.
+    fs::write(
+        root.path().join("sample.txt"),
+        "bad trailing whitespace   \n",
+    )
+    .unwrap();
+    success(git(&["add", "sample.txt"]));
+    assert!(!git(&["commit", "-qm", "must fail"]).status.success());
+    assert_gate_failed(root.path(), "project.staged-diff-check");
+    fs::write(root.path().join("sample.txt"), "clean\n").unwrap();
+    success(git(&["add", "sample.txt"]));
+    success(git(&["commit", "-qm", "valid"]));
+    let remote = root.path().join("remote.git");
+    fs::create_dir(&remote).unwrap();
+    success(git(&["init", "--bare", "-q", remote.to_str().unwrap()]));
+    fs::write(
+        root.path().join("sample.txt"),
+        "bad trailing whitespace   \n",
+    )
+    .unwrap();
+    assert!(
+        !git(&["push", remote.to_str().unwrap(), "HEAD:refs/heads/test"])
+            .status
+            .success()
     );
-    let disabled: Value = serde_json::from_slice(&fs::read(&state).unwrap()).unwrap();
-    assert_eq!(disabled["enabled"], false);
-    assert_eq!(disabled["history"].as_array().unwrap().len(), 2);
+    assert_gate_failed(root.path(), "project.diff-check");
+    fs::write(root.path().join("sample.txt"), "clean\n").unwrap();
+    success(git(&[
+        "push",
+        remote.to_str().unwrap(),
+        "HEAD:refs/heads/test",
+    ]));
 }
 
 #[test]

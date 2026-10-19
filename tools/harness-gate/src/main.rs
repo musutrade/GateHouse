@@ -7,7 +7,6 @@ mod doctor;
 mod error;
 mod failure;
 mod findings;
-mod hooks;
 mod plugins;
 mod preset;
 mod process;
