@@ -381,6 +381,11 @@
       "prefix": "quality-replay/",
       "kind": "migration-reference",
       "reason": "Unpublished differential comparator workspace package; not part of the shipped harness-gate library or binary. The linked quality-core remains production."
+    },
+    {
+      "prefix": "runtime-protocol/",
+      "kind": "non-core-library",
+      "reason": "Unlinked non-default workspace data-contract library for a future adapter; it is outside the shipped harness-gate library/binary and is gated by explicit locked tests, clippy and fmt. Core production coverage boundaries remain src and quality-core."
     }
   ],
   "inline_exclusions": {

@@ -75,6 +75,10 @@ class ProductionCoverageTests(unittest.TestCase):
         self.assertEqual(owners["src/service/inspection.rs"], "service-core")
         self.assertEqual(owners["src/service/runtime.rs"], "service-adapters")
         self.assertIn("src/scope/benchmark.rs", excluded)
+        self.assertIn(
+            ("runtime-protocol/", "non-core-library"),
+            {(row["prefix"], row["kind"]) for row in inventory["external_exclusions"]},
+        )
         self.assertTrue(inventory["unmapped_sources"])
         self.assertEqual(owners["quality-core/policy.rs"], "quality-core")
         self.assertEqual(owners["quality-core/replay.rs"], "quality-core")
@@ -179,6 +183,17 @@ class ProductionCoverageTests(unittest.TestCase):
         result = self.evaluate()
         self.assertEqual(result["boundaries"]["app"]["lines"]["count"], 0)
         self.assertIn("app", result["failures"])
+
+    def test_external_exclusions_require_a_reviewed_prefix_and_kind(self):
+        self.write()
+        self.assertIsNotNone(load_inventory(self.inventory_path, self.root))
+        for prefix, kind in (("runtime-protocol/", "unknown"), ("elsewhere/", "non-core-library")):
+            changed = json.loads(json.dumps(self.inventory))
+            changed["external_exclusions"].append(
+                {"prefix": prefix, "kind": kind, "reason": "fixture"})
+            self.inventory_path.write_text(json.dumps(changed))
+            with self.assertRaisesRegex(ValueError, "unsupported external exclusion"):
+                load_inventory(self.inventory_path, self.root)
 
     def test_negative_inventory_and_raw_reports(self):
         cases = {

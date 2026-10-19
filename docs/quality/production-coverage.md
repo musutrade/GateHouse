@@ -59,6 +59,15 @@ and excluded ranges are retained in the generated report. These controls reject
 empty reports/boundaries, unknown paths, duplicate assignments or reports, and
 missing or mismatched evidence. Threshold comparisons use unrounded raw counts.
 
+## Workspace library scope
+
+`tools/harness-gate/runtime-protocol/` is a non-default workspace data-contract
+library that is not linked into the shipped Core library or binary. Its sources
+are classified as the reviewed external exclusion `non-core-library` and are not
+part of the Core production coverage boundaries or aggregate. The library still
+runs under the normal workspace test archive and has an explicit locked
+test/clippy/fmt CI gate; no coverage result is claimed for it.
+
 ## Reproduction and observed evidence
 
 Run from this checkout (the environment's default Cargo target is read-only):
