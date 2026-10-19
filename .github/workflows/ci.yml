@@ -212,7 +212,11 @@ jobs:
         if: matrix.shard == 1
         env:
           PYTHONDONTWRITEBYTECODE: "1"
-        run: python3 -m unittest discover -s tools/consumers/tests -v
+        run: |
+          set -euo pipefail
+          core_target="$(cargo metadata --manifest-path tools/harness-gate/Cargo.toml --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
+          GATEHOUSE_CORE="$core_target/debug/harness-gate" \
+            python3 -m unittest discover -s tools/consumers/tests -v
 
       - name: Fetch reviewed GateProbes onboarding implementation
         if: matrix.shard == 1
