@@ -41,6 +41,11 @@ def normalize(value: str, root: Path) -> str:
         value,
     )
     value = re.sub(
+        r'("core_sha256"\s*:\s*)"sha256:[0-9a-f]{64}"',
+        r'\1"<CORE_SHA256>"',
+        value,
+    )
+    value = re.sub(
         r'("runtime_bundle_digest"\s*:\s*)"runtime-bundle/v1:sha256:[0-9a-f]{64}"',
         r'\1"<RUNTIME_BUNDLE_DIGEST>"',
         value,
