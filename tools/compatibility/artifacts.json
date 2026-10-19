@@ -1,0 +1,20 @@
+{
+  "schema": "gatehouse-external-compatibility/v1",
+  "repository": "musutrade/GateProbes",
+  "artifacts": {
+    "github-check": {
+      "tag": "github-check-v1.0.0",
+      "archive": "gateprobes-github-check-1.0.0.tar.gz",
+      "sha256": "5c728a19f5b82053937553e5583b66a4230dd05005d86c7853440211851d419a",
+      "prefix": "gateprobes-github-check-1.0.0",
+      "source_commit": "660673073eceec8964aaaa8df524693f3eaa6025"
+    },
+    "onboarding-presets": {
+      "tag": "onboarding-presets-v1.0.0",
+      "archive": "gateprobes-onboarding-presets-1.0.0.tar.gz",
+      "sha256": "4de5a99252f97810e1f4b0e813eb87493002d930dfec99c59f5381dd1de05a3d",
+      "prefix": "gateprobes-onboarding-presets-1.0.0",
+      "source_commit": "23cc634237913941dda17905fa5259d33bdd7482"
+    }
+  }
+}

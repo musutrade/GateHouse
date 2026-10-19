@@ -208,31 +208,28 @@ jobs:
           cargo run --manifest-path tools/harness-gate/Cargo.toml --locked -- schema export --quality
           git diff --exit-code -- schema/flow.schema.json schema/quality.schema.json
 
-      - name: Independent result-consumer paired-identity and boundary acceptance
+      - name: Fetch digest-pinned external compatibility distributions
+        if: matrix.shard == 1
+        run: python3 -B tools/compatibility/fetch_artifacts.py --output "$RUNNER_TEMP/gateprobes-artifacts"
+
+      - name: Core paired-identity and boundary contracts with released consumer
         if: matrix.shard == 1
         env:
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
           set -euo pipefail
           core_target="$(cargo metadata --manifest-path tools/harness-gate/Cargo.toml --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
+          test -x "$core_target/debug/harness-gate"
           GATEHOUSE_CORE="$core_target/debug/harness-gate" \
-            python3 -m unittest discover -s tools/consumers/tests -v
-
-      - name: Fetch reviewed GateProbes onboarding implementation
-        if: matrix.shard == 1
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          repository: musutrade/GateProbes
-          ref: eec90944e339fa15fa531d77d23f889a71e600b4
-          path: .plugin-onboarding
-          persist-credentials: false
+          GATEPROBES_CONSUMER="$RUNNER_TEMP/gateprobes-artifacts/gateprobes-github-check-1.0.0/github_check.py" \
+            python3 -m unittest discover -s tools/compatibility/result_boundary -v
 
       - name: Real locked Rust and Python onboarding against this Core
         if: matrix.shard == 1
         run: |
           set -euo pipefail
           core_target="$(cargo metadata --manifest-path tools/harness-gate/Cargo.toml --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
-          python3 -B .plugin-onboarding/tools/onboarding/acceptance.py \
+          python3 -B "$RUNNER_TEMP/gateprobes-artifacts/gateprobes-onboarding-presets-1.0.0/tools/onboarding/acceptance.py" \
             --core "$core_target/debug/harness-gate" --work-dir "$RUNNER_TEMP/plugin-onboarding"
 
       - name: Retain real plugin onboarding evidence

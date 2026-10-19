@@ -19,6 +19,7 @@ import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
+CONSUMER = Path(os.environ['GATEPROBES_CONSUMER']).resolve(strict=True)
 CORE = Path(os.environ.get('GATEHOUSE_CORE', REPO / 'tools/harness-gate/target/debug/harness-gate'))
 WORKFLOW = REPO / 'tools/harness-gate/fixtures/workflow'
 COLLECTOR = WORKFLOW / 'collectors/collector.py'
@@ -82,7 +83,7 @@ def _value(value):
 
 
 def consumer():
-    spec = importlib.util.spec_from_file_location('github_check', REPO / 'tools/consumers/github_check.py')
+    spec = importlib.util.spec_from_file_location('github_check', CONSUMER)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
