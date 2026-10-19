@@ -63,6 +63,7 @@ mod tests {
             participation: json!({"profile":"full"}),
             full_quality_status: "blocked",
             producers: Value::Null,
+            runtime: serde_json::Value::Null,
         };
         let before = serde_json::to_value(&quality).unwrap();
         let message = quality_message("full", &quality).unwrap();

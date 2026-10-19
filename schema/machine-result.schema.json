@@ -34,11 +34,12 @@
     "report_directory": {"type": "string", "minLength": 1},
     "timestamp": {"type": "string", "format": "date-time"},
     "profile": {"type": "string", "minLength": 1},
-    "input_mode": {"enum": ["working-tree", "staged", "base", "all"]},
+    "input_mode": {"enum": ["working-tree", "staged", "base", "all", "directory"]},
     "project_identity": {"type": "string", "minLength": 1},
     "source_identity": {"type": "string", "minLength": 1},
     "execution_root": {"type": "string", "minLength": 1},
     "configuration_digest": {"type": "string", "pattern": "^sha256:[A-Fa-f0-9]{64}$"},
+    "identities": {"$ref": "#/definitions/identities"},
     "scope": {
       "type": "object",
       "additionalProperties": false,
@@ -62,15 +63,32 @@
     "status": {"enum": ["PASS", "WAIVED", "FAIL", "SKIPPED", "CANCELLED"]}
   },
   "definitions": {
+    "identities": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["verification_policy_identity", "quality_policy_identity", "runtime_bundle_digest", "runtime", "policy_binding_complete", "current_applicability"],
+      "properties": {
+        "verification_policy_identity": {"type": "string", "pattern": "^verification-policy/v1:sha256:[a-f0-9]{64}$"},
+        "quality_policy_identity": {"type": ["string", "null"], "pattern": "^quality-policy/v1:sha256:[a-f0-9]{64}$"},
+        "runtime_bundle_digest": {"type": "string", "pattern": "^runtime-bundle/v1:sha256:[a-f0-9]{64}$"},
+        "runtime": {"type": "object"},
+        "policy_binding_complete": {"type": "boolean"},
+        "current_applicability": {"const": "not_proven"}
+      }
+    },
     "quality": {
       "type": "object",
       "additionalProperties": false,
       "required": ["schema", "status", "phase", "error", "selection", "inputs", "evidence", "baseline", "project_report", "project_report_path", "output", "formats", "evaluation_time"],
       "properties": {
         "schema": {"const": "quality-verification/v1"},
-        "status": {"enum": ["pass", "fail", "blocked"]},
+        "status": {"enum": ["pass", "fail", "blocked", "not_collected"]},
         "phase": {"enum": ["configuration", "baseline", "collection", "evaluation", "complete"]},
         "error": {"type": ["string", "null"]},
+        "runtime": {"type": ["object", "null"]},
+        "participation": {"type": ["object", "null"]},
+        "full_quality_status": {"enum": ["pass", "fail", "blocked", "not_collected"]},
+        "producers": {"type": ["object", "null"]},
         "selection": {"type": ["object", "null"]},
         "inputs": {"type": ["object", "null"]},
         "evidence": {"type": ["array", "null"]},

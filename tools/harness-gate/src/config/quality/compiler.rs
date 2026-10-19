@@ -55,6 +55,7 @@ pub(crate) struct RetainedEvidence {
 pub(crate) struct CompiledInputs {
     pub schema: &'static str,
     pub identity: String,
+    pub quality_policy_identity: String,
     pub project: Value,
     pub policy: Value,
     pub expected: Value,
@@ -151,6 +152,7 @@ pub(crate) fn compile(root: &Path, state: &TrustedState) -> Result<CompiledInput
     Ok(CompiledInputs {
         schema: "quality-compiled-inputs/v1",
         identity: format!("quality-compilation/v1:{}", sha(&canonical(&payload)?)),
+        quality_policy_identity: super::identity::policy_identity(&root, &flow, &config, state)?,
         project,
         policy,
         expected,

@@ -1,6 +1,7 @@
 pub(crate) mod baseline;
 pub(crate) mod collectors;
 pub(crate) mod compiler;
+pub(crate) mod identity;
 mod model;
 mod policy;
 #[cfg(test)]

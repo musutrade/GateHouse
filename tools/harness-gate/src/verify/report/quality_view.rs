@@ -305,6 +305,7 @@ pub(super) mod tests {
             participation: json!({}),
             full_quality_status: "pass",
             producers: json!({}),
+            runtime: serde_json::Value::Null,
         }
     }
     pub(crate) fn combined_fixture(count: usize, commit: &str) -> QualityResult {

@@ -1323,6 +1323,18 @@ fn ci_reuses_authoritative_responses_without_relaunching_or_changing_decisions()
         assert_eq!(original.evidence, reused.evidence);
         assert_eq!(original.responses, reused.responses);
         assert_eq!(reused.producers["stargazer"], "retained");
+        assert_eq!(
+            original.runtime_bindings["stargazer"]["execution"],
+            "collected"
+        );
+        assert_eq!(
+            reused.runtime_bindings["stargazer"]["execution"],
+            "retained"
+        );
+        assert_eq!(
+            original.runtime_bindings["stargazer"]["settings_digest"],
+            reused.runtime_bindings["stargazer"]["settings_digest"]
+        );
         let quality = fixture.quality_result();
         assert_eq!(
             quality["status"],
@@ -1330,7 +1342,111 @@ fn ci_reuses_authoritative_responses_without_relaunching_or_changing_decisions()
             "{quality:#}"
         );
         assert_eq!(quality["producers"]["stargazer"], "retained");
+        assert_eq!(
+            quality["runtime"]["facts"]["collectors"]["stargazer"]["execution"],
+            "retained"
+        );
+        assert_eq!(
+            quality["runtime"]["facts"]["collector_producers"]["stargazer"],
+            "retained"
+        );
     }
+}
+
+#[test]
+fn machine_identities_bind_policy_runtime_and_selected_series() {
+    let mut fixture = Fixture::workflow("pass", true, false);
+    fixture.select_profile("full", false);
+    let project =
+        crate::project::Project::discover(Some(fixture.dir.path().to_path_buf()), None).unwrap();
+    let report = crate::verify::run(
+        &project,
+        crate::scope::ScopeResult::all(&project),
+        &fixture.state.profile,
+        false,
+    )
+    .unwrap();
+    let result: Value = serde_json::from_slice(
+        &fs::read(Path::new(&report.report_directory).join("test_result.json")).unwrap(),
+    )
+    .unwrap();
+    crate::test_support::schema_validator::validate_machine_result(&result).unwrap();
+
+    let identities = &result["identities"];
+    assert!(identities["verification_policy_identity"]
+        .as_str()
+        .unwrap()
+        .starts_with("verification-policy/v1:sha256:"));
+    assert!(identities["quality_policy_identity"]
+        .as_str()
+        .unwrap()
+        .starts_with("quality-policy/v1:sha256:"));
+    assert_eq!(identities["policy_binding_complete"], json!(true));
+    assert_eq!(identities["current_applicability"], json!("not_proven"));
+
+    let runtime = &identities["runtime"];
+    assert!(runtime["runtime_bundle_digest"]
+        .as_str()
+        .unwrap()
+        .starts_with("runtime-bundle/v1:sha256:"));
+    let facts = &runtime["facts"];
+    let core = fs::read(std::env::current_exe().unwrap()).unwrap();
+    assert_eq!(
+        facts["core_sha256"],
+        json!(format!("sha256:{:x}", Sha256::digest(&core)))
+    );
+    assert_eq!(facts["environment_binding"], json!("not_attested"));
+    assert_eq!(facts["isolation_attestation"], json!("not_provided"));
+
+    // The selected trusted series are bound exactly as compiled, not re-derived.
+    let selected = serde_json::to_value(&fixture.state.series).unwrap();
+    assert!(
+        selected
+            .as_object()
+            .is_some_and(|series| !series.is_empty()),
+        "fixture must select at least one series"
+    );
+    assert_eq!(facts["series"], selected);
+
+    let collectors = facts["collectors"].as_object().unwrap();
+    let binding = collectors
+        .get("stargazer")
+        .expect("stargazer runtime binding");
+    assert_eq!(binding["adapter"], json!(fixture.request.adapter.name));
+    assert_eq!(binding["version"], json!(fixture.request.adapter.version));
+    assert_eq!(
+        binding["source_digest"],
+        json!(fixture.request.adapter.source_digest)
+    );
+    assert_eq!(binding["execution"], json!("collected"));
+    let settings = json!({
+        "executable": fixture.request.adapter.executable,
+        "args": fixture.request.args,
+        "environment": fixture.request.environment,
+        "capabilities": fixture.request.capabilities,
+        "timeout_ms": fixture.request.timeout_ms,
+    });
+    assert_eq!(
+        binding["settings_digest"],
+        json!(crate::config::quality::identity::digest("collector-runtime/v1", &settings).unwrap())
+    );
+    assert!(facts["collector_producers"]["stargazer"].is_string());
+
+    // Raw executable paths, arguments and environment values never appear.
+    let serialized = serde_json::to_string(runtime).unwrap();
+    assert!(!serialized.contains(fixture.request.adapter.executable.to_str().unwrap()));
+    for argument in &fixture.request.args {
+        assert!(!serialized.contains(argument));
+    }
+    for value in fixture.request.environment.values() {
+        assert!(!serialized.contains(value));
+    }
+
+    // One domain digest covers series, adapter bindings and producer origins.
+    assert_eq!(
+        runtime["runtime_bundle_digest"],
+        json!(crate::config::quality::identity::digest("runtime-bundle/v1", facts).unwrap())
+    );
 }
 
 #[test]

@@ -265,12 +265,41 @@ def main():
     root = output / 'digest-context'
     state, _ = prepare(root)
     assert compile_inputs(binary, root).returncode == 0
-    before = load(root / 'compiled.json')['identity']
+    before = load(root / 'compiled.json')
     state['expected']['run'] = 'fresh-run'
     write(root / 'state.json', state)
     assert compile_inputs(binary, root).returncode == 0
-    assert load(root / 'compiled.json')['identity'] != before
-    results.append(dict(case='digest-context', identity_changed=True))
+    after = load(root / 'compiled.json')
+    assert after['identity'] != before['identity']
+    # A new run identity is a compilation input, not a policy revision.
+    assert after['quality_policy_identity'] == before['quality_policy_identity']
+    results.append(dict(case='digest-context', identity_changed=True, policy_stable=True))
+    # Presentation and delivery settings are neither policy nor runtime inputs,
+    # but the full compilation identity still binds the edited flow bytes.
+    root = output / 'policy-projection'
+    state, _ = prepare(root)
+    assert compile_inputs(binary, root).returncode == 0
+    baseline = load(root / 'compiled.json')
+    flow_path = root / '.harness-gate/flow.toml'
+    source = flow_path.read_text()
+    assert 'label = "' in source
+    flow_path.write_text(source.replace('label = "', 'label = "edited ', 1))
+    pin(root, state)
+    assert compile_inputs(binary, root).returncode == 0
+    edited = load(root / 'compiled.json')
+    assert edited['identity'] != baseline['identity']
+    assert edited['quality_policy_identity'] == baseline['quality_policy_identity']
+    results.append(dict(case='presentation-not-policy', identity_changed=True, policy_stable=True))
+    # A threshold edit is a policy revision.
+    policy_path = root / '.harness-gate/policy.json'
+    policy = load(policy_path)
+    policy['rules'][0]['limit']['covered'] = 3
+    write(policy_path, policy)
+    pin(root, state)
+    assert compile_inputs(binary, root).returncode == 0
+    tightened = load(root / 'compiled.json')
+    assert tightened['quality_policy_identity'] != baseline['quality_policy_identity']
+    results.append(dict(case='threshold-is-policy', policy_changed=True))
     write(output / 'acceptance.json', dict(schema='quality-compilation-acceptance/v1', cases=results, unexplained_mismatches=0))
     print(f'{len(results)} compilation/equivalence cases; zero unexplained mismatches')
 

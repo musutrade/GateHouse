@@ -1,5 +1,8 @@
 //! Test-only workspace helpers shared by in-process unit tests.
 
+#[path = "../tests/common/schema.rs"]
+pub(crate) mod schema_validator;
+
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::process::Command;

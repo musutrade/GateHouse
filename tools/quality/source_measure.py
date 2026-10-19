@@ -79,7 +79,10 @@ SOURCE_FILES = sorted({"report_history/dashboard.rs", "report_history/dashboard/
     # Issue #130: the staged snapshot content module and secret scanning against
     # the snapshot file list. Additive measured inventory; both commits are
     # recollected under the same expanded selection.
-    {"project/content.rs", "secrets/mod.rs"})
+    {"project/content.rs", "secrets/mod.rs"} |
+    # Issue #139: selected policy identity and recorded runtime identity split.
+    # Additive measured inventory; both commits are recollected.
+    {"config/quality/identity.rs", "verify/runtime.rs"})
 
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
