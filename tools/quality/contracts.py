@@ -36,6 +36,31 @@ def normalize(value: str, root: Path) -> str:
         value,
     )
     value = re.sub(
+        r'("configuration_digest"\s*:\s*)"runtime-configuration/v1:sha256:[0-9a-f]{64}"',
+        r'\1"<RUNTIME_CONFIGURATION_DIGEST>"',
+        value,
+    )
+    value = re.sub(
+        r'("core_sha256"\s*:\s*)"sha256:[0-9a-f]{64}"',
+        r'\1"<CORE_SHA256>"',
+        value,
+    )
+    value = re.sub(
+        r'("runtime_bundle_digest"\s*:\s*)"runtime-bundle/v1:sha256:[0-9a-f]{64}"',
+        r'\1"<RUNTIME_BUNDLE_DIGEST>"',
+        value,
+    )
+    value = re.sub(
+        r'("verification_policy_identity"\s*:\s*)"verification-policy/v1:sha256:[0-9a-f]{64}"',
+        r'\1"<VERIFICATION_POLICY_IDENTITY>"',
+        value,
+    )
+    value = re.sub(
+        r'("quality_policy_identity"\s*:\s*)"quality-policy/v1:sha256:[0-9a-f]{64}"',
+        r'\1"<QUALITY_POLICY_IDENTITY>"',
+        value,
+    )
+    value = re.sub(
         r'("commit"\s*:\s*)"[0-9a-f]{40}"',
         r'\1"<COMMIT>"',
         value,

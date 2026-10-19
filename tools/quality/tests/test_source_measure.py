@@ -533,8 +533,11 @@ fn both() {
                 inventory = ast(source_file, self.binary, compiler_configuration(target))
                 symbols = inventory['symbols']
                 functions = [s['name'] for s in symbols if s['kind'] == 'function']
-                for name in ('normalize_host', 'valid_allowlist_host', 'is_local_only',
-                             'is_local_ipv4', 'is_local_ipv6', 'embedded_ipv4'):
+                # Issue #129 moved network delivery out of verification; the
+                # webhook resolver and its local-address classes left this
+                # module, so the measured production set is the allowlist
+                # validation surface that remains.
+                for name in ('normalize_host', 'valid_allowlist_host', 'is_host_byte'):
                     self.assertIn(name, functions)
                 self.assertFalse(any(s['test'] for s in symbols))
                 self.assertTrue(inventory['excluded'], 'test module must leave production ranges')
