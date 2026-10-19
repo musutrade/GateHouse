@@ -192,3 +192,15 @@ isolation or host recovery is claimed.
 ## External artifact ownership
 
 GitHub consumer implementation and 22 platform behavior tests migrated to GateProbes. Core retains four paired identity and two network-boundary contract tests against its digest-pinned released artifact. Onboarding compatibility consumes the published bundle, not a plugin source checkout. Exact tags, archive digests and source commits are in `tools/compatibility/artifacts.json`; this CI adapter never runs on the Core verification path. Published plugin acceptance remains Linux x86_64 only.
+
+## External GitHub action ownership
+
+The findings-feedback and report-artifact actions and their 16 platform tests
+moved unchanged to GateProbes `github-actions-v1.0.0`, release source
+`fffe3589e8920d14aba4e47338d316ecdbb3ba14`. Archive SHA-256 is
+`e23d272d80aa9cacadfadd58266a14dd80fe9199c64f2f4d4a4959663899dab0`.
+Downloaded extracted tests passed without live API writes/uploads. Core CI uses
+the external report action pinned to that full commit for its synthetic UI
+example; Core retains report generation/tamper regressions. GateProbes owns
+platform transport implementation and tests, not quality decisions. Existing
+explicit upload/publish choices remain unchanged.

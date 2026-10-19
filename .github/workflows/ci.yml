@@ -156,14 +156,6 @@ jobs:
           -E 'test(configured_ci_acceptance_retains_parity_reuse_and_negative_evidence)
           or test(html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering)'
 
-      - name: Test findings feedback integration without publishing
-        if: matrix.shard == 1
-        run: node --test .github/actions/findings-feedback/feedback.test.cjs
-
-      - name: Test optional HTML artifact transport without uploading
-        if: matrix.shard == 1
-        run: node --test .github/actions/report-artifact/prepare.test.cjs
-
       - name: Pin the generated synthetic HTML export
         if: matrix.shard == 1
         id: html-example
@@ -180,7 +172,7 @@ jobs:
       - name: Upload synthetic report UI example (not repository quality evidence)
         if: matrix.shard == 1
         id: html-artifact
-        uses: ./.github/actions/report-artifact
+        uses: musutrade/GateProbes/plugins/github-actions/actions/report-artifact@fffe3589e8920d14aba4e47338d316ecdbb3ba14 # github-actions-v1.0.0
         with:
           directory: ${{ runner.temp }}/gatehouse-html-example
           provenance-sha256: ${{ steps.html-example.outputs.digest }}

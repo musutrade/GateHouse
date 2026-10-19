@@ -66,7 +66,7 @@ a claim that a later main run or a new release has completed.
   outside v1. Recorded short workloads are 10.87% slower and longer workloads
   62.24% faster; neither synthetic series is a universal speed claim.
 - Findings history remains diagnostic. GitHub-specific posting lives in
-  `.github/actions/findings-feedback`, outside the Rust engine, and defaults
+  `GateProbes/plugins/github-actions/actions/findings-feedback`, migrated out of this repository, and defaults
   off. Eleven offline API tests passed; no real PR annotations were published
   during acceptance. Fork publishing, live rendering certification, organization
   history services, dashboards and automatic fixes remain outside this delivery.

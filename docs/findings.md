@@ -146,7 +146,7 @@ never changes the separate authoritative Core quality baseline/debt lineage.
 
 ## Explicit GitHub Actions integration
 
-The [composite action](../.github/actions/findings-feedback/action.yml) runs on a
+The [composite action](https://github.com/musutrade/GateProbes/blob/fffe3589e8920d14aba4e47338d316ecdbb3ba14/plugins/github-actions/actions/findings-feedback/action.yml) runs on a
 runner with Node 20 or newer. Its default `publish: 'false'` validates the local
 report and calculates annotation count without API calls. Use a reviewed immutable
 revision of the action and a trusted report producer. Never execute PR-provided
@@ -165,7 +165,7 @@ concurrency:
 steps:
   # Download only the authenticated, completed report for this exact run/head.
   # Use the action from a trusted checkout or reviewed immutable action revision.
-  - uses: ./.github/actions/findings-feedback
+  - uses: musutrade/GateProbes/plugins/github-actions/actions/findings-feedback@fffe3589e8920d14aba4e47338d316ecdbb3ba14 # github-actions-v1.0.0
     with:
       report: compared.json
       report-sha256: ${{ steps.trusted_report.outputs.sha256 }}
@@ -220,3 +220,5 @@ Keep original Core reports, normalized/source/history artifacts and independent
 checkpoint pins. No baseline rewrite, waiver expansion, gate skip or release
 permission is needed. This first release has no hosted history service, dashboard,
 automatic fix application or automatic posting workflow.
+
+The platform action implementation and its fake-API tests are owned by GateProbes. Core retains findings production and evidence validation. The fixed external action is optional; its transport outcome does not change the historical quality decision.

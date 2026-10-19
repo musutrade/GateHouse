@@ -884,7 +884,7 @@ project code. No release version or additional platform integration is claimed.
 ### Export a completed HTML report for Actions download
 
 The source-tree `report-export` command and
-[optional report-artifact Action](.github/actions/report-artifact/action.yml) share
+[optional report-artifact Action](https://github.com/musutrade/GateProbes/blob/fffe3589e8920d14aba4e47338d316ecdbb3ba14/plugins/github-actions/actions/report-artifact/action.yml) share
 one HTML delivery path with issue #69. These are source capabilities, not a claim
 that a published Core release already includes them. They neither render a second
 report nor implement PR comments, Checks or GitLab publishing.
@@ -912,9 +912,8 @@ then stages only these two files. `upload` defaults to `'false'`. For a reviewed
 trusted producer in the same workflow, the integration is:
 
 ```yaml
-# Use a reviewed checkout of this source commit containing the Action.
-# A remote uses: reference must pin that reviewed full commit, not main/latest.
-- uses: ./.github/actions/report-artifact
+# The Action lives in GateProbes; pin the reviewed full release commit, not main/latest.
+- uses: musutrade/GateProbes/plugins/github-actions/actions/report-artifact@fffe3589e8920d14aba4e47338d316ecdbb3ba14 # github-actions-v1.0.0
   id: html
   with:
     directory: ${{ runner.temp }}/html-export
