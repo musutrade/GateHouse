@@ -815,7 +815,7 @@ Git 缺失/不支持或读取失败只省略链接，取消仍返回错误。不
 摘要钉定、已完成证据和精确 commit 必须匹配，HTML 上限 2 MiB，输出不得覆盖现有目录。
 导出成功不改变 Core 的 PASS/FAIL。
 
-[可选 Action](.github/actions/report-artifact/action.yml)与 #69 共用这一路径，默认
+[可选 Action](https://github.com/musutrade/GateProbes/blob/fffe3589e8920d14aba4e47338d316ecdbb3ba14/plugins/github-actions/actions/report-artifact/action.yml)与 #69 共用这一路径，默认
 `upload: 'false'`，开启时必须传入可信 producer 独立提供的 provenance 摘要和 commit。
 远程 Action 引用应固定审查过的完整提交；这属于源码能力，不表示已有发行版支持。
 Action 仅上传两个展示文件，无额外评论或 Checks 写权限，保留期默认 7 天，可选 1–30 天，
