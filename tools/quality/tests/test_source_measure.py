@@ -523,34 +523,14 @@ fn both() {
                                               *original_point(mapped[2:], edits)),
                                              byte_span(source, original[field]))
 
-    def test_net_policy_source_inventory_and_instrumentation(self):
-        path = 'net_policy.rs'
-        self.assertIn(path, SOURCE_FILES)
-        source_file = ROOT / 'tools/harness-gate/src' / path
-        source = source_file.read_bytes().decode('utf-8')
-        for target in ('x86_64-unknown-linux-gnu', 'aarch64-apple-darwin', 'x86_64-pc-windows-msvc'):
-            with self.subTest(target=target):
-                inventory = ast(source_file, self.binary, compiler_configuration(target))
-                symbols = inventory['symbols']
-                functions = [s['name'] for s in symbols if s['kind'] == 'function']
-                # Issue #129 moved network delivery out of verification; the
-                # webhook resolver and its local-address classes left this
-                # module, so the measured production set is the allowlist
-                # validation surface that remains.
-                for name in ('normalize_host', 'valid_allowlist_host', 'is_host_byte'):
-                    self.assertIn(name, functions)
-                self.assertFalse(any(s['test'] for s in symbols))
-                self.assertTrue(inventory['excluded'], 'test module must leave production ranges')
-                transformed, edits = instrument(source, inventory)
-                reparsed = self.inventory(transformed, target)
-                self.assertEqual([s['kind'] for s in reparsed['symbols']], [s['kind'] for s in symbols])
-                for original, inserted in zip(symbols, reparsed['symbols']):
-                    self.assertEqual(complexity(original['raw']), complexity(inserted['raw']))
-                    for field in ('span', 'body'):
-                        mapped = byte_span(transformed, inserted[field])
-                        self.assertEqual((*original_point(mapped[:2], edits),
-                                          *original_point(mapped[2:], edits)),
-                                         byte_span(source, original[field]))
+    def test_retired_net_policy_is_not_in_the_production_inventory(self):
+        # Issue #129 retired webhook delivery; the unused net_policy module was
+        # deleted from both the crate and the measured production set.
+        self.assertNotIn('net_policy.rs', SOURCE_FILES)
+        inventory = json.loads((ROOT / 'tools/quality/production-source.json').read_text(encoding='utf-8'))
+        self.assertNotIn('net_policy', inventory['boundaries'])
+        self.assertFalse((ROOT / 'tools/harness-gate/src/net_policy.rs').exists())
+        self.assertNotIn('mod net_policy;', (ROOT / 'tools/harness-gate/src/main.rs').read_text(encoding='utf-8'))
 
     def test_actual_redaction_source_inventory_and_instrumentation(self):
         self.assertEqual(SERIES, {

@@ -208,6 +208,10 @@ jobs:
           cargo run --manifest-path tools/harness-gate/Cargo.toml --locked -- schema export --quality
           git diff --exit-code -- schema/flow.schema.json schema/quality.schema.json
 
+      - name: Compatibility fetch guard tests
+        if: matrix.shard == 1
+        run: python3 -B -m unittest discover -s tools/compatibility/tests -v
+
       - name: Fetch digest-pinned external compatibility distributions
         if: matrix.shard == 1
         run: python3 -B tools/compatibility/fetch_artifacts.py --output "$RUNNER_TEMP/gateprobes-artifacts"
