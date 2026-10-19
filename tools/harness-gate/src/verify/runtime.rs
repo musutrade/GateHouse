@@ -99,3 +99,55 @@ pub(super) fn local_facts(project: &Project) -> Result<Value> {
     runtime["runtime_bundle_digest"] = json!(digest("runtime-bundle/v1", &runtime["facts"])?);
     Ok(runtime)
 }
+
+/// Capture policy inputs before execution, independently of runtime facts.
+pub(super) fn policy_inputs(
+    project: &Project,
+    profile: &str,
+    only_step: Option<&str>,
+) -> Result<Value> {
+    let policy_inputs = serde_json::json!({
+        "flow": crate::config::quality::identity::flow_policy(&project.config)?,
+        "builtin_policies": crate::config::quality::identity::builtin_policies(&project.execution_root, &project.config)?,
+        "profile": profile, "only_step": only_step,
+    });
+    Ok(policy_inputs)
+}
+
+/// Recheck captured policy bytes and bind the completed quality/runtime result.
+pub(super) fn result_identities(
+    project: &Project,
+    policy_inputs: Value,
+    local_runtime: Value,
+    quality: Option<&super::quality::QualityResult>,
+) -> Result<Value> {
+    let final_builtin_policies = crate::config::quality::identity::builtin_policies(
+        &project.execution_root,
+        &project.config,
+    )?;
+    if policy_inputs["builtin_policies"] != final_builtin_policies {
+        return Err(anyhow::anyhow!(
+            "built-in policy inputs changed during verification"
+        ));
+    }
+    let quality_identity = quality.map(|result| result.inputs["quality_policy_identity"].clone());
+    let policy_identity = crate::config::quality::identity::digest(
+        "verification-policy/v1",
+        &serde_json::json!({
+            "workflow": policy_inputs, "quality_policy_identity": quality_identity,
+        }),
+    )?;
+    let actual_runtime = quality
+        .filter(|result| !result.runtime.is_null())
+        .map(|result| result.runtime.clone())
+        .unwrap_or(local_runtime);
+    let identities = serde_json::json!({
+        "verification_policy_identity": policy_identity,
+        "quality_policy_identity": quality_identity,
+        "runtime_bundle_digest": actual_runtime["runtime_bundle_digest"],
+        "runtime": actual_runtime,
+        "policy_binding_complete": quality.is_some_and(|result| result.inputs["quality_policy_identity"].is_string()),
+        "current_applicability": "not_proven",
+    });
+    Ok(identities)
+}

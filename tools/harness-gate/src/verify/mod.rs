@@ -272,11 +272,8 @@ fn run_selected(
         Ok(None)
     };
     let local_runtime = runtime::local_facts(project).map_err(VerifyError::execution)?;
-    let policy_inputs = serde_json::json!({
-        "flow": crate::config::quality::identity::flow_policy(&project.config).map_err(VerifyError::execution)?,
-        "builtin_policies": crate::config::quality::identity::builtin_policies(&project.execution_root, &project.config).map_err(VerifyError::execution)?,
-        "profile": profile, "only_step": only_step,
-    });
+    let policy_inputs =
+        runtime::policy_inputs(project, profile, only_step).map_err(VerifyError::execution)?;
     let services = Mutex::new(ServiceManager::new(&invocation_project));
     let scheduler_result = scheduler::run_plan(
         &invocation_project,
@@ -331,39 +328,9 @@ fn run_selected(
         .input()
         .verify_content()
         .map_err(VerifyError::execution)?;
-    let final_builtin_policies = crate::config::quality::identity::builtin_policies(
-        &project.execution_root,
-        &project.config,
-    )
-    .map_err(VerifyError::execution)?;
-    if policy_inputs["builtin_policies"] != final_builtin_policies {
-        return Err(VerifyError::execution(anyhow::anyhow!(
-            "built-in policy inputs changed during verification"
-        )));
-    }
-    let quality_identity = quality
-        .as_ref()
-        .map(|result| result.inputs["quality_policy_identity"].clone());
-    let policy_identity = crate::config::quality::identity::digest(
-        "verification-policy/v1",
-        &serde_json::json!({
-            "workflow": policy_inputs, "quality_policy_identity": quality_identity,
-        }),
-    )
-    .map_err(VerifyError::execution)?;
-    let actual_runtime = quality
-        .as_ref()
-        .filter(|result| !result.runtime.is_null())
-        .map(|result| result.runtime.clone())
-        .unwrap_or(local_runtime);
-    let identities = serde_json::json!({
-        "verification_policy_identity": policy_identity,
-        "quality_policy_identity": quality_identity,
-        "runtime_bundle_digest": actual_runtime["runtime_bundle_digest"],
-        "runtime": actual_runtime,
-        "policy_binding_complete": quality.as_ref().is_some_and(|result| result.inputs["quality_policy_identity"].is_string()),
-        "current_applicability": "not_proven",
-    });
+    let identities =
+        runtime::result_identities(project, policy_inputs, local_runtime, quality.as_ref())
+            .map_err(VerifyError::execution)?;
     let passed = quality.as_ref().is_none_or(|result| result.passed())
         && !cancelled
         && failures.is_empty()
