@@ -1,11 +1,14 @@
 //! Data validation only. No process execution, artifact verification, lease
 //! persistence, ambient context discovery, or authority to delete a resource.
+mod wire;
+
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
 pub const MAX_MESSAGE_BYTES: usize = 65536;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "String")]
 pub enum Protocol {
     #[serde(rename = "gate-runtime/v1")]
     V1,
@@ -13,6 +16,7 @@ pub enum Protocol {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
+#[serde(try_from = "String")]
 pub enum Engine {
     Docker,
     Podman,
@@ -42,8 +46,8 @@ pub struct Binding {
     pub namespace: Namespace,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum Operation {
     Capabilities,
     Inspect { object_id: String },
@@ -73,13 +77,14 @@ pub struct Object {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
+#[serde(try_from = "String")]
 pub enum Capability {
     Inspect,
     Remove,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum Outcome {
     Capabilities { supported: Vec<Capability> },
     Present { object: Object },
