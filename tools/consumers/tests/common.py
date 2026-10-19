@@ -25,6 +25,7 @@ COLLECTOR = WORKFLOW / 'collectors/collector.py'
 PRESET = REPO / 'tools/harness-gate/fixtures/preset-compat/rust-api.flow.toml'
 SIGNING_DOMAIN = 'harness-gate/adapter-request/v2'
 FIXTURE_SEED = bytes([7]) * 32
+_KEY = {}
 
 FLOW = """version = 2
 
@@ -105,7 +106,7 @@ def _record(mode):
     return direct, record
 
 
-def _signed_request(core, root, state, compiled, executable):
+def _signed_request(core, root, state, compiled, executable, nonce='fixture-nonce'):
     produces = []
     config_files = {path: digest((root / path).read_bytes()) for path in state['config_files']}
     requests = {'.harness-gate/coverage-request.json'}
@@ -137,7 +138,7 @@ def _signed_request(core, root, state, compiled, executable):
             'series': state['series'], 'profile': state['profile'],
             'mappings': compiled['mappings'], 'exceptions': compiled['exceptions']})),
         'artifact_root': compiled['artifact_root'],
-        'nonce': 'fixture-nonce',
+        'nonce': nonce,
         'issued_at_ms': int(time.time() * 1000),
         'expires_at_ms': int(time.time() * 1000) + 60000,
         'args': [],
@@ -156,8 +157,8 @@ def _signed_request(core, root, state, compiled, executable):
         },
     }
     signature = _signing_payload(request)
-    signing_key, public_key = _keypair()
-    request['adapter']['signature']['value'] = base64.b64encode(signing_key.sign(signature)).decode()
+    _, public_key = _fixture_key()
+    request['adapter']['signature']['value'] = base64.b64encode(_sign(signature)).decode()
     return request, public_key
 
 
@@ -169,12 +170,35 @@ def _toml_value(path, *tables):
     return value
 
 
-def _keypair():
-    from cryptography.hazmat.primitives import serialization
-    from cryptography.hazmat.primitives.asymmetric import ed25519
-    key = ed25519.Ed25519PrivateKey.from_private_bytes(FIXTURE_SEED)
-    raw = key.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
-    return key, base64.b64encode(raw).decode()
+def _fixture_key():
+    """Ed25519 fixture key via openssl: PEM bytes plus base64 raw public key.
+
+    Uses only the openssl binary so the suite has no Python crypto dependency.
+    """
+    if 'pem' not in _KEY:
+        with tempfile.TemporaryDirectory(prefix='gatehouse-fixture-key-') as work:
+            work = Path(work)
+            der, pem, spki = work / 'key.der', work / 'key.pem', work / 'public.der'
+            der.write_bytes(bytes.fromhex('302e020100300506032b657004220420') + FIXTURE_SEED)
+            subprocess.run(['openssl', 'pkey', '-inform', 'DER', '-in', der, '-out', pem],
+                           check=True, capture_output=True)
+            subprocess.run(['openssl', 'pkey', '-in', pem, '-pubout', '-outform', 'DER',
+                            '-out', spki], check=True, capture_output=True)
+            _KEY['pem'] = pem.read_bytes()
+            _KEY['public'] = base64.b64encode(spki.read_bytes()[-32:]).decode()
+    return _KEY['pem'], _KEY['public']
+
+
+def _sign(payload):
+    pem, _ = _fixture_key()
+    with tempfile.TemporaryDirectory(prefix='gatehouse-fixture-sign-') as work:
+        work = Path(work)
+        key, data, out = work / 'key.pem', work / 'payload', work / 'signature'
+        key.write_bytes(pem)
+        data.write_bytes(payload)
+        subprocess.run(['openssl', 'pkeyutl', '-sign', '-rawin', '-inkey', key,
+                        '-in', data, '-out', out], check=True, capture_output=True)
+        return out.read_bytes()
 
 
 def _signing_payload(request):
@@ -269,6 +293,64 @@ def build(root, mode='pass', execution_passes=True):
     if verified['historical_integrity'] != 'verified':
         raise AssertionError(verified)
     return root, verified
+
+
+def variant(root, run_id, mutate=None, expect_failure=False):
+    """Rebuild one paired variant in the same fixture root.
+
+    Reuses the collector executable bytes of the original root so the
+    collector-runtime settings binding stays comparable; re-pins trusted config
+    bytes and re-signs the request with a fresh nonce after the mutation.
+    """
+    core = CORE
+    root = Path(root).resolve()
+    state_path = root / '.harness-gate/workflow-state.json'
+    state = json.loads(state_path.read_text())
+    if mutate:
+        mutate(root)
+    # Fresh artifact storage per the collector contract: stale evidence files
+    # fail the freshness/pinned-retained check on the next collection.
+    artifacts = root / state.get('artifact_root', 'target/evidence')
+    for entry in sorted(artifacts.iterdir()):
+        shutil.rmtree(entry) if entry.is_dir() else entry.unlink()
+    state['config_files'] = {path: digest((root / path).read_bytes())
+                             for path in state['config_files']}
+    _write_state(root, state)
+    _run(core, root, ['quality', 'compile', '--repository-root', root,
+                      '--state', state_path, '--output', root / 'compiled.json'])
+    compiled = json.loads((root / 'compiled.json').read_text())
+    request, public_key = _signed_request(core, root, state, compiled,
+                                          root / 'collector.py', nonce=run_id)
+    (root / '.harness-gate/coverage-request.json').write_text(
+        json.dumps(request, indent=2) + '\n')
+    state['config_files'] = {path: digest((root / path).read_bytes())
+                             for path in state['config_files']}
+    _write_state(root, state)
+    (root / '.harness-gate/workflow-keys.json').write_text(
+        json.dumps([{'key_id': 'fixture', 'public_key': public_key}]))
+    for args in (['add', '-A'],
+                 ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+                  'commit', '--allow-empty', '-qm', 'variant ' + run_id]):
+        subprocess.run(['git', *args], cwd=root, check=True, capture_output=True)
+    _run(core, root, ['--project-root', root, 'verify', '--all'],
+         expect_failure=expect_failure)
+    machine_path = root / '.harness-gate/reports/test_result.json'
+    machine_bytes = machine_path.read_bytes()
+    machine = json.loads(machine_bytes)
+    directory = Path(machine['report_directory']).resolve()
+    index = root / ('history-' + run_id + '.json')
+    index.write_text(json.dumps({
+        'schema': 'harness-report-history/v1',
+        'samples': [{
+            'directory': directory.relative_to(root).as_posix(),
+            'machine_sha256': digest(machine_bytes),
+            'manifest_sha256': digest((directory / 'manifest.json').read_bytes()),
+        }]}))
+    output = _run(core, root, ['report-verify', '--input', index])
+    verified = json.loads(output.stdout)
+    if verified['historical_integrity'] != 'verified':
+        raise AssertionError(verified)
+    return verified, compiled
 
 
 def _write_state(root, state):

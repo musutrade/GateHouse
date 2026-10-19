@@ -208,6 +208,12 @@ jobs:
           cargo run --manifest-path tools/harness-gate/Cargo.toml --locked -- schema export --quality
           git diff --exit-code -- schema/flow.schema.json schema/quality.schema.json
 
+      - name: Independent result-consumer paired-identity and boundary acceptance
+        if: matrix.shard == 1
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python3 -m unittest discover -s tools/consumers/tests -v
+
       - name: Fetch reviewed GateProbes onboarding implementation
         if: matrix.shard == 1
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
