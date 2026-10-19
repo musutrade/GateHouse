@@ -172,8 +172,8 @@ assertions = ["assert!(!report.passed);", "step.label == \"secret scan\" && !ste
 path = "src/verify/mod.rs"
 symbol = "run_selected"
 start = 210
-end = 383
-sha256 = "fc1229c613454061630ebd467ce2af2a29e1a2a1e8c3808ef210e18a6428c9a0"
+end = 335
+sha256 = "ffde55e7bebf76040bc14ca954b7c330cf3a33ae0c9e4a89ed81450ed6cdfb7f"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
@@ -183,7 +183,7 @@ end = 575
 sha256 = "98270bae01dcbdb09af62a6ecd4cad1c56ab60f567505a64da197053b78cde9b"
 
 [[paths.probes]]
-line = 365
+line = 317
 column = 5
 text = "publish_report(&report, &invocation_project, project, &mut progress)?;"
 
