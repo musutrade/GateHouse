@@ -2025,6 +2025,20 @@ class StepCacheRiskSelectionTests(unittest.TestCase):
         self.assertTrue({f"findings/{name}.rs" for name in ("mod", "model", "history", "sarif")} <= set(SOURCE_FILES))
 
 
+class RetiredOperatorHooksSelectionTests(unittest.TestCase):
+    def test_retired_hook_lifecycle_is_not_in_the_production_inventory(self):
+        # Hook lifecycle moved to the verified external operator; Core keeps
+        # hook execution/verify/compat but no longer owns lifecycle modules.
+        for name in ('mod.rs', 'filesystem.rs', 'paths.rs'):
+            self.assertNotIn('hooks/' + name, SOURCE_FILES)
+        inventory = json.loads((ROOT / 'tools/quality/production-source.json').read_text(encoding='utf-8'))
+        self.assertFalse(any('src/hooks/' in path
+                             for paths in inventory['boundaries'].values()
+                             for path in paths['files']))
+        self.assertFalse((ROOT / 'tools/harness-gate/src/hooks').exists())
+        self.assertNotIn('mod hooks;', (ROOT / 'tools/harness-gate/src/main.rs').read_text(encoding='utf-8'))
+
+
 class RetiredSourceLinksSelectionTests(unittest.TestCase):
     def test_retired_source_links_is_not_in_the_production_inventory(self):
         # Platform navigation was retired: the GitHub-only module was deleted and
