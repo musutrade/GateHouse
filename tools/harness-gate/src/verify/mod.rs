@@ -217,16 +217,7 @@ fn run_selected(
 ) -> std::result::Result<VerificationReport, VerifyError> {
     crate::plugins::check(&project.execution_root, &project.plugins)
         .map_err(VerifyError::execution)?;
-    if project
-        .config
-        .execution
-        .max_parallel
-        .is_some_and(|limit| limit == 0 || limit > 64)
-    {
-        return Err(VerifyError::execution(anyhow::anyhow!(
-            "execution.max_parallel must be between 1 and 64"
-        )));
-    }
+    validate_execution_limits(project)?;
     println!("{}", ui::heading("harness-gate verify"));
     println!("Scope: {}", scope.mode);
     println!(
@@ -246,24 +237,8 @@ fn run_selected(
     let plan = VerificationPlan::build(project, &scope, profile, only_step)
         .map_err(VerifyError::execution)?;
     waiver::validate_plan_waivers(project, &plan, &scope).map_err(VerifyError::execution)?;
-    let invocation = report::allocate_invocation(project).map_err(VerifyError::report)?;
-    if let Some(request_id) = request_id {
-        report::write_invocation_metadata_with_request(
-            &invocation,
-            project,
-            profile,
-            staged,
-            Some(request_id),
-        )
-        .map_err(VerifyError::report)?;
-    } else {
-        report::write_invocation_metadata(&invocation, project, profile, staged)
-            .map_err(VerifyError::report)?;
-    }
-    let mut invocation_project = project.clone();
-    invocation_project.reports = invocation.root.clone();
-    invocation_project.cache_profile =
-        Some(only_step.map_or_else(|| profile.to_string(), |id| format!("step:{id}:{profile}")));
+    let (invocation, invocation_project) =
+        prepare_invocation(project, profile, staged, only_step, request_id)?;
     let mut progress = Progress::new(plan.nodes.len());
     scope.write_reports(&invocation_project)?;
     let quality_inputs = if only_step.is_none() {
@@ -275,37 +250,14 @@ fn run_selected(
     let policy_inputs =
         runtime::policy_inputs(project, profile, only_step).map_err(VerifyError::execution)?;
     let services = Mutex::new(ServiceManager::new(&invocation_project));
-    let scheduler_result = scheduler::run_plan(
+    let (outcome, cleanup_error) = run_plan_with_cleanup(
+        project,
         &invocation_project,
         &plan,
         staged,
         &services,
         &scope,
-        if project.config.execution.parallel {
-            project.config.execution.effective_max_parallel()
-        } else {
-            1
-        },
-    );
-    let cleanup_result = services
-        .lock()
-        .map_err(|_| anyhow::anyhow!("service manager lock was poisoned"))
-        .and_then(|mut manager| manager.cleanup());
-    let outcome = match scheduler_result {
-        Ok(outcome) => outcome,
-        Err(error) => {
-            let cleanup = cleanup_result.err().map(|cleanup| format!("; {cleanup:#}"));
-            let detail = match error {
-                scheduler::SchedulerError::Secrets(error) => VerifyError::Secrets(error),
-                scheduler::SchedulerError::Audit(error) => VerifyError::Audit(error),
-                scheduler::SchedulerError::Execution(error) => VerifyError::execution(
-                    anyhow::anyhow!("{error:#}{}", cleanup.unwrap_or_default()),
-                ),
-            };
-            return Err(detail);
-        }
-    };
-    let cleanup_error = cleanup_result.err();
+    )?;
     let services = service_results(&plan, cleanup_error.is_some());
     let scheduler::SchedulerOutcome {
         results,
@@ -380,6 +332,90 @@ fn run_selected(
         return Err(VerifyError::execution(error));
     }
     Ok(report)
+}
+
+fn validate_execution_limits(project: &Project) -> Result<(), VerifyError> {
+    if project
+        .config
+        .execution
+        .max_parallel
+        .is_some_and(|limit| limit == 0 || limit > 64)
+    {
+        return Err(VerifyError::execution(anyhow::anyhow!(
+            "execution.max_parallel must be between 1 and 64"
+        )));
+    }
+    Ok(())
+}
+
+fn prepare_invocation(
+    project: &Project,
+    profile: &str,
+    staged: bool,
+    only_step: Option<&str>,
+    request_id: Option<&str>,
+) -> Result<(report::Invocation, Project), VerifyError> {
+    let invocation = report::allocate_invocation(project).map_err(VerifyError::report)?;
+    if let Some(request_id) = request_id {
+        report::write_invocation_metadata_with_request(
+            &invocation,
+            project,
+            profile,
+            staged,
+            Some(request_id),
+        )
+        .map_err(VerifyError::report)?;
+    } else {
+        report::write_invocation_metadata(&invocation, project, profile, staged)
+            .map_err(VerifyError::report)?;
+    }
+    let mut invocation_project = project.clone();
+    invocation_project.reports = invocation.root.clone();
+    invocation_project.cache_profile =
+        Some(only_step.map_or_else(|| profile.to_string(), |id| format!("step:{id}:{profile}")));
+    Ok((invocation, invocation_project))
+}
+
+fn run_plan_with_cleanup<'a>(
+    project: &Project,
+    invocation_project: &'a Project,
+    plan: &'a VerificationPlan<'a>,
+    staged: bool,
+    services: &'a Mutex<ServiceManager<'a>>,
+    scope: &ScopeResult,
+) -> Result<(scheduler::SchedulerOutcome, Option<anyhow::Error>), VerifyError> {
+    let scheduler_result = scheduler::run_plan(
+        invocation_project,
+        plan,
+        staged,
+        services,
+        scope,
+        if project.config.execution.parallel {
+            project.config.execution.effective_max_parallel()
+        } else {
+            1
+        },
+    );
+    let cleanup_result = services
+        .lock()
+        .map_err(|_| anyhow::anyhow!("service manager lock was poisoned"))
+        .and_then(|mut manager| manager.cleanup());
+    let outcome = match scheduler_result {
+        Ok(outcome) => outcome,
+        Err(error) => {
+            let cleanup = cleanup_result.err().map(|cleanup| format!("; {cleanup:#}"));
+            let detail = match error {
+                scheduler::SchedulerError::Secrets(error) => VerifyError::Secrets(error),
+                scheduler::SchedulerError::Audit(error) => VerifyError::Audit(error),
+                scheduler::SchedulerError::Execution(error) => VerifyError::execution(
+                    anyhow::anyhow!("{error:#}{}", cleanup.unwrap_or_default()),
+                ),
+            };
+            return Err(detail);
+        }
+    };
+    let cleanup_error = cleanup_result.err();
+    Ok((outcome, cleanup_error))
 }
 
 fn service_results(plan: &VerificationPlan<'_>, cleanup_failed: bool) -> Vec<ServiceResult> {
