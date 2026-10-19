@@ -151,6 +151,8 @@ pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
         } => check_config_json(cli.project_root.clone(), cli.config.clone(), &cli.plugins),
         Commands::Verify {
             snapshot: _,
+            snapshot_source: _,
+            snapshot_destination: _,
             plan: true,
             scope,
             components,
@@ -499,7 +501,22 @@ fn run_project(
             action: ConfigAction::Check { .. }
         }
     );
-    let discovered = if matches!(&command, Commands::Verify { snapshot: true, .. }) {
+    let discovered = if matches!(
+        &command,
+        Commands::Verify {
+            snapshot_source: Some(crate::cli::SnapshotSource::Index),
+            ..
+        }
+    ) {
+        let destination = match &command {
+            Commands::Verify {
+                snapshot_destination,
+                ..
+            } => snapshot_destination.as_deref(),
+            _ => None,
+        };
+        Project::discover_index_content(root, config, destination)
+    } else if matches!(&command, Commands::Verify { snapshot: true, .. }) {
         // Directory snapshots do not consult optional Git context at all.
         Project::discover_for_plan(root, config)
     } else {

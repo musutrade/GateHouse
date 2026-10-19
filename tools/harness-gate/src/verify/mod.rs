@@ -276,9 +276,13 @@ fn run_selected(
     if let Some(result) = &quality {
         println!("{}", quality::diagnostics(result));
     }
+    let collected_output = quality
+        .as_ref()
+        .and_then(|result| result.inputs["artifact_root"].as_str())
+        .map(Path::new);
     invocation_project
         .input()
-        .verify_content()
+        .verify_content(collected_output)
         .map_err(VerifyError::execution)?;
     let identities =
         runtime::result_identities(project, policy_inputs, local_runtime, quality.as_ref())
