@@ -2204,9 +2204,12 @@ mod tests {
         request
             .args
             .insert(0, wrapper.to_string_lossy().into_owned());
+        let probe = directory.path().join("adapter-output-ready");
+        request.args.push(probe.to_string_lossy().into_owned());
         resign_request(&mut request);
         let artifact = directory.path().join("adapter-result.txt");
-        let probe = artifact.clone();
+        // File creation precedes writing its contents. Wait for the fixture's
+        // explicit signal after the artifact is closed and response flushed.
         let error = run_with_cancel(request, &policy, move || probe.exists())
             .expect_err("cancellation with completed output must fail closed");
         assert!(

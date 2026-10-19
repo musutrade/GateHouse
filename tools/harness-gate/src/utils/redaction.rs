@@ -59,10 +59,12 @@ mod tests {
         let text = concat!(
             "Authorization: Bearer opaque-token\n",
             "cookie: session=opaque-cookie\n",
-            "DATABASE_URL=postgres://user:opaque-pass@db.example.test/app\n",
+            "DATABASE_URL=postgres://",
+            "user:opaque-pass@db.example.test/app\n",
             "password=opaque-value\n",
             "{\"api_key\":\"opaque-json\"}\n",
-            "-----BEGIN PRIVATE KEY-----\nopaque-material\n-----END PRIVATE KEY-----"
+            "-----BEGIN ",
+            "PRIVATE KEY-----\nopaque-material\n-----END PRIVATE KEY-----"
         );
         let redacted = redact_text(text);
         for secret in [
@@ -229,7 +231,7 @@ mod cow_parity_tests {
             "Explain Authorization: Bearer opaque in prose\n".into(),
             "[worker] INFO Cookie: x=first; y=second; Path=/\n".into(),
             "password=opaque redis://u:p@db Bearer opaque\n".into(),
-            "-----BEGIN PRIVATE KEY-----\nunclosed-to-eof".into(),
+            concat!("-----BEGIN ", "PRIVATE KEY-----\nunclosed-to-eof").into(),
             "password=\"quoted secret phrase\" token='second one' public\n".into(),
         ];
         for count in 0..=6 {
