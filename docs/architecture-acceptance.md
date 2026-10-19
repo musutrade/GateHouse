@@ -131,3 +131,60 @@ isolation. The earlier green run `39214765287` skipped all consumer tests due to
 an absent default binary path and is not accepted evidence. The corrected
 workflow resolves Cargo's actual target directory. Main run `39216061407`
 succeeded. These environment limits must remain visible in closure records.
+
+## Criterion review outcomes
+
+Each original #129–#140 criterion was reviewed against merged code, tests and
+the evidence above. Satisfied rows and their decisive evidence:
+
+- #129: real-Core directory verification completes with an unavailable consumer
+  and no Git/publisher state (`directory_input_test`); preview never constructs a
+  GitHub client and token-free apply leaves no state (`test_github_check`);
+  [result-boundary.md](result-boundary.md) documents record migration and keeps
+  unknown historical states unchanged.
+- #130: directory and validated-index adapters emit the same `content-v1`
+  identity; [input-snapshots.md](input-snapshots.md) fixes the supported
+  normalized range, rejects symlinks/submodules/escapes/duplicates/colon paths,
+  records materialized-input change rejection, and requires a pinned
+  `retained_artifact` baseline, with absent/corrupt/wrong-lineage baselines
+  failing closed.
+- #131: the optional consumer maps only pinned saved results to Checks with fake
+  transport in tests; duplicate/ambiguous/old delivery remains fenced and API
+  errors never fabricate success; `verify` no longer delivers webhooks and warns
+  on legacy notification configuration.
+- #132: process group cleanup, cancellation and error propagation tests
+  (13/13 targeted) reject PASS on unstopped processes or unusable evidence;
+  [execution-boundary.md](execution-boundary.md) records environment
+  requirements without image-size or recovery prerequisites.
+- #133: PR #149 local run enforces network denial for the real Core fixture and
+  rejects side-effect paths; consumer unavailability, unmerged-PR state and
+  resource leases are independent of result completion.
+- #135: [operator-recovery.md](operator-recovery.md) provides the authorization,
+  observation, failure-preservation and retry runbook; no live recovery was
+  attempted here and none is a gate prerequisite.
+- #136: saved results verify after source cleanup, reject tampering, digest
+  mismatch and cross-run references, and remain readable without a build cache;
+  historical integrity stays separate from current applicability.
+- #137: no publication slot, batch, PR, Check or merge state exists in run
+  records; old runs cannot alter other runs; no scheduler or herdr coupling was
+  added.
+- #138: the baseline contains no cache manager, compatibility keys, TTL/GC,
+  `maintain-cache` or dedicated cache volume, and configuration/installation
+  docs contain no replacement; native caches remain host-owned and #32 step
+  reuse is unchanged.
+- #139: `result_identities_test` separates policy and execution identity
+  movements; PR #149 adds the paired threshold/execution regressions and the
+  stale-runtime rejection; `not_proven` is explicit and never reuse permission.
+- #140: fixed plugin artifacts load without a plugin source checkout (workload
+  release `gatehouse-linux-test-v1.0.0` from `3d146769`), downloaded-artifact
+  acceptance ran with the released Core v0.6.0 binary, and coverage is declared
+  as linux-x86_64 unpartitioned Rust tests only. The 749-test workload run stays
+  attributed to merged Core `120e73ab` and is not relabeled for v0.6.0.
+- #134 / #98: closed with the dependent rows above accounted for; #135 remains
+  an independent operational track and is not a prerequisite.
+
+Retained limits, explicitly not closure blockers: hosted CI network isolation is
+not claimed (#133 local enforcement only, CI class skip recorded); the released
+Core v0.6.0 binary did not rerun the 749-test workload; fixture signatures and
+the disposable test signer are not production trust; and no production OS
+isolation or host recovery is claimed.
