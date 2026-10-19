@@ -988,13 +988,15 @@ runner 描述只是声明，不能证明编译器版本；`executor_version` 表
 root = "templates/harness-gate"
 template = "templates/harness-gate/verification.tera"
 junit = "junit.xml"
-# 可选；默认不生成外部源码链接
+# 已退役：为兼容仍可解析；Core 不再生成平台链接
 source_repository = "https://github.com/owner/repository"
 ```
 
 `root` 和 `template` 必须同时存在；二者必须是仓库内路径，不能是绝对路径、Windows 前缀、
 `..` 跳转或 NUL。模板根必须存在且为目录，模板必须存在且为 `.html` 或 `.tera` 普通文件；
-解析符号链接后仍必须在仓库和模板根内。模板根不能等于、包含或被 `paths.reports` 包含。
+解析符号链接后仍必须在仓库和模板根内。`report_templates.source_repository` 已退役：为兼容仍读取，并输出不回显其值的弃用提示；Core 只渲染本地路径与行范围，模板 `source_url` 保持 null，不再校验该值或构造平台跳转。
+
+模板根不能等于、包含或被 `paths.reports` 包含。
 模板路径相对于仓库根，模板支持 `{{ timestamp }}`、`{{ profile }}`、`{{ summary }}` 和
 `{{ components }}` 替换，也可使用 Tera 的 `include`、`extends` 和 `block`。模板上下文同时提供
 完整的 `report` 对象及其 `timestamp`、`profile`、`scope`、`steps` 和 `passed` 字段。输出固定为报告目录中的 `test_result.html`。`junit` 路径相对于报告目录，

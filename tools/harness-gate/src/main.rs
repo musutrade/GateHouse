@@ -18,7 +18,6 @@ mod report_history;
 mod scope;
 mod secrets;
 mod service;
-mod source_links;
 #[cfg(test)]
 mod test_support;
 mod ui;

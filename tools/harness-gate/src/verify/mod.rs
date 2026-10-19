@@ -543,6 +543,9 @@ fn publish_report(
     report::write(report, invocation_project).map_err(VerifyError::report)?;
     quality::publish(report, project).map_err(VerifyError::report)?;
     report::mirror_legacy_outputs(invocation_project, project).map_err(VerifyError::report)?;
+    if project.config.report_templates.source_repository.is_some() {
+        eprintln!("report_templates.source_repository is deprecated: Core renders local evidence locations; platform navigation belongs to external report consumers");
+    }
     if !project.config.notifications.webhooks.is_empty() {
         eprintln!("notifications.webhooks is deprecated: verification only writes results; deliver saved results through an external consumer");
     }

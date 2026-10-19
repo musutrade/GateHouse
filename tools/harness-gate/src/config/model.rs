@@ -76,7 +76,7 @@ pub struct ReportHistoryConfig {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ReportTemplatesConfig {
-    /// Opt-in canonical https://github.com/owner/repository for committed source links.
+    // Retired platform-navigation setting, parsed for configuration compatibility.
     #[serde(default)]
     pub source_repository: Option<String>,
     #[serde(default)]

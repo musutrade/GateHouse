@@ -953,18 +953,10 @@ fn configured_html(report: &VerificationReport, project: &Project) -> Result<Opt
         .context("serialize verification report for HTML template")?;
     context.insert("report", report);
     if let Some(quality) = &report.quality {
-        let sources = crate::source_links::Links::new(
-            project.config.report_templates.source_repository.as_deref(),
-            &project.input().commit,
-            &project.root,
-        );
-        context.insert(
-            "quality_view",
-            &quality_view::project_with_sources(quality, sources),
-        );
+        context.insert("quality_view", &quality_view::project(quality));
         anyhow::ensure!(
             !crate::process::cancelled(),
-            "HTML source navigation was cancelled"
+            "HTML report rendering was cancelled"
         );
     }
     context.insert("summary", if report.passed { "PASS" } else { "FAIL" });
@@ -4834,11 +4826,11 @@ mod tests {
         }
     }
     #[test]
-    fn source_links_publish_only_evidence_matching_committed_files() {
+    fn retired_platform_navigation_keeps_local_locations_without_urls() {
         use serde_json::json;
         use sha2::{Digest, Sha256};
         let (workspace, _project, _invocation, mut project, mut current) =
-            complete_invocation_fixture("source-links-html");
+            complete_invocation_fixture("retired-source-navigation-html");
         let source = b"fn example() {\n}\n";
         std::fs::create_dir_all(workspace.join("src")).unwrap();
         std::fs::write(workspace.join("src/file0.rs"), source).unwrap();
@@ -4865,12 +4857,21 @@ mod tests {
         .unwrap();
         project.config.report_templates.root = Some("templates".into());
         project.config.report_templates.template = Some("templates/verification.html".into());
+        // A retired non-GitHub value is accepted for compatibility. Rendering
+        // must keep local locations and never construct platform navigation.
         project.config.report_templates.source_repository =
-            Some("https://github.com/example/project".into());
+            Some("https://gitlab.example/example/project".into());
         let mut quality = super::quality_view::tests::fixture(1);
         let mut subject = quality.inputs["project"]["subjects"][0].clone();
         subject["source_sha256"] = json!(format!("{:x}", Sha256::digest(source)));
         subject["span"]["end_line"] = json!(2);
+        let span = format!(
+            "{}:{}–{}:{}",
+            subject["span"]["start_line"],
+            subject["span"]["start_column"],
+            subject["span"]["end_line"],
+            subject["span"]["end_column"]
+        );
         let bind = |quality: &mut crate::verify::quality::QualityResult,
                     mut subject: serde_json::Value| {
             subject["id"] =
@@ -4892,25 +4893,26 @@ mod tests {
             result
         };
         current.quality = Some(copy(&quality));
-        // A later dirty file does not replace the immutable committed target.
+        // Later worktree edits do not change the retained local location.
         std::fs::write(workspace.join("src/file0.rs"), b"dirty\n").unwrap();
         write(&current, &project).unwrap();
         verify_manifest(&project).unwrap();
         let html_path = project.reports.join("test_result.html");
         let html = std::fs::read_to_string(&html_path).unwrap();
-        assert!(html
-            .replace("&#x2F;", "/")
-            .contains(&format!("/blob/{commit}/src/file0.rs#L1-L2")));
-        assert!(
-            html.contains("class=\"source-link\"")
-                && html.contains("referrerpolicy=\"no-referrer\"")
-        );
+        let readable = html.replace("&#x2F;", "/");
+        assert!(readable.contains("data-path=\"src/file0.rs\""));
+        assert!(readable.contains(&span), "missing local span {span}");
+        assert!(!html.contains("class=\"source-link\""));
+        assert!(!readable.contains("/blob/"));
+        assert!(!html.contains("gitlab.example") && !html.contains("github.com"));
         let machine: serde_json::Value = serde_json::from_slice(
             &std::fs::read(project.reports.join(MACHINE_RESULT_FILE)).unwrap(),
         )
         .unwrap();
         assert_eq!(machine["passed"], false);
         assert_eq!(machine["evidence_complete"], true);
+        // Retained tamper/edge coverage: malformed or inconsistent evidence
+        // still renders the supplied outcome and never invents navigation.
         for case in 0..9 {
             let mut bad = copy(&quality);
             match case {
@@ -4952,19 +4954,25 @@ mod tests {
             current.quality = Some(bad);
             let refused = configured_html(&current, &project).unwrap().unwrap();
             assert!(!refused.contains("class=\"source-link\""), "case {case}");
+            assert!(
+                !refused.replace("&#x2F;", "/").contains("/blob/"),
+                "case {case}"
+            );
             assert!(refused.contains("data-component=") && refused.contains("supplied outcome"));
         }
+        // Clearing the retired setting changes nothing about local locations.
         current.quality = Some(quality);
         project.config.report_templates.source_repository = None;
-        assert!(!configured_html(&current, &project)
-            .unwrap()
-            .unwrap()
-            .contains("class=\"source-link\""));
+        let without = configured_html(&current, &project).unwrap().unwrap();
+        assert!(without
+            .replace("&#x2F;", "/")
+            .contains("data-path=\"src/file0.rs\""));
+        assert!(!without.contains("class=\"source-link\""));
         if let Some(path) = std::env::var_os("HG_SOURCE_LINK_PREVIEW") {
             std::fs::write(
                 path,
                 serde_json::to_vec_pretty(
-                    &json!({"html":html_path,"commit":commit,"links":1,"passed":false}),
+                    &json!({"html":html_path,"commit":commit,"platform_links":0,"passed":false}),
                 )
                 .unwrap(),
             )

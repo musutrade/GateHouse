@@ -1196,7 +1196,7 @@ fn report_template_diagnostics_cover_pair_paths_and_extensions() {
 }
 
 #[test]
-fn configured_report_template_validation_covers_pairs_extensions_and_source_repository() {
+fn configured_report_template_validation_covers_pairs_and_extensions() {
     fn validate(
         source_repository: Option<&str>,
         root: Option<&str>,
@@ -1242,13 +1242,13 @@ fn configured_report_template_validation_covers_pairs_extensions_and_source_repo
     )
     .expect("tera HTML template");
 
-    invalid(
-        Some("https://github.com/musutrade/GateHouse?token=secret"),
+    validate(
+        Some("https://gitlab.example/example/project?token=secret"),
         None,
         None,
         None,
-        "report_templates.source_repository must be a canonical https://github.com/owner/repository URL",
-    );
+    )
+    .expect("retired source repository values are accepted for compatibility");
     invalid(
         None,
         Some("templates"),
@@ -2105,19 +2105,31 @@ fn policy_waiver_configuration_rejects_invalid_approval_and_time_boundaries() {
 }
 
 #[test]
-fn report_source_repository_is_opt_in_and_validated_without_echoing_secrets() {
+fn retired_report_source_repository_is_accepted_without_diagnostics() {
     let mut config = repository_config();
     assert!(config.report_templates.source_repository.is_none());
-    config.report_templates.source_repository =
-        Some("https://github.com/musutrade/GateHouse".into());
-    assert!(config.validate().is_ok());
-    config.report_templates.source_repository =
-        Some(concat!("https://", "user:secret@github.com/a/b").into());
-    let error = config.validate().unwrap_err().to_string();
-    assert!(error.contains("report_templates.source_repository") && !error.contains("secret"));
-    assert!(diagnostics_for(&config)
-        .iter()
-        .any(|d| d.path == "report_templates.source_repository" && d.id == "HGCFG-INVALID-FIELD"));
+    for retired in [
+        "https://github.com/musutrade/GateHouse",
+        "https://gitlab.example/example/project?token=secret",
+        "https://user:secret@example.invalid/a/b",
+        "not a repository",
+    ] {
+        config.report_templates.source_repository = Some(retired.into());
+        config
+            .validate()
+            .expect("a retired setting must not gate configuration");
+        let source = toml::to_string_pretty(&config).expect("serialize configuration");
+        let diagnostics = FlowConfig::from_source_with_diagnostics(&source, None, None)
+            .err()
+            .map(|error| error.report().diagnostics)
+            .unwrap_or_default();
+        assert!(
+            diagnostics
+                .iter()
+                .all(|d| d.path != "report_templates.source_repository"),
+            "{retired}"
+        );
+    }
 }
 
 #[test]

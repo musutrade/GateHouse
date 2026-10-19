@@ -107,3 +107,22 @@ permission to reuse an old destination allowlist or to transfer credentials into
 candidate-controlled configuration. Consumers must enforce their own trust and
 network policies. Local verification cannot be blocked by retired transport
 settings. Older Core versions may still reject those settings on rollback.
+
+## Platform source navigation retirement
+
+Core no longer interprets `report_templates.source_repository`, validates a
+GitHub repository URL, or invokes Git to construct platform hyperlinks during
+HTML rendering. The typed field remains readable for compatibility and produces
+a deprecation notice without echoing its value. Local paths, line ranges,
+findings, source identities, evidence pins and quality decisions remain intact.
+The existing template `source_url` field remains null rather than inventing an
+unverified URL. This intentionally retires automatic GitHub navigation; it does
+not silently replace it with a different provider or claim an external renderer
+has already been delivered.
+
+If platform links are required, the external presentation consumer must bind an
+independently trusted repository/commit and verify that the displayed location
+matches retained evidence before adding navigation. A link is not evidence or
+current applicability. Existing generated reports are historical and are not
+rewritten. Rollback to an older Core may restore its GitHub-specific validation;
+remove the retired setting when sharing configurations across versions.
