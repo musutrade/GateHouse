@@ -112,39 +112,23 @@ struct Data<'a> {
     inputs: &'a Value,
     evidence: &'a Value,
 }
-#[cfg(test)]
 pub(super) fn project(quality: &QualityResult) -> View<'_> {
-    project_with_sources(quality, None)
-}
-pub(super) fn project_with_sources<'a>(
-    quality: &'a QualityResult,
-    sources: Option<crate::source_links::Links<'_>>,
-) -> View<'a> {
-    project_data(
-        Data {
-            status: quality.status,
-            project_report: &quality.project_report,
-            inputs: &quality.inputs,
-            evidence: &quality.evidence,
-        },
-        sources,
-    )
+    project_data(Data {
+        status: quality.status,
+        project_report: &quality.project_report,
+        inputs: &quality.inputs,
+        evidence: &quality.evidence,
+    })
 }
 pub(super) fn project_document(quality: &Value) -> View<'_> {
-    project_data(
-        Data {
-            status: quality["status"].as_str().unwrap_or("not_collected"),
-            project_report: &quality["project_report"],
-            inputs: &quality["inputs"],
-            evidence: &quality["evidence"],
-        },
-        None,
-    )
+    project_data(Data {
+        status: quality["status"].as_str().unwrap_or("not_collected"),
+        project_report: &quality["project_report"],
+        inputs: &quality["inputs"],
+        evidence: &quality["evidence"],
+    })
 }
-fn project_data<'a>(
-    quality: Data<'a>,
-    mut sources: Option<crate::source_links::Links<'_>>,
-) -> View<'a> {
+fn project_data(quality: Data<'_>) -> View<'_> {
     let mut groups: BTreeMap<(String, String), Vec<Row<'_>>> = BTreeMap::new();
     let mut panels: BTreeMap<(String, String, String), Vec<Cell>> = BTreeMap::new();
     let mut rankings = ranking::Builder::default();
@@ -157,9 +141,6 @@ fn project_data<'a>(
             let component = text(&gate["record"]["component"]);
             let path = text(&gate["record"]["subject"]["path"]);
             let mut row = row(gate, position);
-            if !matches!(quality.status, "measurement_error" | "not_collected") {
-                row.source_url = sources.as_mut().and_then(|links| links.link(gate, &index));
-            }
 
             row.hotspot_note = hotspots.push(
                 gate_id,

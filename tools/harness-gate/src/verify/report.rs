@@ -953,18 +953,10 @@ fn configured_html(report: &VerificationReport, project: &Project) -> Result<Opt
         .context("serialize verification report for HTML template")?;
     context.insert("report", report);
     if let Some(quality) = &report.quality {
-        let sources = crate::source_links::Links::new(
-            project.config.report_templates.source_repository.as_deref(),
-            &project.input().commit,
-            &project.root,
-        );
-        context.insert(
-            "quality_view",
-            &quality_view::project_with_sources(quality, sources),
-        );
+        context.insert("quality_view", &quality_view::project(quality));
         anyhow::ensure!(
             !crate::process::cancelled(),
-            "HTML source navigation was cancelled"
+            "HTML report rendering was cancelled"
         );
     }
     context.insert("summary", if report.passed { "PASS" } else { "FAIL" });

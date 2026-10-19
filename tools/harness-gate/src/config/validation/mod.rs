@@ -545,9 +545,6 @@ impl FlowConfig {
     }
 
     fn validate_report_templates(&self) -> Result<()> {
-        if let Some(repository) = &self.report_templates.source_repository {
-            anyhow::ensure!(crate::source_links::valid_repository(repository), "report_templates.source_repository must be a canonical https://github.com/owner/repository URL");
-        }
         match (&self.report_templates.root, &self.report_templates.template) {
             (None, None) if self.report_templates.junit.is_none() => Ok(()),
             (Some(root), Some(template)) => {
@@ -1368,17 +1365,6 @@ fn collect_report_template_diagnostics(
         );
     }
     let templates = &config.report_templates;
-    if templates
-        .source_repository
-        .as_deref()
-        .is_some_and(|value| !crate::source_links::valid_repository(value))
-    {
-        add(
-            diagnostics,
-            "report_templates.source_repository",
-            ConfigIssueKind::InvalidField,
-        );
-    }
     match (&templates.root, &templates.template) {
         (None, None) => {}
         (Some(root), Some(template)) => {
