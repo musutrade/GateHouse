@@ -51,9 +51,10 @@ existing verified path; do not infer adapter/namespace/generation fields or
 rewrite them to make the new schema parse. The Python experiment remains design
 evidence, not an implementation dependency.
 
-This crate is outside the Core production coverage series: CI classifies it as
-the reviewed `non-core-library` external exclusion and runs the explicit gates
-below. Run them isolated because this crate is not a default workspace member:
+This crate is outside the Core production coverage series: the instrumented
+Core fast-coverage archive excludes this non-Core workspace package and CI runs
+the explicit gates below. Run them isolated because this crate is not a default
+workspace member:
 
 ```sh
 cargo test --locked --manifest-path tools/harness-gate/Cargo.toml \

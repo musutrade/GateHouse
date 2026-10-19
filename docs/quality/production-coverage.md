@@ -62,11 +62,11 @@ missing or mismatched evidence. Threshold comparisons use unrounded raw counts.
 ## Workspace library scope
 
 `tools/harness-gate/runtime-protocol/` is a non-default workspace data-contract
-library that is not linked into the shipped Core library or binary. Its sources
-are classified as the reviewed external exclusion `non-core-library` and are not
-part of the Core production coverage boundaries or aggregate. The library still
-runs under the normal workspace test archive and has an explicit locked
-test/clippy/fmt CI gate; no coverage result is claimed for it.
+library that is not linked into the shipped Core library or binary. The
+instrumented Core fast-coverage archive excludes that package explicitly, so it
+contributes no Core production-coverage locations or aggregate counts. It still
+runs under an explicit locked test/clippy/fmt CI gate; no coverage result is
+claimed for it.
 
 ## Reproduction and observed evidence
 

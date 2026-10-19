@@ -490,7 +490,7 @@ jobs:
           eval "$(cargo llvm-cov show-env --sh --manifest-path Cargo.toml)"
           export CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target/quality/fast-build-target"
           mkdir -p "$CARGO_TARGET_DIR"
-          cargo nextest archive --workspace --locked --archive-file "$archive" \
+          cargo nextest archive --workspace --exclude gatehouse-runtime-protocol --locked --archive-file "$archive" \
             > "$GITHUB_WORKSPACE/target/quality/fast-archive/build.log" 2>&1
 
       - name: Upload fast coverage archive

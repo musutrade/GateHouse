@@ -118,11 +118,8 @@ def load_inventory(path: Path, crate: Path) -> tuple[dict, dict, dict]:
                 f"invalid exclusion reason/kind: {source}")
         excluded[source] = row
     for row in inventory["external_exclusions"]:
-        require((row["prefix"], row["kind"]) in (
-            ("tests/", "test"),
-            ("quality-replay/", "migration-reference"),
-            ("runtime-protocol/", "non-core-library"),
-        ) and bool(row["reason"].strip()), "unsupported external exclusion")
+        require((row["prefix"], row["kind"]) in (("tests/", "test"), ("quality-replay/", "migration-reference")) and bool(row["reason"].strip()),
+                "unsupported external exclusion")
     actual = {p.relative_to(crate).as_posix() for root in inventory["source_roots"] for p in (crate / root).rglob("*.rs")}
     declared = owners.keys() | excluded.keys()
     require(actual == declared,
