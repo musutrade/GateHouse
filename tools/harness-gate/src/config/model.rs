@@ -99,8 +99,8 @@ pub struct NotificationsConfig {
 #[serde(deny_unknown_fields)]
 pub struct WebhookConfig {
     pub url: String,
-    /// Exact host names authorized for this destination. Wildcards are not
-    /// accepted; address classification is still enforced at connection time.
+    // Legacy consumer configuration retained for parsing compatibility only.
+    // Core neither validates delivery settings nor connects to this destination.
     pub allowed_hosts: Vec<String>,
     #[serde(default = "default_true")]
     pub on_failure: bool,

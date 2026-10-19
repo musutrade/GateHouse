@@ -21,7 +21,9 @@ def unpack(data, expected, destination):
         total = 0
         for member in members:
             path = PurePosixPath(member.name)
-            if (path.is_absolute() or '..' in path.parts or not path.parts
+            raw_parts = member.name.rstrip('/').split('/')
+            if (any(part in ('', '.', '..') for part in raw_parts)
+                    or path.is_absolute() or '..' in path.parts or not path.parts
                     or path.parts[0] != expected['prefix']
                     or member.name in seen or not (member.isfile() or member.isdir())):
                 raise ValueError('unsafe or duplicate external archive member')
