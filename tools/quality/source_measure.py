@@ -79,7 +79,11 @@ SOURCE_FILES = sorted({"report_history/dashboard.rs", "report_history/dashboard/
     {"project/content.rs", "secrets/mod.rs"} |
     # Issue #139: selected policy identity and recorded runtime identity split.
     # Additive measured inventory; both commits are recollected.
-    {"config/quality/identity.rs", "verify/runtime.rs"})
+    {"config/quality/identity.rs", "verify/runtime.rs"} |
+    # Operator lifecycle extraction: the compatibility module loses the canary
+    # state writer while run/compare remain. Include it in the measured risk
+    # inventory and recollect both commits; series and thresholds are unchanged.
+    {"compat.rs"})
 
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
