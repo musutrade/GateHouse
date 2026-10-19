@@ -31,4 +31,11 @@ if mode == 'config-change':
     (Path(request['input']['workspace_root']) / '.harness-gate/policy.json').write_text('{}')
 if mode == 'symlink':
     (root / 'alias').symlink_to(root / 'raw.json')
+if mode == 'cancel-parent':
+    print(json.dumps(PAYLOAD['response']))
+    sys.stdout.flush()
+    import signal
+    os.kill(os.getppid(), signal.SIGINT)
+    time.sleep(2)
+    sys.exit(0)
 print(json.dumps(PAYLOAD['response']))

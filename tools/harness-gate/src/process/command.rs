@@ -32,6 +32,21 @@ pub(super) fn terminate(child: &mut Child) -> std::io::Result<ExitStatus> {
     terminate_with_signal(child, send_signal, Duration::from_secs(2))
 }
 
+/// Finish an exited leader without releasing its process-group identity before
+/// cleaning up descendants. A cleanup error must not become a successful task.
+#[cfg(unix)]
+pub(super) fn try_complete(child: &mut Child) -> std::io::Result<Option<ExitStatus>> {
+    if !observe_exit(child)? {
+        return Ok(None);
+    }
+    terminate_with_signal(child, send_signal, Duration::ZERO).map(Some)
+}
+
+#[cfg(not(unix))]
+pub(super) fn try_complete(child: &mut Child) -> std::io::Result<Option<ExitStatus>> {
+    child.try_wait()
+}
+
 #[cfg(unix)]
 pub(super) fn terminate_with_signal(
     child: &mut Child,

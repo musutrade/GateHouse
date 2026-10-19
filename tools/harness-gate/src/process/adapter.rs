@@ -3,7 +3,7 @@
 //! The host deliberately owns only the process boundary. Scheduler result
 //! mapping and report publication stay in the existing verification modules.
 
-use super::command::{isolate_process_tree, terminate};
+use super::command::{isolate_process_tree, terminate, try_complete};
 use super::reader::{
     collect_limited_reader, spawn_limited_reader, DEFAULT_CAPTURE_BYTES, DEFAULT_READER_DEADLINE,
 };
@@ -267,6 +267,9 @@ pub fn run_with_cancel<F>(
 where
     F: Fn() -> bool,
 {
+    if is_cancelled() {
+        return Err(AdapterError::Protocol("adapter cancelled".into()));
+    }
     let PreparedRequest {
         artifact_root,
         executable,
@@ -283,7 +286,13 @@ where
         &is_cancelled,
     )?;
     validate_process_output(&output, policy)?;
-    finish_response(&request, policy, &artifact_root, output, started)
+    let outcome = finish_response(&request, policy, &artifact_root, output, started)?;
+    // Cancellation can arrive after leader exit while output and artifacts are
+    // being validated. A valid response must not erase that cancellation.
+    if is_cancelled() {
+        return Err(AdapterError::Protocol("adapter cancelled".into()));
+    }
+    Ok(outcome)
 }
 
 struct PreparedRequest {
@@ -489,8 +498,7 @@ fn wait_for_adapter(
     let mut request_write_error: Option<AdapterError> = None;
     let mut request_write_done = false;
     let status = loop {
-        if let Some(status) = child
-            .try_wait()
+        if let Some(status) = try_complete(child)
             .map_err(|error| AdapterError::Protocol(format!("wait for adapter: {error}")))?
         {
             break status;
@@ -2170,5 +2178,77 @@ mod tests {
         assert!(error
             .to_string()
             .contains("artifact root exceeds 128 bytes"));
+    }
+
+    #[test]
+    fn cancellation_before_launch_starts_no_adapter_process() {
+        let directory = tempdir().unwrap();
+        let (request, policy) = fixture_request(directory.path(), "pass");
+        let error = run_with_cancel(request, &policy, || true)
+            .expect_err("pre-launch cancellation must fail closed");
+        assert!(
+            matches!(&error, AdapterError::Protocol(message) if message == "adapter cancelled")
+        );
+        assert!(
+            fs::read_dir(directory.path()).unwrap().next().is_none(),
+            "a cancelled launch must not create adapter artifacts"
+        );
+    }
+
+    #[test]
+    fn cancellation_after_completed_output_is_never_reported_success() {
+        let directory = tempdir().unwrap();
+        let (mut request, policy) = fixture_request(directory.path(), "pass");
+        let wrapper =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/support/linger_adapter.py");
+        request
+            .args
+            .insert(0, wrapper.to_string_lossy().into_owned());
+        resign_request(&mut request);
+        let artifact = directory.path().join("adapter-result.txt");
+        let probe = artifact.clone();
+        let error = run_with_cancel(request, &policy, move || probe.exists())
+            .expect_err("cancellation with completed output must fail closed");
+        assert!(
+            matches!(&error, AdapterError::Protocol(message) if message == "adapter cancelled")
+        );
+        assert_eq!(
+            fs::read_to_string(&artifact).unwrap().replace("\r\n", "\n"),
+            "adapter fixture passed\n",
+            "the valid response and artifact existed before rejection"
+        );
+    }
+
+    #[test]
+    fn final_boundary_cancellation_rejects_a_valid_zero_exit_response() {
+        let directory = tempdir().unwrap();
+        let (request, policy) = fixture_request(directory.path(), "pass");
+        let artifact = directory.path().join("adapter-result.txt");
+        let calls = Arc::new(AtomicU64::new(0));
+        let counter = Arc::clone(&calls);
+        let error = run_with_cancel(request, &policy, move || {
+            let call = counter.fetch_add(1, Ordering::SeqCst);
+            if call == 1 {
+                // Hold the wait loop while the adapter writes its full valid
+                // response and exits zero, so the next observation is the
+                // final result decision boundary.
+                thread::sleep(Duration::from_millis(600));
+            }
+            call >= 2
+        })
+        .expect_err("final-boundary cancellation must fail closed");
+        assert!(
+            matches!(&error, AdapterError::Protocol(message) if message == "adapter cancelled")
+        );
+        assert_eq!(
+            calls.load(Ordering::SeqCst),
+            3,
+            "expected entry, wait-loop and final-boundary observations only"
+        );
+        assert_eq!(
+            fs::read_to_string(&artifact).unwrap().replace("\r\n", "\n"),
+            "adapter fixture passed\n",
+            "the adapter produced valid evidence and exited zero before rejection"
+        );
     }
 }

@@ -287,6 +287,9 @@ fn run_selected(
     let identities =
         runtime::result_identities(project, policy_inputs, local_runtime, quality.as_ref())
             .map_err(VerifyError::execution)?;
+    // The scheduler's snapshot predates quality collection and evaluation.
+    // Observe cancellation again at the final result decision boundary.
+    let cancelled = cancelled || crate::process::cancelled();
     let passed = quality.as_ref().is_none_or(|result| result.passed())
         && !cancelled
         && failures.is_empty()

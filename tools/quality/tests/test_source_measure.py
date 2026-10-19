@@ -816,9 +816,10 @@ fn main() {
                     symbols = inventory['symbols']
                     windows = 'windows' in inventory['configuration']['cfg']
                     functions = [s['name'] for s in symbols if s['kind'] == 'function']
-                    expected = ['isolate_process_tree', 'terminate'] if windows else (
+                    expected = (['isolate_process_tree', 'try_complete', 'terminate'] if label != 'base'
+                                else ['isolate_process_tree', 'terminate']) if windows else (
                         ['isolate_process_tree', 'terminate', 'send_signal'] if label == 'base' else
-                        ['isolate_process_tree', 'terminate', 'terminate_with_signal', 'reap_timeout', 'observe_exit', 'observe_pid', 'send_signal']
+                        ['isolate_process_tree', 'terminate', 'try_complete', 'terminate_with_signal', 'reap_timeout', 'observe_exit', 'observe_pid', 'send_signal']
                         + (['list_process_group', 'darwin_group_is_finished'] if 'target_os="macos"' in inventory['configuration']['cfg'] else []))
                     self.assertEqual(functions, expected)
                     closures = [s for s in symbols if s['kind'] == 'closure']

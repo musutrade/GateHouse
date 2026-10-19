@@ -1,4 +1,4 @@
-use super::command::{isolate_process_tree, terminate};
+use super::command::{isolate_process_tree, terminate, try_complete};
 use super::isolation;
 use super::reader::{
     collect_limited_reader, spawn_limited_reader, LimitedOutput, DEFAULT_CAPTURE_BYTES,
@@ -304,6 +304,7 @@ impl Task {
             .publish()
             .with_context(|| format!("publish log {}", self.log.display()))?;
 
+        let was_cancelled = was_cancelled || cancelled();
         let detail = if let Some(detail) = limit_detail {
             Some(detail)
         } else if was_cancelled {
@@ -352,7 +353,7 @@ fn wait_for_exit(
     let mut output_limited = None;
     let mut wait_round = 0_u32;
     let (status, timed_out, was_cancelled) = loop {
-        if let Some(status) = child.try_wait()? {
+        if let Some(status) = try_complete(child)? {
             if stdout_overflow.load(Ordering::Acquire) {
                 output_limited = Some("stdout");
             } else if stderr_overflow.load(Ordering::Acquire) {
@@ -374,8 +375,7 @@ fn wait_for_exit(
         if started.elapsed() >= timeout {
             break (terminate(child)?, true, false);
         }
-        // `Child::try_wait` is the portable API available on all supported
-        // platforms. Keep the initial delay short for fast commands, then
+        // Keep the initial delay short for fast commands, then
         // back off to cap wakeups while preserving timeout/cancellation checks.
         std::thread::sleep(wait_backoff(wait_round));
         wait_round = wait_round.saturating_add(1);
@@ -474,7 +474,15 @@ mod tests {
                 super::isolate_process_tree(&mut command);
                 let mut child = command.spawn().unwrap();
                 if finished {
-                    assert!(child.wait().unwrap().success());
+                    // Observe the natural exit without reaping it: the wait
+                    // boundary exclusively owns both group cleanup and reap,
+                    // so an external reap before the boundary is a violation
+                    // of ownership, not a cached success.
+                    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+                    while !crate::process::command::observe_exit(&child).unwrap() {
+                        assert!(std::time::Instant::now() < deadline, "child did not finish");
+                        std::thread::sleep(Duration::from_millis(10));
+                    }
                 }
                 let stdout_overflow = AtomicBool::new(stdout);
                 let stderr_overflow = AtomicBool::new(!stdout);
