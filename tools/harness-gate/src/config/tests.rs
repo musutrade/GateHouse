@@ -1116,20 +1116,44 @@ fn junit_report_path_must_stay_relative_to_the_report_directory() {
 }
 
 #[test]
-fn webhook_configuration_requires_http_url_and_an_enabled_result() {
-    let invalid_scheme = format!(
-        "{}\n[[notifications.webhooks]]\nurl = \"ftp://example.test/hook\"\nallowed_hosts = [\"example.test\"]\n",
-        include_str!("../../fixtures/preset-compat/rust-api.flow.toml")
-    );
-    let error = FlowConfig::from_source(&invalid_scheme).expect_err("FTP webhook must fail");
-    assert!(error.to_string().contains("notifications"));
+fn retired_webhook_settings_are_accepted_without_delivery_validation() {
+    let fixture = include_str!("../../fixtures/preset-compat/rust-api.flow.toml");
+    for retired in [
+        "url = \"ftp://example.test/hook\"\nallowed_hosts = [\"example.test\"]\n",
+        "url = \"https://example.test/hook\"\nallowed_hosts = [\"example.test\"]\non_failure = false\non_success = false\n",
+        "url = \"https://user:secret@example.test/hook\"\nallowed_hosts = []\n",
+        "url = \"https://example.test/hook\"\nallowed_hosts = [\"*.example.test\"]\n",
+        "url = \"https://example.test/hook\"\nallowed_hosts = [\"other.test\"]\n",
+    ] {
+        let source = format!("{fixture}\n[[notifications.webhooks]]\n{retired}");
+        let config = FlowConfig::from_source(&source).unwrap_or_else(|error| {
+            panic!("retired transport settings must not gate local verification: {error}")
+        });
+        assert!(
+            config.validate().is_ok(),
+            "retired transport settings must pass validation: {retired}"
+        );
+        assert!(
+            config.diagnostics_report().valid,
+            "retired transport settings must not emit configuration diagnostics: {retired}"
+        );
+    }
 
-    let disabled = format!(
-        "{}\n[[notifications.webhooks]]\nurl = \"https://example.test/hook\"\nallowed_hosts = [\"example.test\"]\non_failure = false\non_success = false\n",
-        include_str!("../../fixtures/preset-compat/rust-api.flow.toml")
+    let unknown = format!(
+        "{fixture}\n[[notifications.webhooks]]\nurl = \"https://example.test/hook\"\nallowed_hosts = [\"example.test\"]\ndelivery_mode = \"batch\"\n"
     );
-    let error = FlowConfig::from_source(&disabled).expect_err("disabled webhook must fail");
-    assert!(error.to_string().contains("notifications"));
+    assert!(
+        FlowConfig::from_source(&unknown).is_err(),
+        "unknown webhook keys stay rejected"
+    );
+
+    let wrong_type = format!(
+        "{fixture}\n[[notifications.webhooks]]\nurl = 7\nallowed_hosts = [\"example.test\"]\n"
+    );
+    assert!(
+        FlowConfig::from_source(&wrong_type).is_err(),
+        "typed webhook fields stay enforced"
+    );
 }
 
 #[test]
@@ -1755,7 +1779,7 @@ fn doctor_parser_alias_and_scope_diagnostics_keep_configuration_paths() {
 }
 
 #[test]
-fn execution_and_webhook_contracts_reject_unknown_or_unsafe_inputs() {
+fn execution_contracts_reject_unknown_or_unsafe_inputs() {
     let mut config = repository_config();
     config.execution.retries.insert(
         "missing".into(),
@@ -1799,8 +1823,8 @@ fn execution_and_webhook_contracts_reject_unknown_or_unsafe_inputs() {
             on_success: false,
         });
         assert!(
-            config.validate().is_err(),
-            "webhook fixture should fail: {url}"
+            config.validate().is_ok(),
+            "retired transport settings must not gate verification: {url}"
         );
     }
 }

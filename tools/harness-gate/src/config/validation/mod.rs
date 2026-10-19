@@ -275,13 +275,6 @@ impl FlowConfig {
             source_map,
             diagnostics,
             ConfigIssueKind::InvalidField,
-            "notifications",
-            self.validate_notifications(),
-        );
-        collect_result(
-            source_map,
-            diagnostics,
-            ConfigIssueKind::InvalidField,
             "policy",
             self.validate_policy(),
         );
@@ -434,45 +427,7 @@ impl FlowConfig {
         self.validate_report_templates()?;
         self.validate_history_archive()?;
         self.validate_execution()?;
-        self.validate_notifications()?;
         self.validate_policy()?;
-        Ok(())
-    }
-
-    fn validate_notifications(&self) -> Result<()> {
-        for (index, webhook) in self.notifications.webhooks.iter().enumerate() {
-            let parsed = url::Url::parse(&webhook.url)
-                .with_context(|| format!("notifications.webhooks[{index}].url is invalid"))?;
-            if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
-                bail!("notifications.webhooks[{index}].url must be an http(s) URL");
-            }
-            if !parsed.username().is_empty() || parsed.password().is_some() {
-                bail!("notifications.webhooks[{index}].url may not contain credentials");
-            }
-            let host = parsed.host_str().expect("validated webhook host");
-            if webhook.allowed_hosts.is_empty() {
-                bail!("notifications.webhooks[{index}] requires an explicit allowed_hosts list");
-            }
-            if !webhook
-                .allowed_hosts
-                .iter()
-                .all(|allowed| crate::net_policy::valid_allowlist_host(allowed))
-            {
-                bail!("notifications.webhooks[{index}].allowed_hosts contains an invalid host");
-            }
-            let normalized_host = crate::net_policy::normalize_host(host);
-            if !webhook
-                .allowed_hosts
-                .iter()
-                .map(|allowed| crate::net_policy::normalize_host(allowed))
-                .any(|allowed| allowed == normalized_host)
-            {
-                bail!("notifications.webhooks[{index}].url host is not in allowed_hosts");
-            }
-            if !webhook.on_failure && !webhook.on_success {
-                bail!("notifications.webhooks[{index}] must enable on_failure or on_success");
-            }
-        }
         Ok(())
     }
 

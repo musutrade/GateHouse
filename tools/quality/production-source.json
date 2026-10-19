@@ -125,12 +125,6 @@
         "src/main.rs"
       ]
     },
-    "net_policy": {
-      "blocking": false,
-      "files": [
-        "src/net_policy.rs"
-      ]
-    },
     "preset": {
       "blocking": false,
       "files": [

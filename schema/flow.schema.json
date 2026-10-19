@@ -1435,7 +1435,6 @@
       ],
       "properties": {
         "allowed_hosts": {
-          "description": "Exact host names authorized for this destination. Wildcards are not accepted; address classification is still enforced at connection time.",
           "type": "array",
           "items": {
             "type": "string"

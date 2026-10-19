@@ -92,3 +92,18 @@ consumer. Those claims require their own exact inputs and evidence. In particula
 #139's complete policy/runtime applicability work and #131's optional platform
 consumer remain independently tracked; the architecture umbrella must not be
 closed merely because these initial local paths exist.
+
+## Retired notification configuration
+
+Legacy `notifications.webhooks` entries remain readable with the existing typed
+configuration shape, but Core no longer validates destination URLs, allowlists
+or delivery event selections. Those values are unused by verification and do
+not authorize network access. Invalid TOML/types and unknown configuration keys
+still fail normally; secret scanning and generic input checks are unchanged.
+Core emits only the existing deprecation notice without echoing destinations.
+
+Move delivery settings to the independently configured consumer. This is not
+permission to reuse an old destination allowlist or to transfer credentials into
+candidate-controlled configuration. Consumers must enforce their own trust and
+network policies. Local verification cannot be blocked by retired transport
+settings. Older Core versions may still reject those settings on rollback.
