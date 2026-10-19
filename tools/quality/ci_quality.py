@@ -67,7 +67,13 @@ REPLAY_RELOCATION = ('tools/harness-gate/quality-core/examples/differential_repl
 # review. This records the reviewed removal only; it does not establish
 # function-level continuity between old and new sources, which are measured as
 # separate functions.
-REVIEWED_REMOVED_SOURCES = ('tools/harness-gate/src/service/postgres.rs',)
+REVIEWED_REMOVED_SOURCES = (
+    'tools/harness-gate/src/service/postgres.rs',
+    # Retired transport cleanup: webhook delivery settings no longer gate
+    # verification, so the unused net_policy module was deleted. Reviewed
+    # removal; the risk series is otherwise unchanged.
+    'tools/harness-gate/src/net_policy.rs',
+)
 
 
 def reviewed_removals(base: str, head: str) -> set[str]:
