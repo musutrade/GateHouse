@@ -41,7 +41,7 @@ CHILD = """\
 import json, os, sys
 from pathlib import Path
 repo, work = sys.argv[1], Path(sys.argv[2])
-sys.path.insert(0, repo + '/tools/consumers/tests')
+sys.path.insert(0, repo + '/tools/compatibility/result_boundary')
 import common
 consumer = common.consumer()
 root = work / 'root'
@@ -140,7 +140,8 @@ class NetworkBoundary(unittest.TestCase):
             child = work / 'child.py'
             child.write_text(CHILD)
             env = {'PATH': os.defpath, 'LANG': 'C.UTF-8', 'HOME': str(work),
-                   'GATEHOUSE_CORE': str(common.CORE)}
+                   'GATEHOUSE_CORE': str(common.CORE),
+                   'GATEPROBES_CONSUMER': str(common.CONSUMER)}
             completed = subprocess.run(
                 self.prefix + [sys.executable, str(child), str(common.REPO), str(work)],
                 capture_output=True, text=True, timeout=900, env=env)

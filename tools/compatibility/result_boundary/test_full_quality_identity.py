@@ -141,7 +141,7 @@ class PairedFullQualityIdentity(unittest.TestCase):
             path = Path(work) / 'consumer.json'
             path.write_text(json.dumps(config2))
             output = subprocess.run(
-                [sys.executable, str(common.REPO / 'tools/consumers/github_check.py'),
+                [sys.executable, str(common.CONSUMER),
                  '--config', str(path), '--core', str(common.CORE),
                  '--index', str(self.root / 'history.json')],
                 capture_output=True, text=True, cwd=work,
