@@ -1,0 +1,12 @@
+[package]
+name = "gatehouse-runtime-protocol"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+license = "MIT"
+description = "Strict data contract for pinned container runtime adapters"
+publish = false
+
+[dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
