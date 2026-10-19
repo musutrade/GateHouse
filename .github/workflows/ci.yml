@@ -213,7 +213,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           repository: musutrade/GateProbes
-          ref: 53c01505bed2ff61dfad1d106abbec2dcd961d05
+          ref: eec90944e339fa15fa531d77d23f889a71e600b4
           path: .plugin-onboarding
           persist-credentials: false
 
