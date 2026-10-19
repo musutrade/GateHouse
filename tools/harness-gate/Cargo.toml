@@ -92,6 +92,6 @@ codegen-units = 1     # Pinned back to 1: distribution builds trade compile time
 
 # The migration runner reuses the shipped generic semantics.
 [workspace]
-members = ["quality-replay"]
+members = ["quality-replay", "runtime-protocol"]
 default-members = [".", "quality-replay"]
 resolver = "2"
