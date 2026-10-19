@@ -3279,7 +3279,7 @@ mod tests {
             "nested": [{"enabled": true, "missing": null,
                 "message": concat!("-----BEGIN ", "PRIVATE KEY-----\nopaque-key\n-----END PRIVATE KEY-----")}],
             "token-policy": {"state": "fail", "limit": 30},
-            "url": "postgres://user:opaque-password@db.example.test/app"
+            "url": concat!("postgres://", "user:opaque-password@db.example.test/app")
         });
         super::redact_json(&mut value).unwrap();
         assert_eq!(value["api_token"], "[REDACTED]");

@@ -59,7 +59,8 @@ mod tests {
         let text = concat!(
             "Authorization: Bearer opaque-token\n",
             "cookie: session=opaque-cookie\n",
-            "DATABASE_URL=postgres://user:opaque-pass@db.example.test/app\n",
+            "DATABASE_URL=postgres://",
+            "user:opaque-pass@db.example.test/app\n",
             "password=opaque-value\n",
             "{\"api_key\":\"opaque-json\"}\n",
             "-----BEGIN ",
