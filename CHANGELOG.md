@@ -5,6 +5,24 @@ All notable changes to Harness-Gate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - pending publication
+
+- Release the explicit signed-plugin store, trusted-key and plugin preset CLI
+  already integrated on main. The published 0.5.0 binary does not provide these
+  commands; matching version metadata alone is not a compatibility check.
+- Add content directory/index verification, pinned historical result reading,
+  separate policy/runtime identities and external result consumption. Local
+  verification completion is independent of delivery to external consumers.
+- Complete Unix process-group cleanup before reaping normally exited leaders,
+  and reject cancellation at final adapter/quality completion boundaries.
+- Preserve default secret detection while constructing synthetic credential
+  test inputs without source-scan false positives. Synchronize the adapter
+  cancellation fixture on completed output rather than file creation.
+
+See [the release notes](docs/releases/0.6.0.zh-CN.md) for compatibility and
+trust limits. Existing unreleased notes below retain additional source history;
+this entry does not claim a release tag or artifact has already been published.
+
 ## Unreleased — Issue #32
 
 - Add opt-in `step-cache/v1` local reuse for declared deterministic external steps on Unix hosts, with private authenticated storage, complete input identity, output/parser revalidation, bounded retention and safe `cache-clear`.
