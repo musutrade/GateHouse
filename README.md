@@ -850,36 +850,22 @@ compose, and Reset clears all of them. Without JavaScript all counts and rows re
 readable. Engineering Policy, Core decisions and authoritative blockers are unchanged.
 History and trends use the separate explicit history command below.
 
-### Source navigation at the recorded commit
+### Source locations and platform navigation
 
-Set `source_repository = "https://github.com/owner/repository"` under
-`[report_templates]` to enable source links in the shipped HTML template. Omission
-keeps source locations as text. The repository mapping is an explicit project-owner
-trust decision; Git remotes and report-supplied URLs are never used. Only canonical
-GitHub HTTPS repository URLs are accepted, without credentials, query, fragment,
-`.git` suffix or trailing slash. Other providers are not supported by this increment.
+Core renders local evidence locations (paths and line ranges) in the shipped HTML
+template and leaves `quality_view.groups[].rows[].source_url` as null. The former
+`report_templates.source_repository` setting is retired: it is still parsed for
+configuration compatibility and produces a deprecation notice that does not echo
+its value, but Core no longer validates a GitHub URL, inspects Git objects or
+constructs platform hyperlinks while rendering. Removing the setting is the
+recommended migration.
 
-A link requires a full 40/64-digit commit matching invocation and quality evidence,
-canonical subject/series/evidence agreement, a safe repository-relative path, and
-a positive line span within the committed file. Core reads the local Git tree/blob
-and checks its SHA-256 against the subject's `source_sha256`. Dirty/staged content
-that differs from that commit, missing objects, symlinks/submodules, malformed
-identities and unavailable quality keep their source details as text. There is no
-fallback to HEAD or a branch. The URL encodes path bytes and includes that exact
-commit and line range; it sends no referrer. The configured remote's availability
-and ownership are not independently established by this offline check.
-
-No network request or source upload occurs during generation. Object reads disable
-lazy fetch, replacement objects, optional locks and filesystem-monitor hooks. Each
-render checks at most 128 distinct files, with a shared two-second execution budget,
-500 ms maximum per command, 1 MiB maximum UTF-8 file and bounded output readers;
-process cleanup can add time beyond that execution budget. Cached files remain
-usable after the budget expires. Missing/unsupported Git or an exhausted budget
-omits the link; cancellation remains an error. These limits affect navigation only,
-not displayed rows, gate outcomes, evidence completeness or Core policy. Opening a
-source link requires a network connection, while the report itself remains offline.
-Custom templates can use `quality_view.groups[].rows[].source_url` but remain trusted
-project code. No release version or additional platform integration is claimed.
+Platform navigation, if required, belongs to a separately trusted external
+presentation consumer. That consumer must bind its own repository/commit trust and
+verify that displayed locations match retained evidence; a link is not evidence,
+current applicability or a quality decision. Local paths, line ranges, findings,
+source identities, evidence pins and gate outcomes are unchanged, and Core does
+not claim an external renderer or additional platform integration.
 
 ### Export a completed HTML report for Actions download
 

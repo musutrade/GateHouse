@@ -731,11 +731,16 @@ audit and confirm every path, regex, and report option.
     root = "templates/harness-gate"
     template = "templates/harness-gate/verification.tera"
     junit = "junit.xml"
-    # Optional; defaults to no external source links
+    # Retired: accepted for compatibility; Core does not create platform links
     source_repository = "https://github.com/owner/repository"
 
 Template root and template must be repository-contained regular paths with no
 traversal or symlink escape, and the template must end in .html or .tera.
+`report_templates.source_repository` is retired: it remains readable for
+compatibility and emits a deprecation notice without echoing its value. Core
+renders local paths and line ranges and leaves template `source_url` null; it
+does not validate the value or construct platform navigation.
+
 Template and report roots must be disjoint. HTML output is test_result.html;
 JUnit is a report-relative .xml path. Tera supports include, extends, and block
 plus timestamp, profile, scope, steps, summary, components, and passed.

@@ -73,6 +73,11 @@ REVIEWED_REMOVED_SOURCES = (
     # verification, so the unused net_policy module was deleted. Reviewed
     # removal; the risk series is otherwise unchanged.
     'tools/harness-gate/src/net_policy.rs',
+    # Platform navigation retirement: Core no longer validates GitHub
+    # repositories or reads Git objects to build source links, so the
+    # GitHub-only source_links module was deleted. Reviewed removal; the
+    # remaining risk inventory and thresholds are unchanged.
+    'tools/harness-gate/src/source_links.rs',
 )
 
 

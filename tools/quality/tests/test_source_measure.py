@@ -2025,11 +2025,15 @@ class StepCacheRiskSelectionTests(unittest.TestCase):
         self.assertTrue({f"findings/{name}.rs" for name in ("mod", "model", "history", "sarif")} <= set(SOURCE_FILES))
 
 
-class SourceLinksRiskSelectionTests(unittest.TestCase):
-    def test_source_links_is_additive_and_preserves_selection_and_threshold(self):
-        self.assertIn('source_links.rs', SOURCE_FILES)
+class RetiredSourceLinksSelectionTests(unittest.TestCase):
+    def test_retired_source_links_is_not_in_the_production_inventory(self):
+        # Platform navigation was retired: the GitHub-only module was deleted and
+        # the risk series is otherwise unchanged.
+        self.assertNotIn('source_links.rs', SOURCE_FILES)
         inventory = json.loads((ROOT / 'tools/quality/production-source.json').read_text(encoding='utf-8'))
-        self.assertIn('src/source_links.rs', inventory['boundaries']['verify']['files'])
+        self.assertNotIn('src/source_links.rs', inventory['boundaries']['verify']['files'])
+        self.assertFalse((ROOT / 'tools/harness-gate/src/source_links.rs').exists())
+        self.assertNotIn('mod source_links;', (ROOT / 'tools/harness-gate/src/main.rs').read_text(encoding='utf-8'))
         self.assertEqual(inventory['threshold'], 80)
         self.assertEqual(SERIES['selection'], 'gh33-findings/1')
 

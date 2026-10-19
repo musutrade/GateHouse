@@ -749,7 +749,6 @@
           ]
         },
         "source_repository": {
-          "description": "Opt-in canonical https://github.com/owner/repository for committed source links.",
           "default": null,
           "type": [
             "string",
