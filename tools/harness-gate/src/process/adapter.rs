@@ -2198,7 +2198,13 @@ mod tests {
     #[test]
     fn cancellation_after_completed_output_is_never_reported_success() {
         let directory = tempdir().unwrap();
-        let (request, policy) = fixture_request(directory.path(), "linger");
+        let (mut request, policy) = fixture_request(directory.path(), "pass");
+        let wrapper =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/support/linger_adapter.py");
+        request
+            .args
+            .insert(0, wrapper.to_string_lossy().into_owned());
+        resign_request(&mut request);
         let artifact = directory.path().join("adapter-result.txt");
         let probe = artifact.clone();
         let error = run_with_cancel(request, &policy, move || probe.exists())
@@ -2207,7 +2213,7 @@ mod tests {
             matches!(&error, AdapterError::Protocol(message) if message == "adapter cancelled")
         );
         assert_eq!(
-            fs::read_to_string(&artifact).unwrap(),
+            fs::read_to_string(&artifact).unwrap().replace("\r\n", "\n"),
             "adapter fixture passed\n",
             "the valid response and artifact existed before rejection"
         );
@@ -2240,7 +2246,7 @@ mod tests {
             "expected entry, wait-loop and final-boundary observations only"
         );
         assert_eq!(
-            fs::read_to_string(&artifact).unwrap(),
+            fs::read_to_string(&artifact).unwrap().replace("\r\n", "\n"),
             "adapter fixture passed\n",
             "the adapter produced valid evidence and exited zero before rejection"
         );

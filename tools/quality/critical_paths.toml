@@ -16,9 +16,9 @@ assertions = ["assert!(!result.passed);", "assert!(result.timed_out);", "assert!
 [paths.source]
 path = "src/process/task.rs"
 symbol = "wait_for_exit"
-start = 345
+start = 346
 end = 385
-sha256 = "96a2b1055768bdcc6a418de34117ff74bb52bc80089987c5c7a2d057274e6e90"
+sha256 = "49e41fe0beaf7bec6dd7044012341284def1feba683e6db8da9998ff7c80a189"
 
 [paths.test_source]
 path = "src/process/tests.rs"
@@ -28,7 +28,7 @@ end = 46
 sha256 = "e4df8a76ec42569ad1fc189b51f132f8977efb2eaeeb915a64c5d76405b2691e"
 
 [[paths.probes]]
-line = 375
+line = 376
 column = 24
 text = "break (terminate(child)?, true, false);"
 
@@ -47,9 +47,9 @@ assertions = ["\"cancelled child still alive\"", "assert_eq!(json[\"passed\"], f
 [paths.source]
 path = "src/process/task.rs"
 symbol = "wait_for_exit"
-start = 345
+start = 346
 end = 385
-sha256 = "96a2b1055768bdcc6a418de34117ff74bb52bc80089987c5c7a2d057274e6e90"
+sha256 = "49e41fe0beaf7bec6dd7044012341284def1feba683e6db8da9998ff7c80a189"
 
 [paths.test_source]
 path = "tests/failure_paths_test.rs"
@@ -59,7 +59,7 @@ end = 817
 sha256 = "cba73087dac7f6d1667a733b75e26c8921648c0805d5ba43eeaf9abd5fafd993"
 
 [[paths.probes]]
-line = 372
+line = 373
 column = 24
 text = "break (terminate(child)?, false, true);"
 
@@ -78,9 +78,9 @@ assertions = ["assert!(result.timed_out, \"fixture must reach the timeout bounda
 [paths.source]
 path = "src/process/task.rs"
 symbol = "wait_for_exit"
-start = 345
+start = 346
 end = 385
-sha256 = "96a2b1055768bdcc6a418de34117ff74bb52bc80089987c5c7a2d057274e6e90"
+sha256 = "49e41fe0beaf7bec6dd7044012341284def1feba683e6db8da9998ff7c80a189"
 
 [paths.test_source]
 path = "src/process/tests.rs"
@@ -90,7 +90,7 @@ end = 220
 sha256 = "e4df8a76ec42569ad1fc189b51f132f8977efb2eaeeb915a64c5d76405b2691e"
 
 [[paths.probes]]
-line = 375
+line = 376
 column = 24
 text = "break (terminate(child)?, true, false);"
 
@@ -118,7 +118,7 @@ path = "src/verify/tests.rs"
 symbol = "non_zero_step_retains_exit_detail_and_log"
 start = 302
 end = 319
-sha256 = "4e62387920a8c4648cbf0f07aaa9947d1ea7f51ba80c1bf565c23ee42facd0b4"
+sha256 = "98270bae01dcbdb09af62a6ecd4cad1c56ab60f567505a64da197053b78cde9b"
 
 [[paths.probes]]
 line = 496
@@ -149,7 +149,7 @@ path = "src/verify/tests.rs"
 symbol = "service_failure_does_not_skip_unrelated_steps"
 start = 45
 end = 88
-sha256 = "4e62387920a8c4648cbf0f07aaa9947d1ea7f51ba80c1bf565c23ee42facd0b4"
+sha256 = "98270bae01dcbdb09af62a6ecd4cad1c56ab60f567505a64da197053b78cde9b"
 
 [[paths.probes]]
 line = 79
@@ -171,19 +171,19 @@ assertions = ["assert!(!report.passed);", "step.label == \"secret scan\" && !ste
 [paths.source]
 path = "src/verify/mod.rs"
 symbol = "run_selected"
-start = 208
-end = 370
-sha256 = "9eb92bedfbaecfe2c9207b2d82f6e038ad91eca330ae2ee223d2aa2201acd731"
+start = 210
+end = 342
+sha256 = "f28e247d3fe21fe5efff338a71914754e5f7d2836a48b721e90fa3d88191e951"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "gate_failure_writes_compatible_report"
 start = 553
 end = 575
-sha256 = "4e62387920a8c4648cbf0f07aaa9947d1ea7f51ba80c1bf565c23ee42facd0b4"
+sha256 = "98270bae01dcbdb09af62a6ecd4cad1c56ab60f567505a64da197053b78cde9b"
 
 [[paths.probes]]
-line = 352
+line = 324
 column = 5
 text = "publish_report(&report, &invocation_project, project, &mut progress)?;"
 
@@ -242,7 +242,7 @@ path = "src/verify/tests.rs"
 symbol = "parser_failure_marks_step_failed"
 start = 348
 end = 381
-sha256 = "4e62387920a8c4648cbf0f07aaa9947d1ea7f51ba80c1bf565c23ee42facd0b4"
+sha256 = "98270bae01dcbdb09af62a6ecd4cad1c56ab60f567505a64da197053b78cde9b"
 
 [[paths.probes]]
 line = 479
@@ -264,19 +264,19 @@ assertions = ["assert!(matches!(error, VerifyError::Report { .. }));"]
 [paths.source]
 path = "src/verify/report.rs"
 symbol = "write_report_file"
-start = 1269
-end = 1279
-sha256 = "f2d138a067a427b8c3da6e36708c1eac159a3d6a1fc4b947db7d886c98b1d9a6"
+start = 1267
+end = 1277
+sha256 = "ce8a64954f6fd6136bf118a0f906c6ffcf72e02e5c930d90e33a43404fa68418"
 
 [paths.test_source]
 path = "src/verify/tests.rs"
 symbol = "report_write_failure_returns_error"
 start = 605
 end = 614
-sha256 = "4e62387920a8c4648cbf0f07aaa9947d1ea7f51ba80c1bf565c23ee42facd0b4"
+sha256 = "98270bae01dcbdb09af62a6ecd4cad1c56ab60f567505a64da197053b78cde9b"
 
 [[paths.probes]]
-line = 1270
+line = 1268
 column = 5
 text = "report_target(project, relative)?;"
 
@@ -295,19 +295,19 @@ assertions = ["assert!(verify_manifest(&invocation_project).is_err());"]
 [paths.source]
 path = "src/verify/report.rs"
 symbol = "verify_manifest_without_result_at"
-start = 1852
-end = 1938
-sha256 = "f2d138a067a427b8c3da6e36708c1eac159a3d6a1fc4b947db7d886c98b1d9a6"
+start = 1850
+end = 1939
+sha256 = "ce8a64954f6fd6136bf118a0f906c6ffcf72e02e5c930d90e33a43404fa68418"
 
 [paths.test_source]
 path = "src/verify/report.rs"
 symbol = "manifest_records_digests_and_detects_tampering"
-start = 3374
-end = 3427
-sha256 = "f2d138a067a427b8c3da6e36708c1eac159a3d6a1fc4b947db7d886c98b1d9a6"
+start = 3109
+end = 3181
+sha256 = "ce8a64954f6fd6136bf118a0f906c6ffcf72e02e5c930d90e33a43404fa68418"
 
 [[paths.probes]]
-line = 1934
+line = 1935
 column = 13
 text = "bail!(\"artifact digest or size changed: {}\", artifact.path);"
 
@@ -390,14 +390,14 @@ path = "src/process/adapter.rs"
 symbol = "claim"
 start = 193
 end = 223
-sha256 = "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0"
+sha256 = "f09d6a235fbc0fd1c682d329fa7288b0d0066517173c25783b707c91721f15b2"
 
 [paths.test_source]
 path = "src/process/adapter.rs"
 symbol = "replay_retention_covers_the_entire_accepted_window"
-start = 2044
-end = 2078
-sha256 = "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0"
+start = 2052
+end = 2086
+sha256 = "f09d6a235fbc0fd1c682d329fa7288b0d0066517173c25783b707c91721f15b2"
 
 [[paths.probes]]
 line = 205
@@ -426,9 +426,9 @@ sha256 = "fbcc49ec16603a0c43ff92f069b7579cf7821cae16d4e77fa4f480da5b068a47"
 [paths.test_source]
 path = "src/process/adapter.rs"
 symbol = "durable_nonce_claims_are_atomic_between_independent_hosts"
-start = 2102
-end = 2127
-sha256 = "0f3af3c911b38f7fac2c337881bb24fc57566da1c34d59daec05a856335ffda0"
+start = 2110
+end = 2135
+sha256 = "f09d6a235fbc0fd1c682d329fa7288b0d0066517173c25783b707c91721f15b2"
 
 [[paths.probes]]
 line = 127
