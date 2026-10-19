@@ -34,7 +34,7 @@
     "report_directory": {"type": "string", "minLength": 1},
     "timestamp": {"type": "string", "format": "date-time"},
     "profile": {"type": "string", "minLength": 1},
-    "input_mode": {"enum": ["working-tree", "staged", "base", "all", "directory"]},
+    "input_mode": {"enum": ["working-tree", "staged", "base", "all", "directory", "content-index"]},
     "project_identity": {"type": "string", "minLength": 1},
     "source_identity": {"type": "string", "minLength": 1},
     "execution_root": {"type": "string", "minLength": 1},

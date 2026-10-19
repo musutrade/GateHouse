@@ -112,6 +112,16 @@ pub(super) fn prepare(
         state.profile == profile,
         "quality state profile differs from verify profile"
     );
+    if project.input().content.is_some() {
+        for name in std::iter::once(&state.artifact_root).chain(
+            config
+                .components
+                .values()
+                .map(|component| &component.artifact_root),
+        ) {
+            project.input().prepare_content_output(Path::new(name))?;
+        }
+    }
     if staged_partial {
         ensure!(
             state.artifacts.is_empty() && state.retained.is_empty(),
