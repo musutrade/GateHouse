@@ -144,6 +144,12 @@ jobs:
           -E 'not test(configured_ci_acceptance_retains_parity_reuse_and_negative_evidence)
           and not test(html_export_combined_thousand_subjects_preserves_fail_and_rejects_tampering)'
 
+      - name: Run runtime protocol contract tests
+        if: matrix.shard == 1
+        run: >-
+          cargo test --manifest-path tools/harness-gate/Cargo.toml --locked
+          -p gatehouse-runtime-protocol --target-dir "$RUNNER_TEMP/runtime-protocol-target"
+
       - name: Run CI acceptance and HTML example tests
         if: matrix.shard == 1
         env:
@@ -348,7 +354,7 @@ jobs:
           components: rustfmt
 
       - name: Check formatting
-        run: cargo fmt --manifest-path tools/harness-gate/Cargo.toml -- --check
+        run: cargo fmt --all --manifest-path tools/harness-gate/Cargo.toml -- --check
 
   clippy:
     name: Clippy
@@ -372,6 +378,9 @@ jobs:
 
       - name: Run clippy
         run: cargo clippy --manifest-path tools/harness-gate/Cargo.toml --locked --all-targets --all-features -- -D warnings
+
+      - name: Run clippy for the runtime protocol crate
+        run: cargo clippy --manifest-path tools/harness-gate/Cargo.toml --locked -p gatehouse-runtime-protocol --all-targets --all-features -- -D warnings
 
   build:
     name: Build
