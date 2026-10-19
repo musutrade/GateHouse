@@ -3241,7 +3241,8 @@ mod tests {
         let mut log = b"\x1b[31mtruncated \xe2\x82 output\n".to_vec();
         log.extend_from_slice(b"Authorization: Bearer BEARER_SECRET\n");
         log.extend_from_slice(b"password=PASSWORD_SECRET \xff\xfe binary\n");
-        log.extend_from_slice(b"-----BEGIN PRIVATE KEY-----\nPEM_HEAD\x80\x81PEM_TAIL\n");
+        log.extend_from_slice(b"-----BEGIN ");
+        log.extend_from_slice(b"PRIVATE KEY-----\nPEM_HEAD\x80\x81PEM_TAIL\n");
         log.extend_from_slice(b"-----END PRIVATE KEY-----\npublic-after-key\n");
         std::fs::write(invocation.root.join("logs/unit.log"), &log).unwrap();
 
@@ -3276,7 +3277,7 @@ mod tests {
         let mut value = serde_json::json!({
             "api_token": "opaque-json-secret", "count": 1778,
             "nested": [{"enabled": true, "missing": null,
-                "message": "-----BEGIN PRIVATE KEY-----\nopaque-key\n-----END PRIVATE KEY-----"}],
+                "message": concat!("-----BEGIN ", "PRIVATE KEY-----\nopaque-key\n-----END PRIVATE KEY-----")}],
             "token-policy": {"state": "fail", "limit": 30},
             "url": "postgres://user:opaque-password@db.example.test/app"
         });

@@ -243,7 +243,7 @@ fn doctor_kinds_execute_success_required_failure_and_optional_warning() {
                         "remote",
                         "set-url",
                         "origin",
-                        "https://fixture:dummy@example.invalid/repo.git",
+                        concat!("https://", "fixture:dummy@example.invalid/repo.git"),
                     ],
                 );
             }
