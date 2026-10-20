@@ -7,6 +7,7 @@ separate work.
 
 | Owner | Path | Why |
 | --- | --- | --- |
+| GateHouse | `tools/release/publish_runtime_protocol.py` | Publishes the Core runtime protocol crate dependency through the Core release environment; verifies an existing version against the exact local package before skipping upload. No collector implementation or GateProbes release authority. |
 | GateHouse | `.github/workflows/release.yml` | Core tag release workflow: build, quality gates, publish and crates.io |
 | GateHouse | `install.sh` | Core install entry for `harness-gate` |
 | GateProbes | `tools/release/bootstrap_collector.sh`, `build_collector_bootstrap.py` | Collector bootstrap/toolchain delivery |
