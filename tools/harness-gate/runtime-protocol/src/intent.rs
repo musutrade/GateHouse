@@ -155,7 +155,7 @@ mod tests {
     // persistence, locking, rollback protection or dispatch behavior.
     use super::*;
     use crate::{Binding, Engine, Namespace, Object, Outcome, Protocol};
-    use serde_json::{json, Value};
+    use serde_json::json;
 
     fn id() -> String {
         "a".repeat(64)
