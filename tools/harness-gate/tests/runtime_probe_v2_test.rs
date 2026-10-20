@@ -23,6 +23,8 @@ int main(void) {
     int d = open("dispatched", O_WRONLY | O_CREAT | O_TRUNC, 0600);
     if (d < 0) return 1;
     close(d);
+    char input[65536];
+    while (read(0, input, sizeof(input)) > 0) {}
     if (access("wait", F_OK) == 0) {
         int r = open("ready", O_WRONLY | O_CREAT | O_TRUNC, 0600);
         if (r < 0) return 2;
