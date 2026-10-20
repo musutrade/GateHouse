@@ -1,10 +1,10 @@
 {
   "schema": "legacy-core-compatibility-result/v1",
   "status": "pass",
-  "revision": "7d2e5c5d381e9a89f1c6ea4c260a50769c34b2a4",
-  "ci_run": "https://github.com/musutrade/GateProbes/actions/runs/39349781528",
+  "revision": "945db3ebaf9c5877da588aade5fa0b70fae99ce1",
+  "ci_run": "https://github.com/musutrade/GateProbes/actions/runs/39353443143",
   "source_commit": "226b5b541a5705b2fcddc960c48ea704f621905d",
-  "inventory_sha256": "ddf600044b81ee8714ac11d14736b7c7c4ea17fdbad3f99820c6e9cdc98205e8",
+  "inventory_sha256": "b3e66c20b39343e1720162e82ef874ca87ee8a5968b40f09a809156c50e5a6fa",
   "core_fixture_sha256": "fcdae780571dbe46c1c8433a74a3f9967398baf6bedc288ae6086d32711e86b3",
   "producer_parity": "pass",
   "methods": [
@@ -812,5 +812,5 @@
   "errors": 0,
   "skipped": 0,
   "held": 11,
-  "wall_seconds": 44.419
+  "wall_seconds": 43.985
 }
