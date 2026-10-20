@@ -1,5 +1,14 @@
 # Published releases and acceptance
 
+## Core 0.7.0 candidate boundary
+
+The protected Linux runtime v2 CLI is integrated at `08f980550960008eb7757df3c69459467aca74c0`.
+The 0.7.0 version candidate is not a published binary. Onboarding presets 1.0.1
+must be published and pinned before Core candidate CI; downloaded Core acceptance
+and native adapter publication follow the Core release. No real daemon acceptance,
+engine switch, lease migration or #62 completion is claimed. See
+[the release plan](releases/0.7.0.zh-CN.md).
+
 ## Postgres externalization delivered, 2026-10-14
 
 GateHouse #24 is accepted with published Core 0.5.0 and GateProbes Postgres 0.1.1. Independent public inventory/signature/provenance verification, 47 real service/doctor/verify contract records and all three installed presets pass. See the [final fixed-pair receipt](releases/postgres-service-0.1.1-acceptance.md). Historical tags, failed publication 0.1.0 and original consumer evidence remain unchanged.

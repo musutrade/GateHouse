@@ -1,5 +1,10 @@
 # About GateHouse
 
+Core 0.7.0 is a release candidate. Its Linux read-only runtime host does not
+replace the service engine or authorize mutations. See the
+[release scope](docs/releases/0.7.0.zh-CN.md) and
+[protected host contract](docs/runtime-probe-v2.md).
+
 GateHouse is the active development repository for **`harness-gate`**, a
 configuration-driven project verification CLI written in Rust. Its workflow is
 **`init -> verify -> one project decision`**: declare execution and quality intent,
