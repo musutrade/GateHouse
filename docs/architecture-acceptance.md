@@ -1,13 +1,16 @@
 # Result-boundary acceptance
 
-## Core 0.7.0 candidate boundary
+## Core 0.7.1 registry repair candidate
 
-The protected Linux runtime v2 CLI is integrated at `08f980550960008eb7757df3c69459467aca74c0`.
-The 0.7.0 version candidate is not a published binary. Onboarding presets 1.0.1
-must be published and pinned before Core candidate CI; downloaded Core acceptance
-and native adapter publication follow the Core release. No real daemon acceptance,
-engine switch, lease migration or #62 completion is claimed. See
-[the release plan](releases/0.7.0.zh-CN.md).
+Core 0.7.0 GitHub assets were published from `6242228a16f951bc30a881641c853afefae262a8`;
+its crates.io job failed because the runtime protocol dependency was not publishable.
+The tag and assets remain immutable. Core 0.7.1 repairs registry packaging and adds
+protocol publication and Core package preflight before GitHub asset publication.
+Onboarding presets 1.0.2 is published from `85b1856dd7061bfb19683df3921060b49490e5e2`
+and pinned by Core CI. Its downloaded archive passed 29-step acceptance with
+released 0.7.0 and source-built 0.7.1; the latter is candidate evidence only.
+No real daemon acceptance, engine switch, lease migration or #62 completion is
+claimed. See [the repair release plan](releases/0.7.1.zh-CN.md).
 
 This matrix tracks the split from #98/#127 under #134. It is an implementation
 and evidence index, not an issue-closure or merge record. PR #127 remains

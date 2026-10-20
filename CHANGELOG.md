@@ -5,6 +5,15 @@ All notable changes to Harness-Gate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - pending publication
+
+- Pin the runtime protocol dependency to a publishable registry version.
+- Run registry packaging dry-run before publishing GitHub release assets.
+- Require onboarding presets 1.0.2 for the exact Core 0.7.1 compatibility gate.
+
+See [the repair release notes](docs/releases/0.7.1.zh-CN.md). The existing 0.7.0
+GitHub release remains immutable; its crates.io publication failed.
+
 ## [0.7.0] - pending publication
 
 - Add the Linux protected-file, sealed-input read-only runtime v2 host and strict

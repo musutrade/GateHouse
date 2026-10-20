@@ -5,7 +5,9 @@ edition = "2021"
 rust-version = "1.88"
 license = "MIT"
 description = "Strict data contract for pinned container runtime adapters"
-publish = false
+repository = "https://github.com/musutrade/GateHouse"
+homepage = "https://github.com/musutrade/GateHouse"
+readme = "README.md"
 
 [dependencies]
 serde = { version = "1.0.229", features = ["derive"] }

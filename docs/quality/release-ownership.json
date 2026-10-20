@@ -6,7 +6,8 @@
       ".github/workflows/release.yml",
       "install.sh",
       "tools/release/check-registry-credentials.sh",
-      "tools/release/frozen_legacy.py"
+      "tools/release/frozen_legacy.py",
+      "tools/release/publish_runtime_protocol.py"
     ],
     "gateprobes": []
   },

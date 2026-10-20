@@ -1,8 +1,8 @@
 # GateHouse
 
-Core 0.7.0 is a release candidate. Its Linux read-only runtime host does not
+Core 0.7.1 is a registry-repair release candidate. Its Linux read-only runtime host does not
 replace the service engine or authorize mutations. See the
-[release scope](docs/releases/0.7.0.zh-CN.md) and
+[release scope](docs/releases/0.7.1.zh-CN.md) and
 [protected host contract](docs/runtime-probe-v2.md).
 
 > Development now lives in **GateHouse**. The `harness-gate` CLI and crate names remain unchanged. Historical releases through v0.4.8 retain their Harness-Gate download and signing identities. See [migration and test data](docs/gatehouse-migration.md).
