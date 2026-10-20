@@ -509,6 +509,7 @@ dependencies = [
  "chrono",
  "clap",
  "ed25519-dalek",
+ "gatehouse-runtime-protocol",
  "globset",
  "ignore",
  "libc",

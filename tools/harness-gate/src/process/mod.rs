@@ -5,6 +5,7 @@ mod isolation;
 mod raw_adapter;
 mod reader;
 pub(crate) mod replay;
+pub(crate) mod runtime_host;
 mod signal;
 mod task;
 #[cfg(test)]
