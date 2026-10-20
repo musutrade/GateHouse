@@ -647,6 +647,22 @@ impl VerifiedExecutable {
         Ok(verified)
     }
 
+    /// Format gate only, not loader/library identity or race-free execution.
+    #[cfg(target_os = "linux")]
+    pub(super) fn require_elf(&self) -> Result<(), AdapterError> {
+        use std::os::unix::fs::FileExt;
+        let mut magic = [0u8; 4];
+        self.file
+            .read_exact_at(&mut magic, 0)
+            .map_err(|_| AdapterError::Protocol("runtime executable format unavailable".into()))?;
+        if magic != *b"\x7fELF" {
+            return Err(AdapterError::Protocol(
+                "runtime executable is not ELF".into(),
+            ));
+        }
+        self.revalidate()
+    }
+
     /// Confirm the held handle and the path still denote the hashed file.
     pub(super) fn revalidate(&self) -> Result<(), AdapterError> {
         let changed = || {
