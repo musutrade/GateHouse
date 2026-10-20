@@ -1,4 +1,4 @@
-# Linux runtime probe v2 — Core 0.7.0 candidate
+# Linux runtime probe v2 — introduced in Core 0.7.0
 
 `harness-gate adapter runtime-probe-v2 --request actual.json --trusted-host /protected/host.json`
 
