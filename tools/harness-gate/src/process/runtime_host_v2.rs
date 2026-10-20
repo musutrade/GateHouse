@@ -69,12 +69,11 @@ pub(super) fn run_readonly(
     }
     let expected_bytes =
         serde_json::to_vec(&input.expected).map_err(|_| "runtime request encoding failed")?;
-    if expected_bytes.len() > 65_536 {
-        return Err("invalid runtime bounds");
-    }
     if cancelled() {
         return Err("runtime cancelled");
     }
+    // SealedInputs checks both exact byte lengths before allocating any memfd.
+    // Keep the serialized expected-input limit at that shared boundary.
     let inputs =
         SealedInputs::new(&input.config, &expected_bytes).map_err(|_| "runtime inputs failed")?;
     let mut command = Command::new(&input.executable);
