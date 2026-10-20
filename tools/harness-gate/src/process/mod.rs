@@ -1,6 +1,8 @@
 pub(crate) mod adapter;
 mod capture;
 mod command;
+#[cfg(target_os = "linux")]
+mod fd_inputs;
 mod isolation;
 mod raw_adapter;
 mod reader;

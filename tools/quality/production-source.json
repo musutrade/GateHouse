@@ -147,6 +147,7 @@
         "src/process/signal.rs",
         "src/process/task.rs",
         "src/process/raw_adapter.rs",
+        "src/process/fd_inputs.rs",
         "src/process/runtime_host.rs",
         "runtime-protocol/src/lib.rs",
         "runtime-protocol/src/wire.rs",
@@ -438,7 +439,7 @@
     {
       "path": "src/process/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "dd44c1e208293cd695767cdc2147ea33771753e685a948acd86d48c0bc0db634"
+      "sha256": "dee5dc19eae3412fadedc3d01159b57d7822beb49d3bf477a31bd5f8f635d08b"
     },
     {
       "path": "src/scope/mod.rs",
