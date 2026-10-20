@@ -437,4 +437,288 @@ mod tests {
         let parsed: serde_json::Value = serde_json::from_slice(&output.stdout.bytes).unwrap();
         assert_eq!(parsed.to_string(), r#"{"a":2,"nested":{"b":2}}"#);
     }
+
+    #[cfg(target_os = "linux")]
+    mod inputs {
+        use super::*;
+        use crate::process::fd_inputs::SealedInputs;
+        use std::fs;
+        use std::os::unix::fs::PermissionsExt;
+        use std::path::{Path, PathBuf};
+        use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+        use std::sync::Arc;
+        use std::thread;
+        use std::time::{Duration, Instant};
+        use tempfile::tempdir;
+
+        fn policy(stdout: usize, stderr: usize, output: usize, deadline: Duration) -> HostPolicy {
+            HostPolicy {
+                max_stdout_bytes: stdout,
+                max_stderr_bytes: stderr,
+                max_output_bytes: output,
+                reader_deadline: deadline,
+                ..HostPolicy::default()
+            }
+        }
+
+        fn script(directory: &Path, name: &str, body: &str, mode: u32) -> PathBuf {
+            let path = directory.join(name);
+            fs::write(&path, body).unwrap();
+            fs::set_permissions(&path, fs::Permissions::from_mode(mode)).unwrap();
+            path
+        }
+
+        fn python(directory: &Path, name: &str, body: &str) -> PathBuf {
+            script(
+                directory,
+                name,
+                &format!("#!/usr/bin/python3\n{body}"),
+                0o755,
+            )
+        }
+
+        fn inputs() -> SealedInputs {
+            SealedInputs::new(b"CFG", b"EXP").expect("inputs")
+        }
+
+        const PROCESS_TREE_PARENT: &str = "process::tests::process_tree_parent_fixture";
+
+        fn process_tree_command(marker: &Path) -> Command {
+            let mut command = Command::new(std::env::current_exe().expect("test executable"));
+            command.args(["--exact", PROCESS_TREE_PARENT, "--nocapture"]);
+            command.env("HARNESS_GATE_PROCESS_TREE_MARKER", marker);
+            command
+        }
+
+        fn assert_descendant_stopped(marker: &Path) {
+            assert!(
+                marker.with_extension("ready").exists(),
+                "descendant must reach readiness before cleanup"
+            );
+            fs::write(marker.with_extension("probe"), b"probe").expect("send liveness probe");
+            thread::sleep(Duration::from_secs(2));
+            assert!(
+                !marker.exists(),
+                "descendant survived process-group cleanup"
+            );
+        }
+
+        #[test]
+        fn sealed_inputs_are_exact_and_stdin_is_the_actual_request() {
+            let directory = tempdir().unwrap();
+            let helper = python(
+            directory.path(),
+            "success.py",
+            "import os,sys\ncfg=os.pread(3,65536,0)\nexp=os.pread(4,65536,0)\nactual=sys.stdin.buffer.read()\nsys.stdout.buffer.write(cfg+b'|'+exp+b'|'+actual)\n",
+        );
+            let policy = policy(4096, 4096, 8192, Duration::from_secs(2));
+            let output = run_with_inputs(
+                Command::new(helper),
+                inputs(),
+                &policy,
+                2_000,
+                b"REQ".to_vec(),
+                Instant::now(),
+                &|| false,
+            )
+            .expect("run");
+            assert!(output.status.success());
+            assert_eq!(output.stdout.bytes, b"CFG|EXP|REQ\n");
+            assert!(!output.timed_out);
+            assert!(!output.was_cancelled);
+            assert!(output.output_limited.is_none());
+            assert!(output.request_write_error.is_none());
+            validate_process_output(&output, &policy).expect("valid process output");
+        }
+
+        #[test]
+        fn spawn_failures_return_errors_without_a_child() {
+            let directory = tempdir().unwrap();
+            let missing = directory.path().join("missing");
+            let denied = script(
+                directory.path(),
+                "denied.py",
+                "#!/usr/bin/python3\nraise SystemExit(0)\n",
+                0o644,
+            );
+            for path in [missing, denied] {
+                let result = run_with_inputs(
+                    Command::new(path),
+                    inputs(),
+                    &policy(4096, 4096, 8192, Duration::from_secs(2)),
+                    2_000,
+                    b"REQ".to_vec(),
+                    Instant::now(),
+                    &|| false,
+                );
+                let error = match result {
+                    Ok(_) => panic!("spawn must fail"),
+                    Err(error) => error,
+                };
+                assert!(matches!(error, AdapterError::Protocol(_)));
+            }
+        }
+
+        #[test]
+        fn pre_spawn_cancellation_does_not_start_the_helper() {
+            let directory = tempdir().unwrap();
+            let marker = directory.path().join("spawned");
+            let helper = python(
+                directory.path(),
+                "spawn.py",
+                "import pathlib,sys\npathlib.Path(sys.argv[1]).write_text('spawned')\n",
+            );
+            let mut command = Command::new(helper);
+            command.arg(&marker);
+            let result = run_with_inputs(
+                command,
+                inputs(),
+                &policy(4096, 4096, 8192, Duration::from_secs(2)),
+                2_000,
+                b"REQ".to_vec(),
+                Instant::now(),
+                &|| true,
+            );
+            let error = match result {
+                Ok(_) => panic!("cancelled before spawn"),
+                Err(error) => error,
+            };
+            assert!(matches!(error, AdapterError::Protocol(_)));
+            assert!(!marker.exists());
+        }
+
+        #[test]
+        fn second_pre_spawn_cancellation_checkpoint_prevents_spawn() {
+            let directory = tempdir().unwrap();
+            let marker = directory.path().join("second-spawned");
+            let helper = python(
+                directory.path(),
+                "second.py",
+                "import pathlib,sys\npathlib.Path(sys.argv[1]).write_text('spawned')\n",
+            );
+            let calls = Arc::new(AtomicUsize::new(0));
+            let counter = Arc::clone(&calls);
+            let mut command = Command::new(helper);
+            command.arg(&marker);
+            let result = run_with_inputs(
+                command,
+                inputs(),
+                &policy(4096, 4096, 8192, Duration::from_secs(2)),
+                2_000,
+                b"REQ".to_vec(),
+                Instant::now(),
+                &move || counter.fetch_add(1, Ordering::SeqCst) >= 1,
+            );
+            let error = match result {
+                Ok(_) => panic!("second cancellation checkpoint must prevent spawn"),
+                Err(error) => error,
+            };
+            assert!(matches!(error, AdapterError::Protocol(_)));
+            assert_eq!(calls.load(Ordering::SeqCst), 2);
+            assert!(!marker.exists());
+        }
+
+        #[test]
+        fn timeout_is_bounded_and_terminates_the_descendant() {
+            let directory = tempdir().unwrap();
+            let marker = directory.path().join("timeout.tree");
+            let started = Instant::now();
+            let output = run_with_inputs(
+                process_tree_command(&marker),
+                inputs(),
+                &policy(4096, 4096, 8192, Duration::from_secs(1)),
+                2_000,
+                b"REQ".to_vec(),
+                started,
+                &|| false,
+            )
+            .expect("timed run");
+            assert!(output.timed_out);
+            assert!(started.elapsed() < Duration::from_secs(8));
+            assert_descendant_stopped(&marker);
+        }
+
+        #[test]
+        fn output_overflow_is_limited_and_terminated() {
+            let directory = tempdir().unwrap();
+            let helper = python(
+                directory.path(),
+                "oversize.py",
+                "import sys\nsys.stdout.buffer.write(b'x'*70000)\n",
+            );
+            let policy = policy(1024, 1024, 2048, Duration::from_secs(1));
+            let output = run_with_inputs(
+                Command::new(helper),
+                inputs(),
+                &policy,
+                2_000,
+                b"REQ".to_vec(),
+                Instant::now(),
+                &|| false,
+            )
+            .expect("limited run");
+            assert!(output.output_limited.is_some() || output.stdout.truncated);
+            assert!(output.stdout.bytes.len() <= 1024);
+            let error =
+                validate_process_output(&output, &policy).expect_err("overflow must be rejected");
+            assert!(matches!(error, AdapterError::OutputLimit { .. }));
+        }
+
+        #[test]
+        fn cancellation_during_run_terminates_the_descendant() {
+            let directory = tempdir().unwrap();
+            let marker = directory.path().join("cancel.tree");
+            let ready = marker.with_extension("ready");
+            let flag = Arc::new(AtomicBool::new(false));
+            let watcher_flag = Arc::clone(&flag);
+            let watcher = thread::spawn(move || {
+                for _ in 0..400 {
+                    if ready.exists() {
+                        watcher_flag.store(true, Ordering::SeqCst);
+                        return;
+                    }
+                    thread::sleep(Duration::from_millis(5));
+                }
+            });
+            let started = Instant::now();
+            let output = run_with_inputs(
+                process_tree_command(&marker),
+                inputs(),
+                &policy(4096, 4096, 8192, Duration::from_secs(1)),
+                10_000,
+                b"REQ".to_vec(),
+                started,
+                &|| flag.load(Ordering::SeqCst),
+            )
+            .expect("cancelled run");
+            watcher.join().unwrap();
+            assert!(output.was_cancelled);
+            assert!(started.elapsed() < Duration::from_secs(8));
+            assert_descendant_stopped(&marker);
+        }
+
+        #[test]
+        fn descendant_pipe_retention_is_bounded() {
+            let directory = tempdir().unwrap();
+            let helper = script(
+                directory.path(),
+                "descendant.sh",
+                "#!/bin/sh\n(sleep 30) &\nprintf 'leader\\n'\nexit 0\n",
+                0o755,
+            );
+            let started = Instant::now();
+            let output = run_with_inputs(
+                Command::new(helper),
+                inputs(),
+                &policy(4096, 4096, 8192, Duration::from_millis(500)),
+                3_000,
+                b"REQ".to_vec(),
+                started,
+                &|| false,
+            )
+            .expect("descendant run");
+            assert_eq!(output.stdout.bytes, b"leader\n");
+            assert!(started.elapsed() < Duration::from_secs(5));
+        }
+    }
 }
