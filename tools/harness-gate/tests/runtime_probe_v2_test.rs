@@ -411,6 +411,23 @@ fn protected_path_link_fifo_mode_and_size_fail_closed() {
     assert_rejected(&fixture, &output);
 
     let fixture = Fixture::new();
+    write_mode(&fixture.actual_path, &vec![b'{'; 65_537], 0o600);
+    assert_rejected(&fixture, &fixture.run());
+
+    let fixture = Fixture::new();
+    let actual_fifo = fixture.root.join("actual.fifo");
+    let actual_name = CString::new(actual_fifo.as_os_str().as_encoded_bytes()).unwrap();
+    assert_eq!(unsafe { libc::mkfifo(actual_name.as_ptr(), 0o600) }, 0);
+    let output = wait_deadline(
+        fixture
+            .command_with_paths(&fixture.host_path, &actual_fifo)
+            .spawn()
+            .unwrap(),
+        Duration::from_secs(5),
+    );
+    assert_rejected(&fixture, &output);
+
+    let fixture = Fixture::new();
     let fifo = fixture.root.join("host.fifo");
     let name = CString::new(fifo.as_os_str().as_encoded_bytes()).unwrap();
     assert_eq!(unsafe { libc::mkfifo(name.as_ptr(), 0o600) }, 0);
