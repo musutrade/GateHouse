@@ -2,6 +2,7 @@ pub(crate) mod adapter;
 mod capture;
 mod command;
 mod isolation;
+mod raw_adapter;
 mod reader;
 pub(crate) mod replay;
 mod signal;

@@ -138,3 +138,16 @@ absent/unavailable 必须携带 null object。remove 只允许 completed、rejec
 GateProbes 工作包括独立 adapter、引擎身份绑定及 inspect/remove/start 的逐项实现；
 联合工作包括真实故障矩阵、安装升级回退和旧租约兼容。各项保持独立验收，
 不能以设计实验通过替代默认切换或生命周期迁移完成。
+
+## 原始字节传输准备切片
+
+`process/raw_adapter.rs` 从已有 signed adapter 提取子进程传输：写入请求及
+换行、有界 stdout/stderr、等待与取消、正常退出后的进程组收尾及 reader/writer
+排空预算。原 signed adapter 已使用该模块；签名、制品再校验、环境构造、响应
+协议和最终取消检查仍由原调用方负责。模块返回原始字节，不经过 JSON `Value`，
+以免后续严格协议解析前丢失重复字段。
+
+这是现有行为的内部复用准备，不是运行时 adapter host：没有新增命令、引擎
+选择、持久意图、能力协商或租约迁移。底层暂复用 `HostPolicy` 的输出预算与
+`AdapterError`；调用方仍须鉴权并验证退出状态、输出限制和最终取消状态。
+不能直接把这个内部函数当作受信执行入口。现有平台进程清理限制不变。
