@@ -151,7 +151,8 @@
         "runtime-protocol/src/lib.rs",
         "runtime-protocol/src/wire.rs",
         "runtime-protocol/src/intent.rs",
-        "runtime-protocol/src/store.rs"
+        "runtime-protocol/src/store.rs",
+        "runtime-protocol/src/v2.rs"
       ]
     },
     "project": {

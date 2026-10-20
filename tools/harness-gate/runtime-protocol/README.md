@@ -141,3 +141,37 @@ before spawn, and after receiving output. A test-only per-store seam can fail be
 after publication before directory sync. It has no production environment knob
 and simulates error ordering, not power loss. Independent failure-ordering tests
 and the consuming authenticated mutation host remain the next acceptance work.
+
+## Separate v2 engine binding contract
+
+`v2` defines an independent `gate-runtime/v2` envelope. It supports only `docker`
+with `unix-http`, requiring explicit adapter digest/version, invocation/operation
+key/generation, protected adapter config digest, absolute normalized socket path,
+socket owner uid, client principal uid, configured rootless flag, API version,
+server version, daemon ID and ownership scope. Socket and principal uids need not
+match. Path validation is lexical only: actual canonicalization, symlink/type/
+owner checks and protected ancestors remain adapter responsibilities.
+
+The API version is the selected, pinned request API version. An adapter must
+separately check it against the server's supported range from `/version`; it must
+not treat the advertised maximum as the selected version or read ApiVersion from
+`/info`. Server version and daemon ID must be acquired from their documented
+endpoints. Unsupported route/version errors cannot establish object absence.
+
+Every v2 response has an explicit `observations` field. Present and Absent require
+an object containing `observed_before` and `observed_after`, each with api_version,
+server_version and daemon_id matching the expected binding. Other outcomes require
+explicit null. Missing, duplicate, unknown, malformed or mismatched data reject.
+Operation/outcome shapes and full 64-lowercase-hex object IDs use the existing
+strict wire types; mutation completion alone is never absence.
+
+These observations are assertions from the pinned adapter, not cryptographic
+proof from a daemon. Daemon ID equality cannot detect every restart. Rootless is
+a configuration expectation, not authenticated user-namespace/cgroup evidence.
+The contract performs no HTTP, socket or filesystem inspection and cannot prove
+that an HTTP 404 came from the correct container route. Engine-specific acceptance
+must establish those prerequisites before deployment.
+
+No v1 request or lease is upgraded or inferred. v1 parsers, intent/store records,
+probe and private mutation host remain v1; they reject v2 documents. v2 has no
+persistence/host integration yet and does not enable a public removal command.
