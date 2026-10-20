@@ -90,6 +90,8 @@ SOURCE_FILES = sorted({"report_history/dashboard.rs", "report_history/dashboard/
     # Batch47 sealed descriptor bootstrap: additive measured source absent at
     # base, not a legacy hotspot; recollect both commits, thresholds unchanged.
     {"process/fd_inputs.rs"} |
+    # Additive pure config binding source, absent at base; no legacy hotspot.
+    {"process/runtime_config.rs"} |
     # Runtime protocol now links into Core; recollect both commits with the
     # full production inventory rather than rely on standalone unit tests.
     {"../runtime-protocol/src/lib.rs", "../runtime-protocol/src/wire.rs",
