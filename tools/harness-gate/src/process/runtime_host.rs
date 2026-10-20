@@ -164,10 +164,7 @@ fn validate_exit(output: &raw_adapter::ProcessOutput) -> Result<()> {
 /// The token is consumed even on failure; its borrow retains the directory lock.
 /// A mutation response can never complete the intent, including `completed`.
 #[cfg(unix)]
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "staged internal host; engine integration pending")
-)]
+#[allow(dead_code)] // Staged internal host; engine integration pending.
 pub(crate) fn dispatch_authorized(
     authorization: gatehouse_runtime_protocol::store::DispatchAuthorization<'_>,
     trusted_host: &Path,
@@ -187,13 +184,7 @@ pub(crate) fn dispatch_authorized(
 /// Recovery never calls the mutation entry. Present/unavailable or any error
 /// retains Unknown; only a separately pinned exact-ID Absent can complete it.
 #[cfg(unix)]
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "staged internal recovery; engine integration pending"
-    )
-)]
+#[allow(dead_code)] // Staged internal recovery; engine integration pending.
 pub(crate) fn recover_unknown(
     store: &mut gatehouse_runtime_protocol::store::Store,
     trusted_host: &Path,
