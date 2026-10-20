@@ -212,3 +212,319 @@ fn lock(directory: &File, timeout: Duration, cancelled: &impl Fn() -> bool) -> R
         );
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::intent::Intent;
+    use crate::{Binding, Engine, Namespace, Object, Outcome, Protocol, Response};
+    use serde_json::json;
+    use std::io::{BufRead, BufReader};
+    use std::os::unix::fs::PermissionsExt;
+    use std::process::{Child, Command, Stdio};
+    use tempfile::TempDir;
+
+    // These are real temporary-filesystem tests. I/O failures are injected with
+    // permissions; no power-loss or hostile same-user claim is made.
+
+    fn id() -> String {
+        "a".repeat(64)
+    }
+
+    fn binding() -> Binding {
+        Binding {
+            protocol: Protocol::V1,
+            adapter_sha256: "b".repeat(64),
+            adapter_version: "1.0.0".into(),
+            invocation: "inv-1".into(),
+            operation_key: "op-1".into(),
+            generation: "gen-1".into(),
+            namespace: Namespace {
+                engine: Engine::Docker,
+                endpoint: "unix:///run/docker.sock".into(),
+                context: "ctx-1".into(),
+                principal: "uid:1000".into(),
+                rootless: true,
+                scope: "scope-1".into(),
+            },
+        }
+    }
+
+    fn removal() -> Request {
+        Request {
+            binding: binding(),
+            operation: Operation::Remove { object_id: id() },
+        }
+    }
+
+    fn labels() -> Vec<Label> {
+        vec![Label {
+            key: "harness-gate.owner".into(),
+            value: "harness-gate".into(),
+        }]
+    }
+
+    fn present() -> Response {
+        Response {
+            binding: binding(),
+            operation: Operation::Inspect { object_id: id() },
+            outcome: Outcome::Present {
+                object: Object {
+                    object_id: id(),
+                    labels: labels(),
+                },
+            },
+        }
+    }
+
+    fn absent() -> Response {
+        Response {
+            binding: binding(),
+            operation: Operation::Inspect { object_id: id() },
+            outcome: Outcome::Absent,
+        }
+    }
+
+    fn private_root() -> (TempDir, PathBuf) {
+        let temporary = tempfile::tempdir().unwrap();
+        let directory = temporary.path().join("intent");
+        fs::create_dir(&directory).unwrap();
+        fs::set_permissions(&directory, fs::Permissions::from_mode(0o700)).unwrap();
+        (temporary, fs::canonicalize(directory).unwrap())
+    }
+
+    fn open(root: &Path) -> Store {
+        Store::open(root, &removal(), Duration::from_secs(1), || false).unwrap()
+    }
+
+    fn prepared_record() -> Vec<u8> {
+        serde_json::to_vec(&Intent::prepare(&removal(), &present(), &labels()).unwrap()).unwrap()
+    }
+
+    fn write_record(root: &Path, bytes: &[u8]) {
+        fs::write(root.join(RECORD), bytes).unwrap();
+        fs::set_permissions(root.join(RECORD), fs::Permissions::from_mode(0o600)).unwrap();
+    }
+
+    fn prepare(store: &mut Store) {
+        store.prepare(&present(), &labels()).unwrap();
+    }
+
+    fn open_prepared(root: &Path) {
+        let mut store = open(root);
+        prepare(&mut store);
+    }
+
+    fn binding_mutations() -> Vec<Binding> {
+        let mut values = Vec::new();
+        let mutations: [fn(&mut Binding); 11] = [
+            |b| b.adapter_sha256 = "c".repeat(64),
+            |b| b.adapter_version = "2".into(),
+            |b| b.invocation = "inv-2".into(),
+            |b| b.operation_key = "op-2".into(),
+            |b| b.generation = "gen-2".into(),
+            |b| b.namespace.engine = Engine::Podman,
+            |b| b.namespace.endpoint = "unix:///other".into(),
+            |b| b.namespace.context = "ctx-2".into(),
+            |b| b.namespace.principal = "uid:1001".into(),
+            |b| b.namespace.rootless = false,
+            |b| b.namespace.scope = "scope-2".into(),
+        ];
+        for mutate in mutations {
+            let mut value = binding();
+            mutate(&mut value);
+            values.push(value);
+        }
+        values
+    }
+
+    struct LockChild(Child);
+
+    impl Drop for LockChild {
+        fn drop(&mut self) {
+            let _ = self.0.kill();
+            let _ = self.0.wait();
+        }
+    }
+
+    fn hold_lock(root: &Path) -> LockChild {
+        let mut child = Command::new("python3")
+            .args([
+                "-c",
+                "import fcntl,os,sys,time\nfd=os.open(sys.argv[1],os.O_RDONLY|os.O_DIRECTORY)\nfcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)\nprint('ready',flush=True)\ntime.sleep(30)",
+            ])
+            .arg(root)
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let stdout = child.stdout.take().unwrap();
+        let mut line = String::new();
+        BufReader::new(stdout).read_line(&mut line).unwrap();
+        assert_eq!(line.trim(), "ready");
+        LockChild(child)
+    }
+
+    #[test]
+    fn prepare_unknown_reopen_reconcile_completed_cycle() {
+        let (_temporary, root) = private_root();
+        {
+            let mut store = open(&root);
+            assert_eq!(store.phase(), None);
+            assert!(store.begin_dispatch().is_err());
+            prepare(&mut store);
+            assert_eq!(store.phase(), Some(Phase::Prepared));
+            assert!(store.prepare(&present(), &labels()).is_err());
+        }
+        {
+            let mut store = open(&root);
+            assert_eq!(store.phase(), Some(Phase::Prepared));
+            store.begin_dispatch().unwrap();
+            assert_eq!(store.phase(), Some(Phase::Unknown));
+        }
+        let mut store = open(&root);
+        assert_eq!(store.phase(), Some(Phase::Unknown));
+        store.observe_dispatch(None).unwrap();
+        assert_eq!(store.phase(), Some(Phase::Unknown));
+        store.reconcile(&absent()).unwrap();
+        assert_eq!(store.phase(), Some(Phase::Completed));
+        assert!(store.begin_dispatch().is_err());
+        assert!(store.observe_dispatch(None).is_err());
+        assert!(store.reconcile(&absent()).is_err());
+        drop(store);
+        let store = open(&root);
+        assert_eq!(store.phase(), Some(Phase::Completed));
+    }
+
+    #[test]
+    fn conflicting_expected_is_rejected() {
+        let (_temporary, root) = private_root();
+        open_prepared(&root);
+        for changed in binding_mutations() {
+            let expected = Request {
+                binding: changed,
+                operation: removal().operation,
+            };
+            assert!(Store::open(&root, &expected, Duration::from_secs(1), || false).is_err());
+        }
+        let expected = Request {
+            binding: binding(),
+            operation: Operation::Remove {
+                object_id: "b".repeat(64),
+            },
+        };
+        assert!(Store::open(&root, &expected, Duration::from_secs(1), || false).is_err());
+    }
+
+    #[test]
+    fn lock_timeout_and_cancel_are_bounded_in_a_subprocess() {
+        let (_temporary, root) = private_root();
+        let child = hold_lock(&root);
+        assert!(Store::open(&root, &removal(), Duration::from_millis(100), || false).is_err());
+        drop(child);
+        let store = open(&root);
+        drop(store);
+
+        let child = hold_lock(&root);
+        let calls = std::cell::Cell::new(0_u32);
+        let result = Store::open(&root, &removal(), Duration::from_secs(5), || {
+            let current = calls.get();
+            calls.set(current + 1);
+            current > 0
+        });
+        assert!(result.is_err());
+        drop(child);
+    }
+
+    #[test]
+    fn record_inputs_reject_links_fifo_modes_size_and_legacy() {
+        let cases: [(&str, fn(&Path)); 6] = [
+            ("symlink", |root| {
+                let target = root.join("record-target");
+                write_record(root, &prepared_record());
+                fs::rename(root.join(RECORD), &target).unwrap();
+                std::os::unix::fs::symlink(&target, root.join(RECORD)).unwrap();
+            }),
+            ("hardlink", |root| {
+                let target = root.join("record-target");
+                write_record(root, &prepared_record());
+                fs::hard_link(root.join(RECORD), &target).unwrap();
+            }),
+            ("fifo", |root| {
+                let status = Command::new("mkfifo")
+                    .arg(root.join(RECORD))
+                    .status()
+                    .unwrap();
+                assert!(status.success());
+            }),
+            ("mode", |root| {
+                write_record(root, &prepared_record());
+                fs::set_permissions(root.join(RECORD), fs::Permissions::from_mode(0o644)).unwrap();
+            }),
+            ("oversize", |root| {
+                let mut bytes = prepared_record();
+                bytes.extend(std::iter::repeat_n(b' ', MAX_MESSAGE_BYTES));
+                write_record(root, &bytes);
+            }),
+            ("legacy-v2", |root| {
+                write_record(
+                    root,
+                    &serde_json::to_vec(&json!({
+                        "owner_marker": "harness-gate",
+                        "schema_version": 2,
+                        "runtime": "docker",
+                        "runtime_object_id": id()
+                    }))
+                    .unwrap(),
+                );
+            }),
+        ];
+        for (name, setup) in cases {
+            let (_temporary, root) = private_root();
+            setup(&root);
+            assert!(
+                Store::open(&root, &removal(), Duration::from_secs(1), || false).is_err(),
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
+    fn record_change_and_directory_rebind_are_rejected() {
+        let (_temporary, root) = private_root();
+        open_prepared(&root);
+        let mut store = open(&root);
+        fs::write(root.join(RECORD), b"{}").unwrap();
+        assert!(store.begin_dispatch().is_err());
+        assert!(store.reconcile(&absent()).is_err());
+        drop(store);
+
+        let (_temporary, root) = private_root();
+        let moved = root.parent().unwrap().join("moved");
+        let mut store = open(&root);
+        fs::rename(&root, &moved).unwrap();
+        fs::create_dir(&root).unwrap();
+        fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
+        assert!(store.prepare(&present(), &labels()).is_err());
+    }
+
+    #[test]
+    fn initial_noclobber_and_commit_failure_poison_until_reopen() {
+        let (_temporary, root) = private_root();
+        let mut store = open(&root);
+        write_record(&root, &prepared_record());
+        assert!(store.prepare(&present(), &labels()).is_err());
+
+        let (_temporary, root) = private_root();
+        let mut store = open(&root);
+        fs::set_permissions(&root, fs::Permissions::from_mode(0o500)).unwrap();
+        assert!(store.prepare(&present(), &labels()).is_err());
+        fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
+        assert!(store.begin_dispatch().is_err());
+        assert!(store.prepare(&present(), &labels()).is_err());
+        drop(store);
+        let mut store = open(&root);
+        assert_eq!(store.phase(), None);
+        prepare(&mut store);
+        assert_eq!(store.phase(), Some(Phase::Prepared));
+    }
+}
