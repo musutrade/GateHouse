@@ -10,11 +10,11 @@
       "source_commit": "660673073eceec8964aaaa8df524693f3eaa6025"
     },
     "onboarding-presets": {
-      "tag": "onboarding-presets-v1.0.1",
-      "archive": "gateprobes-onboarding-presets-1.0.1.tar.gz",
-      "sha256": "f2d8620d78be07d459459b1ec56fbd368d6605cc17e055e4f1f042ce30e5f2a3",
-      "prefix": "gateprobes-onboarding-presets-1.0.1",
-      "source_commit": "81460bb73f45f8f399bdea3afea18bf2c471204d"
+      "tag": "onboarding-presets-v1.0.2",
+      "archive": "gateprobes-onboarding-presets-1.0.2.tar.gz",
+      "sha256": "88650733c53d1dfe955c9c6ff8e1a938d90c4a95cd367a6c211006bf48e83bc5",
+      "prefix": "gateprobes-onboarding-presets-1.0.2",
+      "source_commit": "85b1856dd7061bfb19683df3921060b49490e5e2"
     }
   }
 }

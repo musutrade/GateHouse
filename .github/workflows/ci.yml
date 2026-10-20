@@ -231,7 +231,7 @@ jobs:
         run: |
           set -euo pipefail
           core_target="$(cargo metadata --manifest-path tools/harness-gate/Cargo.toml --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
-          python3 -B "$RUNNER_TEMP/gateprobes-artifacts/gateprobes-onboarding-presets-1.0.1/tools/onboarding/acceptance.py" \
+          python3 -B "$RUNNER_TEMP/gateprobes-artifacts/gateprobes-onboarding-presets-1.0.2/tools/onboarding/acceptance.py" \
             --core "$core_target/debug/harness-gate" --work-dir "$RUNNER_TEMP/plugin-onboarding"
 
       - name: Retain real plugin onboarding evidence
