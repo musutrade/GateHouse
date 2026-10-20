@@ -5,6 +5,19 @@ All notable changes to Harness-Gate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - pending publication
+
+- Add the Linux protected-file, sealed-input read-only runtime v2 host and strict
+  engine binding contract. Remove and Absent remain refused; service engine
+  selection and lease migration are unchanged.
+- Externalize GitHub consumers/actions and operator lifecycle tooling; retire
+  platform source-link rendering and transport validation from Core.
+- Add conservative intent transitions and cooperative Unix durable storage,
+  without a production mutation command or power-loss guarantee.
+
+See [release boundaries and compatibility](docs/releases/0.7.0.zh-CN.md).
+This entry describes a candidate, not published artifact acceptance.
+
 ## [0.6.0] - pending publication
 
 - Release the explicit signed-plugin store, trusted-key and plugin preset CLI
