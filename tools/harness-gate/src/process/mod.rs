@@ -7,6 +7,7 @@ mod isolation;
 mod raw_adapter;
 mod reader;
 pub(crate) mod replay;
+mod runtime_config;
 pub(crate) mod runtime_host;
 mod signal;
 mod task;
