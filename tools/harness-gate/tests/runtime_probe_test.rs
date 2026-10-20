@@ -99,10 +99,11 @@ impl Fixture {
     }
 
     fn host_value(&self, executable: &Path, expected: Value, timeout_ms: u64) -> Value {
+        let cwd = fs::canonicalize(self.dir.path()).unwrap();
         json!({
             "schema": "gate-runtime-host/v1",
             "executable": executable,
-            "cwd": self.dir.path(),
+            "cwd": cwd,
             "timeout_ms": timeout_ms,
             "expected": expected
         })

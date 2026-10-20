@@ -373,6 +373,11 @@
       "path": "src/config/toml_fuzz.rs",
       "kind": "test",
       "reason": "Bounded TOML loader mutation harness compiled only under cfg(test); no production implementation."
+    },
+    {
+      "path": "runtime-protocol/src/contract.rs",
+      "kind": "test",
+      "reason": "Inline cfg(test) contract module for the runtime protocol crate; no production code or executable mapping."
     }
   ],
   "external_exclusions": [
