@@ -135,6 +135,9 @@ jobs:
         with:
           tool: cargo-audit
 
+      - name: Preflight registry package before GitHub publication
+        run: cargo publish --manifest-path tools/harness-gate/Cargo.toml --package harness-gate --locked --dry-run
+
       - name: Run dependency audit
         run: cargo audit --file tools/harness-gate/Cargo.lock --deny warnings
 
