@@ -149,7 +149,8 @@
         "src/process/raw_adapter.rs",
         "src/process/runtime_host.rs",
         "runtime-protocol/src/lib.rs",
-        "runtime-protocol/src/wire.rs"
+        "runtime-protocol/src/wire.rs",
+        "runtime-protocol/src/intent.rs"
       ]
     },
     "project": {
