@@ -573,7 +573,7 @@ fn validate_request_envelope_at(
 /// before spawn, so a rename, symlink swap or in-place rewrite of the verified
 /// path after hashing fails closed instead of executing unverified bytes.
 #[derive(Debug)]
-struct VerifiedExecutable {
+pub(super) struct VerifiedExecutable {
     path: PathBuf,
     file: File,
     identity: FileIdentity,
@@ -612,7 +612,7 @@ impl FileIdentity {
 }
 
 impl VerifiedExecutable {
-    fn open(path: &Path, expected_digest: &str) -> Result<Self, AdapterError> {
+    pub(super) fn open(path: &Path, expected_digest: &str) -> Result<Self, AdapterError> {
         let path = canonical_file(path, "adapter executable")?;
         let protocol = |action: &str, error: io::Error| {
             AdapterError::Protocol(format!(
@@ -648,7 +648,7 @@ impl VerifiedExecutable {
     }
 
     /// Confirm the held handle and the path still denote the hashed file.
-    fn revalidate(&self) -> Result<(), AdapterError> {
+    pub(super) fn revalidate(&self) -> Result<(), AdapterError> {
         let changed = || {
             AdapterError::Protocol(format!(
                 "adapter executable {} changed after digest verification",

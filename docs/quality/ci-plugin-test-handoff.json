@@ -1,13 +1,13 @@
 {
   "schema": "core-plugin-test-handoff/v2",
   "repository": "musutrade/GateProbes",
-  "revision": "a762f0c4c7da3945367b870bccc39aac8069132f",
-  "ci_run": "https://github.com/musutrade/GateProbes/actions/runs/38406597322",
+  "revision": "945db3ebaf9c5877da588aade5fa0b70fae99ce1",
+  "ci_run": "https://github.com/musutrade/GateProbes/actions/runs/39353443143",
   "acceptance": {
-    "file": "docs/quality/issue-10/legacy-compatibility.json",
-    "sha256": "f82f330f021f64e003c69797619cfa988f5f56b5e25a20afd421cf1e14821086",
-    "inventory_sha256": "3dd45e80dbc655505d1650c65fc813a9ef89960bfb1986020ec912c7d94b6357",
-    "inventory_file": "docs/quality/issue-10/compatibility-inventory.json"
+    "file": "docs/quality/runtime-probe-parity/legacy-compatibility.json",
+    "sha256": "aa135c76cd4e3f0890a2ec38a70370be36a8388665f4b8a13afd5e0ebc836f9b",
+    "inventory_sha256": "b3e66c20b39343e1720162e82ef874ca87ee8a5968b40f09a809156c50e5a6fa",
+    "inventory_file": "docs/quality/runtime-probe-parity/compatibility-inventory.json"
   },
   "native_acceptance": {
     "revision": "481eaa6d60264bb1569b85b1c51b6a1a646d2054",
@@ -899,12 +899,12 @@
     "tools/quality/harness_evidence.py": "fcb07569d8fa386fb11324003ba939a9bf2522a7baf60a7ef9194ac703414368",
     "tools/quality/policy_engine.py": "a3ac2948eec2a27b3968e531c2e6f9e7f797afd832f819190734aa545388e619",
     "tools/quality/policy_ratchet.py": "90eeb951393bed7393d5ed1a223c533e18c986ecb63ad06c7fbceeecef640620",
-    "tools/quality/production_coverage.py": "170d7d7470161a25380fdfaf1d0ca62c453e988202ad23dd54ac7b4c548683f1",
+    "tools/quality/production_coverage.py": "50f8548080adb8730b75fe51bbe647979868b72fd00d0b8ca4729a2d47e6437d",
     "tools/quality/project_model.py": "d1d493bbd4566b8aaf469d0f28fdee89a3c3a3e3ebfe3e1068b9d93e90d1b196",
     "tools/quality/project_report.py": "ff1a83d66fa63f988faad8a586e2f8ce9ad7c2f37d4e39c83841da6662c2acd5",
     "tools/quality/quality_common.py": "1b908a7e791fc6df4a5f2d5112a0180c35a6e39a1e8f932a95672d24c78e4cf8",
     "tools/quality/quality_evidence.py": "8938ce2fc2d49caf2e3f3dac284fe3d07a13a3da9cbd8e1e729f011e2d5d145e",
-    "tools/quality/rust_reference.py": "73a76252eebbd1534cfae8d395c70c03a862de3c17908c721eee4d6c5a179a75",
+    "tools/quality/rust_reference.py": "815013865e6b90662b9bfd81a33ede6999fc1dd5d3e37727f58be2b162fbf260",
     "tools/quality/schema/capability-requirements.schema.json": "763da8a3a15cde9c338e8ca076e52488f5d0795ff61e05f8018b61cdc63c40ea",
     "tools/quality/schema/harness-evidence.schema.json": "fbd0b737f73f8d65f196581859fcdf18d8d47da522c98d1020c22d2e0660d406",
     "tools/quality/schema/policy-exceptions.schema.json": "da3c0439d1a7484cef7571e9fd5bd5e3446f64419d51a7556ea69c7a004ead78",
@@ -1120,12 +1120,17 @@
     "test_typescript_policy": "Retain generic policy/debt/history reference tests, including mixed Rust/TypeScript historical series; these exercise Core decisions."
   },
   "policy": "Engineering Policy unchanged. Rust Core retains decisions, requiredness, thresholds, measurement identity, baseline/debt/ratchet and release authority. Held bundled-runtime methods are not passing assurance or independently delivered native-plugin parity.",
+  "parity_renewal": {
+    "prior_receipt": "docs/quality/runtime-probe-parity/prior-handoff.json",
+    "prior_receipt_sha256": "db53354720d5a29c7002a3340b057f5ab0b075f722d19e337781f57fcadd3b50",
+    "note": "Executed parity renewed for production_coverage.py only. Original scope-only receipt is archived unchanged; active scope comparison retains the same narrowing and immutable dependency audit with an explicitly derived renewed comparison baseline. Delegation and native acceptance unchanged."
+  },
   "scope_review": {
     "issue": "https://github.com/musutrade/GateHouse/issues/11",
-    "prior_receipt": "docs/quality/issue-11/prior-test-handoff.json",
-    "note": "Remove two unrelated Core-only release consumers from the plugin parity boundary. Delegated modules and their transitive local imports do not use either consumer. Core measurement tests remain local and required; all actual plugin/shared inputs retain their original hashes. No plugin CI acceptance is renewed or implied.",
+    "prior_receipt": "docs/quality/issue-11/runtime-renewal-comparison.json",
+    "note": "Retain the same two-consumer scope narrowing and dependency audit. Compare against explicitly derived pre-narrowing baseline renewed with GP run39353443143; original historical receipts are unchanged.",
     "dependency_audit": "docs/quality/issue-11/plugin-dependencies.json",
     "dependency_audit_sha256": "c144f7b47c7d43d7308a6874693192061bb6445ef431713c4a833fca35654530",
-    "prior_receipt_sha256": "9cae49e588ac06b3e370df982b987594cdbbb131e63ca00e66dfa45fcbfa1fd8"
+    "prior_receipt_sha256": "eb6b0f8685139640b3714b8ea6e3e459e41b297fb34bb683c3b2d42e2cfd7e2c"
   }
 }

@@ -79,6 +79,8 @@ class ProductionCoverageTests(unittest.TestCase):
         self.assertEqual(owners["quality-core/policy.rs"], "quality-core")
         self.assertEqual(owners["quality-core/replay.rs"], "quality-core")
         self.assertEqual(owners["src/process/replay.rs"], "process")
+        self.assertEqual(owners["runtime-protocol/src/lib.rs"], "process")
+        self.assertEqual(owners["runtime-protocol/src/wire.rs"], "process")
 
     def test_exact_threshold_passes_and_keeps_separate_raw_metrics(self):
         result = self.evaluate()

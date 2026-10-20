@@ -1,0 +1,816 @@
+{
+  "schema": "legacy-core-compatibility-result/v1",
+  "status": "pass",
+  "revision": "945db3ebaf9c5877da588aade5fa0b70fae99ce1",
+  "ci_run": "https://github.com/musutrade/GateProbes/actions/runs/39353443143",
+  "source_commit": "226b5b541a5705b2fcddc960c48ea704f621905d",
+  "inventory_sha256": "b3e66c20b39343e1720162e82ef874ca87ee8a5968b40f09a809156c50e5a6fa",
+  "core_fixture_sha256": "fcdae780571dbe46c1c8433a74a3f9967398baf6bedc288ae6086d32711e86b3",
+  "producer_parity": "pass",
+  "methods": [
+    {
+      "method": "test_rust_collector_contract.DeliveryManifestTests.test_exact_tuple_and_empty_production_matrix",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_contract.DeliveryManifestTests.test_host_configuration_schema_is_explicit_and_versioned",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_contract.DeliveryManifestTests.test_malformed_manifest",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_contract.DeliveryManifestTests.test_receipt_required_and_duplicate_tuple_rejected",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_contract.DeliveryManifestTests.test_relocation_never_establishes_history_equivalence",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_contract.DeliveryManifestTests.test_unknown_combinations_and_wrong_tools_fail_before_sampling",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_contract.MeasurementContractTests.test_all_capability_states_remain_distinct_without_invented_values",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_contract.MeasurementContractTests.test_incomplete_and_operational_errors_never_supply_records",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_contract.MeasurementContractTests.test_legacy_certify_exit_keeps_threshold_failure",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_contract.MeasurementContractTests.test_legacy_nonzero_with_partial_json_is_not_success",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_contract.MeasurementContractTests.test_low_coverage_is_complete_facts_without_verdict",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_contract.MeasurementContractTests.test_native_missing_evidence_cannot_be_legacy_threshold_success",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_delivery.ObservedDeliveryTests.test_host_configuration_changes_preserve_immutable_code_checks",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_delivery.ObservedDeliveryTests.test_pinned_metadata_rejects_changed_duplicate_and_symlink_bytes",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_delivery.ObservedDeliveryTests.test_relocated_capture_is_not_series_equivalence",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_delivery.ObservedDeliveryTests.test_unconfigured_delivery_does_not_probe_or_certify",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_delivery.ObservedDeliveryTests.test_wrong_core_bytes_are_rejected_before_executing_them",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_runtime.BuildInputTests.test_changed_source_and_unsafe_destination_reject_before_assembly",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_runtime.InstalledLayoutTests.test_installed_runtime_resolves_the_host_contract_schema",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_collector_runtime.StandaloneNativeTests.test_actual_core_authenticates_private_collector_and_rejects_replay",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "held",
+      "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+    },
+    {
+      "method": "test_rust_collector_runtime.StandaloneNativeTests.test_actual_core_configures_installed_collector_once_and_rejects_replay",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "held",
+      "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+    },
+    {
+      "method": "test_rust_collector_runtime.StandaloneNativeTests.test_actual_core_rejects_malformed_output_once_and_consumes_nonce",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "held",
+      "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+    },
+    {
+      "method": "test_rust_collector_runtime.StandaloneNativeTests.test_complete_fixture_classifies_with_private_reexport",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "held",
+      "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+    },
+    {
+      "method": "test_rust_collector_runtime.StandaloneNativeTests.test_doctor_and_unknown_collect_never_sample",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "held",
+      "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+    },
+    {
+      "method": "test_rust_collector_runtime.StandaloneNativeTests.test_private_c_dependency_compiles_archives_and_links",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "held",
+      "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+    },
+    {
+      "method": "test_rust_collector_runtime.StandaloneNativeTests.test_private_cargo_capture_preserves_incomplete_classification",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "held",
+      "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+    },
+    {
+      "method": "test_rust_collector_runtime.StandaloneNativeTests.test_private_generic_projection_is_decided_by_actual_core",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "held",
+      "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+    },
+    {
+      "method": "test_rust_collector_runtime.StandaloneNativeTests.test_real_low_coverage_is_completion_and_legacy_exit_is_preserved",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "held",
+      "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+    },
+    {
+      "method": "test_rust_collector_runtime.StandaloneNativeTests.test_released_core_evaluates_typed_private_measurements",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "held",
+      "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+    },
+    {
+      "method": "test_rust_collector_runtime.StandaloneNativeTests.test_wrong_anchor_has_no_measurement",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "held",
+      "reason": "Paused bundled-runtime product; original RUST_COLLECTOR_RUNTIME opt-in acceptance remains archived, never enabled by ordinary CI."
+    },
+    {
+      "method": "test_rust_native.NativeEvidenceTests.test_cfg_selection_and_history_identity",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_native.NativeEvidenceTests.test_duplicate_omitted_ambiguous_and_unowned_regions",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_native.NativeEvidenceTests.test_expansion_context_omission_is_rejected",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_native.NativeEvidenceTests.test_mir_omission_with_new_manifest_is_rejected",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_native.NativeEvidenceTests.test_real_closure_async_generic_and_macro_mapping",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_native.NativeEvidenceTests.test_real_derive_cannot_claim_generated_functions_are_absent",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_native.NativeEvidenceTests.test_retained_native_artifacts_replay_after_relocation",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_rust_native.NativeEvidenceTests.test_tampering_and_new_hash_cannot_invent_native_counts",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_ambiguous_parser_symbols",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_crap_is_explicitly_unsupported_with_no_invented_value_or_series",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_duplicate_native_symbols",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_failed_tool_incomplete_collection_and_undeclared_native_artifact",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_input_tampering_staleness_malformed_parser_and_path_escape",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_missing_native_coverage",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_missing_source_maps",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_nonzero_exit_timeout_and_malformed_stdout_fail_closed",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_real_mixed_subjects_and_all_capabilities_through_both_transports",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_rebound_unknown_method_identity_and_duplicate_scope_fail_closed",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_receipted_source_map_failure",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_replay_binding_rejects_changed_context_collector_and_scope",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_request_contract_rejects_unknown_duplicate_or_scoped_capabilities",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_response_omission_tampering_undeclared_artifact_and_provenance",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_single_capability_request_preserves_existing_measurement_series",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_tampered_source_map_inventory",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.FreshNativeNegativeTests.test_zero_denominator_remains_explicitly_unavailable",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.NativeWindowTests.test_changed_semantic_series_blocks_without_rewriting_historical_debt",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.NativeWindowTests.test_disallowed_legacy_debt_fails_and_keeps_ledger",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.NativeWindowTests.test_missing_and_duplicate_base_evidence_block_legacy_debt",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.NativeWindowTests.test_native_receipts_match_retained_git_parent_and_source_bytes",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.NativeWindowTests.test_required_unsupported_metrics_never_gain_numeric_defaults",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_acceptance.NativeWindowTests.test_two_real_pairs_exact_counters_outcomes_and_debt",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_advisory.AdvisoryTests.test_changed_contract_archive_is_rejected_before_extraction",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_advisory.AdvisoryTests.test_failed_replay_retains_machine_readable_failure_and_inventory",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_contracts.TypeScriptContractTests.test_cli_returns_nonzero_for_break_and_missing_artifact",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_contracts.TypeScriptContractTests.test_equal_generated_bytes_with_changed_input_digest_are_unavailable",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_contracts.TypeScriptContractTests.test_generic_policy_rejects_normalized_provenance_mismatch",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_contracts.TypeScriptContractTests.test_malformed_tool_output_is_not_zero_breaks",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_contracts.TypeScriptContractTests.test_measurement_failure_and_invocation_mismatch_even_with_rebound_receipt",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_contracts.TypeScriptContractTests.test_missing_tampered_and_extra_artifacts_fail_closed",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_contracts.TypeScriptContractTests.test_real_break_blocks_green_components_and_preserves_raw_relationships",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_contracts.TypeScriptContractTests.test_real_compatible_contract_and_current_client_pass",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_contracts.TypeScriptContractTests.test_receipt_and_caller_context_mismatch_fail_closed",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_contracts.TypeScriptContractTests.test_stale_or_missing_generated_client_cannot_pass",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_contracts.TypeScriptContractTests.test_tool_facts_do_not_decide_generic_policy",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_crap_is_explicitly_unsupported_with_no_invented_value_or_series",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_failed_tool_incomplete_collection_and_undeclared_native_artifact",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_input_tampering_staleness_malformed_parser_and_path_escape",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_nonzero_exit_timeout_and_malformed_stdout_fail_closed",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_real_mixed_subjects_and_all_capabilities_through_both_transports",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_rebound_unknown_method_identity_and_duplicate_scope_fail_closed",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_receipted_source_map_failure",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_replay_binding_rejects_changed_context_collector_and_scope",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_request_contract_rejects_unknown_duplicate_or_scoped_capabilities",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_response_omission_tampering_undeclared_artifact_and_provenance",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_single_capability_request_preserves_existing_measurement_series",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_reference.TypeScriptCollectorTests.test_zero_denominator_remains_explicitly_unavailable",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_ambiguous_and_incomplete_parser_joins_rejected",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_basename_unknown_and_fabricated_native_coordinates_rejected",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_bundled_map_keeps_exactly_one_original_source_per_subject",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_duplicate_json_provenance_fields_are_ambiguous",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_duplicate_method_names_and_anonymous_arrows_have_unique_original_identities",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_every_tool_boundary_and_normalization_change_breaks_series_compatibility",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_exact_native_file_and_function_counters",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_invalid_and_incomplete_counters_do_not_become_defaults",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_missing_ambiguous_map_and_emitted_linkage_rejected",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_native_missing_map_is_not_perfect_coverage",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_partial_mapping_cannot_supply_measured_subjects",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_receipted_incomplete_or_invalid_collection_still_fails_closed",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_source_map_semantic_negatives_even_if_artifacts_are_rehashed",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_stale_or_missing_request_sources_rejected",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_tampered_native_archive_or_parser_index_rejected_at_entry",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_template_and_generated_multisource_remain_unsupported",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_utf16_coordinates_and_invalid_columns",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_semantics.TypeScriptSemanticsTests.test_zero_denominator_has_no_numeric_value",
+      "owner": "GateProbes",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_policy.TypeScriptPolicyTests.test_agent_violation_retains_actionable_base_head_evidence",
+      "owner": "Core",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_policy.TypeScriptPolicyTests.test_incompatible_series_preserves_no_favorable_debt_result",
+      "owner": "Core",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_policy.TypeScriptPolicyTests.test_missing_base_and_ambiguous_identity_fail_closed",
+      "owner": "Core",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_policy.TypeScriptPolicyTests.test_modify_rename_move_inherit_only_explicit_history",
+      "owner": "Core",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_policy.TypeScriptPolicyTests.test_native_thresholds_and_unchanged_legacy_debt",
+      "owner": "Core",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_policy.TypeScriptPolicyTests.test_real_rust_and_typescript_share_policy_with_distinct_series",
+      "owner": "Core",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_policy.TypeScriptPolicyTests.test_regression_improvement_new_and_resolved_debt",
+      "owner": "Core",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_policy.TypeScriptPolicyTests.test_unavailable_base_coverage_blocks_incremental_credit",
+      "owner": "Core",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_typescript_policy.TypeScriptPolicyTests.test_unavailable_risk_template_and_route_cannot_inherit_file_coverage",
+      "owner": "Core",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    },
+    {
+      "method": "test_preset_packs.PresetPackTests.test_typescript_uses_native_series_and_unsupported_crap",
+      "owner": "Core",
+      "scope": "Linux retained replay / original compiler 1.97.1; no new platform certification",
+      "execution": "required",
+      "reason": "Original test body and fixtures preserved."
+    }
+  ],
+  "tests_run": 103,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "held": 11,
+  "wall_seconds": 43.985
+}

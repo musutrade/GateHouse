@@ -268,3 +268,6 @@ pub fn require_absence(remove: &Request, inspection: &Response) -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod contract;

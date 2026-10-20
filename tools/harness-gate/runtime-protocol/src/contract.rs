@@ -4,7 +4,7 @@
 //! transport, dispatch counts, persisted intent/unknown state, artifact
 //! verification or real engine behavior.
 
-use gatehouse_runtime_protocol::*;
+use super::*;
 use serde_json::{json, Value};
 
 const ID_A: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";

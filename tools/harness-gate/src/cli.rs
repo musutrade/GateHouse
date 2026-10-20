@@ -288,6 +288,14 @@ pub(crate) enum CompatAction {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum AdapterAction {
+    /// Probe a fixed runtime adapter; removal and lease changes are unsupported.
+    RuntimeProbe {
+        #[arg(long, value_name = "PATH")]
+        request: PathBuf,
+        /// Operator-protected JSON pinning the full expected request and executable.
+        #[arg(long, value_name = "PATH")]
+        trusted_host: PathBuf,
+    },
     /// Advanced: execute one signed request; collectors measure without policy authority.
     Run {
         #[arg(short, long, value_name = "PATH")]
