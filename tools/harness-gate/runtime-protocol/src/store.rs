@@ -12,7 +12,7 @@ use std::time::{Duration, Instant};
 const RECORD: &str = "intent.json";
 
 #[cfg(test)]
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CommitStage {
     FileSync,
     Publish,
@@ -43,6 +43,19 @@ pub struct Store {
 /// Not Clone: a mutation host must consume this value, never accept a separate
 /// request. The mutable borrow keeps the locked store alive until consumption.
 /// This is sequencing authority only, not adapter authentication.
+///
+/// ```compile_fail
+/// // Fields are private and there is no public constructor.
+/// let _forged = gatehouse_runtime_protocol::store::DispatchAuthorization {
+///     store: unimplemented!(),
+/// };
+/// ```
+///
+/// ```compile_fail
+/// fn duplicate(token: gatehouse_runtime_protocol::store::DispatchAuthorization<'_>) {
+///     let _ = token.clone();
+/// }
+/// ```
 #[must_use]
 pub struct DispatchAuthorization<'a> {
     store: &'a mut Store,
@@ -469,7 +482,9 @@ mod tests {
         {
             let mut store = open(&root);
             assert_eq!(store.phase(), Some(Phase::Prepared));
-            store.begin_dispatch().unwrap();
+            store.resume_prepared(&present(), &labels()).unwrap();
+            let authorization = store.begin_dispatch().unwrap();
+            drop(authorization);
             assert_eq!(store.phase(), Some(Phase::Unknown));
         }
         let mut store = open(&root);
@@ -585,6 +600,7 @@ mod tests {
         let (_temporary, root) = private_root();
         open_prepared(&root);
         let mut store = open(&root);
+        store.resume_prepared(&present(), &labels()).unwrap();
         fs::write(root.join(RECORD), b"{}").unwrap();
         assert!(store.begin_dispatch().is_err());
         assert!(store.reconcile(&absent()).is_err());
@@ -597,6 +613,89 @@ mod tests {
         fs::create_dir(&root).unwrap();
         fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
         assert!(store.prepare(&present(), &labels()).is_err());
+    }
+
+    #[test]
+    fn reopened_prepared_requires_resume_and_failed_resume_clears_gate() {
+        let (_temporary, root) = private_root();
+        open_prepared(&root);
+        let mut store = open(&root);
+        assert_eq!(store.phase(), Some(Phase::Prepared));
+        assert!(store.begin_dispatch().is_err());
+        let mut wrong_id = present();
+        if let Outcome::Present { object } = &mut wrong_id.outcome {
+            object.object_id = "b".repeat(64);
+        }
+        assert!(store.resume_prepared(&wrong_id, &labels()).is_err());
+        assert!(store.begin_dispatch().is_err());
+        let wrong_labels = [Label {
+            key: "harness-gate.owner".into(),
+            value: "other".into(),
+        }];
+        assert!(store.resume_prepared(&present(), &wrong_labels).is_err());
+        assert!(store.begin_dispatch().is_err());
+        assert!(store.resume_prepared(&present(), &labels()).is_ok());
+        let authorization = store.begin_dispatch().unwrap();
+        drop(authorization);
+        assert_eq!(store.phase(), Some(Phase::Unknown));
+    }
+
+    #[test]
+    fn dispatch_authorization_binds_request_and_drop_leaves_unknown() {
+        let (_temporary, root) = private_root();
+        let mut store = open(&root);
+        prepare(&mut store);
+        let authorization = store.begin_dispatch().unwrap();
+        assert_eq!(authorization.request(), &removal());
+        drop(authorization);
+        assert_eq!(store.phase(), Some(Phase::Unknown));
+        assert_eq!(store.phase(), Some(Phase::Unknown));
+        assert!(store.begin_dispatch().is_err());
+        let recovery = store.recovery_request().unwrap();
+        assert_eq!(recovery.binding, binding());
+        assert_eq!(recovery.operation, Operation::Inspect { object_id: id() });
+        store.reconcile(&absent()).unwrap();
+        assert_eq!(store.phase(), Some(Phase::Completed));
+        assert!(store.recovery_request().is_err());
+    }
+
+    #[test]
+    fn recovery_request_is_unknown_only_and_exact() {
+        let (_temporary, root) = private_root();
+        let mut store = open(&root);
+        prepare(&mut store);
+        assert!(store.recovery_request().is_err());
+        let authorization = store.begin_dispatch().unwrap();
+        drop(authorization);
+        let recovery = store.recovery_request().unwrap();
+        assert_eq!(recovery.binding, binding());
+        assert_eq!(recovery.operation, Operation::Inspect { object_id: id() });
+        assert!(store.reconcile(&present()).is_err());
+        assert_eq!(store.phase(), Some(Phase::Unknown));
+        store.reconcile(&absent()).unwrap();
+        assert_eq!(store.phase(), Some(Phase::Completed));
+        assert!(store.recovery_request().is_err());
+    }
+
+    #[test]
+    fn commit_failure_stages_issue_no_token_and_poison() {
+        for (stage, expected_phase) in [
+            (CommitStage::FileSync, Phase::Prepared),
+            (CommitStage::Publish, Phase::Prepared),
+            (CommitStage::DirectorySync, Phase::Unknown),
+        ] {
+            let (_temporary, root) = private_root();
+            open_prepared(&root);
+            let mut store = open(&root);
+            store.resume_prepared(&present(), &labels()).unwrap();
+            store.fail_commit = Some(stage);
+            assert!(store.begin_dispatch().is_err());
+            assert!(store.resume_prepared(&present(), &labels()).is_err());
+            assert!(store.observe_dispatch(None).is_err());
+            drop(store);
+            let store = open(&root);
+            assert_eq!(store.phase(), Some(expected_phase), "{stage:?}");
+        }
     }
 
     #[test]
