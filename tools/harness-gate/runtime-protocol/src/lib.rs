@@ -1,5 +1,6 @@
 //! Data validation only. No process execution, artifact verification, lease
 //! persistence, ambient context discovery, or authority to delete a resource.
+pub mod intent;
 mod wire;
 
 use serde::{Deserialize, Serialize};

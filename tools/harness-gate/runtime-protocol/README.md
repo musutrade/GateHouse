@@ -64,3 +64,26 @@ cargo test --locked --manifest-path tools/harness-gate/Cargo.toml \
 Protocol acceptance in this slice cannot establish zero subprocess dispatch,
 bounded kill, persisted recovery or real Docker/Podman correctness. Those
 require their own implementation and tests before a production switch.
+
+## Removal intent transition model
+
+`intent::Intent` is a pure model, not a durable coordinator or enabled removal
+API. Preparation requires an authenticated (by the caller) present inspection
+with the exact request binding/object ID and independently required ownership
+labels. Its fields are private. `begin_dispatch` returns Unknown; the future
+coordinator must durably commit that state under its generation lock before
+spawning anything. Failure to commit must prevent dispatch.
+
+Unknown is sticky for transport loss and all mutation outcomes, including
+`completed` and `rejected-before-effect`. Invalid input leaves the original
+value unchanged. Unknown cannot begin another dispatch. Only a separate exact-ID
+Absent inspection under the same namespace/generation/operation key can return
+Completed. This is not permission to delete a lease or proof that a real engine
+returned the fact. Completed cannot dispatch or consume further transitions.
+
+`restore` requires protected persisted bytes and independently trusted expected
+request pins. It rejects legacy leases and changed bindings but does not verify
+disk integrity, prevent rollback to an older Prepared record, authenticate the
+adapter, lock a file, check owner liveness or migrate a lease. Those are blocking
+requirements of the next durable coordinator, not guarantees of this model.
+The current CLI continues to reject Remove before dispatch.
