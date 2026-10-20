@@ -55,3 +55,29 @@ production adapter. The v2 lease path is unchanged.
 The working directory must be its canonical absolute path, with no symlinked
 parent components or dot-segment aliases. Protect its ancestors from concurrent
 replacement; this path check is not hostile filesystem isolation.
+
+## Internal mutation boundary (not enabled by the CLI)
+
+The staged internal `dispatch_authorized` entry consumes a non-Clone, store-bound
+`DispatchAuthorization`. The store has already synced Unknown before this token
+exists, and the token retains its exclusive lock. The trusted host document must
+match the token's full request; callers cannot supply another dispatch request.
+The same executable digest/revalidation, canonical cwd, empty environment, bounded
+raw transport and strict response validation used by the probe apply here.
+Every error leaves Unknown; even a `completed` mutation response only records an
+Unknown observation. No retry or lease deletion follows a response.
+
+The separate `recover_unknown` entry derives Inspect from the stored request.
+Present/unavailable leaves Unknown; only exact-ID Absent with matching pins can
+commit Completed. It never calls the mutation entry. Cancellation observed after
+transport prevents reconciliation. Cancellation concurrent with a filesystem
+commit is not an atomic transaction with that commit; filesystem operations have
+no hard deadline. Errors after publication require reopening the protected store.
+
+These functions are deliberately internal and not connected to CLI commands or
+service runtime operations. Tests must use disposable fake subprocesses; they do
+not establish real engine namespace authenticity. The caller still owns fresh
+inspection/ownership verification, cancellation before beginning authorization,
+and the independently trusted host document. Public runtime-probe still rejects
+Remove. No legacy lease migration, real engine switch or released adapter is
+provided by this stage.
