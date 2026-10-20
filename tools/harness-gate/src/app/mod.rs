@@ -335,6 +335,18 @@ fn run_adapter(
     action: &AdapterAction,
     replay_state_dir: Option<&std::path::Path>,
 ) -> Result<bool, CliError> {
+    if let AdapterAction::RuntimeProbeV2 {
+        request,
+        trusted_host,
+    } = action
+    {
+        let response = crate::process::runtime_host_files::run_files(request, trusted_host)?;
+        println!(
+            "{}",
+            serde_json::to_string(&response).map_err(anyhow::Error::from)?
+        );
+        return Ok(true);
+    }
     if let AdapterAction::RuntimeProbe {
         request,
         trusted_host,
