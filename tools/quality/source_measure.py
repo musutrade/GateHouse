@@ -31,8 +31,7 @@ HOTSPOTS = {
     "verify/mod.rs": ["run_selected", "service_results", "merge_results", "publish_report"],
     "verify/steps.rs": ["configured_task", "configure_runner", "configure_isolation", "configure_shard", "inject_task_environment"],
     "verify/parser.rs": ["count_json_results", "count_json_path", "discover_json_results"],
-    "process/adapter.rs": ["run_with_cancel", "prepare_request", "run_process", "wait_for_adapter",
-                           "validate_process_output", "finish_response"],
+    "process/adapter.rs": ["run_with_cancel", "prepare_request", "run_process", "finish_response"],
     "project/input.rs": ["allocate_snapshot_root"],
 }
 
@@ -80,6 +79,11 @@ SOURCE_FILES = sorted({"report_history/dashboard.rs", "report_history/dashboard/
     # Issue #139: selected policy identity and recorded runtime identity split.
     # Additive measured inventory; both commits are recollected.
     {"config/quality/identity.rs", "verify/runtime.rs"} |
+    # Batch32 raw transport extraction: the moved transport helpers are measured
+    # in the new module (absent at base) as non-selected functions. The gated
+    # run_with_cancel hotspot stays in adapter.rs; series and thresholds are
+    # unchanged and both commits are recollected under this inventory.
+    {"process/raw_adapter.rs"} |
     # Operator lifecycle extraction: the compatibility module loses the canary
     # state writer while run/compare remain. Include it in the measured risk
     # inventory and recollect both commits; series and thresholds are unchanged.

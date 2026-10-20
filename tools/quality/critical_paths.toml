@@ -388,19 +388,19 @@ assertions = ["assert_eq!(", "now <= 131_000"]
 [paths.source]
 path = "src/process/adapter.rs"
 symbol = "claim"
-start = 193
-end = 223
-sha256 = "2701d3f607d05727bbbe2d4d0b1bc9e72365ab9f282528ddb4e04313d3829096"
+start = 196
+end = 226
+sha256 = "b4d0208ec06801198cdc6bd65703319a7fc7f1d139040f4b484ec3abe94f2e01"
 
 [paths.test_source]
 path = "src/process/adapter.rs"
 symbol = "replay_retention_covers_the_entire_accepted_window"
-start = 2052
-end = 2086
-sha256 = "2701d3f607d05727bbbe2d4d0b1bc9e72365ab9f282528ddb4e04313d3829096"
+start = 1761
+end = 1795
+sha256 = "b4d0208ec06801198cdc6bd65703319a7fc7f1d139040f4b484ec3abe94f2e01"
 
 [[paths.probes]]
-line = 205
+line = 208
 column = 9
 text = "state.seen.retain(|_, expiry| *expiry >= now_ms);"
 
@@ -426,9 +426,9 @@ sha256 = "fbcc49ec16603a0c43ff92f069b7579cf7821cae16d4e77fa4f480da5b068a47"
 [paths.test_source]
 path = "src/process/adapter.rs"
 symbol = "durable_nonce_claims_are_atomic_between_independent_hosts"
-start = 2110
-end = 2135
-sha256 = "2701d3f607d05727bbbe2d4d0b1bc9e72365ab9f282528ddb4e04313d3829096"
+start = 1819
+end = 1844
+sha256 = "b4d0208ec06801198cdc6bd65703319a7fc7f1d139040f4b484ec3abe94f2e01"
 
 [[paths.probes]]
 line = 127
