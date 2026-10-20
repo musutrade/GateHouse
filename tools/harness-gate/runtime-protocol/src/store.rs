@@ -437,7 +437,8 @@ mod tests {
 
     #[test]
     fn record_inputs_reject_links_fifo_modes_size_and_legacy() {
-        let cases: [(&str, fn(&Path)); 6] = [
+        type Case = (&'static str, fn(&Path));
+        let cases: [Case; 6] = [
             ("symlink", |root| {
                 let target = root.join("record-target");
                 write_record(root, &prepared_record());
