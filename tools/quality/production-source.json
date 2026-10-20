@@ -150,6 +150,7 @@
         "src/process/fd_inputs.rs",
         "src/process/runtime_host.rs",
         "src/process/runtime_config.rs",
+        "src/process/runtime_host_v2.rs",
         "runtime-protocol/src/lib.rs",
         "runtime-protocol/src/wire.rs",
         "runtime-protocol/src/intent.rs",
@@ -440,7 +441,7 @@
     {
       "path": "src/process/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "2af761f32ba0c9f12ef0c56992f795834bd42688ea4cdf78d7731223054ebea9"
+      "sha256": "fdd2dc3c9e5255ad42925ae2736d346fc77c21ca3d52e6c54b9359372030bd84"
     },
     {
       "path": "src/scope/mod.rs",
