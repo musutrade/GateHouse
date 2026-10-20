@@ -35,8 +35,6 @@ pub struct Store {
     intent: Option<Intent>,
     poisoned: bool,
     prepared_verified: bool,
-    #[cfg(test)]
-    fail_commit: Option<CommitStage>,
 }
 
 /// A single, store-bound authorization created only after Unknown is synced.
@@ -112,8 +110,6 @@ impl Store {
             intent: None,
             poisoned: false,
             prepared_verified: false,
-            #[cfg(test)]
-            fail_commit: None,
         };
         store.check_directory()?;
         let bytes = store.read()?;
@@ -245,7 +241,7 @@ impl Store {
 
     #[cfg(test)]
     fn fail_at(&self, stage: CommitStage) -> Result<()> {
-        if self.fail_commit == Some(stage) {
+        if commit_failpoint::take(self, stage) {
             return Err(Invalid("injected intent commit failure"));
         }
         Ok(())
@@ -314,6 +310,50 @@ fn lock(directory: &File, timeout: Duration, cancelled: &impl Fn() -> bool) -> R
         std::thread::sleep(
             Duration::from_millis(10).min(timeout.saturating_sub(started.elapsed())),
         );
+    }
+}
+
+// Keep test state out of production structs/initializers so coverage can classify
+// executable production ranges without mixing cfg(test) expressions into them.
+#[cfg(test)]
+mod commit_failpoint {
+    use super::*;
+    use std::cell::RefCell;
+
+    #[derive(PartialEq, Eq)]
+    struct Key {
+        root: PathBuf,
+        device: u64,
+        inode: u64,
+    }
+
+    thread_local! {
+        static ARMED: RefCell<Option<(Key, CommitStage)>> = const { RefCell::new(None) };
+    }
+
+    fn key(store: &Store) -> Key {
+        let metadata = store.directory.metadata().expect("test directory metadata");
+        Key {
+            root: store.root.clone(),
+            device: metadata.dev(),
+            inode: metadata.ino(),
+        }
+    }
+
+    pub(super) fn arm(store: &Store, stage: CommitStage) {
+        ARMED.with(|armed| *armed.borrow_mut() = Some((key(store), stage)));
+    }
+
+    pub(super) fn take(store: &Store, stage: CommitStage) -> bool {
+        ARMED.with(|armed| {
+            let mut armed = armed.borrow_mut();
+            if armed.as_ref() == Some(&(key(store), stage)) {
+                *armed = None;
+                true
+            } else {
+                false
+            }
+        })
     }
 }
 
@@ -688,7 +728,7 @@ mod tests {
             open_prepared(&root);
             let mut store = open(&root);
             store.resume_prepared(&present(), &labels()).unwrap();
-            store.fail_commit = Some(stage);
+            commit_failpoint::arm(&store, stage);
             assert!(store.begin_dispatch().is_err());
             assert!(store.resume_prepared(&present(), &labels()).is_err());
             assert!(store.observe_dispatch(None).is_err());
