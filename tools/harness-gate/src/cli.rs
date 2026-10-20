@@ -288,6 +288,13 @@ pub(crate) enum CompatAction {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum AdapterAction {
+    /// Linux read-only v2 runtime probe using protected local host/config pins.
+    RuntimeProbeV2 {
+        #[arg(long, value_name = "PATH")]
+        request: PathBuf,
+        #[arg(long, value_name = "PATH")]
+        trusted_host: PathBuf,
+    },
     /// Probe a fixed runtime adapter; removal and lease changes are unsupported.
     RuntimeProbe {
         #[arg(long, value_name = "PATH")]

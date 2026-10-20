@@ -9,6 +9,7 @@ mod reader;
 pub(crate) mod replay;
 mod runtime_config;
 pub(crate) mod runtime_host;
+pub(crate) mod runtime_host_files;
 #[cfg(target_os = "linux")]
 mod runtime_host_v2;
 mod signal;
