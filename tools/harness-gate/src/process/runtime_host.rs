@@ -1,5 +1,5 @@
-//! Explicit operator-pinned, read-only runtime protocol probes. This host has
-//! no lease store and rejects Remove before spawning any process.
+//! Operator-pinned runtime transport. The public probe rejects Remove.
+//! Private mutation entry requires a store-bound, durably committed token.
 use super::adapter::{HostPolicy, VerifiedExecutable};
 use super::{raw_adapter, signal};
 use anyhow::{bail, Result};
@@ -56,9 +56,6 @@ impl TrustedHost {
             bail!("unsupported runtime host schema");
         }
         request.require_same_intent(&self.expected)?;
-        if matches!(request.operation, Operation::Remove { .. }) {
-            bail!("runtime probe does not authorize removal");
-        }
         if !self.executable.is_absolute() || !self.cwd.is_absolute() {
             bail!("runtime host paths must be absolute");
         }
@@ -92,6 +89,19 @@ pub(crate) fn run_files(request: &Path, trusted_host: &Path) -> Result<Response>
 }
 
 fn run(host: &TrustedHost, request: &Request, cancelled: impl Fn() -> bool) -> Result<Response> {
+    if matches!(request.operation, Operation::Remove { .. }) {
+        bail!("runtime probe does not authorize removal");
+    }
+    execute(host, request, cancelled)
+}
+
+// Reuse exactly the probe's pinned executable, bounds, environment and strict
+// response path. Only the consuming-token entry below can pass Remove here.
+fn execute(
+    host: &TrustedHost,
+    request: &Request,
+    cancelled: impl Fn() -> bool,
+) -> Result<Response> {
     host.validate(request)?;
     if cancelled() {
         bail!("runtime probe cancelled before dispatch");
@@ -148,4 +158,60 @@ fn validate_exit(output: &raw_adapter::ProcessOutput) -> Result<()> {
         bail!("runtime probe exited unsuccessfully; no absence established");
     }
     Ok(())
+}
+
+/// Internal staged entry, intentionally not exposed by the CLI/service manager.
+/// The token is consumed even on failure; its borrow retains the directory lock.
+/// A mutation response can never complete the intent, including `completed`.
+#[cfg(unix)]
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "staged internal host; engine integration pending")
+)]
+pub(crate) fn dispatch_authorized(
+    authorization: gatehouse_runtime_protocol::store::DispatchAuthorization<'_>,
+    trusted_host: &Path,
+    cancelled: impl Fn() -> bool,
+) -> Result<Response> {
+    let bytes = read_bounded(trusted_host)?;
+    let host: TrustedHost = serde_json::from_slice(&bytes)
+        .map_err(|_| anyhow::anyhow!("invalid trusted runtime host document"))?;
+    let response = execute(&host, authorization.request(), &cancelled)?;
+    if cancelled() {
+        bail!("runtime mutation cancelled; retain unknown intent");
+    }
+    authorization.observe(Some(&response))?;
+    Ok(response)
+}
+
+/// Recovery never calls the mutation entry. Present/unavailable or any error
+/// retains Unknown; only a separately pinned exact-ID Absent can complete it.
+#[cfg(unix)]
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "staged internal recovery; engine integration pending"
+    )
+)]
+pub(crate) fn recover_unknown(
+    store: &mut gatehouse_runtime_protocol::store::Store,
+    trusted_host: &Path,
+    cancelled: impl Fn() -> bool,
+) -> Result<Response> {
+    let request = store.recovery_request()?;
+    let bytes = read_bounded(trusted_host)?;
+    let host: TrustedHost = serde_json::from_slice(&bytes)
+        .map_err(|_| anyhow::anyhow!("invalid trusted runtime host document"))?;
+    let response = run(&host, &request, &cancelled)?;
+    if cancelled() {
+        bail!("runtime recovery cancelled; retain unknown intent");
+    }
+    if matches!(
+        response.outcome,
+        gatehouse_runtime_protocol::Outcome::Absent
+    ) {
+        store.reconcile(&response)?;
+    }
+    Ok(response)
 }
