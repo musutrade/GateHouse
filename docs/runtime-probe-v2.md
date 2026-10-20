@@ -43,3 +43,11 @@ The command returns one verified v2 response only after completion checks. Stati
 errors do not echo input contents or adapter stderr. Fake-socket tests are not
 real Docker compatibility evidence. No published native runtime artifact or
 production recovery/OS sandbox claim is made by this command.
+
+The loader checks ancestor paths before opening/revalidating leaves; it does not
+hold every ancestor directory fd. Same-euid/root adversarial path races are outside
+this local trust model. Cwd is checked for canonicality, not protected ownership
+or permissions. Executable ancestry is not protected by this loader; its existing
+single-file digest and identity checks do not provide full path isolation.
+The owner-mismatch integration fixture requires root and returns without exercising
+chown when run unprivileged; report that case as unexercised, not owner acceptance.
