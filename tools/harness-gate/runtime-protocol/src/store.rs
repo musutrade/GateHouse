@@ -10,6 +10,14 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 const RECORD: &str = "intent.json";
+
+#[cfg(test)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CommitStage {
+    FileSync,
+    Publish,
+    DirectorySync,
+}
 type Result<T> = std::result::Result<T, Invalid>;
 
 fn io<T>(value: std::io::Result<T>) -> Result<T> {
@@ -26,6 +34,41 @@ pub struct Store {
     bytes: Option<Vec<u8>>,
     intent: Option<Intent>,
     poisoned: bool,
+    prepared_verified: bool,
+}
+
+/// A single, store-bound authorization created only after Unknown is synced.
+/// Not Clone: a mutation host must consume this value, never accept a separate
+/// request. The mutable borrow keeps the locked store alive until consumption.
+/// This is sequencing authority only, not adapter authentication.
+///
+/// ```compile_fail
+/// // Fields are private and there is no public constructor.
+/// let _forged = gatehouse_runtime_protocol::store::DispatchAuthorization {
+///     store: unimplemented!(),
+/// };
+/// ```
+///
+/// ```compile_fail
+/// fn duplicate(token: gatehouse_runtime_protocol::store::DispatchAuthorization<'_>) {
+///     let _ = token.clone();
+/// }
+/// ```
+#[must_use]
+pub struct DispatchAuthorization<'a> {
+    store: &'a mut Store,
+}
+
+impl DispatchAuthorization<'_> {
+    pub fn request(&self) -> &Request {
+        &self.store.expected
+    }
+
+    /// All mutation outcomes remain Unknown. Dropping without observation also
+    /// leaves the persisted Unknown intact; it never authorizes another attempt.
+    pub fn observe(self, response: Option<&Response>) -> Result<()> {
+        self.store.observe_dispatch(response)
+    }
 }
 
 fn private(metadata: &fs::Metadata) -> Result<()> {
@@ -66,6 +109,7 @@ impl Store {
             bytes: None,
             intent: None,
             poisoned: false,
+            prepared_verified: false,
         };
         store.check_directory()?;
         let bytes = store.read()?;
@@ -80,6 +124,7 @@ impl Store {
         Ok(store)
     }
 
+    /// Informational only, possibly stale after a failed commit; never authority.
     pub fn phase(&self) -> Option<Phase> {
         self.intent.as_ref().map(Intent::phase)
     }
@@ -89,13 +134,54 @@ impl Store {
             return Err(Invalid("intent already exists"));
         }
         let next = Intent::prepare(&self.expected, inspection, labels)?;
-        self.commit(next)
+        self.commit(next)?;
+        self.prepared_verified = true;
+        Ok(())
+    }
+
+    /// Reopened Prepared records cannot authorize dispatch until a fresh,
+    /// authenticated exact-ID inspection passes independently trusted labels.
+    /// Caller authentication is required; this method validates data bindings.
+    pub fn resume_prepared(&mut self, inspection: &Response, labels: &[Label]) -> Result<()> {
+        self.prepared_verified = false;
+        if self.current()?.phase() != Phase::Prepared {
+            return Err(Invalid("intent is not prepared for ownership revalidation"));
+        }
+        Intent::prepare(&self.expected, inspection, labels)?;
+        if self.read()? != self.bytes {
+            self.poisoned = true;
+            return Err(Invalid("intent changed outside its held lock"));
+        }
+        self.prepared_verified = true;
+        Ok(())
     }
 
     /// Success means Unknown was synced. This method never starts a process.
-    pub fn begin_dispatch(&mut self) -> Result<()> {
+    pub fn begin_dispatch(&mut self) -> Result<DispatchAuthorization<'_>> {
+        if !self.prepared_verified {
+            return Err(Invalid("fresh prepared ownership verification required"));
+        }
         let next = self.current()?.begin_dispatch(&self.expected)?;
-        self.commit(next)
+        self.prepared_verified = false;
+        self.commit(next)?;
+        Ok(DispatchAuthorization { store: self })
+    }
+
+    /// Unknown recovery can only inspect the bound exact ID. No mutation token
+    /// is issued and no transition back to Prepared exists.
+    pub fn recovery_request(&self) -> Result<Request> {
+        if self.current()?.phase() != Phase::Unknown {
+            return Err(Invalid("intent is not awaiting reconciliation"));
+        }
+        let Operation::Remove { object_id } = &self.expected.operation else {
+            return Err(Invalid("intent requires removal"));
+        };
+        Ok(Request {
+            binding: self.expected.binding.clone(),
+            operation: Operation::Inspect {
+                object_id: object_id.clone(),
+            },
+        })
     }
 
     pub fn observe_dispatch(&mut self, response: Option<&Response>) -> Result<()> {
@@ -153,6 +239,14 @@ impl Store {
         Ok(Some(bytes))
     }
 
+    #[cfg(test)]
+    fn fail_at(&self, stage: CommitStage) -> Result<()> {
+        if commit_failpoint::take(self, stage) {
+            return Err(Invalid("injected intent commit failure"));
+        }
+        Ok(())
+    }
+
     fn commit(&mut self, next: Intent) -> Result<()> {
         if self.poisoned {
             return Err(Invalid("intent store requires reopen after failed commit"));
@@ -169,8 +263,12 @@ impl Store {
         }
         let mut temporary = io(tempfile::NamedTempFile::new_in(&self.root))?;
         io(temporary.write_all(&bytes))?;
+        #[cfg(test)]
+        self.fail_at(CommitStage::FileSync)?;
         io(temporary.as_file().sync_all())?;
         self.check_directory()?;
+        #[cfg(test)]
+        self.fail_at(CommitStage::Publish)?;
         if self.bytes.is_none() {
             temporary
                 .persist_noclobber(self.root.join(RECORD))
@@ -180,6 +278,8 @@ impl Store {
                 .persist(self.root.join(RECORD))
                 .map_err(|_| Invalid("cannot commit intent record; reopen required"))?;
         }
+        #[cfg(test)]
+        self.fail_at(CommitStage::DirectorySync)?;
         io(self.directory.sync_all())?;
         self.bytes = Some(bytes);
         self.intent = Some(next);
@@ -210,6 +310,48 @@ fn lock(directory: &File, timeout: Duration, cancelled: &impl Fn() -> bool) -> R
         std::thread::sleep(
             Duration::from_millis(10).min(timeout.saturating_sub(started.elapsed())),
         );
+    }
+}
+
+// Keep test state out of production structs/initializers so coverage can classify
+// executable production ranges without mixing cfg(test) expressions into them.
+#[cfg(test)]
+mod commit_failpoint {
+    use super::*;
+    use std::sync::Mutex;
+
+    #[derive(PartialEq, Eq)]
+    struct Key {
+        root: PathBuf,
+        device: u64,
+        inode: u64,
+    }
+
+    // Test-only one-shot slot. A Mutex (not thread_local!) keeps standard
+    // library internals out of instrumented coverage paths.
+    static ARMED: Mutex<Option<(Key, CommitStage)>> = Mutex::new(None);
+
+    fn key(store: &Store) -> Key {
+        let metadata = store.directory.metadata().expect("test directory metadata");
+        Key {
+            root: store.root.clone(),
+            device: metadata.dev(),
+            inode: metadata.ino(),
+        }
+    }
+
+    pub(super) fn arm(store: &Store, stage: CommitStage) {
+        *ARMED.lock().expect("test failpoint lock") = Some((key(store), stage));
+    }
+
+    pub(super) fn take(store: &Store, stage: CommitStage) -> bool {
+        let mut armed = ARMED.lock().expect("test failpoint lock");
+        if armed.as_ref() == Some(&(key(store), stage)) {
+            *armed = None;
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -378,7 +520,9 @@ mod tests {
         {
             let mut store = open(&root);
             assert_eq!(store.phase(), Some(Phase::Prepared));
-            store.begin_dispatch().unwrap();
+            store.resume_prepared(&present(), &labels()).unwrap();
+            let authorization = store.begin_dispatch().unwrap();
+            drop(authorization);
             assert_eq!(store.phase(), Some(Phase::Unknown));
         }
         let mut store = open(&root);
@@ -494,6 +638,7 @@ mod tests {
         let (_temporary, root) = private_root();
         open_prepared(&root);
         let mut store = open(&root);
+        store.resume_prepared(&present(), &labels()).unwrap();
         fs::write(root.join(RECORD), b"{}").unwrap();
         assert!(store.begin_dispatch().is_err());
         assert!(store.reconcile(&absent()).is_err());
@@ -506,6 +651,89 @@ mod tests {
         fs::create_dir(&root).unwrap();
         fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
         assert!(store.prepare(&present(), &labels()).is_err());
+    }
+
+    #[test]
+    fn reopened_prepared_requires_resume_and_failed_resume_clears_gate() {
+        let (_temporary, root) = private_root();
+        open_prepared(&root);
+        let mut store = open(&root);
+        assert_eq!(store.phase(), Some(Phase::Prepared));
+        assert!(store.begin_dispatch().is_err());
+        let mut wrong_id = present();
+        if let Outcome::Present { object } = &mut wrong_id.outcome {
+            object.object_id = "b".repeat(64);
+        }
+        assert!(store.resume_prepared(&wrong_id, &labels()).is_err());
+        assert!(store.begin_dispatch().is_err());
+        let wrong_labels = [Label {
+            key: "harness-gate.owner".into(),
+            value: "other".into(),
+        }];
+        assert!(store.resume_prepared(&present(), &wrong_labels).is_err());
+        assert!(store.begin_dispatch().is_err());
+        assert!(store.resume_prepared(&present(), &labels()).is_ok());
+        let authorization = store.begin_dispatch().unwrap();
+        drop(authorization);
+        assert_eq!(store.phase(), Some(Phase::Unknown));
+    }
+
+    #[test]
+    fn dispatch_authorization_binds_request_and_drop_leaves_unknown() {
+        let (_temporary, root) = private_root();
+        let mut store = open(&root);
+        prepare(&mut store);
+        let authorization = store.begin_dispatch().unwrap();
+        assert_eq!(authorization.request(), &removal());
+        drop(authorization);
+        assert_eq!(store.phase(), Some(Phase::Unknown));
+        assert_eq!(store.phase(), Some(Phase::Unknown));
+        assert!(store.begin_dispatch().is_err());
+        let recovery = store.recovery_request().unwrap();
+        assert_eq!(recovery.binding, binding());
+        assert_eq!(recovery.operation, Operation::Inspect { object_id: id() });
+        store.reconcile(&absent()).unwrap();
+        assert_eq!(store.phase(), Some(Phase::Completed));
+        assert!(store.recovery_request().is_err());
+    }
+
+    #[test]
+    fn recovery_request_is_unknown_only_and_exact() {
+        let (_temporary, root) = private_root();
+        let mut store = open(&root);
+        prepare(&mut store);
+        assert!(store.recovery_request().is_err());
+        let authorization = store.begin_dispatch().unwrap();
+        drop(authorization);
+        let recovery = store.recovery_request().unwrap();
+        assert_eq!(recovery.binding, binding());
+        assert_eq!(recovery.operation, Operation::Inspect { object_id: id() });
+        assert!(store.reconcile(&present()).is_err());
+        assert_eq!(store.phase(), Some(Phase::Unknown));
+        store.reconcile(&absent()).unwrap();
+        assert_eq!(store.phase(), Some(Phase::Completed));
+        assert!(store.recovery_request().is_err());
+    }
+
+    #[test]
+    fn commit_failure_stages_issue_no_token_and_poison() {
+        for (stage, expected_phase) in [
+            (CommitStage::FileSync, Phase::Prepared),
+            (CommitStage::Publish, Phase::Prepared),
+            (CommitStage::DirectorySync, Phase::Unknown),
+        ] {
+            let (_temporary, root) = private_root();
+            open_prepared(&root);
+            let mut store = open(&root);
+            store.resume_prepared(&present(), &labels()).unwrap();
+            commit_failpoint::arm(&store, stage);
+            assert!(store.begin_dispatch().is_err());
+            assert!(store.resume_prepared(&present(), &labels()).is_err());
+            assert!(store.observe_dispatch(None).is_err());
+            drop(store);
+            let store = open(&root);
+            assert_eq!(store.phase(), Some(expected_phase), "{stage:?}");
+        }
     }
 
     #[test]
