@@ -4,16 +4,21 @@
 use gatehouse_runtime_protocol::v2::Response;
 use std::path::Path;
 
+#[cfg(target_os = "linux")]
 pub(crate) fn run_files(actual: &Path, host: &Path) -> anyhow::Result<Response> {
-    #[cfg(target_os = "linux")]
-    {
-        linux::run(actual, host).map_err(anyhow::Error::msg)
-    }
-    #[cfg(not(target_os = "linux"))]
-    {
-        let _ = (actual, host);
-        anyhow::bail!("runtime v2 is supported only on Linux");
-    }
+    linux::run(actual, host).map_err(anyhow::Error::msg)
+}
+
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+pub(crate) fn run_files(actual: &Path, host: &Path) -> anyhow::Result<Response> {
+    let _ = (actual, host);
+    anyhow::bail!("runtime v2 is supported only on Linux");
+}
+
+#[cfg(not(any(unix, windows)))]
+pub(crate) fn run_files(actual: &Path, host: &Path) -> anyhow::Result<Response> {
+    let _ = (actual, host);
+    anyhow::bail!("runtime v2 is supported only on Linux");
 }
 
 #[cfg(target_os = "linux")]
