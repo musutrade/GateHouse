@@ -146,7 +146,8 @@
         "src/process/replay.rs",
         "src/process/signal.rs",
         "src/process/task.rs",
-        "src/process/raw_adapter.rs"
+        "src/process/raw_adapter.rs",
+        "src/process/runtime_host.rs"
       ]
     },
     "project": {
@@ -427,7 +428,7 @@
     {
       "path": "src/process/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "9d3d722e872ab96a3154610d519b8e8cd78aea9bd3993f21c4b4657dd7b993f9"
+      "sha256": "dd44c1e208293cd695767cdc2147ea33771753e685a948acd86d48c0bc0db634"
     },
     {
       "path": "src/scope/mod.rs",

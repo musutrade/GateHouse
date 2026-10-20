@@ -84,6 +84,9 @@ SOURCE_FILES = sorted({"report_history/dashboard.rs", "report_history/dashboard/
     # run_with_cancel hotspot stays in adapter.rs; series and thresholds are
     # unchanged and both commits are recollected under this inventory.
     {"process/raw_adapter.rs"} |
+    # Batch33 read-only runtime-probe host: new non-selected measured source,
+    # absent at base; series and thresholds are unchanged.
+    {"process/runtime_host.rs"} |
     # Operator lifecycle extraction: the compatibility module loses the canary
     # state writer while run/compare remain. Include it in the measured risk
     # inventory and recollect both commits; series and thresholds are unchanged.
