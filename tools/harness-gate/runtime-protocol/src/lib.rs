@@ -1,6 +1,8 @@
-//! Data validation only. No process execution, artifact verification, lease
-//! persistence, ambient context discovery, or authority to delete a resource.
+//! Strict runtime data and intent state support. No process execution, artifact
+//! verification, ambient context discovery, or authority to delete a resource.
 pub mod intent;
+#[cfg(unix)]
+pub mod store;
 mod wire;
 
 use serde::{Deserialize, Serialize};
