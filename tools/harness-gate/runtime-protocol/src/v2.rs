@@ -4,29 +4,59 @@ use crate::{digest, nonempty, validate_labels, Invalid, Label, Operation, Outcom
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::BTreeSet;
 
-macro_rules! string_identity {
-    ($name:ident, $variant:ident, $wire:literal) => {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-        #[serde(try_from = "String")]
-        pub enum $name {
-            #[serde(rename = $wire)]
-            $variant,
-        }
-        impl TryFrom<String> for $name {
-            type Error = Invalid;
-            fn try_from(value: String) -> Result<Self> {
-                if value == $wire {
-                    Ok(Self::$variant)
-                } else {
-                    Err(Invalid("unsupported v2 identity"))
-                }
-            }
-        }
-    };
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "String")]
+pub enum Protocol {
+    #[serde(rename = "gate-runtime/v2")]
+    V2,
 }
-string_identity!(Protocol, V2, "gate-runtime/v2");
-string_identity!(Engine, Docker, "docker");
-string_identity!(Transport, UnixHttp, "unix-http");
+
+impl TryFrom<String> for Protocol {
+    type Error = Invalid;
+    fn try_from(value: String) -> Result<Self> {
+        if value == "gate-runtime/v2" {
+            Ok(Self::V2)
+        } else {
+            Err(Invalid("unsupported v2 identity"))
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "String")]
+pub enum Engine {
+    #[serde(rename = "docker")]
+    Docker,
+}
+
+impl TryFrom<String> for Engine {
+    type Error = Invalid;
+    fn try_from(value: String) -> Result<Self> {
+        if value == "docker" {
+            Ok(Self::Docker)
+        } else {
+            Err(Invalid("unsupported v2 identity"))
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "String")]
+pub enum Transport {
+    #[serde(rename = "unix-http")]
+    UnixHttp,
+}
+
+impl TryFrom<String> for Transport {
+    type Error = Invalid;
+    fn try_from(value: String) -> Result<Self> {
+        if value == "unix-http" {
+            Ok(Self::UnixHttp)
+        } else {
+            Err(Invalid("unsupported v2 identity"))
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
