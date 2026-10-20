@@ -1,7 +1,7 @@
 # Runtime adapter data contract (first implementation slice)
 
-This workspace library is not linked into the Core CLI and is not a released
-adapter. It implements strict `gate-runtime/v1` data validation for capabilities,
+This workspace library is linked into the Core runtime-probe host. It is not a
+released adapter. It implements strict `gate-runtime/v1` data validation for capabilities,
 inspect and force-remove by full lowercase 64-character object ID. It supports
 neither container creation nor name-based lookup/removal. The existing service
 runtime and lease v2 path are unchanged.
@@ -52,9 +52,9 @@ rewrite them to make the new schema parse. The Python experiment remains design
 evidence, not an implementation dependency.
 
 This crate is outside the Core production coverage series: the instrumented
-Core fast-coverage archive excludes this non-Core workspace package and CI runs
-the explicit gates below. Run them isolated because this crate is not a default
-workspace member:
+The Core fast-coverage archive includes this linked production package. Both
+source files belong to the blocking process boundary; standalone crate tests
+and clippy remain explicit CI gates in addition to Core production measurement.
 
 ```sh
 cargo test --locked --manifest-path tools/harness-gate/Cargo.toml \

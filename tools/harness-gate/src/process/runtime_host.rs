@@ -70,11 +70,19 @@ impl TrustedHost {
         if !metadata.is_dir() || metadata.file_type().is_symlink() {
             bail!("runtime working directory must be a directory, not a symlink");
         }
+        let canonical = std::fs::canonicalize(&self.cwd)
+            .map_err(|_| anyhow::anyhow!("runtime working directory unavailable"))?;
+        if canonical != self.cwd {
+            bail!("runtime working directory must be a canonical absolute path");
+        }
         Ok(())
     }
 }
 
 pub(crate) fn run_files(request: &Path, trusted_host: &Path) -> Result<Response> {
+    if !cfg!(unix) {
+        bail!("runtime probe is supported only on Unix in this version");
+    }
     let request_bytes = read_bounded(request)?;
     let trusted_bytes = read_bounded(trusted_host)?;
     let host: TrustedHost = serde_json::from_slice(&trusted_bytes)

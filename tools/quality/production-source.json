@@ -147,7 +147,9 @@
         "src/process/signal.rs",
         "src/process/task.rs",
         "src/process/raw_adapter.rs",
-        "src/process/runtime_host.rs"
+        "src/process/runtime_host.rs",
+        "runtime-protocol/src/lib.rs",
+        "runtime-protocol/src/wire.rs"
       ]
     },
     "project": {
@@ -453,6 +455,7 @@
   ],
   "source_roots": [
     "src",
-    "quality-core"
+    "quality-core",
+    "runtime-protocol/src"
   ]
 }

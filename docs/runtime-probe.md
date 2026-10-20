@@ -1,7 +1,8 @@
 # Explicit runtime probes (not container lifecycle integration)
 
 `harness-gate adapter runtime-probe --request request.json --trusted-host host.json`
-executes a fixed adapter for `gate-runtime/v1` capabilities or exact-ID inspect.
+is supported on Unix only in this version; non-Unix hosts reject before reading
+input or dispatching a child. It executes a fixed adapter for `gate-runtime/v1` capabilities or exact-ID inspect.
 It does not select a service engine, allocate/reclaim a lease, create/remove a
 container, migrate lease v2, or change the `verify` service path. Removal requests
 are rejected before executable dispatch even when present in the trusted file.
@@ -50,3 +51,7 @@ A GateProbes runtime adapter has not been published. This entry is for explicit
 protocol acceptance with disposable fixtures until joint implementation and
 real-engine acceptance are complete. Do not use the old Python experiment as a
 production adapter. The v2 lease path is unchanged.
+
+The working directory must be its canonical absolute path, with no symlinked
+parent components or dot-segment aliases. Protect its ancestors from concurrent
+replacement; this path check is not hostile filesystem isolation.
