@@ -46,6 +46,64 @@ pub(super) fn run(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     isolate_process_tree(command);
+    spawn_and_supervise(
+        command,
+        policy,
+        timeout_ms,
+        request_json,
+        started,
+        is_cancelled,
+    )
+}
+
+/// Additive Linux bootstrap transport. Consumes Command so descriptor guards
+/// cannot survive a failed/cancelled call or be accidentally reinstalled/retried.
+/// Callers still authenticate inputs/executable and validate response semantics.
+#[cfg(target_os = "linux")]
+#[allow(dead_code)]
+pub(super) fn run_with_inputs(
+    mut command: Command,
+    inputs: super::fd_inputs::SealedInputs,
+    policy: &HostPolicy,
+    timeout_ms: u64,
+    request_json: Vec<u8>,
+    started: Instant,
+    is_cancelled: &impl Fn() -> bool,
+) -> Result<ProcessOutput, AdapterError> {
+    if is_cancelled() {
+        return Err(AdapterError::Protocol("adapter cancelled".into()));
+    }
+    command
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    inputs
+        .install(&mut command)
+        .map_err(|_| AdapterError::Protocol("install runtime inputs failed".into()))?;
+    // Callback order is descriptor remap, then setsid. No caller callback may
+    // change descriptor policy; this entry does not authenticate arbitrary code.
+    isolate_process_tree(&mut command);
+    if is_cancelled() {
+        return Err(AdapterError::Protocol("adapter cancelled".into()));
+    }
+    spawn_and_supervise(
+        &mut command,
+        policy,
+        timeout_ms,
+        request_json,
+        started,
+        is_cancelled,
+    )
+}
+
+fn spawn_and_supervise(
+    command: &mut Command,
+    policy: &HostPolicy,
+    timeout_ms: u64,
+    request_json: Vec<u8>,
+    started: Instant,
+    is_cancelled: &impl Fn() -> bool,
+) -> Result<ProcessOutput, AdapterError> {
     let mut child = command.spawn().map_err(|error| {
         AdapterError::Protocol(format!(
             "start adapter {}: {error}",
