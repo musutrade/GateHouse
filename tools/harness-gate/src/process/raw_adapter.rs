@@ -326,3 +326,57 @@ fn map_reader_error(
         AdapterError::Protocol(format!("read adapter {stream}: {error}"))
     }
 }
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::os::unix::fs::PermissionsExt;
+    use tempfile::tempdir;
+
+    #[test]
+    fn preserves_raw_request_and_duplicate_json_response_bytes() {
+        let directory = tempdir().unwrap();
+        let captured = directory.path().join("request.bin");
+        let adapter = directory.path().join("adapter.sh");
+        fs::write(
+            &adapter,
+            "#!/bin/sh\ncat > \"$1\"\nprintf '%s' '{\"a\":1,\"a\":2,\"nested\":{\"b\":1,\"b\":2}}'\n",
+        )
+        .unwrap();
+        fs::set_permissions(&adapter, fs::Permissions::from_mode(0o755)).unwrap();
+        let mut command = Command::new(&adapter);
+        command.arg(&captured);
+        let request = br#"{"request":1,"request":2}"#.to_vec();
+        let policy = HostPolicy {
+            max_stdout_bytes: 4096,
+            max_stderr_bytes: 4096,
+            max_output_bytes: 8192,
+            reader_deadline: Duration::from_secs(5),
+            ..HostPolicy::default()
+        };
+        let output = run(
+            &mut command,
+            &policy,
+            5_000,
+            request.clone(),
+            Instant::now(),
+            &|| false,
+        )
+        .unwrap();
+        validate_process_output(&output, &policy).unwrap();
+        assert!(output.status.success());
+        assert_eq!(
+            output.stdout.bytes.as_slice(),
+            br#"{"a":1,"a":2,"nested":{"b":1,"b":2}}"#
+        );
+        assert!(output.stderr.bytes.is_empty());
+        let mut expected = request;
+        expected.push(b'\n');
+        assert_eq!(fs::read(&captured).unwrap(), expected);
+        // A Value round-trip would drop the duplicate fields; the raw boundary
+        // must hand the exact bytes to the strict parser.
+        let parsed: serde_json::Value = serde_json::from_slice(&output.stdout.bytes).unwrap();
+        assert_eq!(parsed.to_string(), r#"{"a":2,"nested":{"b":2}}"#);
+    }
+}

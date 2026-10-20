@@ -31,8 +31,11 @@ HOTSPOTS = {
     "verify/mod.rs": ["run_selected", "service_results", "merge_results", "publish_report"],
     "verify/steps.rs": ["configured_task", "configure_runner", "configure_isolation", "configure_shard", "inject_task_environment"],
     "verify/parser.rs": ["count_json_results", "count_json_path", "discover_json_results"],
-    "process/adapter.rs": ["run_with_cancel", "prepare_request", "run_process", "wait_for_adapter",
-                           "validate_process_output", "finish_response"],
+    "process/adapter.rs": ["run_with_cancel", "prepare_request", "run_process", "finish_response"],
+    # Raw transport extraction keeps the same measured functions in the new
+    # module; both commits are recollected under the same series and threshold.
+    "process/raw_adapter.rs": ["run", "wait_for_adapter", "validate_process_output",
+                               "spawn_request_writer", "collect_request_writer", "map_reader_error"],
     "project/input.rs": ["allocate_snapshot_root"],
 }
 
