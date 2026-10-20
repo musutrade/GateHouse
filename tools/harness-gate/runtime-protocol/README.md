@@ -51,8 +51,7 @@ existing verified path; do not infer adapter/namespace/generation fields or
 rewrite them to make the new schema parse. The Python experiment remains design
 evidence, not an implementation dependency.
 
-This crate is outside the Core production coverage series: the instrumented
-The Core fast-coverage archive includes this linked production package. Both
+The Core fast-coverage archive includes this linked production package. Production
 source files belong to the blocking process boundary; standalone crate tests
 and clippy remain explicit CI gates in addition to Core production measurement.
 
@@ -121,3 +120,24 @@ directory or changing the record under a held guard is rejected when observed.
 The implementation assumes a local filesystem with atomic rename and working
 file/directory fsync. Real crash/power-loss guarantees require filesystem-specific
 acceptance. Abandoned temporary files are retained, never swept automatically.
+
+
+## Store-bound dispatch authorization
+
+`Store::begin_dispatch` now returns a non-Clone `DispatchAuthorization` only
+following a successful Unknown commit, including directory sync. Its private
+mutable store borrow retains the lock and exposes only the stored request;
+a future mutation host must consume this token rather than accept another
+request. Dropping it leaves Unknown. It is not executable authentication or a
+public mutation entry; no subprocess is started by this API.
+
+After reopening Prepared, `resume_prepared` must validate a fresh exact-ID Present
+inspection and independently supplied ownership labels before authorization.
+A failed revalidation clears that gate. Unknown exposes only an inspect
+`recovery_request`; only existing exact-ID Absent reconciliation completes it.
+`phase()` is informational, including after poisoning, and never dispatch authority.
+The coordinator still must enforce cancellation before begin, after commit and
+before spawn, and after receiving output. A test-only per-store seam can fail before file sync, before publication, or
+after publication before directory sync. It has no production environment knob
+and simulates error ordering, not power loss. Independent failure-ordering tests
+and the consuming authenticated mutation host remain the next acceptance work.
