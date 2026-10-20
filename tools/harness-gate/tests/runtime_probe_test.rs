@@ -56,7 +56,7 @@ impl Fixture {
     fn adapter(&self, mode: &str) -> (PathBuf, String) {
         let path = self.dir.path().join(format!("adapter-{mode}.py"));
         let script = format!(
-            "#!{}\nimport json,os,sys,time\nopen({dispatch},'a').write('x')\nreq=json.load(sys.stdin)\nmode={mode:?}\nif mode=='env':\n    open({env},'w').write(json.dumps(dict(os.environ)))\n    open({argv},'w').write(json.dumps(sys.argv))\nelif mode=='timeout':\n    time.sleep(30)\nelif mode=='cancel':\n    open({ready},'w').write('ready')\n    time.sleep(30)\nelif mode=='nonzero':\n    print({noise},file=sys.stderr)\n    sys.exit(3)\nelif mode=='oversize':\n    sys.stdout.write('x'*70000)\n    sys.exit(0)\nelif mode=='selfmodify':\n    original=open(sys.argv[0],'rb').read()\n    open(sys.argv[0],'wb').write(original+b'\\n# changed\\n')\nop=req['operation']\nif isinstance(op,dict) and 'inspect' in op:\n    outcome={{'present':{{'object':{{'object_id':op['inspect']['object_id'],'labels':[{{'key':'k','value':'v'}}]}}}}}}\nelse:\n    outcome={{'capabilities':{{'supported':['inspect']}}}}\nif mode=='unavailable':\n    outcome='unavailable'\nif mode=='duplicate':\n    sys.stdout.write('{{\"binding\":'+json.dumps(req['binding'])+',\"operation\":'+json.dumps(op)+',\"outcome\":\"absent\",\"outcome\":\"absent\"}}')\n    sys.exit(0)\nbinding=req['binding']\nif mode=='mismatch':\n    binding['generation']='gen-2'\nsys.stdout.write(json.dumps({{'binding':binding,'operation':op,'outcome':outcome}},separators=(',',':')))\n",
+            "#!{}\nimport json,os,sys,time\nopen({dispatch},'a').write('x')\nreq=json.load(sys.stdin)\nmode={mode:?}\nif mode=='env':\n    open({env},'w').write(json.dumps(dict(os.environ)))\n    open({argv},'w').write(json.dumps(sys.argv))\nelif mode=='timeout':\n    time.sleep(30)\nelif mode=='cancel':\n    open({ready},'w').write('ready')\n    time.sleep(30)\nelif mode=='nonzero':\n    print({noise},file=sys.stderr)\n    sys.exit(3)\nelif mode=='oversize':\n    sys.stdout.write('x'*70000)\n    sys.exit(0)\nelif mode=='selfmodify':\n    original=open(sys.argv[0],'rb').read()\n    open(sys.argv[0],'wb').write(original+b'\\n# changed\\n')\nop=req['operation']\nif isinstance(op,dict) and 'inspect' in op:\n    outcome={{'present':{{'object':{{'object_id':op['inspect']['object_id'],'labels':[{{'key':'k','value':'v'}}]}}}}}}\nelse:\n    outcome={{'capabilities':{{'supported':['inspect']}}}}\nif mode=='unavailable':\n    outcome='unavailable'\nif mode=='duplicate':\n    sys.stdout.write('{{\"binding\":'+json.dumps(req['binding'])+',\"operation\":'+json.dumps(op)+',\"outcome\":\"absent\",\"outcome\":\"absent\"}}')\n    sys.exit(0)\nbinding=req['binding']\nif mode=='mismatch':\n    binding['generation']='gen-2'\npayload=json.dumps({{'binding':binding,'operation':op,'outcome':outcome}},separators=(',',':'))\nsys.stdout.write(payload)\nif mode=='latecancel':\n    sys.stdout.flush()\n    open({ready},'w').write('ready')\n    time.sleep(30)\n",
             python(),
             dispatch = serde_json::to_string(&self.dispatch).unwrap(),
             env = serde_json::to_string(&self.env_out).unwrap(),
@@ -389,6 +389,52 @@ fn cancellation_during_dispatch_fails_closed() {
         );
         if child.try_wait().unwrap().is_some() {
             panic!("adapter exited before cancellation");
+        }
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    unsafe {
+        libc::kill(child.id() as i32, libc::SIGINT);
+    }
+    let output = wait_deadline(child, Duration::from_secs(5));
+    assert_rejected(&output, &fixture);
+    assert!(fixture.dispatched());
+}
+
+#[test]
+fn cwd_parent_symlink_is_rejected() {
+    let fixture = Fixture::new();
+    let (adapter, digest) = fixture.adapter("success");
+    let request = fixture.request_value(json!({"inspect": {"object_id": ID}}), &digest);
+    let req_path = fixture.write_request("request.json", &request);
+    let real = fixture.dir.path().join("real-cwd");
+    fs::create_dir(&real).unwrap();
+    fs::create_dir(real.join("nested")).unwrap();
+    let linked = fixture.dir.path().join("linked-cwd");
+    std::os::unix::fs::symlink(&real, &linked).unwrap();
+    let mut host = fixture.host_value(&adapter, request.clone(), 5_000);
+    host["cwd"] = json!(linked.join("nested"));
+    let host_path = fixture.write_host("symlink-cwd-host.json", &host);
+    assert_rejected(&fixture.run(&req_path, &host_path), &fixture);
+    assert!(!fixture.dispatched());
+}
+
+#[test]
+fn late_cancel_after_adapter_response_is_not_success() {
+    let fixture = Fixture::new();
+    let (adapter, digest) = fixture.adapter("latecancel");
+    let request = fixture.request_value(json!({"inspect": {"object_id": ID}}), &digest);
+    let host = fixture.host_value(&adapter, request.clone(), 30_000);
+    let req_path = fixture.write_request("request.json", &request);
+    let host_path = fixture.write_host("host.json", &host);
+    let mut child = fixture.command(&req_path, &host_path).spawn().unwrap();
+    let started = Instant::now();
+    while !fixture.ready.exists() {
+        assert!(
+            started.elapsed() < Duration::from_secs(5),
+            "adapter did not respond"
+        );
+        if child.try_wait().unwrap().is_some() {
+            panic!("adapter exited before late cancellation");
         }
         std::thread::sleep(Duration::from_millis(20));
     }
