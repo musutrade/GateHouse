@@ -150,7 +150,8 @@
         "src/process/runtime_host.rs",
         "runtime-protocol/src/lib.rs",
         "runtime-protocol/src/wire.rs",
-        "runtime-protocol/src/intent.rs"
+        "runtime-protocol/src/intent.rs",
+        "runtime-protocol/src/store.rs"
       ]
     },
     "project": {

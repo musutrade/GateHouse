@@ -87,3 +87,37 @@ disk integrity, prevent rollback to an older Prepared record, authenticate the
 adapter, lock a file, check owner liveness or migrate a lease. Those are blocking
 requirements of the next durable coordinator, not guarantees of this model.
 The current CLI continues to reject Remove before dispatch.
+
+## Unix cooperative intent store
+
+`store::Store` persists this model in an existing operator-provisioned canonical
+absolute directory, one directory per intent. The directory must belong to the
+current user with no group/other access bits. It takes a nonblocking exclusive
+flock on the directory descriptor, retrying only within a caller-supplied
+1ns–30s lock budget and honoring cancellation. Dropping the guard closes the
+lock descriptor; no reusable lock pathname is removed. Filesystem calls/fsync
+are not promised a hard wall-clock deadline.
+
+The fixed `intent.json` is read without following its final symlink, with a size
+bound; non-regular, multiply linked, foreign or non-private records reject.
+Restore requires the independent full expected request, including generation and
+operation key. There is no legacy lease conversion or record deletion.
+
+Transitions compare the observed bytes under the held lock, write a private
+temporary file, sync it, publish by atomic replacement (no-clobber on first
+creation), then sync the directory. Unknown must be durably committed before a
+future caller dispatches. Any commit error poisons the guard and prevents further
+transitions until reopen/reconciliation; a failed directory sync may mean that
+the new record is already visible, so failure is never evidence of no effect.
+This crate still starts no process and the Core runtime probe still rejects
+Remove. There is not yet a coordinator connecting owner checks, this store and
+an authenticated runtime adapter.
+
+All actors must use the same lock and preserve the private directory and its
+ancestors. These are cooperative locks, not hostile same-account isolation or
+cryptographic rollback protection. Replacing an earlier record with old bytes
+can invalidate guarantees; the protected store is a trusted input. Rebinding the
+directory or changing the record under a held guard is rejected when observed.
+The implementation assumes a local filesystem with atomic rename and working
+file/directory fsync. Real crash/power-loss guarantees require filesystem-specific
+acceptance. Abandoned temporary files are retained, never swept automatically.
