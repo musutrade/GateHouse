@@ -318,7 +318,7 @@ fn lock(directory: &File, timeout: Duration, cancelled: &impl Fn() -> bool) -> R
 #[cfg(test)]
 mod commit_failpoint {
     use super::*;
-    use std::cell::RefCell;
+    use std::sync::Mutex;
 
     #[derive(PartialEq, Eq)]
     struct Key {
@@ -327,9 +327,9 @@ mod commit_failpoint {
         inode: u64,
     }
 
-    thread_local! {
-        static ARMED: RefCell<Option<(Key, CommitStage)>> = const { RefCell::new(None) };
-    }
+    // Test-only one-shot slot. A Mutex (not thread_local!) keeps standard
+    // library internals out of instrumented coverage paths.
+    static ARMED: Mutex<Option<(Key, CommitStage)>> = Mutex::new(None);
 
     fn key(store: &Store) -> Key {
         let metadata = store.directory.metadata().expect("test directory metadata");
@@ -341,19 +341,17 @@ mod commit_failpoint {
     }
 
     pub(super) fn arm(store: &Store, stage: CommitStage) {
-        ARMED.with(|armed| *armed.borrow_mut() = Some((key(store), stage)));
+        *ARMED.lock().expect("test failpoint lock") = Some((key(store), stage));
     }
 
     pub(super) fn take(store: &Store, stage: CommitStage) -> bool {
-        ARMED.with(|armed| {
-            let mut armed = armed.borrow_mut();
-            if armed.as_ref() == Some(&(key(store), stage)) {
-                *armed = None;
-                true
-            } else {
-                false
-            }
-        })
+        let mut armed = ARMED.lock().expect("test failpoint lock");
+        if armed.as_ref() == Some(&(key(store), stage)) {
+            *armed = None;
+            true
+        } else {
+            false
+        }
     }
 }
 
