@@ -637,6 +637,17 @@ impl RunningService {
     }
 }
 pub fn check_available(project: &Project, id: &str, timeout: Duration) -> Result<String> {
+    check_available_with_runtime(project, id, timeout, |runtime| runtime)
+}
+
+/// Resolve a backend only after external values and recipe checks have passed.
+/// This seam is read-only: it does not select a startup or cleanup backend.
+fn check_available_with_runtime<R: ContainerRuntime>(
+    project: &Project,
+    id: &str,
+    timeout: Duration,
+    select_runtime: impl FnOnce(crate::config::ContainerRuntimeKind) -> R,
+) -> Result<String> {
     let service = project
         .config
         .service(id)
@@ -667,6 +678,7 @@ pub fn check_available(project: &Project, id: &str, timeout: Duration) -> Result
             }
             run_checks(project, id, None, timeout)?;
             let deadline = Instant::now() + timeout;
+            let runtime = select_runtime(*runtime);
             runtime
                 .check_available(project, remaining(deadline)?)
                 .with_context(|| format!("container runtime unavailable for service {id:?}"))?;

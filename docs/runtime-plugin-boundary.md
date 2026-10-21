@@ -161,3 +161,10 @@ Docker/Podman CLI 的默认方法。原 CLI 实现在 `service/legacy_cli.rs`；
 这只是 Core 内部迁移准备，旧服务仍选择原 CLI 后端；并未将引擎实现发布到
 GateProbes，也未新增配置选择、v2 mutation、absence 或旧租约转换。
 租约所有权检查、恢复、取消与最终判定继续由原 Core 路径负责。
+
+只读 `check_available` 路径通过延迟后端解析函数共享同一编排：未知服务、
+外部环境值以及 recipe 拒绝都发生在后端选择之前；引擎 info 成功后才检查镜像，
+两次调用共用剩余期限。生产入口仍显式选择配置中的旧 CLI 引擎。
+内存假后端测试覆盖 Docker/Podman 选择传递、调用顺序、info/镜像失败、
+info 耗尽预算和外部服务绕过；任何启动、删除、端口或容器命令调用都会使测试失败。
+这个注入点不接入 ServiceManager 的启动/清理路径，也不把只读结果当作租约权限。
