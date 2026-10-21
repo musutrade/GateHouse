@@ -21,6 +21,24 @@ pub(crate) fn run_files(actual: &Path, host: &Path) -> anyhow::Result<Response> 
     anyhow::bail!("runtime v2 is supported only on Linux");
 }
 
+/// Installed entry is separate: no optional descriptor or downgrade to v2.
+#[cfg(target_os = "linux")]
+pub(crate) fn run_installed(actual: &Path, host: &Path) -> anyhow::Result<Response> {
+    linux::run_mode(actual, host, true).map_err(anyhow::Error::msg)
+}
+
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+pub(crate) fn run_installed(actual: &Path, host: &Path) -> anyhow::Result<Response> {
+    let _ = (actual, host);
+    anyhow::bail!("installed runtime is supported only on Linux");
+}
+
+#[cfg(not(any(unix, windows)))]
+pub(crate) fn run_installed(actual: &Path, host: &Path) -> anyhow::Result<Response> {
+    let _ = (actual, host);
+    anyhow::bail!("installed runtime is supported only on Linux");
+}
+
 #[cfg(target_os = "linux")]
 mod linux {
     use super::*;
@@ -46,7 +64,7 @@ mod linux {
         sha256: String,
         schema: String,
     }
-    #[derive(Deserialize)]
+    #[derive(Deserialize, PartialEq, Eq)]
     #[serde(deny_unknown_fields)]
     struct Executable {
         path: PathBuf,
@@ -62,6 +80,95 @@ mod linux {
         expected: FilePin,
         cwd: PathBuf,
         timeout_ms: u64,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct InstalledHost {
+        schema: String,
+        installation: FilePin,
+        executable: Executable,
+        config: FilePin,
+        expected: FilePin,
+        cwd: PathBuf,
+        timeout_ms: u64,
+    }
+    /// Provenance is operator-supplied audit data, not publisher authentication.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Installation {
+        schema: String,
+        repository: String,
+        tag: String,
+        source_commit: String,
+        archive_sha256: String,
+        executable: Executable,
+    }
+    fn hex(value: &str, size: usize) -> bool {
+        value.len() == size
+            && value
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    }
+    fn audit_text(value: &str) -> bool {
+        !value.trim().is_empty() && !value.chars().any(char::is_control)
+    }
+    fn installed_host(bytes: &[u8]) -> Result<(Host, Option<InstalledFiles>)> {
+        let installed: InstalledHost = serde_json::from_slice(bytes).map_err(|_| ERROR)?;
+        if installed.schema != "gate-runtime-host/installed-v1" {
+            return Err(ERROR);
+        }
+        let held = Held::pinned(&installed.installation, "gate-runtime-installation/v1")?;
+        let descriptor: Installation = serde_json::from_slice(&held.bytes).map_err(|_| ERROR)?;
+        validate_installation(&descriptor, &installed.executable)?;
+        let executable = Held::executable(&installed.executable.path)?;
+        Ok((
+            Host {
+                schema: installed.schema,
+                executable: installed.executable,
+                config: installed.config,
+                expected: installed.expected,
+                cwd: installed.cwd,
+                timeout_ms: installed.timeout_ms,
+            },
+            Some(InstalledFiles {
+                descriptor: held,
+                executable,
+            }),
+        ))
+    }
+    fn validate_installation(descriptor: &Installation, executable: &Executable) -> Result<()> {
+        if descriptor.schema != "gate-runtime-installation/v1"
+            || !audit_text(&descriptor.repository)
+            || !audit_text(&descriptor.tag)
+            || !hex(&descriptor.source_commit, 40)
+            || !hex(&descriptor.archive_sha256, 64)
+            || descriptor.executable != *executable
+        {
+            return Err(ERROR);
+        }
+        protected_path(&executable.path)
+    }
+    fn load_host(bytes: &[u8], installed: bool) -> Result<(Host, Option<InstalledFiles>)> {
+        if installed {
+            return installed_host(bytes);
+        }
+        let host: Host = serde_json::from_slice(bytes).map_err(|_| ERROR)?;
+        if host.schema != "gate-runtime-host/v2" {
+            return Err(ERROR);
+        }
+        Ok((host, None))
+    }
+    struct InstalledFiles {
+        descriptor: Held,
+        executable: Held,
+    }
+    fn revalidate_installation(installation: &Option<InstalledFiles>) -> Result<()> {
+        if let Some(files) = installation {
+            files.descriptor.revalidate()?;
+            files.executable.revalidate()?;
+        }
+        Ok(())
     }
 
     #[derive(PartialEq, Eq)]
@@ -117,6 +224,26 @@ mod linux {
         bytes: Vec<u8>,
     }
     impl Held {
+        fn executable(path: &Path) -> Result<Self> {
+            protected_path(path)?;
+            let file = open(path)?;
+            let m = file.metadata().map_err(|_| ERROR)?;
+            if !m.is_file()
+                || m.uid() != unsafe { libc::geteuid() }
+                || m.nlink() != 1
+                || !matches!(m.mode() & 0o7777, 0o500 | 0o700 | 0o555 | 0o755)
+            {
+                return Err(ERROR);
+            }
+            let held = Self {
+                path: path.to_owned(),
+                file,
+                identity: Identity::of(&m),
+                bytes: Vec::new(),
+            };
+            held.revalidate()?;
+            Ok(held)
+        }
         fn open(path: &Path) -> Result<Self> {
             protected_path(path)?;
             let file = open(path)?;
@@ -182,19 +309,20 @@ mod linux {
         Ok(bytes)
     }
     pub(super) fn run(actual: &Path, host_path: &Path) -> Result<Response> {
+        run_mode(actual, host_path, false)
+    }
+    pub(super) fn run_mode(actual: &Path, host_path: &Path, installed: bool) -> Result<Response> {
         // Actual input is untrusted. No ownership requirement or pin is taken
         // from it. Trusted files stay held and are rechecked around execution.
         let host_file = Held::open(host_path)?;
-        let host: Host = serde_json::from_slice(&host_file.bytes).map_err(|_| ERROR)?;
-        if host.schema != "gate-runtime-host/v2" {
-            return Err(ERROR);
-        }
+        let (host, installation) = load_host(&host_file.bytes, installed)?;
         let config = Held::pinned(&host.config, "gate-runtime-engine-config/v2")?;
         let expected = Held::pinned(&host.expected, "gate-runtime/v2")?;
         let request =
             gatehouse_runtime_protocol::v2::parse_request(&expected.bytes).map_err(|_| ERROR)?;
         let actual = read(&open(actual)?)?;
         host_file.revalidate()?;
+        revalidate_installation(&installation)?;
         config.revalidate()?;
         expected.revalidate()?;
         let response = run_readonly(
@@ -211,6 +339,7 @@ mod linux {
             signal::cancelled,
         )?;
         host_file.revalidate()?;
+        revalidate_installation(&installation)?;
         config.revalidate()?;
         expected.revalidate()?;
         if signal::cancelled() {
