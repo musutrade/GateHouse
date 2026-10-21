@@ -2,6 +2,7 @@ mod commands;
 mod docker;
 mod inspection;
 mod lease;
+mod legacy_cli;
 mod report_directory;
 mod runtime;
 
@@ -669,15 +670,7 @@ pub fn check_available(project: &Project, id: &str, timeout: Duration) -> Result
             runtime
                 .check_available(project, remaining(deadline)?)
                 .with_context(|| format!("container runtime unavailable for service {id:?}"))?;
-            let args = vec!["image".into(), "inspect".into(), image.clone()];
-            let image_ready = crate::process::capture(
-                runtime.executable(),
-                &args,
-                &project.root,
-                remaining(deadline)?,
-            )?
-            .status
-            .success();
+            let image_ready = runtime.image_available(project, image, remaining(deadline)?)?;
             if !image_ready {
                 bail!(
                     "{} image {image} is not available; run `{} pull {image}`",

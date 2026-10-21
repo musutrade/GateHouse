@@ -151,3 +151,13 @@ GateProbes 工作包括独立 adapter、引擎身份绑定及 inspect/remove/sta
 选择、持久意图、能力协商或租约迁移。底层暂复用 `HostPolicy` 的输出预算与
 `AdapterError`；调用方仍须鉴权并验证退出状态、输出限制和最终取消状态。
 不能直接把这个内部函数当作受信执行入口。现有平台进程清理限制不变。
+
+## 显式旧引擎实现边界
+
+`service/runtime.rs` 的 `ContainerRuntime` 只声明操作，不再提供隐式执行
+Docker/Podman CLI 的默认方法。原 CLI 实现在 `service/legacy_cli.rs`；
+包括 doctor 镜像检查在内的引擎调用通过该接口进入显式实现。
+新后端必须逐项实现操作，不能因遗漏实现而继承环境中的 Docker 命令。
+这只是 Core 内部迁移准备，旧服务仍选择原 CLI 后端；并未将引擎实现发布到
+GateProbes，也未新增配置选择、v2 mutation、absence 或旧租约转换。
+租约所有权检查、恢复、取消与最终判定继续由原 Core 路径负责。

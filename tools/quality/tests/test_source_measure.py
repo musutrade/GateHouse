@@ -415,7 +415,7 @@ fn both() {
                 self.assertEqual(len(self.inventory(transformed)['symbols']), len(symbols))
 
     def test_report_retention_sources_inventory_and_instrumentation(self):
-        paths = {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs'}
+        paths = {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs'}
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')}, paths)
         retained = Path(os.environ.get('RUST_MEASURE_NATIVE_EVIDENCE', ROOT / 'target/gh286-native-evidence')).resolve()
         retained.mkdir(parents=True, exist_ok=True)
