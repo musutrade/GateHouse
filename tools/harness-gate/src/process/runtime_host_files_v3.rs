@@ -6,7 +6,7 @@ use std::path::Path;
 pub(crate) fn run_installed(host: &Path, image: &str, timeout_ms: u64) -> anyhow::Result<Response> {
     linux::run(host, image, timeout_ms).map_err(anyhow::Error::msg)
 }
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux")))]
 pub(crate) fn run_installed(_: &Path, _: &str, _: u64) -> anyhow::Result<Response> {
     anyhow::bail!("v3 runtime requires Linux")
 }
@@ -275,7 +275,8 @@ mod linux {
     }
 }
 
-#[cfg(all(test, target_os = "linux"))]
+#[cfg(test)]
+#[cfg(target_os = "linux")]
 mod tests {
     use super::*;
     use serde_json::{json, Value};

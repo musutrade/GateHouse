@@ -46,7 +46,7 @@ fn nonce() -> Result<[u8; 16]> {
     }
     Ok(bytes)
 }
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux")))]
 fn nonce() -> Result<[u8; 16]> {
     Err("v3 runtime requires Linux")
 }
