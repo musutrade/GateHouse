@@ -113,7 +113,7 @@ mod linux {
     fn audit_text(value: &str) -> bool {
         !value.trim().is_empty() && !value.chars().any(char::is_control)
     }
-    fn installed_host(bytes: &[u8]) -> Result<(Host, Option<Held>)> {
+    fn installed_host(bytes: &[u8]) -> Result<(Host, Option<InstalledFiles>)> {
         let installed: InstalledHost = serde_json::from_slice(bytes).map_err(|_| ERROR)?;
         if installed.schema != "gate-runtime-host/installed-v1" {
             return Err(ERROR);
@@ -121,6 +121,7 @@ mod linux {
         let held = Held::pinned(&installed.installation, "gate-runtime-installation/v1")?;
         let descriptor: Installation = serde_json::from_slice(&held.bytes).map_err(|_| ERROR)?;
         validate_installation(&descriptor, &installed.executable)?;
+        let executable = Held::executable(&installed.executable.path)?;
         Ok((
             Host {
                 schema: installed.schema,
@@ -130,7 +131,10 @@ mod linux {
                 cwd: installed.cwd,
                 timeout_ms: installed.timeout_ms,
             },
-            Some(held),
+            Some(InstalledFiles {
+                descriptor: held,
+                executable,
+            }),
         ))
     }
     fn validate_installation(descriptor: &Installation, executable: &Executable) -> Result<()> {
@@ -145,7 +149,7 @@ mod linux {
         }
         protected_path(&executable.path)
     }
-    fn load_host(bytes: &[u8], installed: bool) -> Result<(Host, Option<Held>)> {
+    fn load_host(bytes: &[u8], installed: bool) -> Result<(Host, Option<InstalledFiles>)> {
         if installed {
             return installed_host(bytes);
         }
@@ -155,9 +159,14 @@ mod linux {
         }
         Ok((host, None))
     }
-    fn revalidate_installation(installation: &Option<Held>) -> Result<()> {
-        if let Some(held) = installation {
-            held.revalidate()?;
+    struct InstalledFiles {
+        descriptor: Held,
+        executable: Held,
+    }
+    fn revalidate_installation(installation: &Option<InstalledFiles>) -> Result<()> {
+        if let Some(files) = installation {
+            files.descriptor.revalidate()?;
+            files.executable.revalidate()?;
         }
         Ok(())
     }
@@ -215,6 +224,26 @@ mod linux {
         bytes: Vec<u8>,
     }
     impl Held {
+        fn executable(path: &Path) -> Result<Self> {
+            protected_path(path)?;
+            let file = open(path)?;
+            let m = file.metadata().map_err(|_| ERROR)?;
+            if !m.is_file()
+                || m.uid() != unsafe { libc::geteuid() }
+                || m.nlink() != 1
+                || !matches!(m.mode() & 0o7777, 0o500 | 0o700 | 0o555 | 0o755)
+            {
+                return Err(ERROR);
+            }
+            let held = Self {
+                path: path.to_owned(),
+                file,
+                identity: Identity::of(&m),
+                bytes: Vec::new(),
+            };
+            held.revalidate()?;
+            Ok(held)
+        }
         fn open(path: &Path) -> Result<Self> {
             protected_path(path)?;
             let file = open(path)?;

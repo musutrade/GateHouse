@@ -27,7 +27,11 @@ The descriptor has exactly these required fields:
 The existing host checks also require the executable digest/version to equal the
 trusted expected v2 request. Actual input cannot supply missing trusted pins.
 The installed executable path must be absolute and canonical, with root/euid-owned
-ancestors that are not group/world writable. The descriptor uses the existing
+ancestors that are not group/world writable. The executable leaf must be a
+single-link regular file owned by the current euid, mode 0500, 0700, 0555 or 0755
+(no special bits or group/world write). Its metadata is held and revalidated
+before and after execution in addition to the existing executable digest checks.
+The descriptor uses the existing
 bounded, euid-owned 0400/0600 single-link protected reader. Host, descriptor,
 config and expected files remain held and are revalidated before and after
 execution. Executable digest and file identity retain the v2 host's checks.
