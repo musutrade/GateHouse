@@ -207,6 +207,18 @@ mod linux {
         }
         Ok(bytes)
     }
+    fn validate_installation(descriptor: &Installation, executable: &Executable) -> Result<()> {
+        if descriptor.schema != "gate-runtime-installation/v1"
+            || !audit(&descriptor.repository)
+            || !audit(&descriptor.tag)
+            || !hex(&descriptor.source_commit, 40)
+            || !hex(&descriptor.archive_sha256, 64)
+            || &descriptor.executable != executable
+        {
+            return Err(ERROR);
+        }
+        Ok(())
+    }
     pub(super) fn run(host_path: &Path, image: &str, timeout_ms: u64) -> Result<Response> {
         if !(1..=30_000).contains(&timeout_ms) {
             return Err(ERROR);
@@ -222,15 +234,7 @@ mod linux {
         let installation = Held::pinned(&host.installation, "gate-runtime-installation/v1")?;
         let descriptor: Installation =
             serde_json::from_slice(&installation.bytes).map_err(|_| ERROR)?;
-        if descriptor.schema != "gate-runtime-installation/v1"
-            || !audit(&descriptor.repository)
-            || !audit(&descriptor.tag)
-            || !hex(&descriptor.source_commit, 40)
-            || !hex(&descriptor.archive_sha256, 64)
-            || descriptor.executable != host.executable
-        {
-            return Err(ERROR);
-        }
+        validate_installation(&descriptor, &host.executable)?;
         let executable = Held::executable(&host.executable.path)?;
         let config = Held::pinned(&host.config, "gate-runtime-engine-config/v3")?;
         let expected = runtime_request_v3::mint(
@@ -388,6 +392,46 @@ int main(void) {
         assert!(f.run().is_err());
         let f = Fixture::new();
         assert!(run_installed(&f.host, "bad?image", 2000).is_err());
+        assert!(!f.root.path().join("request-observed").exists());
+    }
+    #[test]
+    fn installation_identity_rejection_precedes_adapter_spawn() {
+        let f = Fixture::new();
+        let original: Value = serde_json::from_slice(&fs::read(&f.host).unwrap()).unwrap();
+        let path = PathBuf::from(original["installation"]["path"].as_str().unwrap());
+        let descriptor: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        for (field, value) in [
+            ("schema", json!("wrong")),
+            ("repository", json!("")),
+            ("repository", json!("bad\nrepository")),
+            ("tag", json!("")),
+            ("tag", json!("bad\ntag")),
+            ("source_commit", json!("short")),
+            ("archive_sha256", json!("z".repeat(64))),
+            ("executable", {
+                let mut exe = descriptor["executable"].clone();
+                exe["version"] = json!("wrong");
+                exe
+            }),
+        ] {
+            let mut invalid = descriptor.clone();
+            invalid[field] = value;
+            write(&path, &invalid);
+            let mut host = original.clone();
+            host["installation"]["sha256"] = json!(hash(&fs::read(&path).unwrap()));
+            write(&f.host, &host);
+            assert!(f.run().is_err(), "{field}");
+            assert!(!f.root.path().join("request-observed").exists());
+        }
+        write(&path, &descriptor);
+        write(&f.host, &original);
+        for timeout in [0, 30_001] {
+            assert!(run_installed(&f.host, "repo:tag", timeout).is_err());
+            let mut host = original.clone();
+            host["timeout_ms"] = json!(timeout);
+            write(&f.host, &host);
+            assert!(f.run().is_err());
+        }
         assert!(!f.root.path().join("request-observed").exists());
     }
 }
