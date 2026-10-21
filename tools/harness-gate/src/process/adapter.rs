@@ -270,20 +270,16 @@ pub fn run_with_cancel<F>(
 where
     F: Fn() -> bool,
 {
-    run_with_cancel_inner(
-        request,
-        policy,
-        is_cancelled,
-        #[cfg(test)]
-        |_| {},
-    )
+    // The production entry supplies only a no-op observer. Keeping the private
+    // generic signature uniform also lets source/coverage tooling classify it.
+    run_with_cancel_inner(request, policy, is_cancelled, |_| {})
 }
 
 fn run_with_cancel_inner<F>(
     request: AdapterRequest,
     policy: &HostPolicy,
     is_cancelled: F,
-    #[cfg(test)] after_validation: impl FnOnce(&AdapterOutcome),
+    after_validation: impl FnOnce(&AdapterOutcome),
 ) -> Result<AdapterOutcome, AdapterError>
 where
     F: Fn() -> bool,
@@ -308,7 +304,6 @@ where
     )?;
     validate_process_output(&output, policy)?;
     let outcome = finish_response(&request, policy, &artifact_root, output, started)?;
-    #[cfg(test)]
     after_validation(&outcome);
     // Cancellation can arrive after leader exit while output and artifacts are
     // being validated. A valid response must not erase that cancellation.
