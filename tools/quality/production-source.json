@@ -318,6 +318,11 @@
       "reason": "Test-only module compiled under cfg(test)."
     },
     {
+      "path": "src/service/tests/availability.rs",
+      "kind": "test",
+      "reason": "In-process fake backend contract in the cfg(test) service tests module."
+    },
+    {
       "path": "src/test_support.rs",
       "kind": "test",
       "reason": "Test-only module compiled under cfg(test)."

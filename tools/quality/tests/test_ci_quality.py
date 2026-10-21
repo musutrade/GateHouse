@@ -135,6 +135,8 @@ class RiskScopeTests(unittest.TestCase):
                 ('tools/harness-gate/src/service/report_directory.rs', True),
                 ('tools/harness-gate/src/service/legacy_cli.rs', True),
                 ('tools/harness-gate/src/service/runtime.rs', True),
+                ('tools/harness-gate/src/service/tests/availability.rs', True),
+                ('tools/harness-gate/src/service/tests/unknown.rs', False),
                 ('tools/harness-gate/src/service/unknown.rs', False),
             ):
                 with self.subTest(path=path), \
