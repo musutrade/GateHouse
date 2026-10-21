@@ -1,13 +1,15 @@
 # Result-boundary acceptance
 
-## Core 0.7.1 registry repair candidate
+## Core 0.7.1 registry repair delivered
 
 Core 0.7.0 GitHub assets were published from `6242228a16f951bc30a881641c853afefae262a8`;
 its crates.io job failed because the runtime protocol dependency was not publishable.
-The tag and assets remain immutable. Core 0.7.1 repairs registry packaging and adds
-protocol publication and Core package preflight before GitHub asset publication.
+The tag and assets remain immutable. Core0.7.1 source26734c7 completed release
+run39487417615 including protocol0.1.0 and Core crate publication. Its workflow
+adds protocol publication and Core package preflight before GitHub publication.
 Onboarding presets 1.0.2 is published from `85b1856dd7061bfb19683df3921060b49490e5e2`
-and pinned by Core CI. Its downloaded archive passed 29-step acceptance with
+and was pinned by Core0.7.1 CI; current candidate pins1.0.3 (receipt below).
+Its prerequisite archive passed 29-step acceptance with
 released 0.7.0 and source-built 0.7.1; the latter is candidate evidence only.
 No real daemon acceptance, engine switch, lease migration or #62 completion is
 claimed. See [the repair release plan](releases/0.7.1.zh-CN.md).
@@ -216,3 +218,18 @@ the external report action pinned to that full commit for its synthetic UI
 example; Core retains report generation/tamper regressions. GateProbes owns
 platform transport implementation and tests, not quality decisions. Existing
 explicit upload/publish choices remain unchanged.
+
+## Installed-runtime delivery candidate 0.8.0
+
+Installed host source a4e6dba and GateProbes offline importer/joint CI c63f1b6 are
+merged. CI verifies source-built Core with independently pinned runtime0.1.1;
+this is not released-Core acceptance or engine migration. Core0.8.0, protocol0.1.1
+and standalone importer0.1.0 delivery remain pending; onboarding1.0.3 is published
+and pinned (receipt below). Retain
+runtime0.1.1 bytes and its old plugin-manager/accept.py compatibility boundary.
+
+Onboarding1.0.3 prerequisite is published from `727dd742510afd01c22d91dc90d5ffe474300531`
+(release run39554478429), archive SHA256
+`d4d3889c199137b067845eac7869a372134e4e4b899895235d9cc2f0362b7337`.
+Core CI now pins this immutable archive. Downloaded presets passed 29 steps with
+released Core0.7.1 and source-built0.8.0; downloaded Core0.8.0 reacceptance remains pending.

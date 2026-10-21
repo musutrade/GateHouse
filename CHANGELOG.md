@@ -1,11 +1,17 @@
 # Changelog
 
+## 0.8.0 (unreleased)
+
+- Add the protected Linux installed-runtime host command and installation descriptor binding.
+- Publish protocol 0.1.1 for the new tag package identity; retain strict registry checks.
+- Require independently pinned onboarding 1.0.3 before release. Fake-socket read-only scope only.
+
 All notable changes to Harness-Gate will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.1] - pending publication
+## [0.7.1] - published
 
 - Pin the runtime protocol dependency to a publishable registry version.
 - Run registry packaging dry-run before publishing GitHub release assets.
@@ -14,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 See [the repair release notes](docs/releases/0.7.1.zh-CN.md). The existing 0.7.0
 GitHub release remains immutable; its crates.io publication failed.
 
-## [0.7.0] - pending publication
+## [0.7.0] - GitHub assets published; crates.io incomplete
 
 - Add the Linux protected-file, sealed-input read-only runtime v2 host and strict
   engine binding contract. Remove and Absent remain refused; service engine

@@ -1,6 +1,18 @@
 # Published releases and acceptance
 
-## Core 0.7.1 registry repair candidate
+## Core 0.8.0 installed-host candidate
+
+The installed command is merged but not yet released. See [0.8.0 scope](releases/0.8.0.zh-CN.md).
+Onboarding1.0.3 publication and pinning are complete (receipt below). Protocol0.1.1 and
+Core0.8.0 must be verified from their final tag; no candidate build is release evidence.
+The separate importer artifact and downloaded fixed-pair acceptance remain pending.
+
+## Core 0.7.1 registry repair delivered
+
+Core0.7.1 source `26734c7055870c1c9c4014bf75039d55b8c91ad8` completed release run
+39487417615, including protocol0.1.0 and Core crate publication. Downloaded Linux
+SHA256 is `63e7ebb3f57f0e864ce5c6f41bed00b6bbfbff64863a913df7b75652af1bf613`.
+The prior candidate chronology follows; it does not describe current publication status.
 
 Core 0.7.0 GitHub assets were published from `6242228a16f951bc30a881641c853afefae262a8`;
 its crates.io job failed because the runtime protocol dependency was not publishable.
@@ -275,3 +287,9 @@ Core 0.4.1 could not finalize the large native report and could not load staged 
 Earlier [RC2 delivery record](https://github.com/musutrade/Harness-Gate/blob/34724396c9cec4ac14899d97a5145c8197bbfe5b/docs/release-status.md), [RC2 operator continuation](quality/release-rc2/operator-continuation.json), and [RC1 HTTP/2 recovery](quality/release-0.4.1/recovery-result.json) preserve failed runs and their independently verified continuations. Current collector uploads use HTTP/1.1 through the authorized local proxy.
 
 [Original corresponding sources, notices and relink materials](https://github.com/musutrade/Harness-Gate/releases/tag/rust-collector-materials-7165558-v1) and [per-file engineering license review](https://github.com/musutrade/Harness-Gate/releases/tag/rust-collector-review-7165558-v1) remain applicable to identical payloads. The actual incremental reviewer is Codex. Private keys and Arc Admin business source are excluded from public handoff.
+
+Onboarding1.0.3 prerequisite is published from `727dd742510afd01c22d91dc90d5ffe474300531`
+(release run39554478429), archive SHA256
+`d4d3889c199137b067845eac7869a372134e4e4b899895235d9cc2f0362b7337`.
+Core CI now pins this immutable archive. Downloaded presets passed 29 steps with
+released Core0.7.1 and source-built0.8.0; downloaded Core0.8.0 reacceptance remains pending.
