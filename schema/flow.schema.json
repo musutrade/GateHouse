@@ -1062,6 +1062,13 @@
                 "docker"
               ]
             },
+            "readiness_host": {
+              "description": "Protected installed-v2 host used only for read-only availability. Startup and cleanup retain their existing engine implementation.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "runtime": {
               "description": "Container CLI used for this service. Podman supports the Docker command surface and is selected explicitly when requested.",
               "default": "docker",

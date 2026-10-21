@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import subprocess
 import tempfile
+import tomllib
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
@@ -23,7 +24,8 @@ class ControlFlow(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="protocol-publish-control-")
         self.addCleanup(self.temp.cleanup)
         self.target = Path(self.temp.name)
-        self.package = self.target / "package" / "gatehouse-runtime-protocol-0.1.1.crate"
+        package = tomllib.loads(m.MANIFEST.read_text())["package"]
+        self.package = self.target / "package" / f"{package['name']}-{package['version']}.crate"
         self.package.parent.mkdir(parents=True)
         self.package.write_bytes(b"exact-package")
         self.metadata = json.dumps({"target_directory": str(self.target)}).encode()
