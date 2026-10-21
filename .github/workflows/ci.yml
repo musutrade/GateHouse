@@ -318,6 +318,27 @@ jobs:
               --no-fail-fast -E "$extra"
           fi
 
+
+      - name: Repeat final cancellation boundary on Windows
+        if: matrix.os == 'windows-latest' && matrix.shard == 1
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p target/quality/windows-cancellation
+          for sample in $(seq 1 10); do
+            cargo nextest run --manifest-path tools/harness-gate/Cargo.toml --locked \
+              --no-fail-fast --no-tests fail -E 'test(=process::adapter::tests::final_boundary_cancellation_rejects_a_valid_zero_exit_response)' \
+              2>&1 | tee "target/quality/windows-cancellation/sample-${sample}.log"
+          done
+
+      - name: Retain Windows cancellation samples
+        if: always() && matrix.os == 'windows-latest' && matrix.shard == 1
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: windows-cancellation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/quality/windows-cancellation/
+          if-no-files-found: warn
+
   security-audit:
     name: Security Audit
     needs: [classify]

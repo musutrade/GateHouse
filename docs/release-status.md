@@ -1,11 +1,20 @@
 # Published releases and acceptance
 
-## Core 0.8.0 installed-host candidate
+## Core 0.9.0 readiness candidate
 
-The installed command is merged but not yet released. See [0.8.0 scope](releases/0.8.0.zh-CN.md).
-Onboarding1.0.3 publication and pinning are complete (receipt below). Protocol0.1.1 and
-Core0.8.0 must be verified from their final tag; no candidate build is release evidence.
-The separate importer artifact and downloaded fixed-pair acceptance remain pending.
+Core 0.9.0 is not published. It adds the Linux opt-in v3 readiness host and
+requires protocol 0.2.0 publication before Core registry packaging.
+Exact-source Windows cancellation validation, release CI and downloaded artifact
+verification remain pending. See [candidate scope](releases/0.9.0.zh-CN.md).
+Separate docker-readiness and importer delivery is unfinished.
+
+## Core 0.8.0 published
+
+Immutable v0.8.0 source is `1fe08f79a46426027023fb921c9d5fa05d499922`.
+Core and protocol 0.1.1 registry publication were verified. Downloaded Linux
+SHA256 is `2b9748bd7ab66d201129922d9e46bfbef1d068fc6a10810666674529ddbd5693`.
+It predates the v3 host. Its Windows cancellation test failure remains retained;
+local validation of the later test repair is not Windows acceptance.
 
 ## Core 0.7.1 registry repair delivered
 
@@ -292,4 +301,4 @@ Onboarding1.0.3 prerequisite is published from `727dd742510afd01c22d91dc90d5ffe4
 (release run39554478429), archive SHA256
 `d4d3889c199137b067845eac7869a372134e4e4b899895235d9cc2f0362b7337`.
 Core CI now pins this immutable archive. Downloaded presets passed 29 steps with
-released Core0.7.1 and source-built0.8.0; downloaded Core0.8.0 reacceptance remains pending.
+released Core0.7.1 and source-built0.8.0; downloaded Core0.8.0 reacceptance subsequently passed 29/29 checks.
