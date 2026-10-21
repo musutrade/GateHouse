@@ -3,7 +3,7 @@
 ## Core 0.8.0 installed-host candidate
 
 The installed command is merged but not yet released. See [0.8.0 scope](releases/0.8.0.zh-CN.md).
-Onboarding1.0.3 publication and pinning remain prerequisites. Protocol0.1.1 and
+Onboarding1.0.3 publication and pinning are complete (receipt below). Protocol0.1.1 and
 Core0.8.0 must be verified from their final tag; no candidate build is release evidence.
 The separate importer artifact and downloaded fixed-pair acceptance remain pending.
 
