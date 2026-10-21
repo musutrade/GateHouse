@@ -170,6 +170,16 @@ fn recipe_rejection_precedes_engine_resolution() {
         service(ContainerRuntimeKind::Docker, None),
     );
     crate::recipes::tests::install_fixture(&mut project, "fixture", false);
+    // The no-external-value route requests a managed recipe. Keep the fixture
+    // digest bound to the rewritten bytes so this tests an actual rejection,
+    // rather than a mode or executable-integrity failure.
+    use sha2::{Digest, Sha256};
+    let check = &mut project.config.service_checks.get_mut("fixture").unwrap()[0];
+    let source = std::fs::read_to_string(&check.executable).unwrap();
+    let managed = source.replace("\"mode\":\"external\"", "\"mode\":\"managed\"");
+    assert_ne!(managed, source);
+    std::fs::write(&check.executable, &managed).unwrap();
+    check.sha256 = format!("{:x}", Sha256::digest(managed.as_bytes()));
     let result =
         check_available_with_runtime::<Fake>(&project, "fixture", Duration::from_secs(1), |_| {
             panic!("recipe failure must precede backend selection")
