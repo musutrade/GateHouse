@@ -1,13 +1,15 @@
 # Result-boundary acceptance
 
-## Core 0.7.1 registry repair candidate
+## Core 0.7.1 registry repair delivered
 
 Core 0.7.0 GitHub assets were published from `6242228a16f951bc30a881641c853afefae262a8`;
 its crates.io job failed because the runtime protocol dependency was not publishable.
-The tag and assets remain immutable. Core 0.7.1 repairs registry packaging and adds
-protocol publication and Core package preflight before GitHub asset publication.
+The tag and assets remain immutable. Core0.7.1 source26734c7 completed release
+run39487417615 including protocol0.1.0 and Core crate publication. Its workflow
+adds protocol publication and Core package preflight before GitHub publication.
 Onboarding presets 1.0.2 is published from `85b1856dd7061bfb19683df3921060b49490e5e2`
-and pinned by Core CI. Its downloaded archive passed 29-step acceptance with
+and was pinned by Core0.7.1 CI; current candidate pins1.0.3 (receipt below).
+Its prerequisite archive passed 29-step acceptance with
 released 0.7.0 and source-built 0.7.1; the latter is candidate evidence only.
 No real daemon acceptance, engine switch, lease migration or #62 completion is
 claimed. See [the repair release plan](releases/0.7.1.zh-CN.md).

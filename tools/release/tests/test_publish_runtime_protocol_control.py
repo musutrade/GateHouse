@@ -23,7 +23,7 @@ class ControlFlow(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="protocol-publish-control-")
         self.addCleanup(self.temp.cleanup)
         self.target = Path(self.temp.name)
-        self.package = self.target / "package" / "gatehouse-runtime-protocol-0.1.0.crate"
+        self.package = self.target / "package" / "gatehouse-runtime-protocol-0.1.1.crate"
         self.package.parent.mkdir(parents=True)
         self.package.write_bytes(b"exact-package")
         self.metadata = json.dumps({"target_directory": str(self.target)}).encode()
