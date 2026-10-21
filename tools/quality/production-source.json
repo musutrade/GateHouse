@@ -204,6 +204,7 @@
     "service-adapters": {
       "blocking": false,
       "files": [
+        "src/service/legacy_cli.rs",
         "src/service/runtime.rs"
       ]
     },
