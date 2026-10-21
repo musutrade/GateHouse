@@ -1,6 +1,13 @@
 # Changelog
 
-## 0.8.0 (unreleased)
+## 0.9.0 (unreleased)
+
+- Add the independently versioned v3 readiness host and protocol 0.2.0 dependency.
+- Bind each installed-host invocation to the exact adapter, config and image.
+- Replace fixed-sleep cancellation test synchronization with a test-only validated-response observer.
+- Keep service lifecycle mutation in Core; separate v3 package/importer delivery remains pending.
+
+## 0.8.0 (published 2026-10-21)
 
 - Add the protected Linux installed-runtime host command and installation descriptor binding.
 - Publish protocol 0.1.1 for the new tag package identity; retain strict registry checks.

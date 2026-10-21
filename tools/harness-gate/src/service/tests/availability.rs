@@ -65,6 +65,7 @@ impl ContainerRuntime for Fake {
 }
 fn service(runtime: ContainerRuntimeKind, external_env: Option<String>) -> ServiceConfig {
     ServiceConfig::Docker {
+        readiness_host: None,
         runtime,
         image: "fixture-image".into(),
         image_env: None,
@@ -185,4 +186,57 @@ fn recipe_rejection_precedes_engine_resolution() {
             panic!("recipe failure must precede backend selection")
         });
     assert!(format!("{:#}", result.unwrap_err()).contains("reported failure"));
+}
+
+#[test]
+fn installed_readiness_failure_never_resolves_legacy_backend() {
+    let (_workspace, mut project) = project();
+    let mut config = service(ContainerRuntimeKind::Docker, None);
+    if let ServiceConfig::Docker { readiness_host, .. } = &mut config {
+        *readiness_host = Some(
+            project
+                .root
+                .join("missing-protected-host.json")
+                .to_string_lossy()
+                .into_owned(),
+        );
+    }
+    project.config.services.insert("fixture".into(), config);
+    let result =
+        check_available_with_runtime::<Fake>(&project, "fixture", Duration::from_secs(1), |_| {
+            panic!("installed readiness must not fall back to CLI")
+        });
+    assert!(result.is_err());
+}
+#[test]
+fn external_value_bypasses_installed_host_but_podman_managed_is_refused() {
+    let (_workspace, mut project) = project();
+    let name = "HG_V3_EXTERNAL_FIXTURE_69";
+    std::env::set_var(name, "fixture://external");
+    let mut config = service(ContainerRuntimeKind::Docker, Some(name.into()));
+    if let ServiceConfig::Docker { readiness_host, .. } = &mut config {
+        *readiness_host = Some("/missing-host".into());
+    }
+    project
+        .config
+        .services
+        .insert("fixture".into(), config.clone());
+    assert!(check_available_with_runtime::<Fake>(
+        &project,
+        "fixture",
+        Duration::from_secs(1),
+        |_| panic!("external must bypass backend")
+    )
+    .is_ok());
+    std::env::remove_var(name);
+    if let ServiceConfig::Docker { runtime, .. } = &mut config {
+        *runtime = ContainerRuntimeKind::Podman;
+    }
+    project.config.services.insert("fixture".into(), config);
+    let e =
+        check_available_with_runtime::<Fake>(&project, "fixture", Duration::from_secs(1), |_| {
+            panic!("Podman must not resolve backend")
+        })
+        .unwrap_err();
+    assert!(e.to_string().contains("requires Docker"));
 }

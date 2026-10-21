@@ -1,9 +1,10 @@
 # GateHouse
 
-Core 0.8.0 is an installed-runtime host release candidate. Its Linux read-only host does not
-replace the service engine or authorize mutations. See the
-[release scope](docs/releases/0.8.0.zh-CN.md) and
-[protected host contract](docs/runtime-probe-installed.md).
+Core 0.9.0 is an unreleased candidate with an opt-in Linux v3 image-readiness
+host. Service lifecycle operations remain in Core. See the
+[release scope](docs/releases/0.9.0.zh-CN.md) and
+[readiness contract](docs/runtime-readiness-v3.md).
+Published Core 0.8.0 predates v3; no v3 adapter package compatibility is claimed.
 
 > Development now lives in **GateHouse**. The `harness-gate` CLI and crate names remain unchanged. Historical releases through v0.4.8 retain their Harness-Gate download and signing identities. See [migration and test data](docs/gatehouse-migration.md).
 

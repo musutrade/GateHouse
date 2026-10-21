@@ -251,7 +251,17 @@ class WorkflowBoundaryTests(unittest.TestCase):
         self.assertIn("extra='test(frozen_evidence_and_integrity_matrix_matches_python)'", native)
         self.assertIn('fail-fast: false', native)
         regex = re.compile(r'^\s+if:', re.M)
-        self.assertNotRegex(native.split('    steps:\n', 1)[1], regex)
+        steps = native.split('    steps:\n', 1)[1]
+        allowed = {
+            'Repeat final cancellation boundary on Windows': "matrix.os == 'windows-latest' && matrix.shard == 1",
+            'Retain Windows cancellation samples': "always() && matrix.os == 'windows-latest' && matrix.shard == 1",
+        }
+        for name, condition in allowed.items():
+            blocks = re.findall(r'      - name: ' + re.escape(name) + r'\n(.*?)(?=\n      - |\Z)', steps, re.S)
+            self.assertEqual(len(blocks), 1)
+            self.assertEqual(re.findall(r'^\s+if: (.+)$', blocks[0], re.M), [condition])
+            steps = steps.replace(blocks[0], '', 1)
+        self.assertNotRegex(steps, re.compile(r'^\s+if:', re.M))
 
     def test_measurements_do_not_restore_compiled_state(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()

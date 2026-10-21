@@ -665,6 +665,7 @@ fn check_available_with_runtime<R: ContainerRuntime>(
         ServiceConfig::Docker {
             runtime,
             image,
+            readiness_host,
             external_env,
             ..
         } => {
@@ -678,6 +679,27 @@ fn check_available_with_runtime<R: ContainerRuntime>(
             }
             run_checks(project, id, None, timeout)?;
             let deadline = Instant::now() + timeout;
+            if let Some(host) = readiness_host {
+                if *runtime != crate::config::ContainerRuntimeKind::Docker {
+                    bail!("v3 readiness requires Docker");
+                }
+                let budget = remaining(deadline)?.as_millis().min(30_000) as u64;
+                let response = crate::process::runtime_host_files_v3::run_installed(
+                    std::path::Path::new(host),
+                    image,
+                    budget,
+                )?;
+                remaining(deadline)?;
+                use gatehouse_runtime_protocol::v3::{Outcome, Readiness};
+                return match response.outcome {
+                    Outcome::Readiness(Readiness {
+                        image_present: true,
+                        ..
+                    }) => Ok(format!("docker and {image} ready (v3 observation)")),
+                    Outcome::Readiness(_) => anyhow::bail!("docker image {image} is not available"),
+                    Outcome::Unavailable => anyhow::bail!("docker readiness unavailable"),
+                };
+            }
             let runtime = select_runtime(*runtime);
             runtime
                 .check_available(project, remaining(deadline)?)

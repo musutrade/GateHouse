@@ -175,3 +175,8 @@ must establish those prerequisites before deployment.
 No v1 request or lease is upgraded or inferred. v1 parsers, intent/store records,
 probe and private mutation host remain v1; they reject v2 documents. v2 has no
 persistence/host integration yet and does not enable a public removal command.
+
+The unreleased 0.2.0 source also exposes independent `v3` image-readiness types.
+V1/v2 wire types remain unchanged. V3 has only readiness and unavailable outcomes;
+capabilities, container absence and mutation are not readiness authority. See
+[the staged contract](../../../docs/runtime-readiness-v3.md).

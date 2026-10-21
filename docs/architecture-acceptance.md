@@ -1,3 +1,7 @@
+> 0.9.0 候选新增独立 v3 只读 readiness 宿主。本文既有验收不构成
+> 已发布 0.8.0 的 v3 兼容声明。服务生命周期仍在 Core，#62 尚未完成。
+> 新候选的 Windows、下载制品和插件交付验收仍待完成。
+
 # Result-boundary acceptance
 
 ## Core 0.7.1 registry repair delivered

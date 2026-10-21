@@ -680,6 +680,24 @@ pub(super) fn validate_impact_input_path(path: &str) -> Result<()> {
     primitives::validate_repo_path("scope.impact.inputs", path)
 }
 
+fn validate_readiness_host(
+    runtime: crate::config::ContainerRuntimeKind,
+    host: Option<&str>,
+    image: &str,
+) -> Result<()> {
+    if let Some(host) = host {
+        if runtime != crate::config::ContainerRuntimeKind::Docker
+            || !std::path::Path::new(host).is_absolute()
+            || host.chars().any(char::is_control)
+        {
+            bail!("service readiness_host requires Docker and an absolute host path");
+        }
+        gatehouse_runtime_protocol::v3::validate_image(image)
+            .map_err(|_| anyhow::anyhow!("invalid v3 readiness image"))?;
+    }
+    Ok(())
+}
+
 fn validate_service_entry(id: &str, service: &ServiceConfig) -> Result<()> {
     validate_id("service id", id)?;
     match service {
@@ -691,7 +709,8 @@ fn validate_service_entry(id: &str, service: &ServiceConfig) -> Result<()> {
             validate_env_name("service.inject_env", inject_env)?;
         }
         ServiceConfig::Docker {
-            runtime: _,
+            runtime,
+            readiness_host,
             image,
             image_env,
             external_env,
@@ -704,6 +723,7 @@ fn validate_service_entry(id: &str, service: &ServiceConfig) -> Result<()> {
             connection,
         } => {
             validate_image(image)?;
+            validate_readiness_host(*runtime, readiness_host.as_deref(), image)?;
             if *startup_timeout_secs == 0 || *startup_timeout_secs > 300 {
                 bail!("service {id:?} startup_timeout_secs must be between 1 and 300");
             }
@@ -1510,5 +1530,78 @@ fn service_inject_env(service: &ServiceConfig) -> &str {
     match service {
         ServiceConfig::Docker { inject_env, .. }
         | ServiceConfig::Environment { inject_env, .. } => inject_env,
+    }
+}
+
+#[cfg(test)]
+mod service_validation_tests {
+    use super::*;
+    use serde_json::{json, Value};
+
+    fn service() -> Value {
+        json!({"kind":"docker", "runtime":"docker", "image":"repo:tag",
+            "inject_env":"SERVICE_URL", "startup_timeout_secs":30,
+            "container_port":5432, "healthcheck":["check"],
+            "connection":"tcp://localhost:{host_port}"})
+    }
+
+    #[test]
+    fn service_field_failures_are_rejected() {
+        let valid: ServiceConfig = serde_json::from_value(service()).unwrap();
+        validate_service_entry("db", &valid).unwrap();
+        assert!(validate_service_entry("", &valid).is_err());
+        for (field, value) in [
+            ("startup_timeout_secs", json!(0)),
+            ("startup_timeout_secs", json!(301)),
+            ("container_port", json!(0)),
+            ("image_env", json!("bad-name")),
+            ("timeout_env", json!("bad-name")),
+            ("external_env", json!("bad-name")),
+            ("inject_env", json!("bad-name")),
+            ("healthcheck", json!([])),
+            ("connection", json!("missing port")),
+            ("environment", json!({"bad-name":"value"})),
+            ("environment", json!({"VALID":"bad\u{0}value"})),
+            ("healthcheck", json!(["bad\u{0}value"])),
+        ] {
+            let mut value_with_error = service();
+            value_with_error[field] = value;
+            let parsed = serde_json::from_value(value_with_error).unwrap();
+            assert!(validate_service_entry("db", &parsed).is_err(), "{field}");
+        }
+        let mut all_optional = service();
+        for field in ["image_env", "timeout_env", "external_env"] {
+            all_optional[field] = json!("VALID_ENV");
+        }
+        all_optional["environment"] = json!({"VALID":"value"});
+        validate_service_entry("db", &serde_json::from_value(all_optional).unwrap()).unwrap();
+        let env = |source: &str, inject: &str| ServiceConfig::Environment {
+            source_env: source.into(),
+            inject_env: inject.into(),
+        };
+        validate_service_entry("db", &env("SOURCE", "DEST")).unwrap();
+        assert!(validate_service_entry("db", &env("bad-name", "DEST")).is_err());
+        assert!(validate_service_entry("db", &env("SOURCE", "bad-name")).is_err());
+    }
+
+    #[test]
+    fn readiness_contract_requires_docker_absolute_safe_path_and_v3_image() {
+        let absolute = std::env::current_dir().unwrap().join("host.json");
+        let mut valid = service();
+        valid["readiness_host"] = json!(absolute);
+        validate_service_entry("db", &serde_json::from_value(valid.clone()).unwrap()).unwrap();
+        for (field, value) in [
+            ("runtime", json!("podman")),
+            ("readiness_host", json!("relative.json")),
+            ("readiness_host", json!(format!("{}\n", absolute.display()))),
+            ("image", json!("repo?tag")),
+        ] {
+            let mut invalid = valid.clone();
+            invalid[field] = value;
+            assert!(
+                validate_service_entry("db", &serde_json::from_value(invalid).unwrap()).is_err(),
+                "{field}"
+            );
+        }
     }
 }

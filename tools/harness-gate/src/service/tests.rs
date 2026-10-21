@@ -388,6 +388,7 @@ fn docker_service_uses_a_valid_external_value_without_docker() {
     project.config.services.insert(
         "database".into(),
         ServiceConfig::Docker {
+            readiness_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -421,6 +422,7 @@ fn docker_service_rejects_an_invalid_external_value_before_any_runtime() {
     project.config.services.insert(
         "database".into(),
         ServiceConfig::Docker {
+            readiness_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -451,6 +453,7 @@ fn exclusive_external_service_is_not_reused_after_its_last_lease() {
     project.config.services.insert(
         "database".into(),
         ServiceConfig::Docker {
+            readiness_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -492,6 +495,7 @@ fn podman_runtime_uses_external_service_without_starting_a_container() {
     project.config.services.insert(
         "database".into(),
         ServiceConfig::Docker {
+            readiness_host: None,
             runtime: crate::config::ContainerRuntimeKind::Podman,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -522,6 +526,7 @@ fn managed_service_lease_excludes_concurrent_users() {
     project.config.services.insert(
         "exclusive".into(),
         ServiceConfig::Docker {
+            readiness_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -601,6 +606,7 @@ esac
     project.config.services.insert(
         "database".into(),
         ServiceConfig::Docker {
+            readiness_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "fixture-image".into(),
             image_env: None,

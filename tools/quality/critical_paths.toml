@@ -390,14 +390,14 @@ path = "src/process/adapter.rs"
 symbol = "claim"
 start = 196
 end = 226
-sha256 = "ff6f673b2d4308e907b9810e17f0982780cc439c14f395c8a1590455d13bf0fa"
+sha256 = "f41cb351e2a3216822f2f60dd647f1940499735c8c8b85cce00ced73a46472eb"
 
 [paths.test_source]
 path = "src/process/adapter.rs"
 symbol = "replay_retention_covers_the_entire_accepted_window"
-start = 1777
-end = 1811
-sha256 = "ff6f673b2d4308e907b9810e17f0982780cc439c14f395c8a1590455d13bf0fa"
+start = 1792
+end = 1826
+sha256 = "f41cb351e2a3216822f2f60dd647f1940499735c8c8b85cce00ced73a46472eb"
 
 [[paths.probes]]
 line = 208
@@ -426,9 +426,9 @@ sha256 = "fbcc49ec16603a0c43ff92f069b7579cf7821cae16d4e77fa4f480da5b068a47"
 [paths.test_source]
 path = "src/process/adapter.rs"
 symbol = "durable_nonce_claims_are_atomic_between_independent_hosts"
-start = 1835
-end = 1860
-sha256 = "ff6f673b2d4308e907b9810e17f0982780cc439c14f395c8a1590455d13bf0fa"
+start = 1850
+end = 1875
+sha256 = "f41cb351e2a3216822f2f60dd647f1940499735c8c8b85cce00ced73a46472eb"
 
 [[paths.probes]]
 line = 127

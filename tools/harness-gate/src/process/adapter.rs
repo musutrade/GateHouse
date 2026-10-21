@@ -270,6 +270,20 @@ pub fn run_with_cancel<F>(
 where
     F: Fn() -> bool,
 {
+    // The production entry supplies only a no-op observer. Keeping the private
+    // generic signature uniform also lets source/coverage tooling classify it.
+    run_with_cancel_inner(request, policy, is_cancelled, |_| {})
+}
+
+fn run_with_cancel_inner<F>(
+    request: AdapterRequest,
+    policy: &HostPolicy,
+    is_cancelled: F,
+    after_validation: impl FnOnce(&AdapterOutcome),
+) -> Result<AdapterOutcome, AdapterError>
+where
+    F: Fn() -> bool,
+{
     if is_cancelled() {
         return Err(AdapterError::Protocol("adapter cancelled".into()));
     }
@@ -290,6 +304,7 @@ where
     )?;
     validate_process_output(&output, policy)?;
     let outcome = finish_response(&request, policy, &artifact_root, output, started)?;
+    after_validation(&outcome);
     // Cancellation can arrive after leader exit while output and artifacts are
     // being validated. A valid response must not erase that cancellation.
     if is_cancelled() {
@@ -1952,27 +1967,37 @@ mod tests {
         let directory = tempdir().unwrap();
         let (request, policy) = fixture_request(directory.path(), "pass");
         let artifact = directory.path().join("adapter-result.txt");
-        let calls = Arc::new(AtomicU64::new(0));
-        let counter = Arc::clone(&calls);
-        let error = run_with_cancel(request, &policy, move || {
-            let call = counter.fetch_add(1, Ordering::SeqCst);
-            if call == 1 {
-                // Hold the wait loop while the adapter writes its full valid
-                // response and exits zero, so the next observation is the
-                // final result decision boundary.
-                thread::sleep(Duration::from_millis(600));
-            }
-            call >= 2
-        })
+        let boundary = AtomicBool::new(false);
+        let final_checks = AtomicU64::new(0);
+        let error = run_with_cancel_inner(
+            request,
+            &policy,
+            || {
+                if boundary.load(Ordering::SeqCst) {
+                    final_checks.fetch_add(1, Ordering::SeqCst);
+                    true
+                } else {
+                    false
+                }
+            },
+            |outcome| {
+                assert_eq!(outcome.status_code, Some(0));
+                assert!(!outcome.timed_out && !outcome.cancelled);
+                assert_eq!(outcome.response["status"], "PASS");
+                assert_eq!(
+                    fs::read_to_string(&artifact).unwrap().replace("\r\n", "\n"),
+                    "adapter fixture passed\n"
+                );
+                assert!(!boundary.swap(true, Ordering::SeqCst));
+            },
+        )
         .expect_err("final-boundary cancellation must fail closed");
         assert!(
             matches!(&error, AdapterError::Protocol(message) if message == "adapter cancelled")
         );
-        assert_eq!(
-            calls.load(Ordering::SeqCst),
-            3,
-            "expected entry, wait-loop and final-boundary observations only"
-        );
+        assert!(boundary.load(Ordering::SeqCst));
+        assert_eq!(final_checks.load(Ordering::SeqCst), 1);
+
         assert_eq!(
             fs::read_to_string(&artifact).unwrap().replace("\r\n", "\n"),
             "adapter fixture passed\n",

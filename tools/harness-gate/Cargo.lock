@@ -438,7 +438,7 @@ dependencies = [
 
 [[package]]
 name = "gatehouse-runtime-protocol"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "libc",
  "serde",
@@ -504,7 +504,7 @@ dependencies = [
 
 [[package]]
 name = "harness-gate"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "base64",

@@ -183,8 +183,17 @@ class TopologyTests(unittest.TestCase):
         self.assertIn('--no-fail-fast --partition "count:${CI_SHARD}/${CI_PARTITIONS}"', native)
         self.assertIn('-E "$extra"', native)
         native_steps = native.split('    steps:\n', 1)[1]
-        self.assertNotRegex(native_steps, re.compile(r'^\s+if:', re.M),
-                            msg='native test steps cannot be conditional within the job')
+        steps = native.split('    steps:\n', 1)[1]
+        allowed = {
+            'Repeat final cancellation boundary on Windows': "matrix.os == 'windows-latest' && matrix.shard == 1",
+            'Retain Windows cancellation samples': "always() && matrix.os == 'windows-latest' && matrix.shard == 1",
+        }
+        for name, condition in allowed.items():
+            blocks = re.findall(r'      - name: ' + re.escape(name) + r'\n(.*?)(?=\n      - |\Z)', steps, re.S)
+            self.assertEqual(len(blocks), 1)
+            self.assertEqual(re.findall(r'^\s+if: (.+)$', blocks[0], re.M), [condition])
+            steps = steps.replace(blocks[0], '', 1)
+        self.assertNotRegex(steps, re.compile(r'^\s+if:', re.M))
         aggregate = jobs['quality-required']
         self.assertEqual(re.findall(r'^        run: (.+)$', aggregate, re.M),
                          ['python3 tools/quality/ci_quality.py aggregate'])
