@@ -87,7 +87,7 @@ class RiskScopeTests(unittest.TestCase):
         self.assertIn('config/suggestions.rs', SOURCE_FILES)
         self.assertIn('app/commands.rs', SOURCE_FILES)
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')},
-                         {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs'})
+                         {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs'})
 
     def test_process_test_module_reaches_measurement_but_unknown_sources_block(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -133,6 +133,8 @@ class RiskScopeTests(unittest.TestCase):
                 ('tools/harness-gate/src/service/lease.rs', True),
                 ('tools/harness-gate/src/service/mod.rs', True),
                 ('tools/harness-gate/src/service/report_directory.rs', True),
+                ('tools/harness-gate/src/service/legacy_cli.rs', True),
+                ('tools/harness-gate/src/service/runtime.rs', True),
                 ('tools/harness-gate/src/service/unknown.rs', False),
             ):
                 with self.subTest(path=path), \
