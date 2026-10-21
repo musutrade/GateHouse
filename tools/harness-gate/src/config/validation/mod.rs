@@ -691,7 +691,8 @@ fn validate_service_entry(id: &str, service: &ServiceConfig) -> Result<()> {
             validate_env_name("service.inject_env", inject_env)?;
         }
         ServiceConfig::Docker {
-            runtime: _,
+            runtime,
+            readiness_host,
             image,
             image_env,
             external_env,
@@ -704,6 +705,16 @@ fn validate_service_entry(id: &str, service: &ServiceConfig) -> Result<()> {
             connection,
         } => {
             validate_image(image)?;
+            if let Some(host) = readiness_host {
+                if *runtime != crate::config::ContainerRuntimeKind::Docker
+                    || !std::path::Path::new(host).is_absolute()
+                    || host.chars().any(char::is_control)
+                {
+                    bail!("service readiness_host requires Docker and an absolute host path");
+                }
+                gatehouse_runtime_protocol::v3::validate_image(image)
+                    .map_err(|_| anyhow::anyhow!("invalid v3 readiness image"))?;
+            }
             if *startup_timeout_secs == 0 || *startup_timeout_secs > 300 {
                 bail!("service {id:?} startup_timeout_secs must be between 1 and 300");
             }

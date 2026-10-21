@@ -288,6 +288,10 @@ pub enum ServiceConfig {
         /// command surface and is selected explicitly when requested.
         #[serde(default)]
         runtime: ContainerRuntimeKind,
+        /// Protected installed-v2 host used only for read-only availability.
+        /// Startup and cleanup retain their existing engine implementation.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        readiness_host: Option<String>,
         image: String,
         #[serde(default)]
         image_env: Option<String>,

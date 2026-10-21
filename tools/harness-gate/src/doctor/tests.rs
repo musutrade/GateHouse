@@ -49,6 +49,7 @@ fn doctor_service_check_keeps_recipe_validation_on_both_outcomes() {
     project.config.services.insert(
         "database".into(),
         crate::config::ServiceConfig::Docker {
+            readiness_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,

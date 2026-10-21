@@ -4,6 +4,7 @@ pub mod intent;
 #[cfg(unix)]
 pub mod store;
 pub mod v2;
+pub mod v3;
 mod wire;
 
 use serde::{Deserialize, Serialize};

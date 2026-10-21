@@ -91,11 +91,11 @@ SOURCE_FILES = sorted({"report_history/dashboard.rs", "report_history/dashboard/
     # base, not a legacy hotspot; recollect both commits, thresholds unchanged.
     {"process/fd_inputs.rs"} |
     # Additive pure config binding source, absent at base; no legacy hotspot.
-    {"process/runtime_config.rs", "process/runtime_host_v2.rs", "process/runtime_host_files.rs"} |
+    {"process/runtime_config.rs", "process/runtime_host_v2.rs", "process/runtime_host_files.rs", "process/runtime_host_v3.rs", "process/runtime_host_files_v3.rs", "process/runtime_request_v3.rs"} |
     # Runtime protocol now links into Core; recollect both commits with the
     # full production inventory rather than rely on standalone unit tests.
     {"../runtime-protocol/src/lib.rs", "../runtime-protocol/src/wire.rs",
-     "../runtime-protocol/src/intent.rs", "../runtime-protocol/src/store.rs", "../runtime-protocol/src/v2.rs"} |
+     "../runtime-protocol/src/intent.rs", "../runtime-protocol/src/store.rs", "../runtime-protocol/src/v2.rs", "../runtime-protocol/src/v3.rs"} |
     # Operator lifecycle extraction: the compatibility module loses the canary
     # state writer while run/compare remain. Include it in the measured risk
     # inventory and recollect both commits; series and thresholds are unchanged.

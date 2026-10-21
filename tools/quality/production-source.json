@@ -156,7 +156,11 @@
         "runtime-protocol/src/wire.rs",
         "runtime-protocol/src/intent.rs",
         "runtime-protocol/src/store.rs",
-        "runtime-protocol/src/v2.rs"
+        "runtime-protocol/src/v2.rs",
+        "src/process/runtime_host_v3.rs",
+        "src/process/runtime_host_files_v3.rs",
+        "src/process/runtime_request_v3.rs",
+        "runtime-protocol/src/v3.rs"
       ]
     },
     "project": {
@@ -448,7 +452,7 @@
     {
       "path": "src/process/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "5ffab3ae3383b591c6505341db68c9ac4a51afbe9934b5cd73d7e6026505201f"
+      "sha256": "7f78d5353e788bd5ae15a8ea1e4c6c539a95de6bd319312f374907686fa71cf2"
     },
     {
       "path": "src/scope/mod.rs",
