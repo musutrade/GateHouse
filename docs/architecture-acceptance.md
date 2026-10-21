@@ -224,3 +224,9 @@ merged. CI verifies source-built Core with independently pinned runtime0.1.1;
 this is not released-Core acceptance or engine migration. Core0.8.0, protocol0.1.1,
 onboarding1.0.3 and standalone importer0.1.0 delivery remain pending. Retain
 runtime0.1.1 bytes and its old plugin-manager/accept.py compatibility boundary.
+
+Onboarding1.0.3 prerequisite is published from `727dd742510afd01c22d91dc90d5ffe474300531`
+(release run39554478429), archive SHA256
+`d4d3889c199137b067845eac7869a372134e4e4b899895235d9cc2f0362b7337`.
+Core CI now pins this immutable archive. Downloaded presets passed 29 steps with
+released Core0.7.1 and source-built0.8.0; downloaded Core0.8.0 reacceptance remains pending.
