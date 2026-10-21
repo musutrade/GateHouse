@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0 (unreleased)
+
+- Add the protected Linux installed-runtime host command and installation descriptor binding.
+- Publish protocol 0.1.1 for the new tag package identity; retain strict registry checks.
+- Require independently pinned onboarding 1.0.3 before release. Fake-socket read-only scope only.
+
 All notable changes to Harness-Gate will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

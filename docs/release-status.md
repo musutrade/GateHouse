@@ -1,6 +1,18 @@
 # Published releases and acceptance
 
-## Core 0.7.1 registry repair candidate
+## Core 0.8.0 installed-host candidate
+
+The installed command is merged but not yet released. See [0.8.0 scope](releases/0.8.0.zh-CN.md).
+Onboarding1.0.3 publication and pinning remain prerequisites. Protocol0.1.1 and
+Core0.8.0 must be verified from their final tag; no candidate build is release evidence.
+The separate importer artifact and downloaded fixed-pair acceptance remain pending.
+
+## Core 0.7.1 registry repair delivered
+
+Core0.7.1 source `26734c7055870c1c9c4014bf75039d55b8c91ad8` completed release run
+39487417615, including protocol0.1.0 and Core crate publication. Downloaded Linux
+SHA256 is `63e7ebb3f57f0e864ce5c6f41bed00b6bbfbff64863a913df7b75652af1bf613`.
+The prior candidate chronology follows; it does not describe current publication status.
 
 Core 0.7.0 GitHub assets were published from `6242228a16f951bc30a881641c853afefae262a8`;
 its crates.io job failed because the runtime protocol dependency was not publishable.

@@ -216,3 +216,11 @@ the external report action pinned to that full commit for its synthetic UI
 example; Core retains report generation/tamper regressions. GateProbes owns
 platform transport implementation and tests, not quality decisions. Existing
 explicit upload/publish choices remain unchanged.
+
+## Installed-runtime delivery candidate 0.8.0
+
+Installed host source a4e6dba and GateProbes offline importer/joint CI c63f1b6 are
+merged. CI verifies source-built Core with independently pinned runtime0.1.1;
+this is not released-Core acceptance or engine migration. Core0.8.0, protocol0.1.1,
+onboarding1.0.3 and standalone importer0.1.0 delivery remain pending. Retain
+runtime0.1.1 bytes and its old plugin-manager/accept.py compatibility boundary.
