@@ -302,3 +302,9 @@ Onboarding1.0.3 prerequisite is published from `727dd742510afd01c22d91dc90d5ffe4
 `d4d3889c199137b067845eac7869a372134e4e4b899895235d9cc2f0362b7337`.
 Core CI now pins this immutable archive. Downloaded presets passed 29 steps with
 released Core0.7.1 and source-built0.8.0; downloaded Core0.8.0 reacceptance subsequently passed 29/29 checks.
+
+Core0.9 prerequisite onboarding1.0.4 is published from
+`bc3862fa58ad10bc6c2b9ebebf66e5d77d26b65d` (release run39602584330).
+Archive SHA256 is `3c3851e9ef819f3410e9028fb7cab89853f5fc62a47cf1260ed5d82e85f81eeb`.
+Downloaded presets passed29 steps with source-built Core0.9; downloaded Core0.9
+acceptance remains pending. Core CI now pins1.0.4; historical1.0.3 stays immutable.
