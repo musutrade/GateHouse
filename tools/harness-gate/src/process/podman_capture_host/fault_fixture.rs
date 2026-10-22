@@ -29,6 +29,14 @@ fn main() {
         "stderr" => {
             std::io::stderr().write_all(b"fixture stderr").unwrap();
         }
+        "stderr-near-cap" | "stderr-at-cap" | "stderr-over-cap" => {
+            let count = match mode.as_str() {
+                "stderr-near-cap" => 65535,
+                "stderr-at-cap" => 65536,
+                _ => 65537,
+            };
+            let _ = std::io::stderr().write_all(&vec![b'e'; count]);
+        }
         "oversize" => {
             let bytes = [b'x'; 65536];
             for _ in 0..512 {

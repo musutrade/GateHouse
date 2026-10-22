@@ -198,7 +198,15 @@ fn final_observer_installation_replacement_is_rejected() {
 fn native_fault_output_and_term_resistant_timeout_are_discarded_and_reaped() {
     let binary = std::env::var("HG_PODMAN_FAULT_BINARY").expect("fault fixture binary");
     let sha = std::env::var("HG_PODMAN_FAULT_SHA256").expect("fault fixture sha");
-    for mode in ["partial-exit", "stderr", "oversize", "term-resistant"] {
+    for mode in [
+        "partial-exit",
+        "stderr",
+        "stderr-near-cap",
+        "stderr-at-cap",
+        "stderr-over-cap",
+        "oversize",
+        "term-resistant",
+    ] {
         let (dir, installed, listener, _) = fixture_binary(&binary, &sha);
         fs::write(dir.path().join("fault-mode"), mode).unwrap();
         let started = Instant::now();
