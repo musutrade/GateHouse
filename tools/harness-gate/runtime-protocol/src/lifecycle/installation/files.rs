@@ -204,6 +204,14 @@ impl VerifiedInstallation {
     }
     /// Future host must execute this held descriptor, not reopen an ambient path.
     /// Reading this descriptor is not permission to bypass journal authorization.
+    pub fn config_bytes(&self) -> Result<&[u8]> {
+        self.revalidate()?;
+        Ok(&self.config.bytes)
+    }
+    pub fn engine_binding(&self) -> Result<&EngineBinding> {
+        self.revalidate()?;
+        Ok(&self.engine)
+    }
     pub fn executable(&self) -> Result<&File> {
         self.revalidate()?;
         Ok(&self.executable.file)

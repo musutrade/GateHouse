@@ -21,6 +21,7 @@ const MAX_ATTEMPTS: usize = 128;
 #[serde(rename_all = "kebab-case")]
 pub enum Purpose {
     Service,
+    ServiceCleanup,
     OperatorCleanup,
     Reconcile,
 }
@@ -42,6 +43,20 @@ struct Attempt {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum AbsenceReason {
+    OperatorObservedAbsence,
+    PostRemoveAbsence,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AbsenceProof {
+    reason: AbsenceReason,
+    remove_request_sha256: Option<String>,
+    status_request_sha256: String,
+    response: Response,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Record {
     schema: String,
@@ -50,7 +65,8 @@ struct Record {
     revision: u64,
     pending: Option<Pending>,
     attempts: Vec<Attempt>,
-    absence: Option<Response>,
+    absence: Option<AbsenceProof>,
+    recoveries: Vec<u64>,
 }
 fn same_authority(a: &Binding, b: &Binding) -> bool {
     let mut a = a.clone();
@@ -76,6 +92,7 @@ impl Record {
             }),
             attempts: vec![],
             absence: None,
+            recoveries: vec![],
         })
     }
     fn target(&self) -> Result<Target> {
@@ -196,9 +213,9 @@ impl Record {
                         .iter()
                         .any(|old| matches!(old.request.operation, Operation::Remove { .. })))
                 || self.pending.is_some()
-                || self.absence.as_ref() != a.response.as_ref()
+                || self.absence.as_ref().map(|p| &p.response) != a.response.as_ref()
                 || !matches!(
-                    self.absence.as_ref().map(|r| &r.outcome),
+                    self.absence.as_ref().map(|p| &p.response.outcome),
                     Some(Outcome::Absent { .. })
                 )
             {
@@ -207,10 +224,79 @@ impl Record {
         } else if self.absence.is_some() {
             return Err(Invalid("premature absence evidence"));
         }
+        self.replay()?;
+        Ok(())
+    }
+    fn replay(&self) -> Result<()> {
+        if self.recoveries.windows(2).any(|w| w[0] >= w[1])
+            || self
+                .recoveries
+                .iter()
+                .any(|g| *g == 0 || *g > self.attempts.len() as u64)
+        {
+            return Err(Invalid("invalid journal recovery history"));
+        }
+        let mut replay = Self::new(&self.create)?;
+        let mut fresh = false;
+        for (index, a) in self.attempts.iter().enumerate() {
+            if index > 0 {
+                replay = replay.begin_inner(&a.request, a.purpose, fresh)?;
+            }
+            let bytes = a
+                .response
+                .as_ref()
+                .map(|r| {
+                    super::canonical::encode(
+                        &serde_json::to_value(r).map_err(|_| Invalid("invalid stored response"))?,
+                    )
+                })
+                .transpose()?;
+            replay = replay.observe_inner(bytes.as_deref())?;
+            fresh = matches!(
+                a.response.as_ref().map(|r| (&r.operation, &r.outcome)),
+                Some((Operation::Status { .. }, Outcome::Status { .. }))
+            );
+            if self.recoveries.contains(&replay.revision) {
+                replay.state = replay.state.recover()?;
+                replay.recoveries.push(replay.revision);
+                fresh = false;
+            }
+        }
+        if !self.attempts.is_empty() {
+            if let Some(p) = &self.pending {
+                replay = replay.begin_inner(&p.request, p.purpose, fresh)?;
+            }
+        }
+        if replay != *self {
+            return Err(Invalid(
+                "journal state does not follow its evidence history",
+            ));
+        }
         Ok(())
     }
     fn begin(&self, r: &Request, purpose: Purpose, fresh_status: bool) -> Result<Self> {
         self.validate()?;
+        let next = self.begin_inner(r, purpose, fresh_status)?;
+        next.validate()?;
+        Ok(next)
+    }
+    fn normal_cleanup(&self) -> bool {
+        self.state.phase() == Phase::Running
+            || (self.state.phase() == Phase::Stopped
+                && self
+                    .attempts
+                    .iter()
+                    .rev()
+                    .find(|a| !matches!(a.request.operation, Operation::Status { .. }))
+                    .is_some_and(|a| {
+                        a.purpose == Purpose::ServiceCleanup
+                            && matches!(
+                                a.response.as_ref().map(|r| &r.outcome),
+                                Some(Outcome::Stopped { .. })
+                            )
+                    }))
+    }
+    fn begin_inner(&self, r: &Request, purpose: Purpose, fresh_status: bool) -> Result<Self> {
         self.check_request(r)?;
         if self.pending.is_some()
             || self.attempts.len() >= MAX_ATTEMPTS
@@ -243,7 +329,7 @@ impl Record {
                 if matches!(
                     self.state.phase(),
                     Phase::Retained | Phase::ReconcilingRemove
-                ) && purpose == Purpose::Service
+                ) && matches!(purpose, Purpose::Service | Purpose::ServiceCleanup)
                 {
                     return Err(Invalid("recovered lease requires explicit reconciliation"));
                 }
@@ -260,7 +346,8 @@ impl Record {
                 self.state.transition(Event::BeginHealth)?
             }
             Operation::Stop { .. }
-                if purpose == Purpose::OperatorCleanup
+                if (purpose == Purpose::OperatorCleanup
+                    || (purpose == Purpose::ServiceCleanup && self.normal_cleanup()))
                     && observed == Some(ContainerState::Running) =>
             {
                 let ev = if self.state.phase() == Phase::ReconcilingRemove {
@@ -271,7 +358,8 @@ impl Record {
                 self.state.transition(ev)?
             }
             Operation::Remove { .. }
-                if purpose == Purpose::OperatorCleanup
+                if (purpose == Purpose::OperatorCleanup
+                    || (purpose == Purpose::ServiceCleanup && self.normal_cleanup()))
                     && matches!(
                         observed,
                         Some(ContainerState::Created | ContainerState::Exited)
@@ -300,11 +388,15 @@ impl Record {
             request: r.clone(),
             purpose,
         });
-        next.validate()?;
         Ok(next)
     }
     fn observe(&self, bytes: Option<&[u8]>) -> Result<Self> {
         self.validate()?;
+        let next = self.observe_inner(bytes)?;
+        next.validate()?;
+        Ok(next)
+    }
+    fn observe_inner(&self, bytes: Option<&[u8]>) -> Result<Self> {
         let pending = self
             .pending
             .as_ref()
@@ -336,7 +428,19 @@ impl Record {
             (Operation::Create { .. }, Some(Outcome::Created { object })) => self
                 .state
                 .transition(Event::Created(object.object_id.clone()))?,
-            (Operation::Status { .. }, Some(Outcome::Status { .. })) => self.state.clone(),
+            (Operation::Status { .. }, Some(Outcome::Status { .. })) => {
+                if matches!(self.state.phase(), Phase::AwaitingAbsence | Phase::Removing) {
+                    if !matches!(
+                        pending.purpose,
+                        Purpose::OperatorCleanup | Purpose::Reconcile
+                    ) {
+                        return Err(Invalid("present removal requires reconciliation purpose"));
+                    }
+                    self.state.recover()?
+                } else {
+                    self.state.clone()
+                }
+            }
             (Operation::Status { .. }, Some(Outcome::Absent { .. })) => {
                 let ev = match (self.state.phase(), pending.purpose) {
                     (
@@ -346,7 +450,24 @@ impl Record {
                     (Phase::Retained, Purpose::OperatorCleanup) => Event::OperatorAbsenceVerified,
                     _ => return Err(Invalid("absence lacks reconciliation authorization")),
                 };
-                next.absence = response.clone();
+                let remove = self
+                    .attempts
+                    .iter()
+                    .rev()
+                    .find(|a| matches!(a.request.operation, Operation::Remove { .. }))
+                    .map(|a| a.request.binding.operation_key.clone());
+                next.absence = Some(AbsenceProof {
+                    reason: if remove.is_some() {
+                        AbsenceReason::PostRemoveAbsence
+                    } else {
+                        AbsenceReason::OperatorObservedAbsence
+                    },
+                    remove_request_sha256: remove,
+                    status_request_sha256: pending.request.binding.operation_key.clone(),
+                    response: response
+                        .clone()
+                        .ok_or(Invalid("missing absence response"))?,
+                });
                 self.state.transition(ev)?
             }
             (Operation::Start { .. }, Some(Outcome::Started { .. })) => {
@@ -372,7 +493,6 @@ impl Record {
             response,
         });
         next.pending = None;
-        next.validate()?;
         Ok(next)
     }
     fn recover(&self) -> Result<Self> {
@@ -381,7 +501,11 @@ impl Record {
         } else {
             self.clone()
         };
-        next.state = next.state.recover()?;
+        let recovered = next.state.recover()?;
+        if recovered != next.state {
+            next.recoveries.push(next.revision);
+            next.state = recovered;
+        }
         next.validate()?;
         Ok(next)
     }

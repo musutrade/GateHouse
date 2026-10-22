@@ -503,3 +503,29 @@ No process-spawn path yet consumes this new installation snapshot or Dispatch.
 The Core host, native lifecycle adapter, service config/lease orchestration and
 real Docker validation remain required. The current tests use never-executed
 fixture executables and memfd descriptors; they are not daemon tests.
+
+## Journal and installation review repairs
+
+The persisted record is replayed from its immutable create request through every
+attempt and explicit recovery boundary before it can authorize another operation.
+Stored phase, purpose, target, generation and absence proof must equal the replayed
+record. Recovery boundaries invalidate earlier live status observations. The
+128-attempt limit rejects additional attempts without truncating history.
+
+ServiceCleanup authorizes normal stop/remove only for a successfully running
+service and its successful normal-stop continuation, with fresh exact-ID status.
+A failed or cancelled cleanup remains retained and requires operator authority.
+Live Removing/AwaitingAbsence status that finds the container present enters
+ReconcilingRemove without requiring the journal to be closed and reopened. A
+dropped dispatch can be durably consumed as unknown via retain_unknown; this
+never replays the operation. Explicit operator reconciliation can then clean up.
+
+Absence proofs record the exact status operation digest and distinguish operator
+observed absence from post-remove absence, including the latter's remove request
+digest. The durable tombstone carries this proof before the active marker is
+released. Marker-only interrupted creation remains blocked, not rediscovered.
+
+VerifiedInstallation exposes held config bytes and engine binding only after
+revalidating every held file identity. The process host must use these bytes for
+fd3 instead of reopening an ambient path. Same-byte replacement of host,
+installation, config or executable invalidates the snapshot.

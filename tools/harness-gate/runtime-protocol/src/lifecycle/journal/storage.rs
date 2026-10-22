@@ -295,6 +295,13 @@ impl Journal {
         }
         Ok(store)
     }
+    /// Close a dropped/incomplete dispatch as unknown without replaying it.
+    /// The mutable borrow prevents use while a Dispatch token is still held.
+    pub fn retain_unknown(&mut self) -> Result<()> {
+        self.check()?;
+        let next = self.record.observe(None)?;
+        self.commit(next)
+    }
     pub fn phase(&self) -> Phase {
         self.record.state.phase()
     }

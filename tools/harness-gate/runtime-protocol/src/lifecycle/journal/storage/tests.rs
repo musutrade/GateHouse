@@ -437,3 +437,270 @@ fn restore_rejects_changed_target_history_and_marker_removal_before_dispatch() {
     );
     assert!(j.begin(&r, Purpose::Service).is_err());
 }
+
+fn running(j: &mut Journal) {
+    status(j, ContainerState::Created, Purpose::Service);
+    let r = req(
+        j,
+        Operation::Start {
+            target: j.target().unwrap(),
+        },
+    );
+    let b = reply(
+        &r,
+        Outcome::Started {
+            object: object(&j.record.create, ContainerState::Running),
+        },
+    );
+    j.begin(&r, Purpose::Service)
+        .unwrap()
+        .observe(Some(&b))
+        .unwrap();
+}
+#[test]
+fn normal_service_teardown_does_not_impersonate_operator() {
+    let d = dir();
+    let mut j = created(&d);
+    running(&mut j);
+    status(&mut j, ContainerState::Running, Purpose::ServiceCleanup);
+    let stop = req(
+        &j,
+        Operation::Stop {
+            target: j.target().unwrap(),
+            grace_seconds: 10,
+        },
+    );
+    let b = reply(
+        &stop,
+        Outcome::Stopped {
+            object: object(&j.record.create, ContainerState::Exited),
+        },
+    );
+    j.begin(&stop, Purpose::ServiceCleanup)
+        .unwrap()
+        .observe(Some(&b))
+        .unwrap();
+    status(&mut j, ContainerState::Exited, Purpose::ServiceCleanup);
+    let remove = req(
+        &j,
+        Operation::Remove {
+            target: j.target().unwrap(),
+        },
+    );
+    let b = reply(&remove, Outcome::Removed);
+    j.begin(&remove, Purpose::ServiceCleanup)
+        .unwrap()
+        .observe(Some(&b))
+        .unwrap();
+    let inspect = req(
+        &j,
+        Operation::Status {
+            target: j.target().unwrap(),
+        },
+    );
+    j.begin(&inspect, Purpose::Reconcile)
+        .unwrap()
+        .observe(Some(&absent(&inspect)))
+        .unwrap();
+    let proof = j.record.absence.as_ref().unwrap();
+    assert_eq!(proof.reason, super::super::AbsenceReason::PostRemoveAbsence);
+    assert_eq!(
+        proof.remove_request_sha256.as_deref(),
+        Some(remove.binding.operation_key.as_str())
+    );
+    assert_eq!(proof.status_request_sha256, inspect.binding.operation_key);
+    assert!(!j
+        .record
+        .attempts
+        .iter()
+        .any(|a| a.purpose == Purpose::OperatorCleanup));
+    j.finish_release().unwrap();
+}
+#[test]
+fn live_present_after_remove_claim_or_lost_response_needs_new_operator_intent() {
+    for lost in [false, true] {
+        let d = dir();
+        let mut j = created(&d);
+        status(&mut j, ContainerState::Created, Purpose::OperatorCleanup);
+        let remove = req(
+            &j,
+            Operation::Remove {
+                target: j.target().unwrap(),
+            },
+        );
+        let b = reply(&remove, Outcome::Removed);
+        let token = j.begin(&remove, Purpose::OperatorCleanup).unwrap();
+        if lost {
+            drop(token);
+            j.retain_unknown().unwrap();
+        } else {
+            token.observe(Some(&b)).unwrap();
+        }
+        status(&mut j, ContainerState::Running, Purpose::Reconcile);
+        assert_eq!(j.phase(), Phase::ReconcilingRemove);
+        let stop = req(
+            &j,
+            Operation::Stop {
+                target: j.target().unwrap(),
+                grace_seconds: 10,
+            },
+        );
+        assert!(j.begin(&stop, Purpose::ServiceCleanup).is_err());
+        let b = reply(
+            &stop,
+            Outcome::Stopped {
+                object: object(&j.record.create, ContainerState::Exited),
+            },
+        );
+        j.begin(&stop, Purpose::OperatorCleanup)
+            .unwrap()
+            .observe(Some(&b))
+            .unwrap();
+        assert!(j.begin(&remove, Purpose::OperatorCleanup).is_err());
+    }
+}
+#[test]
+fn cancelled_service_cleanup_retains_and_requires_operator_recovery() {
+    let d = dir();
+    let mut j = created(&d);
+    running(&mut j);
+    status(&mut j, ContainerState::Running, Purpose::ServiceCleanup);
+    let r = req(
+        &j,
+        Operation::Stop {
+            target: j.target().unwrap(),
+            grace_seconds: 10,
+        },
+    );
+    j.begin(&r, Purpose::ServiceCleanup)
+        .unwrap()
+        .observe(None)
+        .unwrap();
+    assert_eq!(j.phase(), Phase::Retained);
+    let inspect = req(
+        &j,
+        Operation::Status {
+            target: j.target().unwrap(),
+        },
+    );
+    assert!(j.begin(&inspect, Purpose::ServiceCleanup).is_err());
+    status(&mut j, ContainerState::Running, Purpose::OperatorCleanup);
+}
+#[test]
+fn restore_replays_history_rejecting_impossible_phase_and_purpose() {
+    let d = dir();
+    let j = created(&d);
+    let original = j.bytes.clone();
+    drop(j);
+    for phase in ["running", "starting", "awaiting-absence", "verified-absent"] {
+        let mut v: serde_json::Value = serde_json::from_slice(&original).unwrap();
+        v["state"]["phase"] = phase.into();
+        fs::write(d.path().join("lease.json"), canonical::encode(&v).unwrap()).unwrap();
+        assert!(Journal::open(d.path(), &create()).is_err());
+    }
+    fs::write(d.path().join("lease.json"), &original).unwrap();
+    let j = Journal::open(d.path(), &create()).unwrap();
+    let mut fake = j.record.clone();
+    fake.attempts[0].purpose = Purpose::OperatorCleanup;
+    assert!(fake.validate().is_err());
+    // A validly bound start response is insufficient without a preceding status.
+    let start = req(
+        &j,
+        Operation::Start {
+            target: j.target().unwrap(),
+        },
+    );
+    let bytes = reply(
+        &start,
+        Outcome::Started {
+            object: object(&j.record.create, ContainerState::Running),
+        },
+    );
+    let mut fake = j.record.clone();
+    fake.recoveries.clear();
+    fake.state =
+        serde_json::from_value(serde_json::json!({"phase":"running","object_id":"a".repeat(64)}))
+            .unwrap();
+    fake.revision = start.binding.generation;
+    fake.attempts.push(super::super::Attempt {
+        request: start.clone(),
+        purpose: Purpose::Service,
+        response: Some(wire::parse_response(&bytes, &start).unwrap()),
+    });
+    assert!(fake.validate().is_err());
+}
+#[test]
+fn operator_absence_reason_and_no_remove_digest_are_checked() {
+    let d = dir();
+    let j = created(&d);
+    drop(j);
+    let mut j = Journal::open(d.path(), &create()).unwrap();
+    let r = req(
+        &j,
+        Operation::Status {
+            target: j.target().unwrap(),
+        },
+    );
+    j.begin(&r, Purpose::OperatorCleanup)
+        .unwrap()
+        .observe(Some(&absent(&r)))
+        .unwrap();
+    let proof = j.record.absence.as_ref().unwrap();
+    assert_eq!(
+        proof.reason,
+        super::super::AbsenceReason::OperatorObservedAbsence
+    );
+    assert_eq!(proof.remove_request_sha256, None);
+    let mut forged = j.record.clone();
+    forged.absence.as_mut().unwrap().remove_request_sha256 = Some("a".repeat(64));
+    assert!(forged.validate().is_err());
+    forged = j.record.clone();
+    forged.absence.as_mut().unwrap().status_request_sha256 = "f".repeat(64);
+    assert!(forged.validate().is_err());
+}
+#[test]
+fn marker_only_creation_crash_blocks_reacquisition() {
+    let d = dir();
+    let active = d.path().join("active");
+    fs::write(&active, create().binding.operation_key).unwrap();
+    fs::set_permissions(active, fs::Permissions::from_mode(0o600)).unwrap();
+    assert!(Journal::create(d.path(), &create()).is_err());
+    assert!(Journal::open(d.path(), &create()).is_err());
+}
+#[test]
+fn attempt_cap_never_discards_history() {
+    let d = dir();
+    let j = created(&d);
+    let mut r = j.record.clone();
+    drop(j);
+    for generation in 2..=128 {
+        let mut request = r.create.clone();
+        request.operation = Operation::Status {
+            target: r.target().unwrap(),
+        };
+        request.binding.generation = generation;
+        request.binding.invocation = format!("{generation:032x}");
+        request.binding.operation_key = request.operation_key().unwrap();
+        let b = reply(
+            &request,
+            Outcome::Status {
+                object: object(&r.create, ContainerState::Created),
+            },
+        );
+        r = r
+            .begin(&request, Purpose::Service, false)
+            .unwrap()
+            .observe(Some(&b))
+            .unwrap();
+    }
+    assert_eq!(r.attempts.len(), 128);
+    let mut request = r.create.clone();
+    request.operation = Operation::Status {
+        target: r.target().unwrap(),
+    };
+    request.binding.generation = 129;
+    request.binding.invocation = format!("{:032x}", 129);
+    request.binding.operation_key = request.operation_key().unwrap();
+    assert!(r.begin(&request, Purpose::Service, false).is_err());
+    assert_eq!(r.attempts.len(), 128);
+}

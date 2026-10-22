@@ -151,3 +151,26 @@ fn duplicate_descriptor_fields_and_wrong_executable_digest_fail() {
     f.flush();
     assert!(VerifiedInstallation::load(&f.path()).is_err());
 }
+
+#[test]
+fn held_config_snapshot_and_every_descriptor_reject_same_byte_replacement() {
+    for member in ["host.json", "installation.json", "config.json"] {
+        let f = Fixture::new();
+        let loaded = VerifiedInstallation::load(&f.path()).unwrap();
+        let r = f.request();
+        assert_eq!(
+            loaded.config_bytes().unwrap(),
+            fs::read(f.dir.path().join("config.json")).unwrap()
+        );
+        assert_eq!(loaded.engine_binding().unwrap(), &r.binding.engine_binding);
+        let path = f.dir.path().join(member);
+        let replacement = f.dir.path().join("replacement");
+        fs::write(&replacement, fs::read(&path).unwrap()).unwrap();
+        fs::set_permissions(&replacement, fs::Permissions::from_mode(0o600)).unwrap();
+        fs::rename(replacement, path).unwrap();
+        assert!(loaded.validate_request(&r).is_err());
+        assert!(loaded.config_bytes().is_err());
+        assert!(loaded.engine_binding().is_err());
+        assert!(loaded.executable().is_err());
+    }
+}
