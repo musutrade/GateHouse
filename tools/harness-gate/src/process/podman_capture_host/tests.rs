@@ -310,3 +310,76 @@ fn descendant_supervision_isolated() {
         eprintln!("escaped={escaped}: direct reaped; group observation={observed}; adopted descendant reaped");
     }
 }
+
+#[test]
+fn actual_native_host_get_signal_and_cancellation_discard_and_reap() {
+    for signal in [0, libc::SIGTERM, libc::SIGINT] {
+        let (_dir, installed, listener, _) = fixture();
+        let cancelled = std::sync::Arc::new(AtomicBool::new(false));
+        let flag = cancelled.clone();
+        let server = thread::spawn(move || {
+            let deadline = Instant::now() + Duration::from_secs(5);
+            let mut stream = loop {
+                match listener.accept() {
+                    Ok((stream, _)) => break stream,
+                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                        assert!(Instant::now() < deadline);
+                        thread::sleep(Duration::from_millis(2));
+                    }
+                    Err(e) => panic!("{e}"),
+                }
+            };
+            stream
+                .set_read_timeout(Some(Duration::from_secs(5)))
+                .unwrap();
+            let mut peer: libc::ucred = unsafe { std::mem::zeroed() };
+            let mut len = std::mem::size_of::<libc::ucred>() as libc::socklen_t;
+            assert_eq!(
+                unsafe {
+                    libc::getsockopt(
+                        stream.as_raw_fd(),
+                        libc::SOL_SOCKET,
+                        libc::SO_PEERCRED,
+                        (&mut peer as *mut libc::ucred).cast(),
+                        &mut len,
+                    )
+                },
+                0
+            );
+            assert!(peer.pid > 0);
+            let mut header = Vec::new();
+            while !header.ends_with(b"\r\n\r\n") {
+                let mut byte = [0];
+                stream.read_exact(&mut byte).unwrap();
+                header.push(byte[0]);
+                assert!(header.len() < 16384);
+            }
+            assert!(header.starts_with(b"GET /v6.1.4/libpod/info HTTP/1.1\r\n"));
+            // No response or EOF is supplied to trigger the adapter failure.
+            if signal == 0 {
+                flag.store(true, Ordering::SeqCst);
+            } else {
+                assert_eq!(unsafe { libc::kill(peer.pid, signal) }, 0);
+            }
+            let mut byte = [0];
+            assert_eq!(stream.read(&mut byte).unwrap(), 0);
+            assert_eq!(
+                listener.accept().unwrap_err().kind(),
+                std::io::ErrorKind::WouldBlock
+            );
+            peer.pid
+        });
+        let started = Instant::now();
+        let result = capture(&installed, "b".repeat(64), inputs(), 4000, || {
+            cancelled.load(Ordering::SeqCst)
+        });
+        let pid = server.join().unwrap();
+        assert!(result.is_err(), "signal {signal}");
+        assert!(started.elapsed() < Duration::from_secs(6));
+        assert_eq!(unsafe { libc::kill(pid, 0) }, -1);
+        assert_eq!(
+            std::io::Error::last_os_error().raw_os_error(),
+            Some(libc::ESRCH)
+        );
+    }
+}
