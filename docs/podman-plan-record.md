@@ -77,3 +77,17 @@ replacement after create_new returns can be read successfully. Neither behavior
 is authentication or a guarantee against same-UID writers. Consumers needing a
 specific saved record must keep their own trusted expected identity; this API
 alone supplies no such authority.
+
+## Versioned installation-context prerequisite
+
+`ProtectedContext::load_versioned` accepts only the canonical object with fields
+`schema` then `context`, schema `gate-runtime/podman-context-v1`, and the existing
+typed ExpectedContext field order. It opens config once and retains its exact
+wrapper bytes. Both `snapshot` and `config_sha256` refer to that wrapper, not a
+reserialized inner context. Duplicate/unknown fields, alternate whitespace/order
+and raw-context input are rejected. The legacy development `load` remains an
+explicit separate raw loader and rejects the wrapper. Neither loader adopts old
+records or rewrites config. Future installation verification must require the
+versioned loader; `is_versioned` only reports format, never installation truth.
+Executable/host/installation held verification and RecordInstallationMatch are
+not implemented by this prerequisite.

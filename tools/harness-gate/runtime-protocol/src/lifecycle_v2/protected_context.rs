@@ -120,21 +120,52 @@ impl Held {
 }
 /// Exact expected context bytes supplied by the operator. No installation or
 /// dispatch authority is minted here. No environment or old lease migration.
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct VersionedContext {
+    schema: String,
+    context: ExpectedContext,
+}
+pub const CONTEXT_SCHEMA: &str = "gate-runtime/podman-context-v1";
 pub struct ProtectedContext {
     config: Held,
     socket: Held,
     bytes: Vec<u8>,
     context: ExpectedContext,
+    versioned: bool,
 }
 impl ProtectedContext {
+    /// Legacy development raw context only; never inferred as versioned.
     pub fn load(path: &Path) -> Result<Self> {
+        Self::load_format(path, false)
+    }
+    /// Canonical versioned context, held from the original open. Exact wrapper
+    /// bytes are the snapshot and config digest, not reserialized inner bytes.
+    pub fn load_versioned(path: &Path) -> Result<Self> {
+        Self::load_format(path, true)
+    }
+    pub fn is_versioned(&self) -> bool {
+        self.versioned
+    }
+    fn load_format(path: &Path, versioned: bool) -> Result<Self> {
         let config = Held::open(path, false)?;
         let mut bytes = Vec::new();
         io((&config.file)
             .take(native_json::LIMIT as u64 + 1)
             .read_to_end(&mut bytes))?;
-        let context: ExpectedContext = serde_json::from_value(native_json::decode(&bytes)?)
-            .map_err(|_| "protected context schema rejected")?;
+        let value = native_json::decode(&bytes)?;
+        let context: ExpectedContext = if versioned {
+            let wrapper: VersionedContext =
+                serde_json::from_value(value).map_err(|_| "versioned context fields rejected")?;
+            if wrapper.schema != CONTEXT_SCHEMA
+                || serde_json::to_vec(&wrapper).map_err(|_| "context encode")? != bytes
+            {
+                return Err("noncanonical versioned context");
+            }
+            wrapper.context
+        } else {
+            serde_json::from_value(value).map_err(|_| "protected context schema rejected")?
+        };
         context.validate()?;
         context.validate_local_socket_policy()?;
         if context.principal_uid != unsafe { libc::geteuid() } {
@@ -146,6 +177,7 @@ impl ProtectedContext {
             socket,
             bytes,
             context,
+            versioned,
         };
         held.revalidate()?;
         Ok(held)
@@ -885,5 +917,65 @@ mod tests {
         let reopened = PlanRecord::open(&path, &held).unwrap();
         assert_ne!(reopened.encode().unwrap(), intended);
         assert!(!reopened.installation_verified());
+    }
+    #[test]
+    fn versioned_context_retains_wrapper_and_refuses_raw_record_adoption() {
+        use super::super::plan_record::PlanRecord;
+        let (f, raw, record) = evidence_fixture();
+        let old_bytes = record.encode().unwrap();
+        assert!(!raw.is_versioned());
+        assert!(ProtectedContext::load_versioned(&f.config).is_err());
+        let wrapper = VersionedContext {
+            schema: CONTEXT_SCHEMA.into(),
+            context: raw.snapshot().unwrap().0.clone(),
+        };
+        let bytes = serde_json::to_vec(&wrapper).unwrap();
+        fs::write(&f.config, &bytes).unwrap();
+        assert!(raw.revalidate().is_err());
+        assert!(ProtectedContext::load(&f.config).is_err());
+        let held = ProtectedContext::load_versioned(&f.config).unwrap();
+        assert!(held.is_versioned());
+        assert_eq!(held.snapshot().unwrap().1, bytes);
+        assert_eq!(
+            held.config_sha256().unwrap(),
+            format!("{:x}", Sha256::digest(&bytes))
+        );
+        assert!(PlanRecord::decode(&old_bytes, &held).is_err());
+        let info = info(&held);
+        let mut calls = 0;
+        let captured = held
+            .capture_image_for_plan(&"b".repeat(64), |_| {
+                calls += 1;
+                Ok((
+                    200,
+                    if calls == 2 {
+                        serde_json::to_vec(&serde_json::json!({"Id":"b".repeat(64),"Config":{}}))
+                            .unwrap()
+                    } else {
+                        info.clone()
+                    },
+                ))
+            })
+            .unwrap();
+        assert_eq!(captured.config_bytes(), bytes);
+    }
+    #[test]
+    fn versioned_context_rejects_schema_duplicate_unknown_and_whitespace() {
+        let f = Fixture::new();
+        let raw = ProtectedContext::load(&f.config).unwrap();
+        let wrapper = VersionedContext {
+            schema: CONTEXT_SCHEMA.into(),
+            context: raw.snapshot().unwrap().0.clone(),
+        };
+        let text = serde_json::to_string(&wrapper).unwrap();
+        for bad in [
+            text.replace(CONTEXT_SCHEMA, "other"),
+            format!("{text} "),
+            text.replacen("{", "{\"extra\":0,", 1),
+            text.replacen("{", "{\"schema\":\"duplicate\",", 1),
+        ] {
+            fs::write(&f.config, bad).unwrap();
+            assert!(ProtectedContext::load_versioned(&f.config).is_err());
+        }
     }
 }
