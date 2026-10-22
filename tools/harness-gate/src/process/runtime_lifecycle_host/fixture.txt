@@ -1,0 +1,21 @@
+use std::{fs::File, io::{Read,Write,Seek,SeekFrom}, os::fd::FromRawFd};
+extern "C" { fn fcntl(fd:i32,cmd:i32,...)->i32; }
+fn main() {
+    assert_eq!(std::env::vars_os().count(),0);
+    assert_eq!(std::env::current_dir().unwrap().to_str().unwrap(),"/");
+    let mut input=String::new(); std::io::stdin().read_to_string(&mut input).unwrap();
+    let mut expected=String::new(); let mut config=String::new();
+    unsafe {
+        assert_eq!(fcntl(3,1034)&15,15); assert_eq!(fcntl(4,1034)&15,15);
+        let mut cfg=File::from_raw_fd(3); cfg.seek(SeekFrom::Start(0)).unwrap(); cfg.read_to_string(&mut config).unwrap();
+        let mut exp=File::from_raw_fd(4); exp.seek(SeekFrom::Start(0)).unwrap(); exp.read_to_string(&mut expected).unwrap();
+    }
+    assert_eq!(input,expected); assert!(config.contains("gate-runtime/lifecycle-config-v1"));
+    if input.contains("\"value\":\"timeout\"") { std::thread::sleep(std::time::Duration::from_secs(5)); }
+    if input.contains("\"value\":\"exit\"") { std::process::exit(3); }
+    if input.contains("\"value\":\"stderr\"") { eprint!("not allowed"); }
+    if input.contains("\"value\":\"malformed\"") { print!("{{}}"); return; }
+    let output=input.replacen(",\"operation\":",",\"observations\":null,\"operation\":",1)
+        .replacen(",\"protocol\":",",\"outcome\":{\"kind\":\"unknown\",\"reason\":\"transport\"},\"protocol\":",1);
+    std::io::stdout().write_all(output.as_bytes()).unwrap();
+}

@@ -41,6 +41,8 @@ pub(super) fn run(
     started: Instant,
     is_cancelled: &impl Fn() -> bool,
 ) -> Result<ProcessOutput, AdapterError> {
+    let mut request_json = request_json;
+    request_json.push(b'\n');
     command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -62,6 +64,30 @@ pub(super) fn run(
 #[cfg(target_os = "linux")]
 #[allow(dead_code)]
 pub(super) fn run_with_inputs(
+    command: Command,
+    inputs: super::fd_inputs::SealedInputs,
+    policy: &HostPolicy,
+    timeout_ms: u64,
+    request_json: Vec<u8>,
+    started: Instant,
+    is_cancelled: &impl Fn() -> bool,
+) -> Result<ProcessOutput, AdapterError> {
+    let mut request_json = request_json;
+    request_json.push(b'\n');
+    run_with_exact_inputs(
+        command,
+        inputs,
+        policy,
+        timeout_ms,
+        request_json,
+        started,
+        is_cancelled,
+    )
+}
+
+/// Exact-byte transport for canonical lifecycle requests; no line terminator.
+#[cfg(target_os = "linux")]
+pub(super) fn run_with_exact_inputs(
     mut command: Command,
     inputs: super::fd_inputs::SealedInputs,
     policy: &HostPolicy,
@@ -331,9 +357,7 @@ fn spawn_request_writer(
 ) -> (JoinHandle<()>, Receiver<io::Result<()>>) {
     let (sender, receiver) = mpsc::sync_channel(1);
     let handle = std::thread::spawn(move || {
-        let result = stdin
-            .write_all(&request)
-            .and_then(|_| stdin.write_all(b"\n"));
+        let result = stdin.write_all(&request);
         let _ = sender.send(result);
     });
     (handle, receiver)

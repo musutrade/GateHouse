@@ -137,39 +137,40 @@
     "process": {
       "blocking": true,
       "files": [
+        "runtime-protocol/src/intent.rs",
+        "runtime-protocol/src/lib.rs",
+        "runtime-protocol/src/lifecycle/canonical.rs",
+        "runtime-protocol/src/lifecycle/installation.rs",
+        "runtime-protocol/src/lifecycle/installation/files.rs",
+        "runtime-protocol/src/lifecycle/installation/sealed.rs",
+        "runtime-protocol/src/lifecycle/journal.rs",
+        "runtime-protocol/src/lifecycle/journal/storage.rs",
+        "runtime-protocol/src/lifecycle/mod.rs",
+        "runtime-protocol/src/lifecycle/state.rs",
+        "runtime-protocol/src/lifecycle/wire.rs",
+        "runtime-protocol/src/store.rs",
+        "runtime-protocol/src/v2.rs",
+        "runtime-protocol/src/v3.rs",
+        "runtime-protocol/src/wire.rs",
         "src/process/adapter.rs",
         "src/process/capture.rs",
         "src/process/command.rs",
+        "src/process/fd_inputs.rs",
         "src/process/isolation.rs",
         "src/process/mod.rs",
+        "src/process/raw_adapter.rs",
         "src/process/reader.rs",
         "src/process/replay.rs",
-        "src/process/signal.rs",
-        "src/process/task.rs",
-        "src/process/raw_adapter.rs",
-        "src/process/fd_inputs.rs",
-        "src/process/runtime_host.rs",
         "src/process/runtime_config.rs",
-        "src/process/runtime_host_v2.rs",
+        "src/process/runtime_host.rs",
         "src/process/runtime_host_files.rs",
-        "runtime-protocol/src/lib.rs",
-        "runtime-protocol/src/wire.rs",
-        "runtime-protocol/src/intent.rs",
-        "runtime-protocol/src/store.rs",
-        "runtime-protocol/src/v2.rs",
-        "src/process/runtime_host_v3.rs",
         "src/process/runtime_host_files_v3.rs",
+        "src/process/runtime_host_v2.rs",
+        "src/process/runtime_host_v3.rs",
+        "src/process/runtime_lifecycle_host.rs",
         "src/process/runtime_request_v3.rs",
-        "runtime-protocol/src/v3.rs",
-        "runtime-protocol/src/lifecycle/canonical.rs",
-        "runtime-protocol/src/lifecycle/installation/files.rs",
-        "runtime-protocol/src/lifecycle/installation/sealed.rs",
-        "runtime-protocol/src/lifecycle/installation.rs",
-        "runtime-protocol/src/lifecycle/journal/storage.rs",
-        "runtime-protocol/src/lifecycle/journal.rs",
-        "runtime-protocol/src/lifecycle/mod.rs",
-        "runtime-protocol/src/lifecycle/state.rs",
-        "runtime-protocol/src/lifecycle/wire.rs"
+        "src/process/signal.rs",
+        "src/process/task.rs"
       ]
     },
     "project": {
@@ -419,6 +420,11 @@
       "path": "runtime-protocol/src/lifecycle/wire/tests.rs",
       "kind": "test",
       "reason": "Lifecycle regression tests reached only through cfg(test) modules; no production execution."
+    },
+    {
+      "path": "src/process/runtime_lifecycle_host/tests.rs",
+      "kind": "test",
+      "reason": "Test-only module compiled under cfg(test)."
     }
   ],
   "external_exclusions": [
@@ -476,7 +482,7 @@
     {
       "path": "src/process/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "4cfdcf146d365f07d48831d6528b37c9a555b272e4102888b6576231cf5b03b0"
+      "sha256": "8fa841fb17a3f0cf963050b638167c1af998418dbe0e646096ca4aa2f661ad66"
     },
     {
       "path": "src/scope/mod.rs",

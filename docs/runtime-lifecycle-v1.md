@@ -529,3 +529,27 @@ VerifiedInstallation exposes held config bytes and engine binding only after
 revalidating every held file identity. The process host must use these bytes for
 fd3 instead of reopening an ambient path. Same-byte replacement of host,
 installation, config or executable invalidates the snapshot.
+
+## Core process host implementation checkpoint
+
+The Linux lifecycle host consumes a journal Dispatch and a VerifiedInstallation;
+it has no entry accepting a freely supplied executable or public expected file.
+It uses the revalidated held config bytes as sealed fd3, the token's exact canonical
+request as sealed fd4 and stdin, clears the environment and uses `/` as cwd. It
+requires ELF and executes a duplicate held executable descriptor through
+`/proc/self/fd` while retaining it across spawn; the duplicate is above fd4 and
+close-on-exec. Dynamic libraries are not pinned and this is not OS containment.
+
+The existing bounded process supervisor supplies timeout, cancellation, process
+group termination and output limits. Nonzero exit, any stderr, incomplete writes,
+invalid response, changed installation or cancellation/deadline after validation
+consume the attempt as unknown. Valid responses enter the journal only after those
+checks; journal persistence failure remains an error. There is no automatic retry,
+CLI fallback, discovery or name-only operation.
+
+Host tests execute a freshly compiled local ELF fixture that checks sealed fd3/fd4,
+exact expected/stdin equality, empty environment and cwd. It returns no container
+identity and cannot contact Docker. Service configuration, identity acquisition,
+lease orchestration and the lifecycle adapter still need integration; this host
+checkpoint is not a claim that Docker lifecycle has left Core or passed real
+engine acceptance.
