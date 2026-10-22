@@ -456,6 +456,11 @@
       "path": "src/process/podman_capture_host/tests.rs",
       "kind": "test",
       "reason": "Opt-in paired native Podman adapter tests under cfg(test)."
+    },
+    {
+      "path": "src/process/podman_capture_host/fault_fixture.rs",
+      "kind": "test",
+      "reason": "Standalone rustc-built native fault fixture; never linked into production."
     }
   ],
   "external_exclusions": [

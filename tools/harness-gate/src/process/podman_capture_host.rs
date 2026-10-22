@@ -100,6 +100,7 @@ fn capture_observed(
     }
     installation.match_record(&record)?.revalidate()?;
     after_revalidation();
+    installation.match_record(&record)?.revalidate()?;
     if cancelled() || started.elapsed() >= Duration::from_millis(timeout_ms as u64) {
         return Err("Podman capture post-revalidation expired or cancelled");
     }

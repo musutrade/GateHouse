@@ -23,6 +23,17 @@ fn fixture() -> (
 ) {
     let native = std::env::var("HG_PODMAN_NATIVE_BINARY").expect("pinned native binary required");
     let expected = std::env::var("HG_PODMAN_NATIVE_SHA256").expect("native SHA required");
+    fixture_binary(&native, &expected)
+}
+fn fixture_binary(
+    native: &str,
+    expected: &str,
+) -> (
+    tempfile::TempDir,
+    VerifiedPodmanInstallation,
+    UnixListener,
+    Vec<u8>,
+) {
     let executable = fs::read(native).unwrap();
     assert_eq!(hash(&executable), expected);
     let dir = tempfile::tempdir_in(std::env::var_os("HOME").unwrap()).unwrap();
@@ -158,5 +169,56 @@ fn post_revalidation_cancel_and_expiry_withhold_valid_response() {
             Some("Podman capture post-revalidation expired or cancelled")
         );
         server.join().unwrap();
+    }
+}
+
+#[test]
+fn final_observer_installation_replacement_is_rejected() {
+    let (dir, installed, listener, info) = fixture();
+    let server = serve(listener, info);
+    let result = capture_observed(
+        &installed,
+        "b".repeat(64),
+        inputs(),
+        3000,
+        || false,
+        || {
+            let path = dir.path().join("adapter");
+            let bytes = fs::read(&path).unwrap();
+            let mode = fs::metadata(&path).unwrap().permissions();
+            fs::rename(&path, dir.path().join("old-adapter")).unwrap();
+            fs::write(&path, bytes).unwrap();
+            fs::set_permissions(&path, mode).unwrap();
+        },
+    );
+    assert_eq!(result.err(), Some("installation member changed"));
+    server.join().unwrap();
+}
+#[test]
+fn native_fault_output_and_term_resistant_timeout_are_discarded_and_reaped() {
+    let binary = std::env::var("HG_PODMAN_FAULT_BINARY").expect("fault fixture binary");
+    let sha = std::env::var("HG_PODMAN_FAULT_SHA256").expect("fault fixture sha");
+    for mode in ["partial-exit", "stderr", "oversize", "term-resistant"] {
+        let (dir, installed, listener, _) = fixture_binary(&binary, &sha);
+        fs::write(dir.path().join("fault-mode"), mode).unwrap();
+        let started = Instant::now();
+        assert!(
+            capture(&installed, "b".repeat(64), inputs(), 500, || false).is_err(),
+            "{mode}"
+        );
+        assert!(started.elapsed() < Duration::from_secs(5));
+        assert_eq!(
+            listener.accept().unwrap_err().kind(),
+            std::io::ErrorKind::WouldBlock
+        );
+        let pid: i32 = fs::read_to_string(dir.path().join("fault-pid"))
+            .unwrap()
+            .parse()
+            .unwrap();
+        assert_eq!(unsafe { libc::kill(pid, 0) }, -1, "child remains: {mode}");
+        assert_eq!(
+            std::io::Error::last_os_error().raw_os_error(),
+            Some(libc::ESRCH)
+        );
     }
 }

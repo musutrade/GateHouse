@@ -147,3 +147,13 @@ record persist/reopen/live match. Separate final-boundary tests cancel or consum
 the budget after revalidation and require rejection. No real engine is used.
 Signal, TERM-resistant timeout/kill-reap, blocked stdout/stderr/oversize and
 partial-output discard tests remain required.
+
+Checkpoint 121 adds deterministic final-observer same-byte executable replacement
+and revalidates immediately after that observer. A separately compiled, hashed
+Rust ELF fixture exercises partial stdout/nonzero exit, stderr, over-24MiB stdout,
+and a TERM-resistant child. Tests require failure, zero socket connects, bounded
+return and ESRCH for the direct child PID after host return. The fixture is
+explicit test source and never linked into production. These tests do not yet
+cover actual adapter SIGTERM/SIGINT during all three I/O phases, full stderr,
+blocked output below the cap, descendant reaping or arbitrary same-UID mutation
+after the final check. They do not establish real engine behavior.
