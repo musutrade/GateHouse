@@ -170,6 +170,7 @@
         "src/process/runtime_host_v2.rs",
         "src/process/runtime_host_v3.rs",
         "src/process/runtime_lifecycle_host.rs",
+        "src/process/podman_capture_host.rs",
         "src/process/runtime_request_v3.rs",
         "src/process/signal.rs",
         "src/process/task.rs",

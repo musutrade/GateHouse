@@ -43,6 +43,24 @@ impl SealedInputs {
         })
     }
 
+    /// Read-only original config descriptor plus sealed expected bytes. Caller
+    /// owns held-file validation; parent descriptor flags are left untouched.
+    pub(super) fn with_held_config(config: &File, expected: &[u8]) -> io::Result<Self> {
+        if expected.len() > MAX_INPUT_BYTES {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "runtime expected too large",
+            ));
+        }
+        let fd = unsafe { libc::fcntl(config.as_raw_fd(), libc::F_DUPFD_CLOEXEC, 5) };
+        if fd < 0 {
+            return Err(io::Error::last_os_error());
+        }
+        Ok(Self {
+            config: unsafe { OwnedFd::from_raw_fd(fd) },
+            expected: sealed(expected)?,
+        })
+    }
     /// Consume inputs into the Command so their lifetime covers every spawn.
     /// Callers own stdio, environment, cwd, executable pins and supervision.
     /// Install once, with no subsequent pre_exec callback that changes fd policy.

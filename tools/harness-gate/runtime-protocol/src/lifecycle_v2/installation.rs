@@ -210,6 +210,13 @@ impl VerifiedPodmanInstallation {
         self.revalidate()?;
         Ok(&self.executable.file)
     }
+    pub fn capture_expected(&self, request: &super::capture_wire::CaptureRequest) -> Result<super::capture_wire::CaptureExpected> {
+        self.revalidate()?;
+        super::capture_wire::CaptureExpected::bind(request, &self.identity, digest(&self.host.bytes), self.config.path.to_str().ok_or("config path UTF8")?.into())
+    }
+    pub fn config_file(&self) -> Result<&File> {
+        self.revalidate()?; Ok(&self.config.file)
+    }
     pub fn match_record<'a>(
         &'a self,
         record: &'a PlanRecord,

@@ -110,3 +110,20 @@ socket connection, though context loading holds the selected socket O_PATH.
 Seals prove immutable bytes, not launcher authentication. The future child must
 supply actual inherited fd3/fd4; this API alone cannot prove descriptor numbers,
 parent provenance, process deadline, stderr/exit handling or real engine identity.
+
+## Core host source checkpoint (118)
+
+The internal podman_capture_host runner now mints a fresh 128-bit invocation,
+derives expected hashes/config path from a live installation, stages its original
+config descriptor with sealed expected bytes, and executes the held executable
+via procfd. It reuses only fd_inputs and raw_adapter transport/supervision, with
+empty env, cwd `/`, exact stdin, bounded stdout/stderr, process exit checks and
+final record/request/installation/cancel/deadline validation. No Docker wire,
+journal or lease module is used. with_held_config is an additive generic FD
+transport primitive; existing sealed-config callers are unchanged.
+
+This source checkpoint needs native positive and kill/reap/signal/output-limit
+joint tests before host acceptance. It is not a public ServiceManager route,
+fixed Core-owned host mapping, published protocol or installed product. New
+source is registered to the same process quality owner/risk series; the broader
+unpublished Podman series still needs release-wide quality inventories and CI.
