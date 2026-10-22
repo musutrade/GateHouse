@@ -72,6 +72,9 @@ fn fixture_binary(
     (dir, installed, listener, info)
 }
 fn serve(listener: UnixListener, info: Vec<u8>) -> thread::JoinHandle<()> {
+    serve_sized(listener, info, false)
+}
+fn serve_sized(listener: UnixListener, info: Vec<u8>, large: bool) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         let deadline = Instant::now() + Duration::from_secs(5);
         for n in 0..3 {
@@ -104,7 +107,17 @@ fn serve(listener: UnixListener, info: Vec<u8>) -> thread::JoinHandle<()> {
                 .unwrap()
                 .starts_with(&format!("GET {route} HTTP/1.1\r\n")));
             let body = if n == 1 {
-                serde_json::to_vec(&json!({"Id":"b".repeat(64),"Config":{}})).unwrap()
+                if large {
+                    let labels: std::collections::BTreeMap<_, _> = (0..16)
+                        .map(|n| (format!("label{n}"), "x".repeat(1024)))
+                        .collect();
+                    serde_json::to_vec(
+                        &json!({"Id":"b".repeat(64), "Labels":labels, "Config":{"Labels":labels}}),
+                    )
+                    .unwrap()
+                } else {
+                    serde_json::to_vec(&json!({"Id":"b".repeat(64),"Config":{}})).unwrap()
+                }
             } else {
                 info.clone()
             };
@@ -604,6 +617,7 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
         "missing-trust",
         "missing-host",
         "full-output",
+        "partial-output",
     ] {
         let (dir, _installed, listener, info) = fixture();
         let root = dir.path();
@@ -654,9 +668,12 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
         if mode != "missing-trust" {
             command.arg("--trust-host");
         }
-        let connects = matches!(mode, "success" | "config" | "full-output");
+        let connects = matches!(
+            mode,
+            "success" | "config" | "full-output" | "partial-output"
+        );
         let check_listener = listener.try_clone().unwrap();
-        let server = connects.then(|| serve(listener, info));
+        let server = connects.then(|| serve_sized(listener, info, mode == "partial-output"));
         if mode == "full-output" {
             command.stdout(
                 fs::OpenOptions::new()
@@ -665,7 +682,26 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
                     .unwrap(),
             );
         }
-        let output = command.output().unwrap();
+        let mut partial = Vec::new();
+        let output = if mode == "partial-output" {
+            let mut fds = [-1; 2];
+            assert_eq!(unsafe { libc::pipe2(fds.as_mut_ptr(), libc::O_CLOEXEC) }, 0);
+            let mut reader = unsafe { File::from_raw_fd(fds[0]) };
+            let writer = unsafe { File::from_raw_fd(fds[1]) };
+            assert_eq!(
+                unsafe { libc::fcntl(reader.as_raw_fd(), libc::F_SETPIPE_SZ, 4096) },
+                4096
+            );
+            command.stdout(writer).stderr(std::process::Stdio::piped());
+            let child = command.spawn().unwrap();
+            drop(command);
+            partial.resize(4096, 0);
+            reader.read_exact(&mut partial).unwrap();
+            drop(reader); // Actual EPIPE after a nonempty evidence prefix.
+            child.wait_with_output().unwrap()
+        } else {
+            command.output().unwrap()
+        };
         if let Some(server) = server {
             server.join().unwrap();
         }
@@ -688,6 +724,11 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
             );
             assert!(output.stdout.is_empty());
             assert!(!output.stderr.is_empty());
+        }
+        if mode == "partial-output" {
+            let installed = VerifiedPodmanInstallation::load(&mapped.join("host.json")).unwrap();
+            assert_eq!(partial.len(), 4096);
+            assert!(PlanRecord::decode(&partial, installed.context().unwrap()).is_err());
         }
         assert_eq!(
             check_listener.accept().unwrap_err().kind(),

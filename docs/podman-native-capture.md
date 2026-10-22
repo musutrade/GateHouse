@@ -257,3 +257,13 @@ elsewhere. No evidence file is created. `/dev/full` verifies stdout write failur
 returns exit 1. It is not a partial-write or blocked-pipe proof. These tests remain
 local pinned-source/fake-engine acceptance, not published artifact or real Podman
 acceptance.
+
+## Partial stdout checkpoint 132
+
+The normal-binary fake test additionally creates a 4096-byte pipe before spawn,
+uses a larger valid image metadata response, reads one nonempty 4096-byte prefix,
+then closes the reader. The Core stdout writer encounters a broken pipe; the test
+requires exit1, a diagnostic, and refusal to decode the captured prefix as a
+complete PlanRecord. This is actual partial-output/broken-pipe evidence with the
+pinned normal binary. It is not proof that an indefinitely blocked consumer is
+preempted, nor process containment or real-engine acceptance.
