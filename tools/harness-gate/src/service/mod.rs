@@ -520,10 +520,7 @@ impl Drop for RunningService {
         if let Some(lifecycle) = self.lifecycle.take() {
             if let Err(error) = lifecycle.cleanup(Instant::now() + Duration::from_secs(15)) {
                 let detail = format!("lifecycle cleanup retained the resource: {error:#}");
-                if let Ok(mut errors) = self.cleanup_errors.lock() {
-                    errors.push(detail.clone());
-                }
-                eprintln!("warning: {detail}");
+                self.report_cleanup_error(detail);
             }
             return;
         }
@@ -543,10 +540,7 @@ impl Drop for RunningService {
                     "failed to clean up {} container {container:?}: {error:#}",
                     self.runtime.executable()
                 );
-                if let Ok(mut errors) = self.cleanup_errors.lock() {
-                    errors.push(detail.clone());
-                }
-                eprintln!("warning: {detail}");
+                self.report_cleanup_error(detail);
             }
         }
         if cleanup_succeeded {
@@ -559,10 +553,7 @@ impl Drop for RunningService {
                         "failed to release {} lease for container {container:?}: {error:#}",
                         self.runtime.executable()
                     );
-                    if let Ok(mut errors) = self.cleanup_errors.lock() {
-                        errors.push(detail.clone());
-                    }
-                    eprintln!("warning: {detail}");
+                    self.report_cleanup_error(detail);
                 }
             }
         } else if let Some(lease) = self.lease.take() {
@@ -574,6 +565,12 @@ impl Drop for RunningService {
 }
 
 impl RunningService {
+    fn report_cleanup_error(&self, detail: String) {
+        if let Ok(mut errors) = self.cleanup_errors.lock() {
+            errors.push(detail.clone());
+        }
+        eprintln!("warning: {detail}");
+    }
     fn start(
         project: &Project,
         id: &str,

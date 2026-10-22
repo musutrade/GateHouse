@@ -452,6 +452,9 @@ fn both() {
                         self.assertIn('pub(crate) struct Config', source)
                         self.assertIn('mod linux;', source)
                         self.assertIn('mod unsupported;', source)
+                    elif path == 'service/lifecycle_public/unsupported.rs' and os_name == 'linux':
+                        self.assertEqual(symbols, [])
+                        self.assertTrue(inventory['excluded'])
                     else:
                         self.assertTrue(any(not symbol['test'] for symbol in symbols))
                     self.assertFalse(any(symbol['test'] for symbol in symbols))

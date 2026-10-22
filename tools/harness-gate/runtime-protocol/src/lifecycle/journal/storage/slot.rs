@@ -89,32 +89,7 @@ impl ServiceSlot {
         };
         record.validate()?;
         if let Some(bytes) = previous {
-            let old: Record = serde_json::from_value(canonical::parse_canonical(&bytes)?)
-                .map_err(|_| Invalid("invalid service slot record"))?;
-            old.validate()?;
-            if !old.released
-                || old.resolve.binding.project_id != record.resolve.binding.project_id
-                || old.resolve.binding.resource_id != record.resolve.binding.resource_id
-            {
-                return Err(Invalid(
-                    "service slot retained or belongs to another resource",
-                ));
-            }
-            // Never trust a released boolean alone. Revalidate the exact reserved
-            // journal, immutable proof and matching durable tombstone under lock.
-            let mut journal =
-                Journal::open_reserved(&root.join(old.journal_name()), &old.resolve, &old.plan)?;
-            journal.finish_release()?;
-            let archive = format!("service-history-{}.json", old.fence);
-            match Journal::read(&directory, &archive)? {
-                Some(prior) if prior != bytes => return Err(Invalid("slot history changed")),
-                Some(_) => {}
-                None => Journal::atomic(&directory, &archive, &bytes)?,
-            }
-            record.fence = old
-                .fence
-                .checked_add(1)
-                .ok_or(Invalid("slot fence exhausted"))?;
+            record.fence = Self::released_fence(root, &directory, &record, &bytes)?;
         }
         let name = CString::new(record.journal_name()).unwrap();
         if Journal::at(
@@ -144,6 +119,35 @@ impl ServiceSlot {
         };
         slot.check()?;
         Ok(slot)
+    }
+    fn released_fence(root: &Path, directory: &File, record: &Record, bytes: &[u8]) -> Result<u64> {
+        let old: Record = serde_json::from_value(canonical::parse_canonical(bytes)?)
+            .map_err(|_| Invalid("invalid service slot record"))?;
+        old.validate()?;
+        if !old.released
+            || old.resolve.binding.project_id != record.resolve.binding.project_id
+            || old.resolve.binding.resource_id != record.resolve.binding.resource_id
+        {
+            return Err(Invalid(
+                "service slot retained or belongs to another resource",
+            ));
+        }
+        // Never trust a released boolean alone. Revalidate the exact reserved
+        // journal, immutable proof and matching durable tombstone under lock.
+        let mut journal =
+            Journal::open_reserved(&root.join(old.journal_name()), &old.resolve, &old.plan)?;
+        journal.finish_release()?;
+        let archive = format!("service-history-{}.json", old.fence);
+        match Journal::read(directory, &archive)? {
+            Some(prior) if prior != bytes => return Err(Invalid("slot history changed")),
+            Some(_) => {}
+            None => Journal::atomic(directory, &archive, bytes)?,
+        }
+        let fence = old
+            .fence
+            .checked_add(1)
+            .ok_or(Invalid("slot fence exhausted"))?;
+        Ok(fence)
     }
     pub fn check(&self) -> Result<()> {
         let now = io(fs::symlink_metadata(&self.root))?;

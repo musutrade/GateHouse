@@ -906,6 +906,16 @@ jobs:
             --shards-root target/quality/risk-shards \
             --output target/quality/candidate-risk
 
+      - name: Retain risk comparison diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quality-risk-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            target/quality/candidate-risk/risk-compare.log
+            target/quality/candidate-risk/risk.json
+          if-no-files-found: warn
+
       - name: Merge artifacts
         run: |
           python3 tools/quality/ci_quality.py merge \

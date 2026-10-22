@@ -100,7 +100,7 @@ pub(super) fn start_docker(
         return Err(error);
     }
 
-    let mut running = RunningService {
+    let running = RunningService {
         lifecycle: None,
         runtime,
         inject_env,
@@ -110,6 +110,27 @@ pub(super) fn start_docker(
         cleanup_errors,
         lease: Some(lease),
     };
+    wait_ready(
+        running,
+        id,
+        startup_timeout_secs,
+        container_port,
+        &healthcheck,
+        &connection,
+        deadline,
+    )
+}
+
+fn wait_ready(
+    mut running: RunningService,
+    id: &str,
+    startup_timeout_secs: u64,
+    container_port: u16,
+    healthcheck: &[String],
+    connection: &str,
+    deadline: Instant,
+) -> Result<RunningService> {
+    let runtime = running.runtime;
     while Instant::now() < deadline {
         if let Some(lease) = &running.lease {
             lease.renew()?;
@@ -118,13 +139,16 @@ pub(super) fn start_docker(
             bail!("verification cancelled while waiting for service {id:?}");
         }
         if let Some(container) = running.container.as_deref() {
-            if let Some(port) =
-                runtime.mapped_port(project, container, container_port, remaining(deadline)?)?
-            {
+            if let Some(port) = runtime.mapped_port(
+                &running.project,
+                container,
+                container_port,
+                remaining(deadline)?,
+            )? {
                 let ready = runtime.run_healthcheck(
-                    project,
+                    &running.project,
                     container,
-                    &healthcheck,
+                    healthcheck,
                     remaining(deadline)?,
                 )?;
                 if ready {

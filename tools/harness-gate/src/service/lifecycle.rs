@@ -152,18 +152,29 @@ impl LifecycleService {
             create,
             port: 0,
         };
-        service.require_state(
+        service.start_created(container_port, deadline, &cancelled)?;
+        service.check_health(&healthcheck, deadline, &cancelled)?;
+        Ok(service)
+    }
+
+    fn start_created(
+        &mut self,
+        container_port: u16,
+        deadline: Instant,
+        cancelled: &impl Fn() -> bool,
+    ) -> Result<()> {
+        self.require_state(
             Purpose::Service,
             &[ContainerState::Created],
             deadline,
-            &cancelled,
+            cancelled,
         )?;
-        let target = service.journal.target()?;
-        let started = service.execute(
+        let target = self.journal.target()?;
+        let started = self.execute(
             Operation::Start { target },
             Purpose::Service,
             deadline,
-            &cancelled,
+            cancelled,
         )?;
         let Outcome::Started { object } = started.outcome else {
             bail!("lifecycle service start not proved; retain journal");
@@ -178,17 +189,25 @@ impl LifecycleService {
         {
             bail!("service port differs from immutable plan; retain journal");
         }
-        service.port = port.host_port;
+        self.port = port.host_port;
+        Ok(())
+    }
+    fn check_health(
+        &mut self,
+        healthcheck: &[String],
+        deadline: Instant,
+        cancelled: &impl Fn() -> bool,
+    ) -> Result<()> {
         if !healthcheck.is_empty() {
-            service.require_state(
+            self.require_state(
                 Purpose::Service,
                 &[ContainerState::Running],
                 deadline,
-                &cancelled,
+                cancelled,
             )?;
-            let target = service.journal.target()?;
+            let target = self.journal.target()?;
             let timeout_ms = remaining(deadline)?.min(30_000) as u32;
-            let health = service.execute(
+            let health = self.execute(
                 Operation::HealthExec {
                     target,
                     argv: healthcheck.to_vec(),
@@ -196,15 +215,14 @@ impl LifecycleService {
                 },
                 Purpose::Service,
                 deadline,
-                &cancelled,
+                cancelled,
             )?;
             if !matches!(health.outcome, Outcome::Health { exit_code: 0, .. }) {
                 bail!("lifecycle service health failed; retain journal");
             }
         }
-        Ok(service)
+        Ok(())
     }
-
     pub(crate) fn port(&self) -> u16 {
         self.port
     }

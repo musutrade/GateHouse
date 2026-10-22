@@ -481,6 +481,10 @@ impl Response {
                 Err(Invalid("invalid failure observations"))
             };
         }
+        self.validate_observations(expected)?;
+        self.validate_outcome(expected)
+    }
+    fn validate_observations(&self, expected: &Request) -> Result<()> {
         let obs = self
             .observations
             .as_ref()
@@ -494,6 +498,10 @@ impl Response {
                 return Err(Invalid("lifecycle observation mismatch"));
             }
         }
+        Ok(())
+    }
+    fn validate_outcome(&self, expected: &Request) -> Result<()> {
+        let e = &expected.binding.engine_binding;
         use ContainerState as S;
         match (&expected.operation, &self.outcome) {
             (
@@ -503,19 +511,7 @@ impl Response {
                     repo_digests,
                 },
             ) => {
-                image_id(id)?;
-                if repo_digests.len() > 128 {
-                    return Err(Invalid("too many repo digests"));
-                }
-                for (i, d) in repo_digests.iter().enumerate() {
-                    crate::v3::validate_image(d)?;
-                    if !d.contains('@') || repo_digests[..i].contains(d) {
-                        return Err(Invalid("invalid repo digests"));
-                    }
-                }
-                if image.contains('@') && !repo_digests.contains(image) {
-                    return Err(Invalid("image digest pin mismatch"));
-                }
+                validate_resolved_image(image, id, repo_digests)?;
             }
             (
                 Operation::Create {
@@ -586,6 +582,22 @@ impl Response {
         }
         Ok(())
     }
+}
+fn validate_resolved_image(image: &str, id: &str, repo_digests: &[String]) -> Result<()> {
+    image_id(id)?;
+    if repo_digests.len() > 128 {
+        return Err(Invalid("too many repo digests"));
+    }
+    for (i, d) in repo_digests.iter().enumerate() {
+        crate::v3::validate_image(d)?;
+        if !d.contains('@') || repo_digests[..i].contains(d) {
+            return Err(Invalid("invalid repo digests"));
+        }
+    }
+    if image.contains('@') && !repo_digests.iter().any(|digest| digest == image) {
+        return Err(Invalid("image digest pin mismatch"));
+    }
+    Ok(())
 }
 /// Only validated responses may subsequently enter the durable journal layer.
 /// Validation does not consume a generation; replay rejection belongs to storage.

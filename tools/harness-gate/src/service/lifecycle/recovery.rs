@@ -35,6 +35,33 @@ fn status(
         cancelled,
     )
 }
+fn stop_running(
+    recovery: &mut OperatorRecovery,
+    installation: &VerifiedInstallation,
+    deadline: Instant,
+    cancelled: &impl Fn() -> bool,
+) -> Result<()> {
+    let target = recovery.target()?;
+    run(
+        recovery,
+        installation,
+        Operation::Stop {
+            target,
+            grace_seconds: 5,
+        },
+        deadline,
+        cancelled,
+    )?;
+    match status(recovery, installation, deadline, cancelled)?.outcome {
+        Outcome::Status { object }
+            if matches!(
+                object.state,
+                ContainerState::Created | ContainerState::Exited
+            ) => {}
+        _ => bail!("operator stop not proved; retain slot"),
+    }
+    Ok(())
+}
 /// Requires an exact-fence operator token. Recovered unknown-ID creation is never
 /// adopted by name. Only exact-ID status/stop/remove/absence are available.
 pub(crate) fn cleanup_known(
@@ -60,25 +87,7 @@ pub(crate) fn cleanup_known(
             return Ok(());
         }
         Outcome::Status { object } if object.state == ContainerState::Running => {
-            let target = recovery.target()?;
-            run(
-                &mut recovery,
-                &installation,
-                Operation::Stop {
-                    target,
-                    grace_seconds: 5,
-                },
-                deadline,
-                &cancelled,
-            )?;
-            match status(&mut recovery, &installation, deadline, &cancelled)?.outcome {
-                Outcome::Status { object }
-                    if matches!(
-                        object.state,
-                        ContainerState::Created | ContainerState::Exited
-                    ) => {}
-                _ => bail!("operator stop not proved; retain slot"),
-            }
+            stop_running(&mut recovery, &installation, deadline, &cancelled)?;
         }
         Outcome::Status { object }
             if matches!(

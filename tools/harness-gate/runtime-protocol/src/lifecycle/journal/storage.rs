@@ -386,6 +386,14 @@ impl Journal {
         self.ready = false;
         Ok(Dispatch { journal: self })
     }
+    fn persist_tombstone(&self) -> Result<()> {
+        match Self::read(&self.directory, "tombstone.json")? {
+            Some(b) if b != self.bytes => return Err(Invalid("conflicting tombstone")),
+            Some(_) => {}
+            None => Self::atomic(&self.directory, "tombstone.json", &self.bytes)?,
+        }
+        Ok(())
+    }
     /// Evidence is already committed in the verified-absent record. Write its
     /// tombstone durably before unlinking active, then fsync the directory. This
     /// method is idempotent after a crash; it never removes the lease/evidence.
@@ -395,11 +403,7 @@ impl Journal {
             return Err(Invalid("absence evidence required before release"));
         }
         self.poisoned = true;
-        match Self::read(&self.directory, "tombstone.json")? {
-            Some(b) if b != self.bytes => return Err(Invalid("conflicting tombstone")),
-            Some(_) => {}
-            None => Self::atomic(&self.directory, "tombstone.json", &self.bytes)?,
-        }
+        self.persist_tombstone()?;
         let name = CString::new("active").unwrap();
         // SAFETY: fixed name, live directory descriptor; never a container path.
         if unsafe { libc::unlinkat(self.directory.as_raw_fd(), name.as_ptr(), 0) } != 0

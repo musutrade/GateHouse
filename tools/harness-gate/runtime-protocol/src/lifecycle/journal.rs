@@ -167,6 +167,12 @@ impl Record {
         {
             return Err(Invalid("invalid journal origin"));
         }
+        self.validate_history()?;
+        self.validate_absence()?;
+        self.replay()?;
+        Ok(())
+    }
+    fn validate_history(&self) -> Result<()> {
         let base = self.create.binding.generation - 1;
         let mut revision = base;
         let mut nonces = std::collections::BTreeSet::new();
@@ -203,6 +209,18 @@ impl Record {
             }
             revision += 1;
         }
+        revision = self.validate_pending(base, revision, &mut nonces)?;
+        if revision != self.revision {
+            return Err(Invalid("journal revision mismatch"));
+        }
+        Ok(())
+    }
+    fn validate_pending<'a>(
+        &'a self,
+        base: u64,
+        mut revision: u64,
+        nonces: &mut std::collections::BTreeSet<&'a String>,
+    ) -> Result<u64> {
         if let Some(p) = &self.pending {
             if p.request.binding.generation != revision + 1
                 || !nonces.insert(&p.request.binding.invocation)
@@ -225,9 +243,9 @@ impl Record {
             }
             revision += 1;
         }
-        if revision != self.revision {
-            return Err(Invalid("journal revision mismatch"));
-        }
+        Ok(revision)
+    }
+    fn validate_absence(&self) -> Result<()> {
         if self.state.phase() == Phase::VerifiedAbsent {
             let a = self
                 .attempts
@@ -251,7 +269,6 @@ impl Record {
         } else if self.absence.is_some() {
             return Err(Invalid("premature absence evidence"));
         }
-        self.replay()?;
         Ok(())
     }
     fn replay(&self) -> Result<()> {
@@ -341,6 +358,19 @@ impl Record {
             return Err(Invalid("journal request replay or unfinished attempt"));
         }
         let mut next = self.clone();
+        next.state = self.begin_state(r, purpose, fresh_status)?;
+        next.revision = r.binding.generation;
+        next.pending = Some(Pending {
+            request: r.clone(),
+            purpose,
+        });
+        Ok(next)
+    }
+    fn cleanup_authorized(&self, purpose: Purpose) -> bool {
+        purpose == Purpose::OperatorCleanup
+            || (purpose == Purpose::ServiceCleanup && self.normal_cleanup())
+    }
+    fn begin_state(&self, r: &Request, purpose: Purpose, fresh_status: bool) -> Result<State> {
         let status = self
             .attempts
             .last()
@@ -351,7 +381,7 @@ impl Record {
             Some(Outcome::Status { object }) => Some(object.state),
             _ => None,
         };
-        next.state = match &r.operation {
+        let state = match &r.operation {
             Operation::Status { .. } => {
                 if matches!(
                     self.state.phase(),
@@ -373,8 +403,7 @@ impl Record {
                 self.state.transition(Event::BeginHealth)?
             }
             Operation::Stop { .. }
-                if (purpose == Purpose::OperatorCleanup
-                    || (purpose == Purpose::ServiceCleanup && self.normal_cleanup()))
+                if self.cleanup_authorized(purpose)
                     && observed == Some(ContainerState::Running) =>
             {
                 let ev = if self.state.phase() == Phase::ReconcilingRemove {
@@ -385,8 +414,7 @@ impl Record {
                 self.state.transition(ev)?
             }
             Operation::Remove { .. }
-                if (purpose == Purpose::OperatorCleanup
-                    || (purpose == Purpose::ServiceCleanup && self.normal_cleanup()))
+                if self.cleanup_authorized(purpose)
                     && matches!(
                         observed,
                         Some(ContainerState::Created | ContainerState::Exited)
@@ -410,12 +438,7 @@ impl Record {
                 ))
             }
         };
-        next.revision = r.binding.generation;
-        next.pending = Some(Pending {
-            request: r.clone(),
-            purpose,
-        });
-        Ok(next)
+        Ok(state)
     }
     fn observe(&self, bytes: Option<&[u8]>) -> Result<Self> {
         self.validate()?;
@@ -433,21 +456,7 @@ impl Record {
             .transpose()?;
         let mut next = self.clone();
         let outcome = response.as_ref().map(|r| &r.outcome);
-        // The exact pinned image remains immutable across every returned object.
-        if let Some(
-            Outcome::Created { object }
-            | Outcome::Status { object }
-            | Outcome::Started { object }
-            | Outcome::Stopped { object }
-            | Outcome::Health { object, .. },
-        ) = outcome
-        {
-            if let Operation::Create { image_id, .. } = &self.create.operation {
-                if &object.image_id != image_id {
-                    return Err(Invalid("journal image changed"));
-                }
-            }
-        }
+        self.validate_observed_image(outcome)?;
         next.state = match (&pending.request.operation, outcome) {
             (_, None | Some(Outcome::Unknown { .. } | Outcome::RejectedBeforeEffect { .. })) => {
                 self.state.recover()?
@@ -469,33 +478,14 @@ impl Record {
                 }
             }
             (Operation::Status { .. }, Some(Outcome::Absent { .. })) => {
-                let ev = match (self.state.phase(), pending.purpose) {
-                    (
-                        Phase::AwaitingAbsence | Phase::ReconcilingRemove,
-                        Purpose::Reconcile | Purpose::OperatorCleanup,
-                    ) => Event::AbsenceVerified,
-                    (Phase::Retained, Purpose::OperatorCleanup) => Event::OperatorAbsenceVerified,
-                    _ => return Err(Invalid("absence lacks reconciliation authorization")),
-                };
-                let remove = self
-                    .attempts
-                    .iter()
-                    .rev()
-                    .find(|a| matches!(a.request.operation, Operation::Remove { .. }))
-                    .map(|a| a.request.binding.operation_key.clone());
-                next.absence = Some(AbsenceProof {
-                    reason: if remove.is_some() {
-                        AbsenceReason::PostRemoveAbsence
-                    } else {
-                        AbsenceReason::OperatorObservedAbsence
-                    },
-                    remove_request_sha256: remove,
-                    status_request_sha256: pending.request.binding.operation_key.clone(),
-                    response: response
+                let (state, proof) = self.observe_absence(
+                    pending,
+                    response
                         .clone()
                         .ok_or(Invalid("missing absence response"))?,
-                });
-                self.state.transition(ev)?
+                )?;
+                next.absence = Some(proof);
+                state
             }
             (Operation::Start { .. }, Some(Outcome::Started { .. })) => {
                 self.state.transition(Event::RunningVerified)?
@@ -521,6 +511,55 @@ impl Record {
         });
         next.pending = None;
         Ok(next)
+    }
+    fn observe_absence(
+        &self,
+        pending: &Pending,
+        response: Response,
+    ) -> Result<(State, AbsenceProof)> {
+        let ev = match (self.state.phase(), pending.purpose) {
+            (
+                Phase::AwaitingAbsence | Phase::ReconcilingRemove,
+                Purpose::Reconcile | Purpose::OperatorCleanup,
+            ) => Event::AbsenceVerified,
+            (Phase::Retained, Purpose::OperatorCleanup) => Event::OperatorAbsenceVerified,
+            _ => return Err(Invalid("absence lacks reconciliation authorization")),
+        };
+        let remove = self
+            .attempts
+            .iter()
+            .rev()
+            .find(|a| matches!(a.request.operation, Operation::Remove { .. }))
+            .map(|a| a.request.binding.operation_key.clone());
+        let proof = AbsenceProof {
+            reason: if remove.is_some() {
+                AbsenceReason::PostRemoveAbsence
+            } else {
+                AbsenceReason::OperatorObservedAbsence
+            },
+            remove_request_sha256: remove,
+            status_request_sha256: pending.request.binding.operation_key.clone(),
+            response,
+        };
+        Ok((self.state.transition(ev)?, proof))
+    }
+    fn validate_observed_image(&self, outcome: Option<&Outcome>) -> Result<()> {
+        // The exact pinned image remains immutable across every returned object.
+        if let Some(
+            Outcome::Created { object }
+            | Outcome::Status { object }
+            | Outcome::Started { object }
+            | Outcome::Stopped { object }
+            | Outcome::Health { object, .. },
+        ) = outcome
+        {
+            if let Operation::Create { image_id, .. } = &self.create.operation {
+                if &object.image_id != image_id {
+                    return Err(Invalid("journal image changed"));
+                }
+            }
+        }
+        Ok(())
     }
     fn recover(&self) -> Result<Self> {
         let mut next = if self.pending.is_some() {
