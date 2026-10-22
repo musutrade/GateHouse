@@ -62,3 +62,10 @@ concurrent creators; symlink/hardlink/mode/metadata replacement. A successful
 capture test alone does not establish any persistence property.
 
 Storage now uses held-parent /proc/self/fd anchoring, create-new, file/parent sync and explicit close. Boundary interruption tests are not simulated kernel fsync/close errors or power-loss proof. Full fault injection and independent review remain required.
+
+Creation reopens and compares the complete canonical record to the intended bytes
+before reporting success. This detects substitution at that boundary; it cannot
+prevent a same-UID writer changing bytes after the check. Tests inject short-write
+ENOSPC, file/parent-sync EIO and close failure through the private I/O adapter,
+and replace valid evidence at the reopen boundary. These are deterministic
+software fault simulations, not kernel fault injection or power-loss proof.

@@ -650,6 +650,23 @@ mod tests {
         let record = PlanRecord::capture(&held, &captured, &identity, inputs.clone()).unwrap();
         let bytes = record.encode().unwrap();
         let reopened = PlanRecord::decode(&bytes, &held).unwrap();
+        let substituted = f.config.parent().unwrap().join("substituted-record");
+        let replacement = String::from_utf8(bytes.clone())
+            .unwrap()
+            .replace(&"a".repeat(64), &"f".repeat(64));
+        // This is independently valid evidence, so only exact intended-byte
+        // comparison rejects substitution, not ordinary record validation.
+        PlanRecord::decode(replacement.as_bytes(), &held).unwrap();
+        assert_eq!(
+            record
+                .create_checked(&substituted, &held, || {
+                    std::fs::write(&substituted, replacement.as_bytes()).unwrap();
+                    Ok(())
+                })
+                .unwrap_err(),
+            "created record differs from intended evidence"
+        );
+        assert_eq!(std::fs::read(&substituted).unwrap(), replacement.as_bytes());
         let disk = f.config.parent().unwrap().join("plan-record");
         record.create_new(&disk, &held).unwrap();
         assert_eq!(

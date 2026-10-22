@@ -111,10 +111,21 @@ fn close(file: File) -> Result<()> {
 impl PlanRecord {
     /// Not a journal or lease. A failed call can leave a complete or partial file.
     pub fn create_new(&self, path: &Path, context: &ProtectedContext) -> Result<()> {
+        self.create_checked(path, context, || Ok(()))
+    }
+    pub(super) fn create_checked(
+        &self,
+        path: &Path,
+        context: &ProtectedContext,
+        after_write: impl FnOnce() -> Result<()>,
+    ) -> Result<()> {
         let bytes = self.encode()?;
         Self::decode(&bytes, context)?;
         write_new(path, &bytes, |_| context.revalidate())?;
-        Self::open(path, context)?;
+        after_write()?;
+        if Self::open(path, context)?.encode()? != bytes {
+            return Err("created record differs from intended evidence");
+        }
         Ok(())
     }
     pub fn open(path: &Path, context: &ProtectedContext) -> Result<Self> {
@@ -142,10 +153,27 @@ impl PlanRecord {
         Ok(record)
     }
 }
-fn write_new(
+trait StorageIo {
+    fn write(&mut self, file: &mut File, bytes: &[u8]) -> std::io::Result<()> {
+        file.write_all(bytes)
+    }
+    fn sync(&mut self, file: &File, _parent: bool) -> std::io::Result<()> {
+        file.sync_all()
+    }
+    fn close(&mut self, file: File) -> Result<()> {
+        close(file)
+    }
+}
+struct SystemIo;
+impl StorageIo for SystemIo {}
+fn write_new(path: &Path, bytes: &[u8], boundary: impl FnMut(&str) -> Result<()>) -> Result<()> {
+    write_with_io(path, bytes, boundary, &mut SystemIo)
+}
+fn write_with_io(
     path: &Path,
     bytes: &[u8],
     mut boundary: impl FnMut(&str) -> Result<()>,
+    ops: &mut impl StorageIo,
 ) -> Result<()> {
     let (parent, anchored) = Parent::open(path)?;
     boundary("before-create")?;
@@ -159,11 +187,11 @@ fn write_new(
     valid(&initial)?;
     boundary("created")?;
     let middle = bytes.len() / 2;
-    io(file.write_all(&bytes[..middle]))?;
+    io(ops.write(&mut file, &bytes[..middle]))?;
     boundary("partial-write")?;
-    io(file.write_all(&bytes[middle..]))?;
+    io(ops.write(&mut file, &bytes[middle..]))?;
     boundary("before-file-sync")?;
-    io(file.sync_all())?;
+    io(ops.sync(&file, false))?;
     boundary("before-parent-sync")?;
     parent.check()?;
     let final_meta = io(file.metadata())?;
@@ -174,9 +202,9 @@ fn write_new(
     {
         return Err("record replaced during write");
     }
-    io(parent.file.sync_all())?;
+    io(ops.sync(&parent.file, true))?;
     boundary("before-close")?;
-    close(file)?;
+    ops.close(file)?;
     parent.check()?;
     boundary("complete")?;
     Ok(())
@@ -233,5 +261,84 @@ mod tests {
         let link = root.path().join("link");
         std::os::unix::fs::symlink(&path, &link).unwrap();
         assert!(write_new(&link, b"bad", |_| Ok(())).is_err());
+    }
+    struct Fault(&'static str);
+    impl StorageIo for Fault {
+        fn write(&mut self, file: &mut File, bytes: &[u8]) -> std::io::Result<()> {
+            if self.0 == "short-write" {
+                file.write_all(&bytes[..1])?;
+                return Err(std::io::Error::from_raw_os_error(libc::ENOSPC));
+            }
+            file.write_all(bytes)
+        }
+        fn sync(&mut self, file: &File, parent: bool) -> std::io::Result<()> {
+            if self.0 == if parent { "parent-sync" } else { "file-sync" } {
+                return Err(std::io::Error::from_raw_os_error(libc::EIO));
+            }
+            file.sync_all()
+        }
+        fn close(&mut self, file: File) -> Result<()> {
+            close(file)?;
+            if self.0 == "close" {
+                Err("injected close error after descriptor release")
+            } else {
+                Ok(())
+            }
+        }
+    }
+    #[test]
+    fn io_failures_return_failure_and_retain_without_retry() {
+        for stage in ["short-write", "file-sync", "parent-sync", "close"] {
+            let root = root();
+            let path = root.path().join("record");
+            assert!(write_with_io(&path, b"evidence", |_| Ok(()), &mut Fault(stage)).is_err());
+            let retained = fs::read(&path).unwrap();
+            assert_eq!(
+                retained,
+                if stage == "short-write" {
+                    b"e".as_slice()
+                } else {
+                    b"evidence".as_slice()
+                }
+            );
+            assert!(write_new(&path, b"retry", |_| Ok(())).is_err());
+            assert_eq!(fs::read(&path).unwrap(), retained);
+        }
+    }
+    #[test]
+    fn replacement_during_write_is_rejected() {
+        let root = root();
+        let path = root.path().join("record");
+        assert!(write_new(&path, b"evidence", |stage| {
+            if stage == "before-parent-sync" {
+                fs::rename(&path, root.path().join("old")).unwrap();
+                fs::write(&path, b"replacement").unwrap();
+            }
+            Ok(())
+        })
+        .is_err());
+    }
+    #[test]
+    fn parent_replacement_during_write_is_rejected() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = root();
+        let parent = root.path().join("parent");
+        fs::create_dir(&parent).unwrap();
+        fs::set_permissions(&parent, fs::Permissions::from_mode(0o700)).unwrap();
+        let path = parent.join("record");
+        assert!(write_new(&path, b"evidence", |stage| {
+            if stage == "before-parent-sync" {
+                fs::rename(&parent, root.path().join("old-parent")).unwrap();
+                fs::create_dir(&parent).unwrap();
+                fs::set_permissions(&parent, fs::Permissions::from_mode(0o700)).unwrap();
+            }
+            Ok(())
+        })
+        .is_err());
+        assert!(!path.exists());
+        assert_eq!(
+            fs::read(root.path().join("old-parent/record")).unwrap(),
+            b"evidence"
+        );
     }
 }
