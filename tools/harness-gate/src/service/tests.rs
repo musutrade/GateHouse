@@ -704,7 +704,9 @@ fn managed_teardown_removes_verified_id_and_retains_failed_cleanup() {
                 r#"#!/bin/sh
 case "$1" in
  container) printf '%s' "$HG_ID_INSPECTION";;
- rm) printf '%s\n' "$*" >> "$HG_ID_REMOVE_LOG"; exit "$HG_ID_REMOVE_EXIT";;
+ rm) printf '%s\n' "$*" >> "$HG_ID_REMOVE_LOG";
+     if [ "$HG_ID_RELEASE_FAIL" = 1 ]; then printf 'changed marker' > "$HG_ID_MARKER"; fi
+     exit "$HG_ID_REMOVE_EXIT";;
  *) exit 99;;
 esac
 "#,
@@ -736,7 +738,7 @@ esac
         return;
     }
     for runtime in [ContainerRuntimeKind::Docker, ContainerRuntimeKind::Podman] {
-        for remove_fails in [false, true] {
+        for (remove_fails, release_fails) in [(false, false), (true, false), (false, true)] {
             let (_workspace, project) = project();
             let name = "harness-gate-reused-name";
             let id = "0123456789abcdef".repeat(4);
@@ -779,6 +781,8 @@ esac
                     .to_string(),
             );
             std::env::set_var("HG_ID_REMOVE_EXIT", if remove_fails { "1" } else { "0" });
+            std::env::set_var("HG_ID_RELEASE_FAIL", if release_fails { "1" } else { "0" });
+            std::env::set_var("HG_ID_MARKER", &marker);
             let errors = Arc::new(Mutex::new(Vec::new()));
             std::fs::write(std::env::var_os("HG_ID_REMOVE_LOG").unwrap(), "").unwrap();
             drop(super::RunningService {
@@ -807,8 +811,19 @@ esac
             }
             assert_eq!(std::fs::read_to_string(std::env::var_os("HG_ID_REMOVE_LOG").unwrap()).unwrap(), format!("rm --force {id}\n"),
                 "normal teardown must carry the inspected immutable ID to the CLI, not resolve the reused name");
-            assert_eq!(marker.exists(), remove_fails);
-            assert_eq!(errors.lock().unwrap().is_empty(), !remove_fails);
+            assert_eq!(marker.exists(), remove_fails || release_fails);
+            assert_eq!(
+                errors.lock().unwrap().is_empty(),
+                !(remove_fails || release_fails)
+            );
+            if release_fails {
+                assert!(errors
+                    .lock()
+                    .unwrap()
+                    .iter()
+                    .any(|e| e.contains("failed to release podman lease")));
+                assert_eq!(std::fs::read_to_string(&marker).unwrap(), "changed marker");
+            }
         }
     }
 }
@@ -974,4 +989,93 @@ fn installed_lifecycle_start_retains_dangling_legacy_symlink() {
         .root
         .join(".harness-gate/lifecycle-services")
         .exists());
+}
+
+#[cfg(unix)]
+#[test]
+fn podman_start_failures_retain_marker_without_cleanup_or_readiness() {
+    use std::os::unix::fs::PermissionsExt;
+    use std::sync::{Arc, Mutex};
+    if std::env::var_os("HG_START_FAILURE_CHILD").is_none() {
+        let root = tempfile::tempdir().unwrap();
+        let git = std::env::split_paths(&std::env::var_os("PATH").unwrap())
+            .map(|path| path.join("git"))
+            .find(|path| path.is_file())
+            .expect("test Git required");
+        std::os::unix::fs::symlink(git, root.path().join("git")).unwrap();
+        let binary = root.path().join("podman");
+        std::fs::write(&binary, r#"#!/bin/sh
+printf '%s\n' "$1" >> "$HG_START_FAILURE_LOG"
+case "$1" in
+ run) if [ "$HG_START_FAILURE_MODE" = start ]; then exit 9; fi;;
+ container)
+  case "$HG_START_FAILURE_MODE" in
+   inspect) exit 8;;
+   malformed) printf '{}';;
+   foreign) printf '{"Id":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","Name":"foreign","Config":{"Labels":{}}}';;
+  esac;;
+ *) exit 99;;
+esac
+"#).unwrap();
+        std::fs::set_permissions(&binary, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "service::tests::podman_start_failures_retain_marker_without_cleanup_or_readiness",
+                "--nocapture",
+            ])
+            .env("HG_START_FAILURE_CHILD", "1")
+            .env("HG_START_FAILURE_LOG", root.path().join("calls"))
+            .env("PATH", root.path())
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return;
+    }
+    for mode in ["start", "inspect", "malformed", "foreign"] {
+        let (_workspace, project) = project();
+        std::env::set_var("HG_START_FAILURE_MODE", mode);
+        let log = std::env::var_os("HG_START_FAILURE_LOG").unwrap();
+        std::fs::write(&log, "").unwrap();
+        let result = super::docker::start_docker(
+            &project,
+            "failed",
+            super::docker::DockerStartOptions {
+                runtime: crate::config::ContainerRuntimeKind::Podman,
+                image: "fixture-image".into(),
+                inject_env: "UNUSED".into(),
+                startup_timeout_secs: 5,
+                container_port: 1234,
+                environment: Default::default(),
+                healthcheck: vec![],
+                connection: "opaque:{host_port}".into(),
+                deadline: std::time::Instant::now() + Duration::from_secs(5),
+                cleanup_errors: Arc::new(Mutex::new(vec![])),
+                invocation_id: format!("failed-{mode}"),
+            },
+        );
+        let error = result.err().expect("fixture must not become ready");
+        if mode == "start" {
+            assert!(error.to_string().contains("start podman service"));
+        }
+        assert_eq!(
+            std::fs::read_dir(&project.resource_leases).unwrap().count(),
+            1,
+            "{mode}: retained ownership marker"
+        );
+        assert_eq!(
+            std::fs::read_to_string(log).unwrap(),
+            if mode == "start" {
+                "run\n"
+            } else {
+                "run\ncontainer\n"
+            },
+            "{mode}: no cleanup/readiness calls"
+        );
+    }
 }

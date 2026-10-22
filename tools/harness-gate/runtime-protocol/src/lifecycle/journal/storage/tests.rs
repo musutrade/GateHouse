@@ -704,3 +704,33 @@ fn attempt_cap_never_discards_history() {
     assert!(r.begin(&request, Purpose::Service, false).is_err());
     assert_eq!(r.attempts.len(), 128);
 }
+
+#[test]
+fn release_unlink_failure_preserves_tombstone_and_poisoned_journal() {
+    let d = dir();
+    drop(created(&d));
+    let mut j = Journal::open(d.path(), &create()).unwrap();
+    let request = req(
+        &j,
+        Operation::Status {
+            target: j.target().unwrap(),
+        },
+    );
+    j.begin(&request, Purpose::OperatorCleanup)
+        .unwrap()
+        .observe(Some(&absent(&request)))
+        .unwrap();
+    let committed = fs::read(d.path().join("lease.json")).unwrap();
+    fs::remove_file(d.path().join("active")).unwrap();
+    fs::create_dir(d.path().join("active")).unwrap();
+    let error = j.finish_release().unwrap_err();
+    assert!(error.to_string().contains("cannot remove lifecycle marker"));
+    assert!(d.path().join("active").is_dir());
+    assert_eq!(
+        fs::read(d.path().join("tombstone.json")).unwrap(),
+        committed
+    );
+    assert_eq!(fs::read(d.path().join("lease.json")).unwrap(), committed);
+    assert!(j.finish_release().is_err());
+    assert!(j.dispatch().is_err());
+}

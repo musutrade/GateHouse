@@ -78,6 +78,42 @@ fn public_operator_cleanup_requires_exact_fence_and_releases_failed_start() {
 fn public_operator_executable_releases_failed_service_from_saved_configuration() {
     joint(19);
 }
+#[test]
+fn operator_recovery_initial_exact_absence_releases_without_mutation() {
+    joint(20);
+}
+#[test]
+fn operator_recovery_terminal_object_removes_without_stop() {
+    joint(21);
+}
+#[test]
+fn operator_recovery_unproved_stop_retains_slot() {
+    joint(22);
+}
+#[test]
+fn operator_recovery_unsupported_state_retains_slot() {
+    joint(23);
+}
+#[test]
+fn operator_recovery_present_after_remove_retains_slot() {
+    joint(24);
+}
+#[test]
+fn operator_recovery_cancellation_before_status_retains_slot() {
+    joint(25);
+}
+#[test]
+fn operator_recovery_failed_stop_retains_slot() {
+    joint(26);
+}
+#[test]
+fn public_operator_cleanup_dispatches_in_process_cli() {
+    joint(27);
+}
+#[test]
+fn public_service_drop_reports_failed_cleanup_and_retains_slot() {
+    joint(28);
+}
 fn joint(service_path: u8) {
     let path = std::env::var_os("GATEHOUSE_LIFECYCLE_ADAPTER")
         .expect("explicit native adapter path required");
@@ -127,6 +163,10 @@ fn joint(service_path: u8) {
     running["State"]["Status"] = "running".into();
     running["NetworkSettings"]["Ports"] =
         json!({"1234/tcp":[{"HostIp":"127.0.0.1","HostPort":"49152"}]});
+    // The executable case deliberately runs refusal-only CLI calls between
+    // startup and recovery. They must not consume the fake engine's request
+    // deadline: arm recovery only when the valid command is about to launch.
+    let (operator_ready, wait_operator) = std::sync::mpsc::sync_channel(1);
     let server = thread::spawn(move || {
         type Step = (&'static str, String, u16, Value);
         let version = json!({"Version":"27","MinAPIVersion":"1.40","ApiVersion":"1.47"});
@@ -180,13 +220,13 @@ fn joint(service_path: u8) {
                     "GET",
                     format!("{exec}/json"),
                     200,
-                    json!({"ID":"b".repeat(64),"ContainerID":"a".repeat(64),"Running":false,"ExitCode":if service_path >= 2 && service_path != 9 && service_path != 17 && service_path != 18 && service_path != 19 {0} else {7}}),
+                    json!({"ID":"b".repeat(64),"ContainerID":"a".repeat(64),"Running":false,"ExitCode":if service_path >= 2 && service_path != 9 && service_path != 17 && service_path != 18 && service_path != 19 && service_path != 27 && !(20..=26).contains(&service_path) {0} else {7}}),
                 ),
                 ("GET", inspect.clone(), 200, running.clone()),
             ],
         ];
         if service_path >= 2 && service_path != 5 {
-            let final_status = if service_path == 3 {
+            let final_status = if matches!(service_path, 3 | 28) {
                 (200, running.clone())
             } else if service_path == 4 {
                 (404, json!({"message":"wrong container"}))
@@ -224,6 +264,35 @@ fn joint(service_path: u8) {
             ]);
         }
         match service_path {
+            20 => {
+                operations[6][0].2 = 404;
+                operations[6][0].3 =
+                    json!({"message":format!("No such container: {}", "a".repeat(64))});
+                operations.truncate(7);
+            }
+            21 => {
+                operations[6][0].3["State"]["Status"] = "exited".into();
+                operations.drain(7..9);
+            }
+            22 => {
+                operations[8][0].3 = running.clone();
+                operations.truncate(9);
+            }
+            23 => {
+                operations[6][0].3["State"]["Status"] = "paused".into();
+                operations.truncate(7);
+            }
+            24 => {
+                operations[10][0].2 = 200;
+                operations[10][0].3 = running.clone();
+            }
+            25 => operations.truncate(6),
+            26 => {
+                operations[7].truncate(2);
+                operations[7][1].2 = 500;
+                operations[7][1].3 = json!({"message":"operator stop failed"});
+                operations.truncate(8);
+            }
             17 => operations.truncate(6),
             11 => {
                 operations[6][0].2 = 404;
@@ -269,8 +338,13 @@ fn joint(service_path: u8) {
         let mut public_object: Option<(String, Value)> = None;
         let last = operations.len() - 1;
         for (index, operation) in operations.into_iter().enumerate() {
+            if service_path == 19 && index == 6 {
+                wait_operator
+                    .recv_timeout(Duration::from_secs(30))
+                    .expect("operator command not armed");
+            }
             // A malformed final absence response aborts before after-observation.
-            let after = if matches!(service_path, 4 | 8 | 13 | 14 | 15) && index == last {
+            let after = if matches!(service_path, 4 | 8 | 13 | 14 | 15 | 26) && index == last {
                 vec![]
             } else {
                 identity()
@@ -303,7 +377,8 @@ fn joint(service_path: u8) {
                     assert!(header.len() < 16384);
                 }
                 let header = String::from_utf8(header).unwrap();
-                if service_path >= 16 && path.contains("/containers/create?") {
+                if matches!(service_path, 16..=19 | 27 | 28) && path.contains("/containers/create?")
+                {
                     let route = header
                         .lines()
                         .next()
@@ -359,7 +434,7 @@ fn joint(service_path: u8) {
             }
         }
     });
-    if service_path >= 16 {
+    if matches!(service_path, 16..=19 | 27 | 28) {
         use gatehouse_runtime_protocol::lifecycle::journal::ServiceSlot;
         crate::preset::init(directory.path(), "generic", false).unwrap();
         assert!(std::process::Command::new("git")
@@ -381,7 +456,7 @@ fn joint(service_path: u8) {
             .unwrap(),
         );
         let mut manager = crate::service::ServiceManager::new(&project);
-        if matches!(service_path, 17..=19) {
+        if matches!(service_path, 17..=19 | 27) {
             let error = manager.handle("fixture").unwrap().acquire().err().unwrap();
             assert!(format!("{error:#}").contains("health failed"), "{error:#}");
             drop(manager);
@@ -395,7 +470,7 @@ fn joint(service_path: u8) {
             let retained = fs::read(root.join("service.json")).unwrap();
             let record: Value = serde_json::from_slice(&retained).unwrap();
             assert_eq!(record["released"], false);
-            if matches!(service_path, 18 | 19) {
+            if matches!(service_path, 18 | 19 | 27) {
                 let invocation = record["resolve"]["binding"]["lease_invocation"]
                     .as_str()
                     .unwrap();
@@ -406,7 +481,47 @@ fn joint(service_path: u8) {
                     crate::service::cleanup_lifecycle(&project, "fixture", 1, &"0".repeat(32))
                         .is_err()
                 );
-                let auth = if service_path == 19 {
+                let auth = if service_path == 27 {
+                    use clap::Parser;
+                    fs::write(
+                        &project.config_path,
+                        toml::to_string_pretty(&project.config).unwrap(),
+                    )
+                    .unwrap();
+                    let run = |fence: &str| {
+                        let cli = crate::cli::Cli::try_parse_from([
+                            "harness-gate",
+                            "--project-root",
+                            project.root.to_str().unwrap(),
+                            "lifecycle-cleanup",
+                            "--service",
+                            "fixture",
+                            "--fence",
+                            fence,
+                            "--lease-invocation",
+                            invocation,
+                        ])
+                        .unwrap();
+                        crate::app::run_cli(cli)
+                    };
+                    assert!(run("2").is_err());
+                    assert_eq!(fs::read(root.join("service.json")).unwrap(), retained);
+                    assert!(run("1").unwrap());
+                    let proofs: Vec<_> = fs::read_dir(&root)
+                        .unwrap()
+                        .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+                        .filter(|name| {
+                            name.starts_with("operator-") && name.ends_with(".proof.json")
+                        })
+                        .collect();
+                    assert_eq!(proofs.len(), 1);
+                    proofs[0]
+                        .strip_prefix("operator-")
+                        .unwrap()
+                        .strip_suffix(".proof.json")
+                        .unwrap()
+                        .to_owned()
+                } else if service_path == 19 {
                     let core = std::env::var_os("GATEHOUSE_LIFECYCLE_CORE")
                         .expect("explicit normal Core binary required");
                     let digest = std::env::var("GATEHOUSE_LIFECYCLE_CORE_SHA256")
@@ -457,6 +572,7 @@ fn joint(service_path: u8) {
                         "does not match current resource fence",
                     );
                     assert_eq!(fs::read(root.join("service.json")).unwrap(), retained);
+                    operator_ready.send(()).unwrap();
                     let output = run("1", invocation);
                     assert!(
                         output.status.success(),
@@ -553,6 +669,24 @@ fn joint(service_path: u8) {
             serde_json::from_slice(&fs::read(root.join("service.json")).unwrap()).unwrap();
         assert_eq!(active["released"], false);
         drop(lease);
+        if service_path == 28 {
+            let error = manager.cleanup().unwrap_err().to_string();
+            assert!(
+                error.contains("lifecycle cleanup retained the resource"),
+                "{error}"
+            );
+            let retained: Value =
+                serde_json::from_slice(&fs::read(root.join("service.json")).unwrap()).unwrap();
+            assert_eq!(retained["released"], false);
+            let invocation = active["resolve"]["binding"]["lease_invocation"]
+                .as_str()
+                .unwrap();
+            let journal = root.join(format!("journal-{invocation}"));
+            assert!(journal.join("active").exists());
+            assert!(!journal.join("tombstone.json").exists());
+            server.join().unwrap();
+            return;
+        }
         manager.cleanup().unwrap();
         let released: Value =
             serde_json::from_slice(&fs::read(root.join("service.json")).unwrap()).unwrap();
@@ -588,7 +722,7 @@ fn joint(service_path: u8) {
         .unwrap();
         let result = prepared.start(Instant::now() + Duration::from_secs(20), || false);
         let journal_root = root.join(format!("journal-{}", request.binding.lease_invocation));
-        if service_path == 9 {
+        if service_path == 9 || (20..=26).contains(&service_path) {
             use gatehouse_runtime_protocol::lifecycle::journal::OperatorRecovery;
             assert!(result.err().unwrap().to_string().contains("health failed"));
             let mut recovery = OperatorRecovery::open_mapped(
@@ -608,13 +742,35 @@ fn joint(service_path: u8) {
                     &"8".repeat(32)
                 )
                 .is_err());
-            crate::service::lifecycle::recovery::cleanup_known(
+            let cleanup = crate::service::lifecycle::recovery::cleanup_known(
                 recovery,
                 VerifiedInstallation::load(&host_path).unwrap(),
                 Instant::now() + Duration::from_secs(20),
-                || false,
-            )
-            .unwrap();
+                || service_path == 25,
+            );
+            if (22..=26).contains(&service_path) {
+                let expected = match service_path {
+                    22 => "operator stop not proved",
+                    23 => "operator recovery state unsupported",
+                    24 => "operator removal absence not proved",
+                    25 => "operator recovery cancelled",
+                    26 => "lifecycle dispatch failed",
+                    _ => unreachable!(),
+                };
+                let error = cleanup.unwrap_err().to_string();
+                assert!(error.contains(expected), "{error}");
+                assert!(journal_root.join("active").exists());
+                assert!(!journal_root.join("tombstone.json").exists());
+                assert!(!root
+                    .join(format!("operator-{}.proof.json", "9".repeat(32)))
+                    .exists());
+                let record: Value =
+                    serde_json::from_slice(&fs::read(root.join("service.json")).unwrap()).unwrap();
+                assert_eq!(record["released"], false);
+                server.join().unwrap();
+                return;
+            }
+            cleanup.unwrap();
             assert!(journal_root.join("tombstone.json").exists());
             assert!(!journal_root.join("active").exists());
             assert!(root
