@@ -1414,4 +1414,86 @@ mod tests {
         )
         .is_err());
     }
+    #[test]
+    fn protected_capture_inputs_bind_original_fd_and_restore_cloexec() {
+        use super::super::{
+            capture_inputs,
+            capture_wire::{CaptureExpected, CaptureRequest},
+            installation::VerifiedPodmanInstallation,
+            plan_record::PlanInputs,
+        };
+        let (f, host) = installed_fixture();
+        let installed = VerifiedPodmanInstallation::load(&host).unwrap();
+        let request = CaptureRequest {
+            schema: "gate-runtime/podman-capture-v1".into(),
+            profile: installed.identity().unwrap().profile.clone(),
+            invocation: "1".repeat(32),
+            image_id: "b".repeat(64),
+            inputs: PlanInputs {
+                name: "fixture".into(),
+                labels: [("owner".into(), "fixture".into())].into(),
+                port: None,
+            },
+            timeout_ms: 1000,
+        };
+        let expected = CaptureExpected::bind(
+            &request,
+            installed.identity().unwrap(),
+            format!("{:x}", Sha256::digest(fs::read(&host).unwrap())),
+            f.config.to_str().unwrap().into(),
+        )
+        .unwrap();
+        let raw = request.encode().unwrap();
+        let eb = expected.encode(&request).unwrap();
+        let seals =
+            libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
+        let config = File::open(&f.config).unwrap();
+        let witness = config.try_clone().unwrap();
+        assert_eq!(
+            unsafe { libc::fcntl(config.as_raw_fd(), libc::F_SETFD, 0) },
+            0
+        );
+        let parsed =
+            capture_inputs::parse(config, capture_inputs::test_memory(&eb, seals, 0o600), &raw)
+                .unwrap();
+        assert_eq!(
+            parsed.context().unwrap().snapshot().unwrap().1,
+            fs::read(&f.config).unwrap()
+        );
+        assert_ne!(
+            unsafe {
+                libc::fcntl(
+                    parsed.context().unwrap().config.file.as_raw_fd(),
+                    libc::F_GETFD,
+                )
+            } & libc::FD_CLOEXEC,
+            0
+        );
+        assert_eq!(parsed.expected().operation_key, expected.operation_key);
+        assert_eq!(parsed.request().invocation, request.invocation);
+        assert_ne!(
+            unsafe { libc::fcntl(witness.as_raw_fd(), libc::F_GETFD) } & libc::FD_CLOEXEC,
+            0
+        );
+        let other = Fixture::new();
+        assert!(capture_inputs::parse(
+            File::open(&other.config).unwrap(),
+            capture_inputs::test_memory(&eb, seals, 0o600),
+            &raw
+        )
+        .is_err());
+        let altered = replace_record_field(&raw, "image_id", serde_json::json!("c".repeat(64)));
+        assert!(capture_inputs::parse(
+            File::open(&f.config).unwrap(),
+            capture_inputs::test_memory(&eb, seals, 0o600),
+            &altered
+        )
+        .is_err());
+        assert!(capture_inputs::parse(
+            File::open(&f.config).unwrap(),
+            capture_inputs::test_memory(&eb, 0, 0o600),
+            &raw
+        )
+        .is_err());
+    }
 }

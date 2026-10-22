@@ -97,3 +97,16 @@ These are pure data APIs. CaptureExpected::bind takes caller assertions and does
 not mint trusted fd4 contents. The future Core host must derive them from held
 snapshots. FD ownership/seals, executable ABI, process exit/stderr, deadlines,
 cancellation and real native spawn remain unimplemented integration gates.
+
+## Protected input parser checkpoint (116)
+
+capture_inputs::parse consumes child-owned config/expected files and bounded
+request bytes. It restores CLOEXEC on these owned descriptors, verifies expected
+memory is regular, zero-link, euid-owned 0600, 1..16384 bytes, and has all four
+write/grow/shrink/seal seals. Positional reading ignores its cursor. Canonical
+request/fd4 binding is checked before from_held_versioned consumes fd3; the exact
+config wrapper hash must match. The parser opens no config path and performs no
+socket connection, though context loading holds the selected socket O_PATH.
+Seals prove immutable bytes, not launcher authentication. The future child must
+supply actual inherited fd3/fd4; this API alone cannot prove descriptor numbers,
+parent provenance, process deadline, stderr/exit handling or real engine identity.
