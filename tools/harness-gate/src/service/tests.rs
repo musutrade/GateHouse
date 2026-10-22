@@ -945,3 +945,33 @@ fn installed_lifecycle_start_refuses_existing_legacy_marker_without_rewrite() {
             .exists());
     }
 }
+
+#[cfg(target_os = "linux")]
+#[test]
+fn installed_lifecycle_start_retains_dangling_legacy_symlink() {
+    let (_workspace, mut project) = project();
+    std::fs::create_dir_all(&project.resource_leases).unwrap();
+    let marker = project.resource_leases.join(format!(
+        "{}.json",
+        super::lease::resource_key("service:fixture")
+    ));
+    let target = project.root.join("missing-old-lease");
+    std::os::unix::fs::symlink(&target, &marker).unwrap();
+    project.config.services.insert("fixture".into(), serde_json::from_value(serde_json::json!({
+        "kind":"docker", "runtime":"docker", "image":"fixture", "lifecycle_host":"/missing-host.json",
+        "inject_env":"FIXTURE", "startup_timeout_secs":1, "container_port":1234,
+        "environment":{}, "healthcheck":[], "connection":"{host_port}"
+    })).unwrap());
+    let mut manager = ServiceManager::new(&project);
+    let error = manager.handle("fixture").unwrap().acquire().err().unwrap();
+    assert!(
+        format!("{error:#}").contains("legacy service lease still exists"),
+        "{error:#}"
+    );
+    assert_eq!(std::fs::read_link(&marker).unwrap(), target);
+    assert!(!target.exists());
+    assert!(!project
+        .root
+        .join(".harness-gate/lifecycle-services")
+        .exists());
+}
