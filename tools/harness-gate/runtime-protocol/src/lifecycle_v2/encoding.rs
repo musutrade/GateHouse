@@ -17,11 +17,41 @@ struct Envelope {
 /// This envelope is distinct from every historical lifecycle slot format.
 pub fn encode(identity: &SlotIdentity) -> Result<Vec<u8>, &'static str> {
     identity.validate()?;
-    let value = serde_json::to_value(Envelope {
-        schema: SCHEMA.into(),
-        identity: identity.clone(),
-    })
-    .map_err(|_| "invalid Podman slot identity")?;
+    // Struct fields below explicitly fix lexicographic order at every level.
+    // No serde_json::Value/Map is involved, including under preserve_order.
+    #[derive(Serialize)]
+    struct CanonicalProfile<'a> {
+        engine: &'a str,
+        product: &'a str,
+        protocol: &'a str,
+        version: &'a str,
+    }
+    #[derive(Serialize)]
+    struct CanonicalIdentity<'a> {
+        config_sha256: &'a str,
+        executable_sha256: &'a str,
+        installation_sha256: &'a str,
+        profile: CanonicalProfile<'a>,
+    }
+    #[derive(Serialize)]
+    struct CanonicalEnvelope<'a> {
+        identity: CanonicalIdentity<'a>,
+        schema: &'a str,
+    }
+    let value = CanonicalEnvelope {
+        identity: CanonicalIdentity {
+            config_sha256: &identity.config_sha256,
+            executable_sha256: &identity.executable_sha256,
+            installation_sha256: &identity.installation_sha256,
+            profile: CanonicalProfile {
+                engine: &identity.profile.engine,
+                product: &identity.profile.product,
+                protocol: &identity.profile.protocol,
+                version: &identity.profile.version,
+            },
+        },
+        schema: SCHEMA,
+    };
     let bytes = serde_json::to_vec(&value).map_err(|_| "invalid Podman slot encoding")?;
     if bytes.len() > LIMIT {
         return Err("Podman slot identity exceeds limit");
@@ -160,6 +190,29 @@ mod tests {
         for invalid in [extra, old] {
             assert!(decode(&serde_json::to_vec(&invalid).unwrap()).is_err());
         }
+    }
+
+    #[test]
+    fn extra_envelope_and_identity_fields_are_rejected() {
+        let value: serde_json::Value =
+            serde_json::from_slice(&encode(&identity()).unwrap()).unwrap();
+        let mut envelope = value.clone();
+        envelope["authority"] = "adopt".into();
+        let mut identity = value;
+        identity["identity"]["authority"] = "adopt".into();
+        for invalid in [envelope, identity] {
+            assert!(decode(&serde_json::to_vec(&invalid).unwrap()).is_err());
+        }
+    }
+
+    #[test]
+    fn full_canonical_bytes_are_feature_independent() {
+        let id = identity();
+        let expected = format!(
+            "{{\"identity\":{{\"config_sha256\":\"{}\",\"executable_sha256\":\"{}\",\"installation_sha256\":\"{}\",\"profile\":{{\"engine\":\"podman\",\"product\":\"podman-lifecycle\",\"protocol\":\"gate-runtime/lifecycle-v2\",\"version\":\"0.1.0\"}}}},\"schema\":\"gate-runtime/podman-slot-identity-v1\"}}",
+            id.config_sha256, id.executable_sha256, id.installation_sha256
+        );
+        assert_eq!(encode(&id).unwrap(), expected.as_bytes());
     }
 
     #[test]

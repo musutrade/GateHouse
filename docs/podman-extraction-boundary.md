@@ -81,3 +81,9 @@ installation/config/executable bytes. It never reserializes descriptor inputs.
 This is byte equality only: held-file ownership, permissions, schema validation,
 provenance and post-call revalidation remain Core integration gates. It grants no
 execution or recovery authority and writes no slot or journal.
+
+The canonical writer now uses explicit ordered serialization structs at all three
+levels, without `serde_json::Value` or `Map`. Field order therefore does not depend
+on `serde_json/preserve_order`. A complete literal-byte regression fixes the
+entire envelope representation; extra top-level and identity-level fields have
+explicit negative vectors in addition to typed duplicate/missing-field tests.
