@@ -66,3 +66,18 @@ This pure module is not connected to service routing or on-disk slots. It does
 not parse, adopt or migrate Docker journals. Its presence in the development
 crate is not a published protocol version: publication requires a new crate/Core
 version after complete wire, identity, host, storage and adapter integration.
+
+## Canonical encoding checkpoint
+
+`lifecycle_v2::encoding` defines a separate
+`gate-runtime/podman-slot-identity-v1` envelope with `schema` and `identity`.
+Decode is bounded to 4096 bytes and first deserializes strict typed fields, so
+missing, unknown and duplicate keys are rejected. Accepted bytes must exactly
+match compact UTF-8 JSON with lexicographically ordered keys and no newline.
+Historical slot documents cannot select this schema.
+
+`match_snapshots` compares the three recorded hashes with the exact supplied
+installation/config/executable bytes. It never reserializes descriptor inputs.
+This is byte equality only: held-file ownership, permissions, schema validation,
+provenance and post-call revalidation remain Core integration gates. It grants no
+execution or recovery authority and writes no slot or journal.
