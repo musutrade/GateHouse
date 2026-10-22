@@ -446,3 +446,56 @@ fn fixed_project_mapping_refuses_missing_and_symlink_hosts_without_fallback() {
         std::io::ErrorKind::WouldBlock
     );
 }
+
+#[test]
+fn mapped_host_is_explicit_trust_root_for_protected_external_members() {
+    for mode in ["valid", "digest-mismatch", "writable-executable"] {
+        let (external, _installed, listener, info) = fixture();
+        let project = tempfile::tempdir_in(std::env::var_os("HOME").unwrap()).unwrap();
+        fs::set_permissions(project.path(), fs::Permissions::from_mode(0o700)).unwrap();
+        let mapped = project
+            .path()
+            .join(".harness-gate/runtime/podman-capture-v1");
+        fs::create_dir_all(&mapped).unwrap();
+        for p in [
+            project.path().join(".harness-gate"),
+            project.path().join(".harness-gate/runtime"),
+            mapped.clone(),
+        ] {
+            fs::set_permissions(p, fs::Permissions::from_mode(0o700)).unwrap();
+        }
+        // Exact descriptor bytes intentionally reference a separate protected tree.
+        fs::copy(external.path().join("host.json"), mapped.join("host.json")).unwrap();
+        match mode {
+            "digest-mismatch" => {
+                let path = external.path().join("adapter");
+                let mut bytes = fs::read(&path).unwrap();
+                bytes.push(0);
+                fs::write(path, bytes).unwrap();
+            }
+            "writable-executable" => fs::set_permissions(
+                external.path().join("adapter"),
+                fs::Permissions::from_mode(0o777),
+            )
+            .unwrap(),
+            _ => {}
+        }
+        if mode == "valid" {
+            let server = serve(listener, info);
+            let record =
+                capture_mapped(project.path(), "b".repeat(64), inputs(), 3000, || false).unwrap();
+            server.join().unwrap();
+            assert!(!record.installation_verified());
+            assert_eq!(fs::read_dir(mapped).unwrap().count(), 1);
+        } else {
+            assert!(
+                capture_mapped(project.path(), "b".repeat(64), inputs(), 3000, || false).is_err(),
+                "{mode}"
+            );
+            assert_eq!(
+                listener.accept().unwrap_err().kind(),
+                std::io::ErrorKind::WouldBlock
+            );
+        }
+    }
+}

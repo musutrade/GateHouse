@@ -181,3 +181,28 @@ installed release, public command, restart or rootless acceptance is claimed.
 Protected installation loading precedes the runner's request budget; filesystem
 work is not preempted. This does not strengthen the previously documented
 same-UID race or process-containment guarantees.
+
+
+## Explicit host trust-root policy (checkpoint 127)
+
+The fixed project host.json is an operator-selected configuration trust root.
+Its installation/config references may point outside the project; confinement to
+project descendants is deliberately not the policy. The host binds exact hashes,
+and every external member still passes the existing ownership, permissions,
+canonical-path, held-file and revalidation checks. Tests use a separate protected
+installation tree and reject a changed executable digest and a group/world-writable
+executable before connecting. No discovery or fallback is introduced.
+
+Selecting a Project does not authenticate that project. A caller must explicitly
+trust the selected project and its host configuration before invoking this internal
+API: loading host.json may launch its declared executable. A malicious same-UID
+operator can author a different self-consistent descriptor and executable; hashes
+are not signatures or an executable allowlist. Do not automatically invoke capture
+while opening or inspecting an untrusted checkout. Future public CLI/service routing
+must preserve explicit operator selection and document this execution boundary.
+
+The policy allows centrally installed protected binaries/configuration to be reused
+across projects. It supplies neither artifact provenance nor Podman authentication,
+OS containment, lease authority or a trusted-project registry. Existing final-file
+replacement tests cover held-snapshot replacement; this checkpoint's new negatives
+cover pre-load digest/permission rejection, not postcheck race elimination.
