@@ -250,3 +250,27 @@ libpod/container_inspect.go, as linked above.
 `inspect_owned_with` runs this matcher on the inspect response within the same
 protected info/inspect/info sequence. Wrong ownership stops without retry;
 a matching object is withheld if final info or input revalidation fails.
+
+### Native create and HostConfig policy (97)
+
+`CreatePlan` emits an explicit native SpecGenerator body from a resolved full
+local image ID, native name, full merged labels and zero/one fixed loopback TCP
+mapping. It sets netns=bridge, range=1, publish_image_ports=false, privileged=false,
+remove=false, removeImage=false and restart_policy=no. Host environment/proxy
+inheritance is explicitly disabled. Image defaults (command/env/health and other
+unmodeled settings) still need review; this is not a complete sandbox policy.
+Only a successful exact 201 Id/Warnings response can supply the container ID for
+the plan's ExpectedContainer. Missing/ambiguous responses have no name-discovery
+or retry path in these helpers, but durable unknown retention is not implemented.
+
+Ownership inspection now requires matching HostConfig.PortBindings as well as
+NetworkSettings.Ports, and explicit false Privileged/AutoRemove/AutoRemoveImage
+plus RestartPolicy{Name:no, MaximumRetryCount:0}. Missing policy fields fail closed.
+Both port maps remain configuration evidence, not port reachability proof. Live
+created/running/stopped and rootless bridge behavior remain unverified.
+
+[Native SpecGenerator](https://github.com/podman-container-tools/podman/blob/v6.1.4/pkg/specgen/specgen.go)
+and [vendored port mapping](https://github.com/podman-container-tools/podman/blob/v6.1.4/vendor/go.podman.io/common/libnetwork/types/network.go)
+are pinned to v6.1.4. Image resolution/label derivation, durable plan binding,
+transport, mutation dispatch, cancellation/deadlines and lease integration remain
+required. No engine operation or publication is enabled by this checkpoint.

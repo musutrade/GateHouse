@@ -520,7 +520,7 @@ mod tests {
                 labels: BTreeMap::from([("lease".into(), "owned".into())]),
                 port: None,
             };
-            let mut object = serde_json::json!({"Id":owner.id,"Name":owner.name,"Image":owner.image_id,"Config":{"Labels":owner.labels},"NetworkSettings":{"Ports":{}},"State":{"Status":"running","Running":true,"Paused":false,"Restarting":false,"Dead":false,"ExitCode":0}});
+            let mut object = serde_json::json!({"Id":owner.id,"Name":owner.name,"Image":owner.image_id,"Config":{"Labels":owner.labels},"HostConfig":{"PortBindings":{},"Privileged":false,"AutoRemove":false,"AutoRemoveImage":false,"RestartPolicy":{"Name":"no","MaximumRetryCount":0}},"NetworkSettings":{"Ports":{}},"State":{"Status":"running","Running":true,"Paused":false,"Restarting":false,"Dead":false,"ExitCode":0}});
             if failure == 1 {
                 object["Config"]["Labels"]["lease"] = "foreign".into();
             }
