@@ -118,6 +118,15 @@ impl Held {
         Ok(())
     }
 }
+/// Revalidated installation facts for Core request construction. These facts
+/// confer no dispatch authority; the host still requires a durable journal token.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InstallationSnapshot {
+    pub installation_sha256: String,
+    pub executable_sha256: String,
+    pub config_sha256: String,
+    pub engine_binding: EngineBinding,
+}
 /// A held file snapshot, not a runnable host or mutation capability.
 pub struct VerifiedInstallation {
     host: Held,
@@ -204,6 +213,15 @@ impl VerifiedInstallation {
     }
     /// Future host must execute this held descriptor, not reopen an ambient path.
     /// Reading this descriptor is not permission to bypass journal authorization.
+    pub fn snapshot(&self) -> Result<InstallationSnapshot> {
+        self.revalidate()?;
+        Ok(InstallationSnapshot {
+            installation_sha256: self.installation.sha256.clone(),
+            executable_sha256: self.executable.sha256.clone(),
+            config_sha256: self.config.sha256.clone(),
+            engine_binding: self.engine.clone(),
+        })
+    }
     pub fn config_bytes(&self) -> Result<&[u8]> {
         self.revalidate()?;
         Ok(&self.config.bytes)

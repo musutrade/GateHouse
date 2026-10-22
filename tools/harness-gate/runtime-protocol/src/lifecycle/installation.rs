@@ -49,7 +49,7 @@ fn parse<T: serde::de::DeserializeOwned + Serialize>(bytes: &[u8]) -> Result<T> 
 #[cfg(unix)]
 mod files;
 #[cfg(unix)]
-pub use files::VerifiedInstallation;
+pub use files::{InstallationSnapshot, VerifiedInstallation};
 
 #[cfg(target_os = "linux")]
 mod sealed;

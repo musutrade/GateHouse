@@ -80,6 +80,11 @@ fn exact_snapshot_and_request_binding_are_required() {
     let loaded = VerifiedInstallation::load(&f.path()).unwrap();
     let r = f.request();
     loaded.validate_request(&r).unwrap();
+    let snapshot = loaded.snapshot().unwrap();
+    assert_eq!(snapshot.installation_sha256, r.binding.installation_sha256);
+    assert_eq!(snapshot.executable_sha256, r.binding.executable_sha256);
+    assert_eq!(snapshot.config_sha256, r.binding.config_sha256);
+    assert_eq!(snapshot.engine_binding, r.binding.engine_binding);
     assert!(loaded.executable().is_ok());
     for field in ["installation_sha256", "config_sha256", "executable_sha256"] {
         let mut v = serde_json::to_value(&r).unwrap();
@@ -116,6 +121,7 @@ fn executable_substitution_even_identical_bytes_invalidates_held_identity() {
     fs::rename(replacement, f.dir.path().join("adapter")).unwrap();
     assert!(loaded.revalidate().is_err());
     assert!(loaded.executable().is_err());
+    assert!(loaded.snapshot().is_err());
 }
 #[test]
 fn config_tamper_symlink_hardlink_and_unsafe_permissions_fail() {
@@ -172,5 +178,6 @@ fn held_config_snapshot_and_every_descriptor_reject_same_byte_replacement() {
         assert!(loaded.config_bytes().is_err());
         assert!(loaded.engine_binding().is_err());
         assert!(loaded.executable().is_err());
+        assert!(loaded.snapshot().is_err());
     }
 }
