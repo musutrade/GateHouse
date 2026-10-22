@@ -565,7 +565,7 @@ mod tests {
             let id = "b".repeat(64);
             let mut routes = vec![];
             let image = serde_json::json!({"Id":id,"Labels":{"image":"value"},"Config":{"Labels":{"image":"value"},"ExposedPorts":{"80/tcp":{}}}});
-            let result = held.inspect_image_with(&id, |route| {
+            let result = held.capture_image_for_plan(&id, |route| {
                 routes.push(route.to_string());
                 if failure == 1 && routes.len() == 2 {
                     return Ok((404, b"{}".to_vec()));
@@ -584,7 +584,7 @@ mod tests {
             });
             if failure == 0 {
                 let facts = result.unwrap();
-                assert_eq!(facts.id(), id);
+                assert_eq!(facts.facts().id(), id);
                 assert_eq!(routes.len(), 3);
             } else {
                 assert!(result.is_err());
@@ -595,5 +595,40 @@ mod tests {
                 super::super::native_image::image_route(&id).unwrap()
             );
         }
+    }
+    #[test]
+    fn capture_retains_exact_bytes_and_refuses_another_context() {
+        let f = Fixture::new();
+        let held = ProtectedContext::load(&f.config).unwrap();
+        let id = "b".repeat(64);
+        let raw = format!("{{ \"Id\":\"{id}\",\"Config\":{{}} }}").into_bytes();
+        let info = info(&held);
+        let mut calls = 0;
+        let captured = held
+            .capture_image_for_plan(&id, |_| {
+                calls += 1;
+                Ok((
+                    200,
+                    if calls == 2 {
+                        raw.clone()
+                    } else {
+                        info.clone()
+                    },
+                ))
+            })
+            .unwrap();
+        assert_eq!(calls, 3);
+        assert_eq!(captured.image_bytes(), raw);
+        assert_eq!(captured.config_bytes(), held.snapshot().unwrap().1);
+        assert_eq!(
+            captured.operator_epoch(),
+            held.snapshot().unwrap().0.operator_epoch
+        );
+        assert_eq!(captured.facts().id(), id);
+        captured.match_context(&held).unwrap();
+        let other = Fixture::new();
+        assert!(captured
+            .match_context(&ProtectedContext::load(&other.config).unwrap())
+            .is_err());
     }
 }

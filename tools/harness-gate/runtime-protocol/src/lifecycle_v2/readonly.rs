@@ -10,7 +10,67 @@ use super::{
     protected_context::ProtectedContext,
 };
 
+/// Evidence of the protected observation sequence, not transport authentication,
+/// freshness, restart continuity, installation verification or dispatch authority.
+/// There is deliberately no public constructor or deserializer. The injected
+/// exchange remains a trust boundary and can supply fabricated HTTP responses.
+#[derive(Debug)]
+pub struct CapturedImage {
+    facts: ImageFacts,
+    image_bytes: Vec<u8>,
+    config_bytes: Vec<u8>,
+    epoch: String,
+}
+impl CapturedImage {
+    pub fn facts(&self) -> &ImageFacts {
+        &self.facts
+    }
+    pub fn image_bytes(&self) -> &[u8] {
+        &self.image_bytes
+    }
+    pub fn config_bytes(&self) -> &[u8] {
+        &self.config_bytes
+    }
+    pub fn operator_epoch(&self) -> &str {
+        &self.epoch
+    }
+    /// Same exact context only; socket recreation/restart is not adopted.
+    pub fn match_context(&self, context: &ProtectedContext) -> Result<(), &'static str> {
+        let (expected, bytes) = context.snapshot()?;
+        if bytes != self.config_bytes || expected.operator_epoch != self.epoch {
+            return Err("captured image context mismatch");
+        }
+        Ok(())
+    }
+}
+
 impl ProtectedContext {
+    /// Capture exact bounded evidence only after protected info/image/info.
+    /// An eventual record constructor must accept this type, never ImageFacts.
+    pub fn capture_image_for_plan<F>(&self, id: &str, get: F) -> Result<CapturedImage, &'static str>
+    where
+        F: FnMut(&str) -> Result<(u16, Vec<u8>), &'static str>,
+    {
+        let (expected, bytes) = self.snapshot()?;
+        let config_bytes = bytes.to_vec();
+        let epoch = expected.operator_epoch.clone();
+        let (facts, image_bytes) =
+            self.inspect_checked_with(&image_route(id)?, get, |route, status, bytes| {
+                Ok((
+                    decode_image(id, "GET", route, status, bytes)?,
+                    bytes.to_vec(),
+                ))
+            })?;
+        let captured = CapturedImage {
+            facts,
+            image_bytes,
+            config_bytes,
+            epoch,
+        };
+        captured.match_context(self)?;
+        Ok(captured)
+    }
+
     /// No retry, mutation or lease authority. Even an exact Missing result is
     /// withheld until the final info observation and filesystem check succeed.
     pub fn inspect_with<F>(&self, id: &str, get: F) -> Result<InspectOutcome, &'static str>
