@@ -6,3 +6,5 @@ pub mod profile;
 pub mod encoding;
 
 pub mod observation;
+
+pub mod native_info;

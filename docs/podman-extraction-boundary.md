@@ -117,3 +117,23 @@ must never be presented as continuity proof. A changed context or observation
 returns a refusal for callers to retain uncertainty; it cannot establish absence.
 Create/status/absence/health bodies, exact native decoding, mutation authorization
 and actual slot persistence remain unimplemented gates.
+
+## Native info body decoder checkpoint
+
+The decoder is pinned to the v6.1.4
+[native info handler](https://github.com/podman-container-tools/podman/blob/v6.1.4/pkg/api/handlers/libpod/info.go)
+and [version JSON types](https://github.com/podman-container-tools/podman/blob/v6.1.4/libpod/define/version.go).
+Version keys are `APIVersion` and `Version`, inside the lowercase `version` object.
+It requires host hostname/security.rootless and store graphRoot/runRoot, bounds
+input to 1 MiB, and rejects duplicate keys recursively before field extraction.
+Additional native metrics are accepted, including finite floating-point metrics;
+they do not participate in context identity. Compat/fabricated top-level identity
+authority is refused. Advertised remote socket data must match the separate local
+socket observation. This decoder does not establish HTTP status, route, framing,
+actual socket metadata or file protection: callers must validate those separately.
+
+`ExpectedContext::match_current_operation` is the Unix integration entry that
+compares principal_uid to actual `geteuid()` before comparing bound context and
+observations. The pure comparator remains available for data validation only.
+Neither entry authenticates protected config; host-held config and endpoint
+verification remain necessary before any operation is dispatched.

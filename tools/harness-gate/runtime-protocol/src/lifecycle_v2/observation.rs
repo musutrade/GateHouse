@@ -107,6 +107,22 @@ impl ExpectedContext {
         self.observation.validate()
     }
 
+    /// Integration entry on Unix: compare the configured principal to actual
+    /// process euid, not another caller-supplied identity. Config protection is
+    /// still the host's responsibility; this does not open any file.
+    #[cfg(unix)]
+    pub fn match_current_operation(
+        &self,
+        bound: &Self,
+        before: &Observation,
+        after: &Observation,
+    ) -> Result<(), &'static str> {
+        if self.principal_uid != unsafe { libc::geteuid() } {
+            return Err("Podman configured principal differs from process euid");
+        }
+        self.match_operation(bound, before, after)
+    }
+
     /// Compare the exact protected caller context and both observations.
     /// Equal observations can occur across socket activation or service restart.
     /// Success therefore says nothing about daemon lifetime or authentication.
@@ -255,6 +271,28 @@ mod tests {
         let text = serde_json::to_string(&o).unwrap();
         let duplicate = text.replacen('{', "{\"engine\":\"podman\",", 1);
         assert!(serde_json::from_str::<Observation>(&duplicate).is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn actual_principal_cannot_be_replaced_by_self_consistent_caller_values() {
+        let mut c = context();
+        c.principal_uid = unsafe { libc::geteuid() };
+        c.match_current_operation(&c, &c.observation, &c.observation)
+            .unwrap();
+        c.principal_uid = c.principal_uid.wrapping_add(1);
+        assert!(c
+            .match_current_operation(&c, &c.observation, &c.observation)
+            .is_err());
+    }
+
+    #[test]
+    fn different_valid_socket_path_is_not_the_same_context() {
+        let c = context();
+        let mut changed = c.observation.clone();
+        changed.socket.path = "/run/podman/other.sock".into();
+        changed.validate().unwrap();
+        assert!(c.match_operation(&c, &changed, &changed).is_err());
     }
 
     #[test]
