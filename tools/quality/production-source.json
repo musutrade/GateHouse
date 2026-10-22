@@ -542,7 +542,7 @@
     {
       "path": "src/service/lifecycle_public/unsupported.rs",
       "reason": "Compiled only through cfg(not(any(target_os = \"linux\"))) in lifecycle_public.rs; absent from Linux LLVM reports. Remains production-owned and measured whenever target mappings exist; non-Linux refusal validation remains a cross-platform requirement.",
-      "sha256": "cda1bcd0f33fabdb7bc533b21f26d572871d78c21cc34dc63242532487813158"
+      "sha256": "d299b120ff83c0233e4e11350b528eafac7950460c990621b32c713f7815b976"
     }
   ],
   "source_roots": [

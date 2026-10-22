@@ -355,6 +355,20 @@ fn both() {
                 self.assertEqual(len(self.inventory(transformed)['symbols']), len(symbols))
         self.assertIn('#[cfg(test)]\nmod tests;', (crate / 'src/preset/mod.rs').read_text(encoding="utf-8"))
 
+    def test_lifecycle_unsupported_target_inventory(self):
+        path = 'service/lifecycle_public/unsupported.rs'
+        self.assertIn(path, SOURCE_FILES)
+        source = ROOT / 'tools/harness-gate/src' / path
+        for target in ('x86_64-unknown-linux-gnu', 'x86_64-pc-windows-msvc',
+                       'aarch64-apple-darwin'):
+            with self.subTest(target=target):
+                inventory = ast(source, self.binary, compiler_configuration(target))
+                names = {s['name'] for s in inventory['symbols'] if not s['test']}
+                expected = set() if 'linux' in target else {
+                    'ManagedLifecycle::start', 'ManagedLifecycle::port',
+                    'ManagedLifecycle::cleanup', 'cleanup_known'}
+                self.assertEqual(names, expected)
+
     def test_resource_validation_source_certification(self):
         path = 'config/validation/mod.rs'
         self.assertIn(path, SOURCE_FILES)
