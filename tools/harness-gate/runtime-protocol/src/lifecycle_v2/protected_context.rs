@@ -174,6 +174,13 @@ impl ProtectedContext {
         }
         Ok(())
     }
+    /// Borrow the held Linux O_PATH socket handle after revalidation. A transport
+    /// may connect through /proc/self/fd/N to avoid reopening the ambient path.
+    /// This alone is not peer authentication or a mutation capability.
+    pub fn socket_file(&self) -> Result<&File> {
+        self.revalidate()?;
+        Ok(&self.socket.file)
+    }
     pub fn snapshot(&self) -> Result<(&ExpectedContext, &[u8])> {
         self.revalidate()?;
         Ok((&self.context, &self.bytes))
