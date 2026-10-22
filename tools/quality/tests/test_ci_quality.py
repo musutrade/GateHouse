@@ -87,7 +87,10 @@ class RiskScopeTests(unittest.TestCase):
         self.assertIn('config/suggestions.rs', SOURCE_FILES)
         self.assertIn('app/commands.rs', SOURCE_FILES)
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')},
-                         {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs'})
+                         {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs',
+                          'service/lifecycle.rs', 'service/lifecycle/recovery.rs',
+                          'service/lifecycle_public.rs', 'service/lifecycle_public/linux.rs',
+                          'service/lifecycle_public/unsupported.rs'})
 
     def test_process_test_module_reaches_measurement_but_unknown_sources_block(self):
         with tempfile.TemporaryDirectory() as temporary:
