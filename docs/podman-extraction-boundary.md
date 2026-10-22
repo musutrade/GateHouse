@@ -137,3 +137,28 @@ compares principal_uid to actual `geteuid()` before comparing bound context and
 observations. The pure comparator remains available for data validation only.
 Neither entry authenticates protected config; host-held config and endpoint
 verification remain necessary before any operation is dispatched.
+
+### Native inspect checkpoint (92)
+
+`lifecycle_v2::native_status` checks GET against the exact v6.1.4 native
+full-ID inspect route and bounds response JSON to 1 MiB using the shared
+recursive duplicate-key decoder. HTTP 200 requires the same full lowercase ID
+and selected state fields, with consistent running/paused flags. Unsupported
+states fail closed. HTTP 404 requires the exact three-field native ErrorModel,
+`no such container` cause, response code 404, and SQLite lookup text naming the
+requested full ID. Ambiguous lookup, generic/Docker errors, other routes and
+other HTTP statuses do not establish absence. This intentionally supports only
+the pinned SQLite lookup error spelling; alternative storage errors fail closed.
+
+Sources pinned to Podman v6.1.4:
+
+- [Native route](https://github.com/podman-container-tools/podman/blob/v6.1.4/pkg/api/server/register_containers.go)
+- [GetContainer handler](https://github.com/podman-container-tools/podman/blob/v6.1.4/pkg/api/handlers/libpod/containers.go)
+- [SQLite lookup](https://github.com/podman-container-tools/podman/blob/v6.1.4/libpod/sqlite_state.go)
+- [Error mapping](https://github.com/podman-container-tools/podman/blob/v6.1.4/pkg/api/handlers/utils/errors.go)
+- [Inspect state construction](https://github.com/podman-container-tools/podman/blob/v6.1.4/libpod/container_inspect.go)
+
+This is a pure selected-state parser, not ownership or lease-release evidence.
+It does not bind image/labels/ports, protected config, held socket, observations,
+a journal, HTTP framing or deadlines. These remain required before integration.
+No adapter transport, mutation, real Podman operation or publication is enabled.
