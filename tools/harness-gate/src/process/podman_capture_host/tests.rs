@@ -590,3 +590,112 @@ fn cli_capture_preflight_and_canonical_success() {
     fs::remove_file(mapped.join("host.json")).unwrap();
     assert!(crate::app::podman_capture_bytes(&cli, args).is_err());
 }
+
+#[test]
+fn normal_core_cli_exact_output_config_and_failure_contract() {
+    let core = std::env::var("HG_PODMAN_CORE_BINARY").expect("pinned normal Core binary");
+    assert_eq!(
+        hash(&fs::read(&core).unwrap()),
+        std::env::var("HG_PODMAN_CORE_SHA256").unwrap()
+    );
+    for mode in [
+        "success",
+        "config",
+        "missing-trust",
+        "missing-host",
+        "full-output",
+    ] {
+        let (dir, _installed, listener, info) = fixture();
+        let root = dir.path();
+        crate::preset::init(root, "generic", false).unwrap();
+        assert!(std::process::Command::new("git")
+            .args(["init", "--quiet"])
+            .current_dir(root)
+            .status()
+            .unwrap()
+            .success());
+        let mapped = root.join(".harness-gate/runtime/podman-capture-v1");
+        fs::create_dir_all(&mapped).unwrap();
+        for p in [
+            root.join(".harness-gate"),
+            root.join(".harness-gate/runtime"),
+            mapped.clone(),
+        ] {
+            fs::set_permissions(p, fs::Permissions::from_mode(0o700)).unwrap();
+        }
+        if mode != "missing-host" {
+            fs::copy(root.join("host.json"), mapped.join("host.json")).unwrap();
+        }
+        let mut command = std::process::Command::new(&core);
+        command.env_clear().current_dir("/").args([
+            "--project-root",
+            root.to_str().unwrap(),
+            "--color",
+            "never",
+        ]);
+        if mode == "config" {
+            fs::create_dir(root.join("alternate")).unwrap();
+            fs::copy(
+                root.join(crate::config::DEFAULT_CONFIG_PATH),
+                root.join("alternate/workflow.toml"),
+            )
+            .unwrap();
+            command.args(["--config", "alternate/workflow.toml"]);
+        }
+        command.args([
+            "podman-capture",
+            "--image-id",
+            &"b".repeat(64),
+            "--name",
+            "fixture",
+            "--label",
+            "owner=fixture",
+        ]);
+        if mode != "missing-trust" {
+            command.arg("--trust-host");
+        }
+        let connects = matches!(mode, "success" | "config" | "full-output");
+        let check_listener = listener.try_clone().unwrap();
+        let server = connects.then(|| serve(listener, info));
+        if mode == "full-output" {
+            command.stdout(
+                fs::OpenOptions::new()
+                    .write(true)
+                    .open("/dev/full")
+                    .unwrap(),
+            );
+        }
+        let output = command.output().unwrap();
+        if let Some(server) = server {
+            server.join().unwrap();
+        }
+        if matches!(mode, "success" | "config") {
+            assert_eq!(
+                output.status.code(),
+                Some(0),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert!(output.stderr.is_empty());
+            let installed = VerifiedPodmanInstallation::load(&mapped.join("host.json")).unwrap();
+            let record = PlanRecord::decode(&output.stdout, installed.context().unwrap()).unwrap();
+            assert_eq!(record.encode().unwrap(), output.stdout);
+            assert!(!output.stdout.ends_with(b"\n"));
+        } else {
+            assert_eq!(
+                output.status.code(),
+                Some(if mode == "missing-trust" { 2 } else { 1 })
+            );
+            assert!(output.stdout.is_empty());
+            assert!(!output.stderr.is_empty());
+        }
+        assert_eq!(
+            check_listener.accept().unwrap_err().kind(),
+            std::io::ErrorKind::WouldBlock
+        );
+        assert_eq!(
+            fs::read_dir(&mapped).unwrap().count(),
+            usize::from(mode != "missing-host")
+        );
+    }
+}

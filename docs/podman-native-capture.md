@@ -244,3 +244,16 @@ must require success and validate the complete record. The evidence may contain
 configuration/image metadata and is not an authority token. Published protocol
 and artifacts still lack this route; local pinned-source testing is separate
 from a release or real Podman proof.
+
+## Normal executable acceptance checkpoint 130
+
+A pinned ordinary Core binary (without the joint-test feature) is invoked with
+an empty environment and cwd `/` against the pinned native adapter/fake socket.
+Tests require exit 0, empty stderr and exact canonical stdout without newline;
+they repeat success with `--config alternate/workflow.toml`, while the host stays
+at its fixed project-root location. Missing trust exits 2; missing mapped host
+exits 1 with empty stdout and no socket activity, despite an arbitrary valid host
+elsewhere. No evidence file is created. `/dev/full` verifies stdout write failure
+returns exit 1. It is not a partial-write or blocked-pipe proof. These tests remain
+local pinned-source/fake-engine acceptance, not published artifact or real Podman
+acceptance.
