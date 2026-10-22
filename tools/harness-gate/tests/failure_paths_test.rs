@@ -569,8 +569,8 @@ elif args[0] == 'rm':
 elif args[0] not in ('info', 'exec', 'image'):
     sys.exit(99)
 "#;
-    fs::write(bin.join("docker"), script).unwrap();
-    fs::set_permissions(bin.join("docker"), fs::Permissions::from_mode(0o755)).unwrap();
+    fs::write(bin.join("podman"), script).unwrap();
+    fs::set_permissions(bin.join("podman"), fs::Permissions::from_mode(0o755)).unwrap();
     let mut paths = vec![bin];
     paths.extend(std::env::split_paths(&std::env::var_os("PATH").unwrap()));
     std::env::join_paths(paths).unwrap()
@@ -593,6 +593,7 @@ fn verification_cleanup_cancel_and_report_precedence_retains_resource_evidence()
         ) + r#"
 [services.fixture]
 kind = 'docker'
+runtime = 'podman'
 image = 'fixture:local'
 inject_env = 'PROBE_SERVICE'
 startup_timeout_secs = 10
@@ -656,7 +657,7 @@ connection = 'fixture:{host_port}'
             "{stderr}"
         );
         let cleanup_cause = if cancel {
-            "internal command docker was cancelled"
+            "internal command podman was cancelled"
         } else {
             "injected cleanup failure"
         };
@@ -736,7 +737,7 @@ connection = 'fixture:{host_port}'
         assert_eq!(lease["resource_id"], "service:fixture");
         assert_eq!(lease["invocation_id"], invocation_id);
         assert_eq!(lease["project_identity"], project_identity);
-        assert_eq!(lease["runtime"], "docker");
+        assert_eq!(lease["runtime"], "podman");
         assert_eq!(lease["runtime_object_id"], "fixture-immutable-id");
         let runtime: Value =
             serde_json::from_slice(&fs::read(root.path().join("runtime-object.json")).unwrap())

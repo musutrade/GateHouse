@@ -421,28 +421,92 @@ fn joint(service_path: u8) {
                         toml::to_string_pretty(&project.config).unwrap(),
                     )
                     .unwrap();
-                    let output = std::process::Command::new(core)
-                        .arg("--project-root")
-                        .arg(&project.root)
-                        .args([
-                            "lifecycle-cleanup",
-                            "--service",
-                            "fixture",
-                            "--fence",
-                            "1",
-                            "--lease-invocation",
-                            invocation,
-                        ])
-                        .env_clear()
-                        .current_dir("/")
-                        .output()
-                        .unwrap();
+                    let run = |fence: &str, lease: &str| {
+                        std::process::Command::new(&core)
+                            .arg("--project-root")
+                            .arg(&project.root)
+                            .args([
+                                "lifecycle-cleanup",
+                                "--service",
+                                "fixture",
+                                "--fence",
+                                fence,
+                                "--lease-invocation",
+                                lease,
+                            ])
+                            .env_clear()
+                            .current_dir("/")
+                            .output()
+                            .unwrap()
+                    };
+                    let refuse = |output: std::process::Output, expected: &str| {
+                        assert_eq!(output.status.code(), Some(1));
+                        assert!(output.stdout.is_empty());
+                        assert!(
+                            String::from_utf8_lossy(&output.stderr).contains(expected),
+                            "{}",
+                            String::from_utf8_lossy(&output.stderr)
+                        );
+                    };
+                    refuse(
+                        run("2", invocation),
+                        "does not match current resource fence",
+                    );
+                    refuse(
+                        run("1", &"0".repeat(32)),
+                        "does not match current resource fence",
+                    );
+                    assert_eq!(fs::read(root.join("service.json")).unwrap(), retained);
+                    let output = run("1", invocation);
                     assert!(
                         output.status.success(),
                         "operator CLI failed: {}",
                         String::from_utf8_lossy(&output.stderr)
                     );
                     assert!(output.stderr.is_empty(), "unexpected operator stderr");
+                    let released = fs::read(root.join("service.json")).unwrap();
+                    refuse(run("1", invocation), "released slot");
+                    let mut changed = project.config.clone();
+                    if let crate::config::ServiceConfig::Docker { lifecycle_host, .. } =
+                        changed.services.get_mut("fixture").unwrap()
+                    {
+                        *lifecycle_host = None;
+                    }
+                    fs::write(
+                        &project.config_path,
+                        toml::to_string_pretty(&changed).unwrap(),
+                    )
+                    .unwrap();
+                    refuse(
+                        run("1", invocation),
+                        "requires explicit Docker lifecycle_host",
+                    );
+                    if let crate::config::ServiceConfig::Docker { lifecycle_host, .. } =
+                        changed.services.get_mut("fixture").unwrap()
+                    {
+                        *lifecycle_host = Some(
+                            directory
+                                .path()
+                                .join("missing-host.json")
+                                .to_string_lossy()
+                                .into_owned(),
+                        );
+                    }
+                    fs::write(
+                        &project.config_path,
+                        toml::to_string_pretty(&changed).unwrap(),
+                    )
+                    .unwrap();
+                    let unsupported = run("1", invocation);
+                    assert_eq!(unsupported.status.code(), Some(1));
+                    assert!(unsupported.stdout.is_empty());
+                    assert!(!unsupported.stderr.is_empty());
+                    assert_eq!(fs::read(root.join("service.json")).unwrap(), released);
+                    fs::write(
+                        &project.config_path,
+                        toml::to_string_pretty(&project.config).unwrap(),
+                    )
+                    .unwrap();
                     let stdout = String::from_utf8(output.stdout).unwrap();
                     stdout
                         .trim()

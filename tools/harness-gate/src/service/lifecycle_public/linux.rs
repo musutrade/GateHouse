@@ -18,6 +18,7 @@ impl ManagedLifecycle {
         config: Config,
         deadline: Instant,
     ) -> Result<Self> {
+        reject_legacy_marker(project, id)?;
         let base = ServiceSlot::project_state_base(&project.root)?;
         let project_id = project.input().project_identity.clone();
         let resource_id = format!("service:{id}");
@@ -114,4 +115,15 @@ pub(crate) fn cleanup_known(
         )
     })?;
     Ok(authorization)
+}
+
+fn reject_legacy_marker(project: &Project, id: &str) -> Result<()> {
+    use crate::service::lease::{lease_directory, resource_key};
+    let marker =
+        lease_directory(project)?.join(format!("{}.json", resource_key(&format!("service:{id}"))));
+    match std::fs::symlink_metadata(marker) {
+        Ok(_) => anyhow::bail!("legacy service lease still exists; resolve it with the prior approved version before lifecycle startup; no automatic migration"),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error.into()),
+    }
 }

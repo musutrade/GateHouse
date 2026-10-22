@@ -1830,6 +1830,20 @@ mod tests {
     }
 
     #[test]
+    fn legacy_docker_cleanup_retains_marker_without_implicit_migration() {
+        let (_workspace, project) = runtime_project("retired-docker-lease");
+        let (path, _, _) = container_lease(&project, ContainerRuntimeKind::Docker, true);
+        let bytes = std::fs::read(&path).unwrap();
+        let report = super::cleanup(&project, false).unwrap();
+        assert_eq!(report.reclaimed, 0);
+        assert!(report
+            .failures
+            .iter()
+            .any(|f| f.contains("Docker CLI service operations are retired")));
+        assert_eq!(std::fs::read(path).unwrap(), bytes);
+    }
+
+    #[test]
     fn fake_docker_and_podman_cleanup_requires_fresh_complete_ownership() {
         for (index, runtime) in [ContainerRuntimeKind::Docker, ContainerRuntimeKind::Podman]
             .into_iter()

@@ -41,6 +41,7 @@ pub(super) fn start_docker(
         cleanup_errors,
         invocation_id,
     } = options;
+    super::legacy_cli::legacy_executable(runtime)?;
     let unique = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
