@@ -7,12 +7,16 @@ use std::{
 };
 unsafe extern "C" {
     fn signal(sig: i32, handler: usize) -> usize;
+    fn fork() -> i32;
+    fn setsid() -> i32;
+    fn close(fd: i32) -> i32;
+
 }
 fn main() {
     let exe = std::env::current_exe().unwrap();
     let root = exe.parent().unwrap();
     let mode = fs::read_to_string(root.join("fault-mode")).unwrap();
-    if mode == "term-resistant" {
+    if mode == "term-resistant" || mode.starts_with("descendant-") {
         unsafe {
             signal(15, 1);
             signal(2, 1);
@@ -22,6 +26,22 @@ fn main() {
     let mut input = Vec::new();
     std::io::stdin().read_to_end(&mut input).unwrap();
     match mode.as_str() {
+        "descendant-group" | "descendant-escaped" => {
+            let pid = unsafe { fork() };
+            assert!(pid >= 0);
+            if pid == 0 {
+                if mode == "descendant-escaped" {
+                    assert!(unsafe { setsid() } > 0);
+                }
+                // Do not let the escaped negative hold capture pipes open.
+                unsafe { close(0); close(1); close(2); }
+                fs::write(root.join("descendant-pid"), std::process::id().to_string()).unwrap();
+                // Safety bound even if the isolated supervisor itself fails.
+                thread::sleep(Duration::from_secs(15));
+                std::process::exit(0);
+            }
+            loop { thread::sleep(Duration::from_secs(1)); }
+        }
         "partial-exit" => {
             std::io::stdout().write_all(b"{\"schema\":").unwrap();
             std::process::exit(7);

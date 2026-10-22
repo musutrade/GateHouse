@@ -230,3 +230,83 @@ fn native_fault_output_and_term_resistant_timeout_are_discarded_and_reaped() {
         );
     }
 }
+
+#[test]
+fn descendant_supervision_isolated() {
+    const KEY: &str = "HG_PODMAN_ISOLATED_DESCENDANT";
+    if std::env::var_os(KEY).is_none() {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "process::podman_capture_host::tests::descendant_supervision_isolated",
+                "--nocapture",
+            ])
+            .env(KEY, "1")
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{} {}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return;
+    }
+    // Only this dedicated test subprocess changes orphan adoption policy.
+    assert_eq!(
+        unsafe { libc::prctl(libc::PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0) },
+        0
+    );
+    let binary = std::env::var("HG_PODMAN_FAULT_BINARY").unwrap();
+    let sha = std::env::var("HG_PODMAN_FAULT_SHA256").unwrap();
+    for escaped in [false, true] {
+        let (dir, installed, listener, _) = fixture_binary(&binary, &sha);
+        fs::write(
+            dir.path().join("fault-mode"),
+            if escaped {
+                "descendant-escaped"
+            } else {
+                "descendant-group"
+            },
+        )
+        .unwrap();
+        let result = capture(&installed, "b".repeat(64), inputs(), 1500, || false);
+        let direct: i32 = fs::read_to_string(dir.path().join("fault-pid"))
+            .unwrap()
+            .parse()
+            .unwrap();
+        let descendant: i32 = fs::read_to_string(dir.path().join("descendant-pid"))
+            .unwrap()
+            .parse()
+            .unwrap();
+        let mut status = 0;
+        let observed = unsafe { libc::waitpid(descendant, &mut status, libc::WNOHANG) };
+        // Cleanup before assertions: escape is a negative containment result.
+        if observed == 0 {
+            assert_eq!(unsafe { libc::kill(descendant, libc::SIGKILL) }, 0);
+            assert_eq!(
+                unsafe { libc::waitpid(descendant, &mut status, 0) },
+                descendant
+            );
+        }
+        assert!(result.is_err());
+        assert_eq!(
+            listener.accept().unwrap_err().kind(),
+            std::io::ErrorKind::WouldBlock
+        );
+        assert_eq!(unsafe { libc::kill(direct, 0) }, -1);
+        assert_eq!(
+            std::io::Error::last_os_error().raw_os_error(),
+            Some(libc::ESRCH)
+        );
+        assert_eq!(observed, if escaped { 0 } else { descendant });
+        assert!(libc::WIFSIGNALED(status));
+        assert_eq!(libc::WTERMSIG(status), libc::SIGKILL);
+        assert_eq!(unsafe { libc::kill(descendant, 0) }, -1);
+        assert_eq!(
+            std::io::Error::last_os_error().raw_os_error(),
+            Some(libc::ESRCH)
+        );
+        eprintln!("escaped={escaped}: direct reaped; group observation={observed}; adopted descendant reaped");
+    }
+}
