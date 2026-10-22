@@ -161,3 +161,144 @@ fn wait_ready(
     }
     bail!("service {id:?} did not become ready within {startup_timeout_secs} seconds")
 }
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+    use crate::service::inspection::RuntimeInspection;
+    use crate::test_support::TestWorkspace;
+    use std::os::unix::fs::PermissionsExt;
+
+    #[test]
+    fn readiness_timeout_and_cancellation_preserve_failed_cleanup() {
+        if std::env::var_os("HG_WAIT_CHILD").is_none() {
+            let directory = tempfile::tempdir().unwrap();
+            let git = std::env::split_paths(&std::env::var_os("PATH").unwrap())
+                .map(|path| path.join("git"))
+                .find(|path| path.is_file())
+                .unwrap();
+            std::os::unix::fs::symlink(git, directory.path().join("git")).unwrap();
+            let script = directory.path().join("podman");
+            std::fs::write(
+                &script,
+                r#"#!/bin/sh
+printf '%s\n' "$1" >> "$HG_WAIT_LOG"
+case "$1" in
+ container) printf '%s' "$HG_WAIT_INSPECTION";;
+ port) if [ "$HG_WAIT_CHILD" = health ]; then printf '127.0.0.1:12345\n'; fi;;
+ exec|rm) exit 1;;
+ *) exit 99;;
+esac
+"#,
+            )
+            .unwrap();
+            std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o700)).unwrap();
+            for mode in ["timeout", "health", "cancel"] {
+                let output = std::process::Command::new(std::env::current_exe().unwrap())
+                    .args(["--exact", "service::docker::tests::readiness_timeout_and_cancellation_preserve_failed_cleanup", "--nocapture"])
+                    .env("HG_WAIT_CHILD", mode)
+                    .env("HG_WAIT_LOG", directory.path().join("calls"))
+                    .env("PATH", directory.path()).output().unwrap();
+                assert!(
+                    output.status.success(),
+                    "{mode}: {}\n{}",
+                    String::from_utf8_lossy(&output.stdout),
+                    String::from_utf8_lossy(&output.stderr)
+                );
+            }
+            return;
+        }
+        let workspace = TestWorkspace::new("readiness-boundary");
+        crate::preset::init(&workspace.root, "generic", false).unwrap();
+        workspace.init_git();
+        let project = Project::discover(Some(workspace.root.clone()), None).unwrap();
+        let mode = std::env::var("HG_WAIT_CHILD").unwrap();
+        let name = "owned-readiness";
+        let object_id = "a".repeat(64);
+        let labels = ownership_labels(
+            &project.input().project_identity,
+            "service:wait",
+            "container",
+            "wait-invocation",
+        );
+        let lease = ResourceLease::acquire(
+            &project,
+            "service:wait",
+            "container",
+            "wait-invocation",
+            Some(name.into()),
+            Some(ContainerRuntimeKind::Podman),
+        )
+        .unwrap();
+        lease
+            .bind_runtime_identity(
+                &project,
+                &RuntimeInspection {
+                    object_id: object_id.clone(),
+                    name: name.into(),
+                    labels: labels.clone(),
+                },
+            )
+            .unwrap();
+        std::env::set_var(
+            "HG_WAIT_INSPECTION",
+            serde_json::json!({"Id":object_id,"Name":name,"Config":{"Labels":labels}}).to_string(),
+        );
+        let log = std::env::var_os("HG_WAIT_LOG").unwrap();
+        std::fs::write(&log, "").unwrap();
+        let errors = Arc::new(Mutex::new(vec![]));
+        let running = RunningService {
+            lifecycle: None,
+            runtime: ContainerRuntimeKind::Podman,
+            inject_env: "WAIT".into(),
+            value: String::new(),
+            container: Some(name.into()),
+            project: project.clone(),
+            cleanup_errors: Arc::clone(&errors),
+            lease: Some(lease),
+        };
+        if mode == "cancel" {
+            crate::process::install_signal_handlers();
+            // SAFETY: the installed handler only sets the process cancellation flag;
+            // this case runs in its own child process.
+            assert_eq!(unsafe { libc::raise(libc::SIGTERM) }, 0);
+        }
+        let error = wait_ready(
+            running,
+            "wait",
+            1,
+            1234,
+            &["check".into()],
+            "{host_port}",
+            Instant::now() + Duration::from_millis(500),
+        )
+        .err()
+        .unwrap();
+        assert!(
+            error.to_string().contains(if mode == "cancel" {
+                "verification cancelled"
+            } else {
+                "did not become ready"
+            }),
+            "{error:#}"
+        );
+        assert_eq!(
+            std::fs::read_dir(&project.resource_leases).unwrap().count(),
+            1
+        );
+        assert!(
+            !errors.lock().unwrap().is_empty(),
+            "failed cleanup must be observable"
+        );
+        let calls = std::fs::read_to_string(log).unwrap();
+        if mode == "cancel" {
+            assert!(!calls.contains("port"));
+        } else {
+            assert!(calls.contains("port\n"));
+            assert!(calls.contains("rm\n"));
+        }
+        if mode == "health" {
+            assert!(calls.contains("exec\n"));
+        }
+    }
+}
