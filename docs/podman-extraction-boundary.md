@@ -164,3 +164,21 @@ a journal, HTTP framing or deadlines. These remain required before integration.
 No adapter transport, mutation, real Podman operation or publication is enabled.
 
 State spelling is pinned to [ContainerStatus.String](https://github.com/podman-container-tools/podman/blob/v6.1.4/libpod/define/containerstate.go): Podman Configured emits `created`; OCI Created emits `initialized`. Both are present, non-running observations. The impossible `configured` spelling is rejected. No lifecycle journal state is inferred by this pure parser.
+
+### Protected context filesystem checkpoint (93, Linux only)
+
+`ProtectedContext` loads the exact `ExpectedContext` JSON from a protected
+regular file (current euid, one link, mode 0400/0600, at most 1 MiB). Recursive
+JSON duplicates are rejected. It retains the config descriptor and bytes, checks
+actual euid, and holds the configured socket inode using O_PATH without connecting.
+The actual socket type/device/inode/owner/mode must equal the expected observation.
+Config and socket paths must be canonical without symlinks; ancestors must be
+root/current-user owned and not group/world writable. Revalidation checks both
+held descriptors and current paths, including timestamps, owner and permissions.
+Snapshots expose the same validated config bytes and their SHA256.
+
+This checkpoint is not installation/slot authority or connected endpoint proof.
+The transport must still bind its connection to the selected endpoint, enforce
+deadlines and pair before/after native observations. Same-UID malicious rollback,
+filesystem races during future connect, authentication and daemon restart proof
+are not solved by holding O_PATH. No real engine is contacted by these tests.

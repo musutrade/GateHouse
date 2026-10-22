@@ -11,3 +11,6 @@ pub mod native_info;
 
 mod native_json;
 pub mod native_status;
+
+#[cfg(target_os = "linux")]
+pub mod protected_context;
