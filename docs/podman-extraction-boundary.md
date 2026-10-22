@@ -162,3 +162,5 @@ This is a pure selected-state parser, not ownership or lease-release evidence.
 It does not bind image/labels/ports, protected config, held socket, observations,
 a journal, HTTP framing or deadlines. These remain required before integration.
 No adapter transport, mutation, real Podman operation or publication is enabled.
+
+State spelling is pinned to [ContainerStatus.String](https://github.com/podman-container-tools/podman/blob/v6.1.4/libpod/define/containerstate.go): Podman Configured emits `created`; OCI Created emits `initialized`. Both are present, non-running observations. The impossible `configured` spelling is rejected. No lifecycle journal state is inferred by this pure parser.

@@ -72,7 +72,7 @@ pub fn decode_inspect(
             // state. Unknown/removing/bad states are unavailable, never absent.
             if !matches!(
                 s.status.as_str(),
-                "configured" | "created" | "running" | "stopped" | "exited" | "paused"
+                "initialized" | "created" | "running" | "stopped" | "exited" | "paused"
             ) || s.running != (s.status == "running")
                 || s.paused != (s.status == "paused")
                 || s.restarting
@@ -147,7 +147,7 @@ mod tests {
     #[test]
     fn supported_present_states_and_exact_missing() {
         for state in [
-            "configured",
+            "initialized",
             "created",
             "running",
             "paused",
@@ -183,7 +183,14 @@ mod tests {
             v["State"][field] = (!v["State"][field].as_bool().unwrap()).into();
             assert!(parse(200, &v).is_err());
         }
-        for state in ["unknown", "bad state", "removing", "stopping", ""] {
+        for state in [
+            "configured",
+            "unknown",
+            "bad state",
+            "removing",
+            "stopping",
+            "",
+        ] {
             assert!(parse(200, &present(state)).is_err());
         }
     }
