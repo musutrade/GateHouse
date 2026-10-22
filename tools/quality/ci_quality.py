@@ -1278,6 +1278,8 @@ class Collector:
                     'tools/harness-gate/src/preset/tests.rs',
                     'tools/harness-gate/src/scope/tests.rs',
                     'tools/harness-gate/src/process/tests.rs',
+                    'tools/harness-gate/src/process/runtime_lifecycle_host/tests.rs',
+                    'tools/harness-gate/src/process/runtime_lifecycle_host/tests/joint.rs',
                     'tools/harness-gate/src/doctor/tests.rs',
                     'tools/harness-gate/src/service/tests.rs',
                     'tools/harness-gate/src/service/tests/availability.rs',
@@ -1298,10 +1300,27 @@ class Collector:
             + ', '.join(unsupported)
         )
 
+    def _lifecycle_coverage_inputs(self, label, crate, target, env):
+        # The base snapshot predates lifecycle; do not change its features or protocol.
+        from lifecycle_fixture import supported, environment, FEATURE
+        if not target.endswith('linux-gnu') or not supported(crate):
+            return [], env
+        bundle = self.directory / f'{label}-lifecycle-bundle'
+        self.python(f'{label}-lifecycle-build', 'lifecycle_fixture.py', 'build',
+                    '--crate', crate, '--bundle', bundle,
+                    '--work', self.directory / f'{label}-lifecycle-build', env=env)
+        # Keep Unix socket paths short and all journal ancestors protected.
+        import tempfile
+        parent = Path(os.environ.get('GATEHOUSE_JOURNAL_TEST_ROOT', Path.home()))
+        journal_parent = Path(tempfile.mkdtemp(prefix='.gh-lifecycle-', dir=parent))
+        values = environment(crate, bundle, journal_parent / 'journal')
+        return ['--features', FEATURE], {**(os.environ if env is None else env), **values}
+
     def _collect_commit_coverage(self, label: str, commit: str, snapshot: Path, binary: Path, target: str, *, env=None):
         """Shared per-commit coverage collection for both modes."""
         crate = snapshot / 'tools/harness-gate'
         manifest = self.directory / f'{label}-manifest.json'
+        features, env = self._lifecycle_coverage_inputs(label, crate, target, env)
 
         self.python(
             f'{label}-prepare',
@@ -1315,7 +1334,7 @@ class Collector:
         cargo_manifest = str(crate / 'Cargo.toml')
         self.command(
             f'{label}-coverage',
-            ['cargo', 'llvm-cov', 'nextest', '--workspace', '--locked',
+            ['cargo', 'llvm-cov', 'nextest', '--workspace', '--locked', *features,
              '--manifest-path', cargo_manifest, '--target', target,
              '--json', '--output-path', str(self.directory / f'{label}-coverage.json')], env=env
         )
@@ -1371,6 +1390,7 @@ class Collector:
         crate = snapshot / 'tools/harness-gate'
         manifest = self.directory / f'{side}-manifest.json'
         coverage = self.directory / f'{side}-coverage-{shard}.json'
+        features, env = self._lifecycle_coverage_inputs(side, crate, target, env)
 
         self.python(
             f'{side}-prepare',
@@ -1382,7 +1402,7 @@ class Collector:
         )
 
         cargo_manifest = str(crate / 'Cargo.toml')
-        nextest = ['cargo', 'llvm-cov', 'nextest', '--workspace', '--locked',
+        nextest = ['cargo', 'llvm-cov', 'nextest', '--workspace', '--locked', *features,
                    '--manifest-path', cargo_manifest, '--target', target]
         partition = [*nextest, '--partition', f'hash:{shard}/{partitions}', '--no-report']
         if excluded_tests:

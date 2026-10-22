@@ -355,6 +355,20 @@ fn both() {
                 self.assertEqual(len(self.inventory(transformed)['symbols']), len(symbols))
         self.assertIn('#[cfg(test)]\nmod tests;', (crate / 'src/preset/mod.rs').read_text(encoding="utf-8"))
 
+    def test_lifecycle_unsupported_target_inventory(self):
+        path = 'service/lifecycle_public/unsupported.rs'
+        self.assertIn(path, SOURCE_FILES)
+        source = ROOT / 'tools/harness-gate/src' / path
+        for target in ('x86_64-unknown-linux-gnu', 'x86_64-pc-windows-msvc',
+                       'aarch64-apple-darwin'):
+            with self.subTest(target=target):
+                inventory = ast(source, self.binary, compiler_configuration(target))
+                names = {s['name'] for s in inventory['symbols'] if not s['test']}
+                expected = set() if 'linux' in target else {
+                    'ManagedLifecycle::start', 'ManagedLifecycle::port',
+                    'ManagedLifecycle::cleanup', 'cleanup_known'}
+                self.assertEqual(names, expected)
+
     def test_resource_validation_source_certification(self):
         path = 'config/validation/mod.rs'
         self.assertIn(path, SOURCE_FILES)
@@ -415,7 +429,10 @@ fn both() {
                 self.assertEqual(len(self.inventory(transformed)['symbols']), len(symbols))
 
     def test_report_retention_sources_inventory_and_instrumentation(self):
-        paths = {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs'}
+        paths = {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs', 'service/docker.rs',
+                 'service/lifecycle.rs', 'service/lifecycle/recovery.rs',
+                 'service/lifecycle_public.rs', 'service/lifecycle_public/linux.rs',
+                 'service/lifecycle_public/unsupported.rs'}
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')}, paths)
         retained = Path(os.environ.get('RUST_MEASURE_NATIVE_EVIDENCE', ROOT / 'target/gh286-native-evidence')).resolve()
         retained.mkdir(parents=True, exist_ok=True)
@@ -429,7 +446,17 @@ fn both() {
                     source = source_file.read_text(encoding='utf-8')
                     inventory = ast(source_file, self.binary, compiler_configuration(target))
                     symbols = inventory['symbols']
-                    self.assertTrue(any(not symbol['test'] for symbol in symbols))
+                    if path == 'service/lifecycle_public.rs':
+                        # This routing module contains only a data struct and cfg module/reexports.
+                        self.assertEqual(symbols, [])
+                        self.assertIn('pub(crate) struct Config', source)
+                        self.assertIn('mod linux;', source)
+                        self.assertIn('mod unsupported;', source)
+                    elif path == 'service/lifecycle_public/unsupported.rs' and os_name == 'linux':
+                        self.assertEqual(symbols, [])
+                        self.assertTrue(inventory['excluded'])
+                    else:
+                        self.assertTrue(any(not symbol['test'] for symbol in symbols))
                     self.assertFalse(any(symbol['test'] for symbol in symbols))
                     if path == 'service/lease.rs':
                         variants = [symbol for symbol in symbols if symbol['name'] == 'process_start_identity_checked']

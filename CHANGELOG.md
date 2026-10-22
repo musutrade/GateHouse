@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.9.0 (unreleased)
+## 0.10.0 (unreleased)
+
+- Add protocol 0.3.0 with explicit Docker lifecycle authority and protected installed-host dispatch.
+- Retire Core Docker CLI operations; managed Docker requires lifecycle_host.
+- Retain Core lease/recovery/cancellation coordination and legacy lease markers; no automatic migration.
+- Add exact-ID operator cleanup and durable absence-based release. Podman extraction remains pending.
+- Rootful normal and failed-health recovery have local real-engine evidence; rootless, restart and downloaded lifecycle product acceptance remain pending.
+
+## 0.9.0 (published)
 
 - Add the independently versioned v3 readiness host and protocol 0.2.0 dependency.
 - Bind each installed-host invocation to the exact adapter, config and image.

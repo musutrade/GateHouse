@@ -1062,8 +1062,15 @@
                 "docker"
               ]
             },
+            "lifecycle_host": {
+              "description": "Explicit protected lifecycle-v1 host. Never falls back to an engine CLI.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "readiness_host": {
-              "description": "Protected installed-v2 host used only for read-only availability. Startup and cleanup retain their existing engine implementation.",
+              "description": "Protected installed-v2 host used only for read-only availability. Startup and cleanup use the separately selected lifecycle route.",
               "type": [
                 "string",
                 "null"

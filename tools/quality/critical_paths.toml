@@ -55,8 +55,8 @@ sha256 = "49e41fe0beaf7bec6dd7044012341284def1feba683e6db8da9998ff7c80a189"
 path = "tests/failure_paths_test.rs"
 symbol = "verification_cleanup_cancel_and_report_precedence_retains_resource_evidence"
 start = 580
-end = 817
-sha256 = "f20ea4baf7b07fc6d9611157bc72a90d3a820431036ed4705923ad9468ec9be2"
+end = 818
+sha256 = "0d2a7d3ae6eea1ee2900eeb74c694926fa1853acee71342c5ded332832048e6a"
 
 [[paths.probes]]
 line = 373
@@ -364,9 +364,9 @@ sha256 = "936f430219d0a35922b9bfd0c631e491a59dc3be37b96107c37cac33e5346289"
 [paths.test_source]
 path = "src/service/lease.rs"
 symbol = "fake_docker_and_podman_cleanup_requires_fresh_complete_ownership"
-start = 1833
-end = 1920
-sha256 = "7071eae090ff35af442a60e1cde53bd63029fe671f86bcdb4d354d70c49195cb"
+start = 1847
+end = 1934
+sha256 = "7e150f7635cd5523abc53247569af670785336f539fb22a13f52d99b47ca71a6"
 
 [[paths.probes]]
 line = 113

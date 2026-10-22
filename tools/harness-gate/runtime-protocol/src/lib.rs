@@ -1,6 +1,7 @@
 //! Strict runtime data and intent state support. No process execution, artifact
 //! verification, ambient context discovery, or authority to delete a resource.
 pub mod intent;
+pub mod lifecycle;
 #[cfg(unix)]
 pub mod store;
 pub mod v2;

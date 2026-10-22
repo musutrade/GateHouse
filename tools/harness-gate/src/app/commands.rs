@@ -22,23 +22,22 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
                     output,
                     old_result,
                 },
-        } => {
-            let response = crate::compat::run(project, &input, &output, old_result.as_deref())?;
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&response).map_err(anyhow::Error::from)?
-            );
-            Ok(response.status == "PASS"
-                && response
-                    .comparison
-                    .as_ref()
-                    .is_none_or(|result| result.equivalent))
-        }
+        } => run_compat(project, &input, &output, old_result.as_deref()),
         Commands::Compat { .. } => {
             unreachable!("compatibility maintenance actions handled before project discovery")
         }
         Commands::Doctor { json, strict } => run_doctor(project, json, strict),
         Commands::Cleanup { dry_run, json } => run_cleanup(project, dry_run, json),
+        Commands::LifecycleCleanup {
+            service,
+            fence,
+            lease_invocation,
+        } => {
+            let authorization =
+                crate::service::cleanup_lifecycle(project, &service, fence, &lease_invocation)?;
+            println!("Lifecycle service released; operator authorization {authorization}");
+            Ok(true)
+        }
         Commands::Scope {
             scope: args,
             json,
@@ -55,22 +54,15 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
             profile,
             plan: _,
             json: _,
-        } => {
-            let snapshot_project;
-            let project = if snapshot {
-                snapshot_project =
-                    match snapshot_source.unwrap_or(crate::cli::SnapshotSource::Directory) {
-                        crate::cli::SnapshotSource::Directory => {
-                            project.directory_snapshot(snapshot_destination.as_deref())?
-                        }
-                        crate::cli::SnapshotSource::Index => project.clone(),
-                    };
-                &snapshot_project
-            } else {
-                project
-            };
-            run_verify(project, args.mode(), components, profile)
-        }
+        } => run_verify_snapshot(
+            project,
+            snapshot,
+            snapshot_source,
+            snapshot_destination,
+            args.mode(),
+            components,
+            profile,
+        ),
         Commands::Hook => run_hook(project),
         Commands::ParseLogs { input, output } => {
             crate::audit::parse_logs(&input, &output)?;
@@ -93,6 +85,24 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
             unreachable!("handled before project discovery")
         }
     }
+}
+
+fn run_compat(
+    project: &Project,
+    input: &std::path::Path,
+    output: &std::path::Path,
+    old_result: Option<&std::path::Path>,
+) -> Result<bool, CliError> {
+    let response = crate::compat::run(project, input, output, old_result)?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&response).map_err(anyhow::Error::from)?
+    );
+    Ok(response.status == "PASS"
+        && response
+            .comparison
+            .as_ref()
+            .is_none_or(|result| result.equivalent))
 }
 
 fn run_doctor(project: &Project, json: bool, strict: bool) -> Result<bool, CliError> {
@@ -251,6 +261,30 @@ fn run_audit(project: &Project, json: bool) -> Result<bool, CliError> {
         }
     }
     Ok(outcome.total_violations == 0)
+}
+
+fn run_verify_snapshot(
+    project: &Project,
+    snapshot: bool,
+    snapshot_source: Option<crate::cli::SnapshotSource>,
+    snapshot_destination: Option<std::path::PathBuf>,
+    mode: ScopeMode,
+    components: Vec<String>,
+    profile: Option<String>,
+) -> Result<bool, CliError> {
+    let snapshot_project;
+    let project = if snapshot {
+        snapshot_project = match snapshot_source.unwrap_or(crate::cli::SnapshotSource::Directory) {
+            crate::cli::SnapshotSource::Directory => {
+                project.directory_snapshot(snapshot_destination.as_deref())?
+            }
+            crate::cli::SnapshotSource::Index => project.clone(),
+        };
+        &snapshot_project
+    } else {
+        project
+    };
+    run_verify(project, mode, components, profile)
 }
 
 fn run_verify(

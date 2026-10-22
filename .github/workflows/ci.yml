@@ -231,7 +231,7 @@ jobs:
         run: |
           set -euo pipefail
           core_target="$(cargo metadata --manifest-path tools/harness-gate/Cargo.toml --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
-          python3 -B "$RUNNER_TEMP/gateprobes-artifacts/gateprobes-onboarding-presets-1.0.4/tools/onboarding/acceptance.py" \
+          python3 -B "$RUNNER_TEMP/gateprobes-artifacts/gateprobes-onboarding-presets-1.0.5/tools/onboarding/acceptance.py" \
             --core "$core_target/debug/harness-gate" --work-dir "$RUNNER_TEMP/plugin-onboarding"
 
       - name: Retain real plugin onboarding evidence
@@ -501,6 +501,13 @@ jobs:
         with:
           tool: cargo-llvm-cov
 
+      - name: Build pinned lifecycle joint fixture
+        run: |
+          python3 -B tools/quality/lifecycle_fixture.py build \
+            --crate tools/harness-gate \
+            --bundle target/quality/fast-archive/lifecycle \
+            --work "$RUNNER_TEMP/lifecycle-build"
+
       - name: Build instrumented nextest archive
         shell: bash
         run: |
@@ -511,7 +518,7 @@ jobs:
           eval "$(cargo llvm-cov show-env --sh --manifest-path Cargo.toml)"
           export CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target/quality/fast-build-target"
           mkdir -p "$CARGO_TARGET_DIR"
-          cargo nextest archive --workspace --locked --archive-file "$archive" \
+          cargo nextest archive --workspace --locked --features harness-gate/lifecycle-joint-tests --archive-file "$archive" \
             > "$GITHUB_WORKSPACE/target/quality/fast-archive/build.log" 2>&1
 
       - name: Upload fast coverage archive
@@ -522,6 +529,7 @@ jobs:
           path: |
             target/quality/fast-archive/tests.tar.zst
             target/quality/fast-archive/build.log
+            target/quality/fast-archive/lifecycle/
           if-no-files-found: error
 
   quality-fast-shard:
@@ -562,6 +570,14 @@ jobs:
         with:
           name: quality-fast-archive-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/quality/fast-archive
+
+      - name: Verify lifecycle fixture and private journal root
+        run: |
+          python3 -B tools/quality/lifecycle_fixture.py activate \
+            --crate tools/harness-gate \
+            --bundle target/quality/fast-archive/lifecycle \
+            --journal "$HOME/.gatehouse-lifecycle-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.shard }}" \
+            --env-file "$GITHUB_ENV"
 
       - name: Run fast coverage shard
         shell: bash
@@ -889,6 +905,16 @@ jobs:
           python3 tools/quality/ci_quality.py assemble-risk-shards \
             --shards-root target/quality/risk-shards \
             --output target/quality/candidate-risk
+
+      - name: Retain risk comparison diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quality-risk-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            target/quality/candidate-risk/risk-compare.log
+            target/quality/candidate-risk/risk.json
+          if-no-files-found: warn
 
       - name: Merge artifacts
         run: |

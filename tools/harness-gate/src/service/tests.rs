@@ -389,6 +389,7 @@ fn docker_service_uses_a_valid_external_value_without_docker() {
         "database".into(),
         ServiceConfig::Docker {
             readiness_host: None,
+            lifecycle_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -423,6 +424,7 @@ fn docker_service_rejects_an_invalid_external_value_before_any_runtime() {
         "database".into(),
         ServiceConfig::Docker {
             readiness_host: None,
+            lifecycle_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -454,6 +456,7 @@ fn exclusive_external_service_is_not_reused_after_its_last_lease() {
         "database".into(),
         ServiceConfig::Docker {
             readiness_host: None,
+            lifecycle_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -496,6 +499,7 @@ fn podman_runtime_uses_external_service_without_starting_a_container() {
         "database".into(),
         ServiceConfig::Docker {
             readiness_host: None,
+            lifecycle_host: None,
             runtime: crate::config::ContainerRuntimeKind::Podman,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -527,6 +531,7 @@ fn managed_service_lease_excludes_concurrent_users() {
         "exclusive".into(),
         ServiceConfig::Docker {
             readiness_host: None,
+            lifecycle_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -569,7 +574,7 @@ fn managed_availability_keeps_check_daemon_and_image_failures_blocking() {
     use std::os::unix::fs::PermissionsExt;
     if std::env::var_os("HG_MANAGED_AVAILABILITY_CHILD").is_none() {
         let root = tempfile::tempdir().unwrap();
-        let binary = root.path().join("docker");
+        let binary = root.path().join("podman");
         std::fs::write(
             &binary,
             r#"#!/bin/sh
@@ -607,7 +612,8 @@ esac
         "database".into(),
         ServiceConfig::Docker {
             readiness_host: None,
-            runtime: crate::config::ContainerRuntimeKind::Docker,
+            lifecycle_host: None,
+            runtime: crate::config::ContainerRuntimeKind::Podman,
             image: "fixture-image".into(),
             image_env: None,
             external_env: Some("HG_MANAGED_EXTERNAL_VALUE".into()),
@@ -698,7 +704,9 @@ fn managed_teardown_removes_verified_id_and_retains_failed_cleanup() {
                 r#"#!/bin/sh
 case "$1" in
  container) printf '%s' "$HG_ID_INSPECTION";;
- rm) printf '%s\n' "$*" >> "$HG_ID_REMOVE_LOG"; exit "$HG_ID_REMOVE_EXIT";;
+ rm) printf '%s\n' "$*" >> "$HG_ID_REMOVE_LOG";
+     if [ "$HG_ID_RELEASE_FAIL" = 1 ]; then printf 'changed marker' > "$HG_ID_MARKER"; fi
+     exit "$HG_ID_REMOVE_EXIT";;
  *) exit 99;;
 esac
 "#,
@@ -730,7 +738,7 @@ esac
         return;
     }
     for runtime in [ContainerRuntimeKind::Docker, ContainerRuntimeKind::Podman] {
-        for remove_fails in [false, true] {
+        for (remove_fails, release_fails) in [(false, false), (true, false), (false, true)] {
             let (_workspace, project) = project();
             let name = "harness-gate-reused-name";
             let id = "0123456789abcdef".repeat(4);
@@ -773,9 +781,12 @@ esac
                     .to_string(),
             );
             std::env::set_var("HG_ID_REMOVE_EXIT", if remove_fails { "1" } else { "0" });
+            std::env::set_var("HG_ID_RELEASE_FAIL", if release_fails { "1" } else { "0" });
+            std::env::set_var("HG_ID_MARKER", &marker);
             let errors = Arc::new(Mutex::new(Vec::new()));
             std::fs::write(std::env::var_os("HG_ID_REMOVE_LOG").unwrap(), "").unwrap();
             drop(super::RunningService {
+                lifecycle: None,
                 runtime,
                 inject_env: String::new(),
                 value: String::new(),
@@ -784,12 +795,287 @@ esac
                 cleanup_errors: Arc::clone(&errors),
                 lease: Some(lease),
             });
+            if runtime == ContainerRuntimeKind::Docker {
+                assert!(
+                    std::fs::read_to_string(std::env::var_os("HG_ID_REMOVE_LOG").unwrap())
+                        .unwrap()
+                        .is_empty()
+                );
+                assert!(marker.exists(), "legacy Docker marker must remain retained");
+                assert!(errors
+                    .lock()
+                    .unwrap()
+                    .iter()
+                    .any(|e| e.contains("Docker CLI service operations are retired")));
+                continue;
+            }
             assert_eq!(std::fs::read_to_string(std::env::var_os("HG_ID_REMOVE_LOG").unwrap()).unwrap(), format!("rm --force {id}\n"),
                 "normal teardown must carry the inspected immutable ID to the CLI, not resolve the reused name");
-            assert_eq!(marker.exists(), remove_fails);
-            assert_eq!(errors.lock().unwrap().is_empty(), !remove_fails);
+            assert_eq!(marker.exists(), remove_fails || release_fails);
+            assert_eq!(
+                errors.lock().unwrap().is_empty(),
+                !(remove_fails || release_fails)
+            );
+            if release_fails {
+                assert!(errors
+                    .lock()
+                    .unwrap()
+                    .iter()
+                    .any(|e| e.contains("failed to release podman lease")));
+                assert_eq!(std::fs::read_to_string(&marker).unwrap(), "changed marker");
+            }
         }
     }
 }
 
 mod availability;
+
+#[cfg(unix)]
+#[test]
+fn retired_docker_operations_never_execute_cli_or_allocate_new_lease() {
+    use super::runtime::{ContainerRuntime, ContainerStartOptions};
+    use crate::config::ContainerRuntimeKind;
+    use std::{collections::BTreeMap, os::unix::fs::PermissionsExt};
+    const CHILD: &str = "HG_RETIRED_DOCKER_CHILD_81";
+    if std::env::var_os(CHILD).is_none() {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "service::tests::retired_docker_operations_never_execute_cli_or_allocate_new_lease",
+                "--nocapture",
+            ])
+            .env(CHILD, "1")
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return;
+    }
+    let (_workspace, mut project) = project();
+    let bins = tempfile::tempdir().unwrap();
+    let log = bins.path().join("calls");
+    std::fs::write(&log, "").unwrap();
+    let script = bins.path().join("docker");
+    std::fs::write(
+        &script,
+        "#!/bin/sh\nprintf 'unexpected engine call\n' >> \"$HG_RETIRED_DOCKER_LOG\"\nexit 91\n",
+    )
+    .unwrap();
+    std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o700)).unwrap();
+    std::env::set_var("HG_RETIRED_DOCKER_LOG", &log);
+    std::env::set_var("PATH", bins.path());
+    let runtime = ContainerRuntimeKind::Docker;
+    let empty = BTreeMap::new();
+    let timeout = Duration::from_secs(1);
+    let results = [
+        runtime.check_available(&project, timeout),
+        runtime
+            .image_available(&project, "fixture", timeout)
+            .map(|_| ()),
+        runtime.start_container(
+            &project,
+            ContainerStartOptions {
+                name: "fixture",
+                image: "fixture",
+                environment: &empty,
+                labels: &empty,
+                container_port: 1234,
+            },
+            timeout,
+        ),
+        runtime
+            .mapped_port(&project, "fixture", 1234, timeout)
+            .map(|_| ()),
+        runtime
+            .run_healthcheck(&project, "fixture", &["check".into()], timeout)
+            .map(|_| ()),
+        runtime
+            .inspect_container(&project, "fixture", timeout)
+            .map(|_| ()),
+        runtime.stop_container(&project.root, "fixture", timeout),
+    ];
+    for result in results {
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Docker CLI service operations are retired"));
+    }
+    project.config.services.insert("fixture".into(), serde_json::from_value(serde_json::json!({
+        "kind":"docker", "runtime":"docker", "image":"fixture", "inject_env":"FIXTURE_URL", "startup_timeout_secs":1,
+        "container_port":1234, "environment":{}, "healthcheck":[], "connection":"tcp://127.0.0.1:{host_port}"
+    })).unwrap());
+    let mut manager = ServiceManager::new(&project);
+    let error = manager.handle("fixture").unwrap().acquire().err().unwrap();
+    assert!(format!("{error:#}").contains("Docker CLI service operations are retired"));
+    assert!(std::fs::read_to_string(log).unwrap().is_empty());
+    if project.resource_leases.exists() {
+        assert!(!std::fs::read_dir(&project.resource_leases)
+            .unwrap()
+            .any(|e| e.unwrap().path().extension().is_some_and(|e| e == "json")));
+    }
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn installed_lifecycle_start_refuses_existing_legacy_marker_without_rewrite() {
+    let (_workspace, mut project) = project();
+    let lease = ResourceLease::acquire(
+        &project,
+        "service:fixture",
+        "container",
+        "old-owner",
+        Some("old-container".into()),
+        Some(crate::config::ContainerRuntimeKind::Docker),
+    )
+    .unwrap();
+    lease.retain();
+    let marker = project.resource_leases.join(format!(
+        "{}.json",
+        super::lease::resource_key("service:fixture")
+    ));
+    for bytes in [
+        std::fs::read(&marker).unwrap(),
+        b"invalid-old-marker".to_vec(),
+    ] {
+        std::fs::write(&marker, &bytes).unwrap();
+        project.config.services.insert("fixture".into(), serde_json::from_value(serde_json::json!({
+            "kind":"docker", "runtime":"docker", "image":"fixture", "lifecycle_host":"/missing-host.json",
+            "inject_env":"FIXTURE", "startup_timeout_secs":1, "container_port":1234,
+            "environment":{}, "healthcheck":[], "connection":"{host_port}"
+        })).unwrap());
+        let mut manager = ServiceManager::new(&project);
+        let error = manager.handle("fixture").unwrap().acquire().err().unwrap();
+        assert!(
+            format!("{error:#}").contains("legacy service lease still exists"),
+            "{error:#}"
+        );
+        assert_eq!(std::fs::read(&marker).unwrap(), bytes);
+        assert!(!project
+            .root
+            .join(".harness-gate/lifecycle-services")
+            .exists());
+    }
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn installed_lifecycle_start_retains_dangling_legacy_symlink() {
+    let (_workspace, mut project) = project();
+    std::fs::create_dir_all(&project.resource_leases).unwrap();
+    let marker = project.resource_leases.join(format!(
+        "{}.json",
+        super::lease::resource_key("service:fixture")
+    ));
+    let target = project.root.join("missing-old-lease");
+    std::os::unix::fs::symlink(&target, &marker).unwrap();
+    project.config.services.insert("fixture".into(), serde_json::from_value(serde_json::json!({
+        "kind":"docker", "runtime":"docker", "image":"fixture", "lifecycle_host":"/missing-host.json",
+        "inject_env":"FIXTURE", "startup_timeout_secs":1, "container_port":1234,
+        "environment":{}, "healthcheck":[], "connection":"{host_port}"
+    })).unwrap());
+    let mut manager = ServiceManager::new(&project);
+    let error = manager.handle("fixture").unwrap().acquire().err().unwrap();
+    assert!(
+        format!("{error:#}").contains("legacy service lease still exists"),
+        "{error:#}"
+    );
+    assert_eq!(std::fs::read_link(&marker).unwrap(), target);
+    assert!(!target.exists());
+    assert!(!project
+        .root
+        .join(".harness-gate/lifecycle-services")
+        .exists());
+}
+
+#[cfg(unix)]
+#[test]
+fn podman_start_failures_retain_marker_without_cleanup_or_readiness() {
+    use std::os::unix::fs::PermissionsExt;
+    use std::sync::{Arc, Mutex};
+    if std::env::var_os("HG_START_FAILURE_CHILD").is_none() {
+        let root = tempfile::tempdir().unwrap();
+        let git = std::env::split_paths(&std::env::var_os("PATH").unwrap())
+            .map(|path| path.join("git"))
+            .find(|path| path.is_file())
+            .expect("test Git required");
+        std::os::unix::fs::symlink(git, root.path().join("git")).unwrap();
+        let binary = root.path().join("podman");
+        std::fs::write(&binary, r#"#!/bin/sh
+printf '%s\n' "$1" >> "$HG_START_FAILURE_LOG"
+case "$1" in
+ run) if [ "$HG_START_FAILURE_MODE" = start ]; then exit 9; fi;;
+ container)
+  case "$HG_START_FAILURE_MODE" in
+   inspect) exit 8;;
+   malformed) printf '{}';;
+   foreign) printf '{"Id":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","Name":"foreign","Config":{"Labels":{}}}';;
+  esac;;
+ *) exit 99;;
+esac
+"#).unwrap();
+        std::fs::set_permissions(&binary, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "service::tests::podman_start_failures_retain_marker_without_cleanup_or_readiness",
+                "--nocapture",
+            ])
+            .env("HG_START_FAILURE_CHILD", "1")
+            .env("HG_START_FAILURE_LOG", root.path().join("calls"))
+            .env("PATH", root.path())
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return;
+    }
+    for mode in ["start", "inspect", "malformed", "foreign"] {
+        let (_workspace, project) = project();
+        std::env::set_var("HG_START_FAILURE_MODE", mode);
+        let log = std::env::var_os("HG_START_FAILURE_LOG").unwrap();
+        std::fs::write(&log, "").unwrap();
+        let result = super::docker::start_docker(
+            &project,
+            "failed",
+            super::docker::DockerStartOptions {
+                runtime: crate::config::ContainerRuntimeKind::Podman,
+                image: "fixture-image".into(),
+                inject_env: "UNUSED".into(),
+                startup_timeout_secs: 5,
+                container_port: 1234,
+                environment: Default::default(),
+                healthcheck: vec![],
+                connection: "opaque:{host_port}".into(),
+                deadline: std::time::Instant::now() + Duration::from_secs(5),
+                cleanup_errors: Arc::new(Mutex::new(vec![])),
+                invocation_id: format!("failed-{mode}"),
+            },
+        );
+        let error = result.err().expect("fixture must not become ready");
+        if mode == "start" {
+            assert!(error.to_string().contains("start podman service"));
+        }
+        assert_eq!(
+            std::fs::read_dir(&project.resource_leases).unwrap().count(),
+            1,
+            "{mode}: retained ownership marker"
+        );
+        assert_eq!(
+            std::fs::read_to_string(log).unwrap(),
+            if mode == "start" {
+                "run\n"
+            } else {
+                "run\ncontainer\n"
+            },
+            "{mode}: no cleanup/readiness calls"
+        );
+    }
+}

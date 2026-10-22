@@ -3,6 +3,10 @@ mod docker;
 mod inspection;
 mod lease;
 mod legacy_cli;
+#[cfg(target_os = "linux")]
+#[allow(dead_code)]
+pub(crate) mod lifecycle;
+mod lifecycle_public;
 mod report_directory;
 mod runtime;
 
@@ -21,6 +25,15 @@ use std::time::{Duration, Instant};
 
 pub(crate) use lease::{cleanup as cleanup_resources, ResourceLease};
 pub(crate) use report_directory::ReportDirectoryGuard;
+
+pub(crate) fn cleanup_lifecycle(
+    project: &Project,
+    service: &str,
+    fence: u64,
+    invocation: &str,
+) -> Result<String> {
+    lifecycle_public::cleanup_known(project, service, fence, invocation)
+}
 
 const RESOURCE_LOCK_POLL: Duration = Duration::from_millis(25);
 const RESOURCE_LOCK_WAIT: Duration = Duration::from_secs(30);
@@ -492,6 +505,7 @@ impl Drop for ServiceLease {
 }
 
 struct RunningService {
+    lifecycle: Option<lifecycle_public::ManagedLifecycle>,
     runtime: crate::config::ContainerRuntimeKind,
     inject_env: String,
     value: String,
@@ -503,6 +517,13 @@ struct RunningService {
 
 impl Drop for RunningService {
     fn drop(&mut self) {
+        if let Some(lifecycle) = self.lifecycle.take() {
+            if let Err(error) = lifecycle.cleanup(Instant::now() + Duration::from_secs(15)) {
+                let detail = format!("lifecycle cleanup retained the resource: {error:#}");
+                self.report_cleanup_error(detail);
+            }
+            return;
+        }
         let mut cleanup_succeeded = true;
         if let Some(container) = &self.container {
             let ownership = self
@@ -519,10 +540,7 @@ impl Drop for RunningService {
                     "failed to clean up {} container {container:?}: {error:#}",
                     self.runtime.executable()
                 );
-                if let Ok(mut errors) = self.cleanup_errors.lock() {
-                    errors.push(detail.clone());
-                }
-                eprintln!("warning: {detail}");
+                self.report_cleanup_error(detail);
             }
         }
         if cleanup_succeeded {
@@ -535,10 +553,7 @@ impl Drop for RunningService {
                         "failed to release {} lease for container {container:?}: {error:#}",
                         self.runtime.executable()
                     );
-                    if let Ok(mut errors) = self.cleanup_errors.lock() {
-                        errors.push(detail.clone());
-                    }
-                    eprintln!("warning: {detail}");
+                    self.report_cleanup_error(detail);
                 }
             }
         } else if let Some(lease) = self.lease.take() {
@@ -550,6 +565,12 @@ impl Drop for RunningService {
 }
 
 impl RunningService {
+    fn report_cleanup_error(&self, detail: String) {
+        if let Ok(mut errors) = self.cleanup_errors.lock() {
+            errors.push(detail.clone());
+        }
+        eprintln!("warning: {detail}");
+    }
     fn start(
         project: &Project,
         id: &str,
@@ -568,6 +589,7 @@ impl RunningService {
                 }
                 run_checks(project, id, Some(&value), Duration::from_secs(300))?;
                 Ok(Self {
+                    lifecycle: None,
                     runtime: crate::config::ContainerRuntimeKind::Docker,
                     inject_env,
                     value,
@@ -580,6 +602,7 @@ impl RunningService {
             ServiceConfig::Docker {
                 runtime,
                 image,
+                lifecycle_host,
                 external_env,
                 inject_env,
                 startup_timeout_secs,
@@ -589,6 +612,38 @@ impl RunningService {
                 connection,
                 ..
             } => {
+                if let Some(host) = lifecycle_host {
+                    if runtime != crate::config::ContainerRuntimeKind::Docker
+                        || external_env.is_some()
+                    {
+                        bail!("lifecycle_host requires Docker and cannot use external_env");
+                    }
+                    run_checks(project, id, None, Duration::from_secs(startup_timeout_secs))?;
+                    let deadline = Instant::now() + Duration::from_secs(startup_timeout_secs);
+                    let lifecycle = lifecycle_public::ManagedLifecycle::start(
+                        project,
+                        id,
+                        lifecycle_public::Config {
+                            host: host.into(),
+                            image,
+                            container_port,
+                            environment,
+                            healthcheck,
+                        },
+                        deadline,
+                    )?;
+                    let value = connection.replace("{host_port}", &lifecycle.port().to_string());
+                    return Ok(Self {
+                        lifecycle: Some(lifecycle),
+                        runtime,
+                        inject_env,
+                        value,
+                        container: None,
+                        project: project.clone(),
+                        cleanup_errors,
+                        lease: None,
+                    });
+                }
                 if let Some((_, value)) = external_env
                     .as_ref()
                     .and_then(|name| std::env::var(name).ok().map(|value| (name, value)))
@@ -601,6 +656,7 @@ impl RunningService {
                         Duration::from_secs(startup_timeout_secs),
                     )?;
                     return Ok(Self {
+                        lifecycle: None,
                         runtime,
                         inject_env,
                         value,
@@ -666,9 +722,13 @@ fn check_available_with_runtime<R: ContainerRuntime>(
             runtime,
             image,
             readiness_host,
+            lifecycle_host,
             external_env,
             ..
         } => {
+            if lifecycle_host.is_some() && external_env.is_some() {
+                bail!("lifecycle_host cannot be combined with external_env");
+            }
             if let Some(name) = external_env {
                 if let Ok(value) = std::env::var(name) {
                     if !value.trim().is_empty() {
@@ -699,6 +759,9 @@ fn check_available_with_runtime<R: ContainerRuntime>(
                     Outcome::Readiness(_) => anyhow::bail!("docker image {image} is not available"),
                     Outcome::Unavailable => anyhow::bail!("docker readiness unavailable"),
                 };
+            }
+            if lifecycle_host.is_some() {
+                bail!("lifecycle service availability requires an explicit readiness_host; no CLI fallback");
             }
             let runtime = select_runtime(*runtime);
             runtime

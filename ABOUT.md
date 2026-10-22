@@ -1,10 +1,12 @@
 # About GateHouse
 
-Core 0.9.0 is an unreleased candidate with an opt-in Linux v3 image-readiness
-host. Service lifecycle operations remain in Core. See the
-[release scope](docs/releases/0.9.0.zh-CN.md) and
-[readiness contract](docs/runtime-readiness-v3.md).
-Published Core 0.8.0 predates v3; no v3 adapter package compatibility is claimed.
+Core 0.10.0 is an unreleased Docker lifecycle candidate. Managed Docker services
+require an explicitly installed lifecycle host; Core retains lease, recovery and
+cancellation coordination. The legacy Podman route is unchanged. See the
+[release scope](docs/releases/0.10.0.zh-CN.md) and
+[lifecycle contract](docs/runtime-lifecycle-v1.md).
+Core 0.9.0 and its readiness artifacts remain immutable. Lifecycle product
+publication, rootless and daemon-restart acceptance are still pending.
 
 GateHouse is the active development repository for **`harness-gate`**, a
 configuration-driven project verification CLI written in Rust. Its workflow is

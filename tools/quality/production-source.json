@@ -137,30 +137,45 @@
     "process": {
       "blocking": true,
       "files": [
+        "runtime-protocol/src/intent.rs",
+        "runtime-protocol/src/lib.rs",
+        "runtime-protocol/src/lifecycle/canonical.rs",
+        "runtime-protocol/src/lifecycle/installation.rs",
+        "runtime-protocol/src/lifecycle/installation/files.rs",
+        "runtime-protocol/src/lifecycle/installation/sealed.rs",
+        "runtime-protocol/src/lifecycle/journal.rs",
+        "runtime-protocol/src/lifecycle/journal/resolution.rs",
+        "runtime-protocol/src/lifecycle/journal/storage.rs",
+        "runtime-protocol/src/lifecycle/journal/storage/reservation.rs",
+        "runtime-protocol/src/lifecycle/mod.rs",
+        "runtime-protocol/src/lifecycle/state.rs",
+        "runtime-protocol/src/lifecycle/wire.rs",
+        "runtime-protocol/src/store.rs",
+        "runtime-protocol/src/v2.rs",
+        "runtime-protocol/src/v3.rs",
+        "runtime-protocol/src/wire.rs",
         "src/process/adapter.rs",
         "src/process/capture.rs",
         "src/process/command.rs",
+        "src/process/fd_inputs.rs",
         "src/process/isolation.rs",
         "src/process/mod.rs",
+        "src/process/raw_adapter.rs",
         "src/process/reader.rs",
         "src/process/replay.rs",
+        "src/process/runtime_config.rs",
+        "src/process/runtime_host.rs",
+        "src/process/runtime_host_files.rs",
+        "src/process/runtime_host_files_v3.rs",
+        "src/process/runtime_host_v2.rs",
+        "src/process/runtime_host_v3.rs",
+        "src/process/runtime_lifecycle_host.rs",
+        "src/process/runtime_request_v3.rs",
         "src/process/signal.rs",
         "src/process/task.rs",
-        "src/process/raw_adapter.rs",
-        "src/process/fd_inputs.rs",
-        "src/process/runtime_host.rs",
-        "src/process/runtime_config.rs",
-        "src/process/runtime_host_v2.rs",
-        "src/process/runtime_host_files.rs",
-        "runtime-protocol/src/lib.rs",
-        "runtime-protocol/src/wire.rs",
-        "runtime-protocol/src/intent.rs",
-        "runtime-protocol/src/store.rs",
-        "runtime-protocol/src/v2.rs",
-        "src/process/runtime_host_v3.rs",
-        "src/process/runtime_host_files_v3.rs",
-        "src/process/runtime_request_v3.rs",
-        "runtime-protocol/src/v3.rs"
+        "runtime-protocol/src/lifecycle/journal/storage/slot.rs",
+        "runtime-protocol/src/lifecycle/journal/storage/slot/mapping.rs",
+        "runtime-protocol/src/lifecycle/journal/storage/slot/recovery.rs"
       ]
     },
     "project": {
@@ -202,7 +217,12 @@
         "src/service/lease.rs",
         "src/service/lease/container.rs",
         "src/service/mod.rs",
-        "src/service/report_directory.rs"
+        "src/service/report_directory.rs",
+        "src/service/lifecycle.rs",
+        "src/service/lifecycle/recovery.rs",
+        "src/service/lifecycle_public.rs",
+        "src/service/lifecycle_public/linux.rs",
+        "src/service/lifecycle_public/unsupported.rs"
       ]
     },
     "service-adapters": {
@@ -395,6 +415,41 @@
       "path": "runtime-protocol/src/contract.rs",
       "kind": "test",
       "reason": "Inline cfg(test) contract module for the runtime protocol crate; no production code or executable mapping."
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/installation/files/tests.rs",
+      "kind": "test",
+      "reason": "Lifecycle regression tests reached only through cfg(test) modules; no production execution."
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/journal/storage/tests.rs",
+      "kind": "test",
+      "reason": "Lifecycle regression tests reached only through cfg(test) modules; no production execution."
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/wire/tests.rs",
+      "kind": "test",
+      "reason": "Lifecycle regression tests reached only through cfg(test) modules; no production execution."
+    },
+    {
+      "path": "src/process/runtime_lifecycle_host/tests.rs",
+      "kind": "test",
+      "reason": "Test-only module compiled under cfg(test)."
+    },
+    {
+      "path": "src/process/runtime_lifecycle_host/tests/joint.rs",
+      "kind": "test",
+      "reason": "Opt-in paired native adapter test under cfg(test)."
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/journal/storage/reservation/tests.rs",
+      "kind": "test",
+      "reason": "Test-only reservation durability module compiled under cfg(test)."
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/journal/storage/slot/tests.rs",
+      "kind": "test",
+      "reason": "Test-only reservation durability module compiled under cfg(test)."
     }
   ],
   "external_exclusions": [
@@ -452,7 +507,7 @@
     {
       "path": "src/process/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "4cfdcf146d365f07d48831d6528b37c9a555b272e4102888b6576231cf5b03b0"
+      "sha256": "8f1ee0422f98c07cf929df8dd78849818480ee21897196358c9b8e13089eeace"
     },
     {
       "path": "src/scope/mod.rs",
@@ -473,6 +528,21 @@
       "path": "src/config/quality/model.rs",
       "reason": "Type declarations and derived implementations have no executable LLVM source mapping on this target; the AST inventory contains no handwritten functions or closures.",
       "sha256": "4206caf213e60bfa47ba267a58ce3c0d2bb2fb4bf65e8fb58d431f54c1d15a0e"
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/mod.rs",
+      "reason": "Module declarations/re-exports only, no executable LLVM mapping; implementation files remain measured.",
+      "sha256": "1c9fe3fbb19abead3287543acd4f20418b405201a4e254afa58807697dde108e"
+    },
+    {
+      "path": "src/service/lifecycle_public.rs",
+      "reason": "Module/type declarations and cfg re-exports only; no handwritten executable mappings. Linux and unsupported implementations remain in production inventory.",
+      "sha256": "eda84d8326aafbfcb3859a8bbd95c116c168beff4e5672736459f99c47b90395"
+    },
+    {
+      "path": "src/service/lifecycle_public/unsupported.rs",
+      "reason": "Compiled only through cfg(not(any(target_os = \"linux\"))) in lifecycle_public.rs; absent from Linux LLVM reports. Remains production-owned and measured whenever target mappings exist; non-Linux refusal validation remains a cross-platform requirement.",
+      "sha256": "d299b120ff83c0233e4e11350b528eafac7950460c990621b32c713f7815b976"
     }
   ],
   "source_roots": [

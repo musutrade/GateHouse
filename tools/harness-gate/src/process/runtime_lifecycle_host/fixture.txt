@@ -1,0 +1,31 @@
+use std::{fs::File, io::{Read,Write,Seek,SeekFrom}, os::fd::FromRawFd};
+extern "C" { fn fcntl(fd:i32,cmd:i32,...)->i32; }
+fn main() {
+    assert_eq!(std::env::vars_os().count(),0);
+    assert_eq!(std::env::current_dir().unwrap().to_str().unwrap(),"/");
+    let mut input=String::new(); std::io::stdin().read_to_string(&mut input).unwrap();
+    let mut expected=String::new(); let mut config=String::new();
+    unsafe {
+        assert_eq!(fcntl(3,1034)&15,15); assert_eq!(fcntl(4,1034)&15,15);
+        let mut cfg=File::from_raw_fd(3); cfg.seek(SeekFrom::Start(0)).unwrap(); cfg.read_to_string(&mut config).unwrap();
+        let mut exp=File::from_raw_fd(4); exp.seek(SeekFrom::Start(0)).unwrap(); exp.read_to_string(&mut expected).unwrap();
+    }
+    assert_eq!(input,expected); assert!(config.contains("gate-runtime/lifecycle-config-v1"));
+    if input.contains("\"value\":\"timeout\"") { std::thread::sleep(std::time::Duration::from_secs(5)); }
+    if input.contains("\"value\":\"exit\"") { std::process::exit(3); }
+    if input.contains("\"value\":\"stderr\"") { eprint!("not allowed"); }
+    if input.contains("\"value\":\"malformed\"") { print!("{{}}"); return; }
+    let (observations,outcome)=if input.contains("\"value\":\"created\"") {
+        // This controlled fixture only receives the fixed test request shape.
+        let labels=input.split_once("\"labels\":").unwrap().1.split_once(']').unwrap().0.to_string()+"]";
+        let object=format!(r#"{{"image_id":"sha256:{}","labels":{},"name":"test-container","object_id":"{}","ports":[],"state":"created"}}"#, "e".repeat(64),labels,"a".repeat(64));
+        (r#"{"observed_after":{"api_version":"1.47","daemon_id":"test-daemon","server_version":"27"},"observed_before":{"api_version":"1.47","daemon_id":"test-daemon","server_version":"27"}}"#.to_string(),format!(r#"{{"kind":"created","object":{object}}}"#))
+    } else if input.contains("\"value\":\"rejected\"") {
+        ("null".to_string(),r#"{"kind":"rejected-before-effect","reason":"unsupported-state"}"#.to_string())
+    } else {
+        ("null".to_string(),r#"{"kind":"unknown","reason":"transport"}"#.to_string())
+    };
+    let output=input.replacen(",\"operation\":",&format!(",\"observations\":{observations},\"operation\":"),1)
+        .replacen(",\"protocol\":",&format!(",\"outcome\":{outcome},\"protocol\":"),1);
+    std::io::stdout().write_all(output.as_bytes()).unwrap();
+}

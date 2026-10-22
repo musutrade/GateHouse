@@ -1,4 +1,20 @@
-# Runtime adapter data contract (first implementation slice)
+# Runtime protocol 0.3.0 candidate
+
+Version 0.3.0 adds the independent `gate-runtime/lifecycle-v1` contract for
+explicit Docker lifecycle authority. Its lifecycle module defines protected
+installation snapshots, canonical per-invocation bindings, durable image
+reservations, exact-ID mutations, health exec, and journal/slot recovery.
+Core retains coordination; the engine adapter performs concrete operations.
+
+Published runtime v2 and readiness v3 contracts remain separate. Their authority
+must never be promoted to lifecycle mutation. The historical private v1 notes
+below describe only that module, not the public lifecycle implementation.
+No environment identity, implicit old-lease migration, name-only deletion or
+automatic replay is authorized. See the repository lifecycle design document
+for the installed-host and operator boundaries. Product publication, rootless
+and daemon-restart acceptance remain pending for this candidate.
+
+# Historical private v1 implementation notes
 
 This workspace library is linked into the Core runtime-probe host. It is not a
 released adapter. It implements strict `gate-runtime/v1` data validation for capabilities,

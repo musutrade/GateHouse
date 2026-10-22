@@ -343,6 +343,21 @@
       "sha256": "98a84b640bf5628e09bd96772cf1f3a7174e37f79bfa4cd6cc1abc2ed0fbac0e"
     },
     {
+      "module": "tools/quality/lifecycle_fixture.py",
+      "category": "A",
+      "purpose": "Fetch a digest-pinned source-only GP fixture and build a matching normal Core/adapter pair for fake-socket lifecycle coverage.",
+      "callers": [
+        ".github/workflows/ci.yml",
+        "tools/quality/ci_quality.py",
+        "tools/quality/tests/test_lifecycle_fixture.py"
+      ],
+      "ci_role": "Required coverage fixture preparation and verified shard activation; no engine operations.",
+      "release_impact": "Not packaged in release binary; no product publication or release approval authority.",
+      "authoritative_status": "CI fixture transport and input integrity only; existing Rust policy and coverage thresholds remain authoritative.",
+      "final_disposition": "Retain maintained Python CI tooling with exact archive, source and binary binding.",
+      "sha256": "40f1487068956badd0c2ab213a842798394cedf86f83dbd16e154acb95e7bd54"
+    },
+    {
       "authoritative_status": "Repository Rust required-path helper; authoritative within its existing CI responsibility",
       "callers": [
         "Manual CLI documented in tools/quality/README.md and docs/quality/measurement-contract.md; no tracked automatic caller"

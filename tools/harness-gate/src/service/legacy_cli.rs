@@ -1,4 +1,4 @@
-//! Legacy Docker/Podman CLI implementation of the service engine boundary.
+//! Remaining Podman CLI implementation; Docker requires explicit installed hosts.
 //! New adapters must implement the boundary explicitly; no ambient CLI fallback.
 use super::commands::{
     healthcheck_args, inspect_container_args, mapped_port_args, runtime_info_args,
@@ -9,6 +9,13 @@ use super::runtime::{ContainerRuntime, ContainerStartOptions};
 use crate::{config::ContainerRuntimeKind, project::Project};
 use anyhow::{bail, Context, Result};
 use std::{path::Path, time::Duration};
+
+pub(super) fn legacy_executable(runtime: ContainerRuntimeKind) -> Result<&'static str> {
+    match runtime {
+        ContainerRuntimeKind::Podman => Ok("podman"),
+        ContainerRuntimeKind::Docker => bail!("Docker CLI service operations are retired; configure lifecycle_host for lifecycle and readiness_host for availability; legacy Docker leases remain retained without migration"),
+    }
+}
 
 impl ContainerRuntime for ContainerRuntimeKind {
     fn executable(&self) -> &'static str {
@@ -21,6 +28,7 @@ impl ContainerRuntime for ContainerRuntimeKind {
         options: ContainerStartOptions<'_>,
         timeout: Duration,
     ) -> Result<()> {
+        let executable = legacy_executable(*self)?;
         let name = options.name;
         let image = options.image;
         let args = start_container_args(
@@ -30,12 +38,12 @@ impl ContainerRuntime for ContainerRuntimeKind {
             options.labels,
             options.container_port,
         );
-        let output = crate::process::capture(self.executable(), &args, &project.root, timeout)
-            .with_context(|| format!("start {} container {name:?}", self.executable()))?;
+        let output = crate::process::capture(executable, &args, &project.root, timeout)
+            .with_context(|| format!("start {} container {name:?}", executable))?;
         if !output.status.success() {
             bail!(
                 "failed to start {} container {name:?} with image {image}: {}",
-                self.executable(),
+                executable,
                 String::from_utf8_lossy(&output.stderr).trim()
             );
         }
@@ -49,8 +57,9 @@ impl ContainerRuntime for ContainerRuntimeKind {
         container_port: u16,
         timeout: Duration,
     ) -> Result<Option<String>> {
+        let executable = legacy_executable(*self)?;
         let args = mapped_port_args(name, container_port);
-        let output = crate::process::capture(self.executable(), &args, &project.root, timeout)?;
+        let output = crate::process::capture(executable, &args, &project.root, timeout)?;
         if !output.status.success() {
             return Ok(None);
         }
@@ -64,21 +73,23 @@ impl ContainerRuntime for ContainerRuntimeKind {
         command: &[String],
         timeout: Duration,
     ) -> Result<bool> {
+        let executable = legacy_executable(*self)?;
         let args = healthcheck_args(name, command);
         Ok(
-            crate::process::capture(self.executable(), &args, &project.root, timeout)?
+            crate::process::capture(executable, &args, &project.root, timeout)?
                 .status
                 .success(),
         )
     }
 
     fn stop_container(&self, cwd: &Path, name: &str, timeout: Duration) -> Result<()> {
+        let executable = legacy_executable(*self)?;
         let args = stop_container_args(name);
-        let output = crate::process::capture_cleanup(self.executable(), &args, cwd, timeout)?;
+        let output = crate::process::capture_cleanup(executable, &args, cwd, timeout)?;
         if !output.status.success() {
             bail!(
                 "failed to stop {} container {name:?}: {}",
-                self.executable(),
+                executable,
                 String::from_utf8_lossy(&output.stderr).trim()
             );
         }
@@ -93,43 +104,42 @@ impl ContainerRuntime for ContainerRuntimeKind {
         name: &str,
         timeout: Duration,
     ) -> Result<RuntimeInspection> {
+        let executable = legacy_executable(*self)?;
         let output = crate::process::capture(
-            self.executable(),
+            executable,
             &inspect_container_args(name),
             &project.root,
             timeout,
         )
-        .with_context(|| format!("inspect {} container {name:?}", self.executable()))?;
+        .with_context(|| format!("inspect {} container {name:?}", executable))?;
         if !output.status.success() {
             bail!(
                 "failed to inspect {} container {name:?}: {}",
-                self.executable(),
+                executable,
                 String::from_utf8_lossy(&output.stderr).trim()
             );
         }
         parse_runtime_inspection(&output.stdout)
-            .with_context(|| format!("parse {} inspection for {name:?}", self.executable()))
+            .with_context(|| format!("parse {} inspection for {name:?}", executable))
     }
 
     fn check_available(&self, project: &Project, timeout: Duration) -> Result<()> {
-        let output = crate::process::capture(
-            self.executable(),
-            &runtime_info_args(),
-            &project.root,
-            timeout,
-        )
-        .with_context(|| format!("{} is required for managed services", self.executable()))?;
+        let executable = legacy_executable(*self)?;
+        let output =
+            crate::process::capture(executable, &runtime_info_args(), &project.root, timeout)
+                .with_context(|| format!("{} is required for managed services", executable))?;
         if output.status.success() {
             Ok(())
         } else {
-            anyhow::bail!("{} daemon is unavailable", self.executable())
+            anyhow::bail!("{} daemon is unavailable", executable)
         }
     }
 
     fn image_available(&self, project: &Project, image: &str, timeout: Duration) -> Result<bool> {
+        let executable = legacy_executable(*self)?;
         let args = vec!["image".into(), "inspect".into(), image.into()];
         Ok(
-            crate::process::capture(self.executable(), &args, &project.root, timeout)?
+            crate::process::capture(executable, &args, &project.root, timeout)?
                 .status
                 .success(),
         )
