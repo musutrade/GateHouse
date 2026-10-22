@@ -373,6 +373,38 @@ mod tests {
         fs::write(out, bytes).map_err(|error| error.to_string())
     }
 
+    fn helper_held(mode: &str, out: &Path) -> Result<(), String> {
+        close_fd(3);
+        close_fd(4);
+        let path = out.with_extension("config");
+        fs::write(&path, CONFIG).map_err(|e| e.to_string())?;
+        let mut original = File::open(&path).map_err(|e| e.to_string())?;
+        if mode == "held_swapped" {
+            let fd = unsafe { libc::fcntl(original.as_raw_fd(), libc::F_DUPFD_CLOEXEC, 4) };
+            if fd < 0 {
+                return Err("dup original".into());
+            }
+            original = unsafe { File::from_raw_fd(fd) };
+        }
+        let mut inputs =
+            SealedInputs::with_held_config(&original, EXPECTED).map_err(|e| e.to_string())?;
+        if mode == "held_holes" {
+            inputs = SealedInputs {
+                config: duplicate(&inputs.config, 10).map_err(|e| e.to_string())?,
+                expected: duplicate(&inputs.expected, 10).map_err(|e| e.to_string())?,
+            };
+        }
+        drop(original);
+        let child_out = out.with_extension("child.json");
+        let mut command = helper_command("inspect", &child_out);
+        inputs.install(&mut command).map_err(|e| e.to_string())?;
+        let output = command.output().map_err(|e| e.to_string())?;
+        if !output.status.success() {
+            return Err("held helper failed".into());
+        }
+        fs::write(out, fs::read(child_out).map_err(|e| e.to_string())?).map_err(|e| e.to_string())
+    }
+
     fn helper_holes_fail(out: &Path) -> Result<(), String> {
         let inputs = hole_inputs()?;
         let mut command = Command::new("/definitely/not/a/harness-gate-executable");
@@ -414,6 +446,7 @@ mod tests {
         let out = PathBuf::from(std::env::var_os(HELPER_OUT).expect("helper output"));
         let result = match mode.as_str() {
             "inspect" => helper_inspect(&out),
+            "held_targets" | "held_holes" | "held_swapped" => helper_held(&mode, &out),
             "targets" => helper_child("targets", &out, false),
             "swapped" => helper_child("swapped", &out, true),
             "holes" => helper_child("holes", &out, false),
@@ -567,5 +600,56 @@ mod tests {
         let directory = TempDir::new().unwrap();
         let value = run_helper("leak", directory.path());
         assert_eq!(value["before"], value["after"]);
+    }
+    #[test]
+    fn held_config_preserves_original_and_child_mapping() {
+        let directory = TempDir::new().unwrap();
+        let path = directory.path().join("config");
+        fs::write(&path, CONFIG).unwrap();
+        let original = File::open(&path).unwrap();
+        let flags = unsafe { libc::fcntl(original.as_raw_fd(), libc::F_GETFD) };
+        let inputs = SealedInputs::with_held_config(&original, EXPECTED).unwrap();
+        assert_eq!(
+            fd_stat(inputs.config.as_raw_fd()).st_ino,
+            fd_stat(original.as_raw_fd()).st_ino
+        );
+        let staged = inputs.config.as_raw_fd();
+        let sealed = inputs.expected.as_raw_fd();
+        assert_eq!(read_fd(staged, MAX_INPUT_BYTES).unwrap(), CONFIG);
+        assert_eq!(
+            unsafe { libc::fcntl(sealed, libc::F_GET_SEALS) } & SEALS,
+            SEALS
+        );
+        let out = directory.path().join("inspect.json");
+        let mut command = helper_command("inspect", &out);
+        inputs.install(&mut command).unwrap();
+        let output = command.output().unwrap();
+        assert!(output.status.success());
+        let value: Value = serde_json::from_slice(&fs::read(&out).unwrap()).unwrap();
+        assert_eq!(value["fds"], json!(TARGET_FDS));
+        assert_eq!(from_hex(value["config"].as_str().unwrap()), CONFIG);
+        assert_eq!(from_hex(value["expected"].as_str().unwrap()), EXPECTED);
+        assert_eq!(
+            unsafe { libc::fcntl(original.as_raw_fd(), libc::F_GETFD) },
+            flags
+        );
+        drop(command);
+        assert_eq!(unsafe { libc::fcntl(staged, libc::F_GETFD) }, -1);
+        assert_eq!(unsafe { libc::fcntl(sealed, libc::F_GETFD) }, -1);
+        assert_eq!(
+            read_fd(original.as_raw_fd(), MAX_INPUT_BYTES).unwrap(),
+            CONFIG
+        );
+        assert!(SealedInputs::with_held_config(&original, &vec![0; MAX_INPUT_BYTES + 1]).is_err());
+    }
+    #[test]
+    fn held_config_target_holes_and_swapped_sources() {
+        let directory = TempDir::new().unwrap();
+        for mode in ["held_targets", "held_holes", "held_swapped"] {
+            let value = run_helper(mode, directory.path());
+            assert_eq!(value["fds"], json!(TARGET_FDS));
+            assert_eq!(from_hex(value["config"].as_str().unwrap()), CONFIG);
+            assert_eq!(from_hex(value["expected"].as_str().unwrap()), EXPECTED);
+        }
     }
 }

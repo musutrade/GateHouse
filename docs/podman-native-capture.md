@@ -127,3 +127,11 @@ joint tests before host acceptance. It is not a public ServiceManager route,
 fixed Core-owned host mapping, published protocol or installed product. New
 source is registered to the same process quality owner/risk series; the broader
 unpublished Podman series still needs release-wide quality inventories and CI.
+
+Checkpoint 119 adds a second live record/installation revalidation after the final
+cancel/deadline callback and immediately before return. This catches changes made
+during that callback; it does not provide atomic exclusion against same-UID
+changes after the final check. Direct original-config FD tests cover child bytes,
+parent flags/bytes, closure-owned descriptor release, reserved target holes and
+swapped source allocation. They exercise generic FD staging only; positive Core
+capture and process supervision joints are still required.

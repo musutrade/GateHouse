@@ -88,6 +88,7 @@ pub(crate) fn capture(
     if cancelled() || started.elapsed() >= Duration::from_millis(timeout_ms as u64) {
         return Err("Podman capture final boundary expired or cancelled");
     }
+    installation.match_record(&record)?.revalidate()?;
     Ok(record)
 }
 fn nonce() -> Result<String> {
