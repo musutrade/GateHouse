@@ -366,7 +366,7 @@ path = "src/service/lease.rs"
 symbol = "fake_docker_and_podman_cleanup_requires_fresh_complete_ownership"
 start = 1847
 end = 1934
-sha256 = "3935503df524ab929bdee82123a8696d188dc83f62c3a794a725515ca73aa29d"
+sha256 = "7e150f7635cd5523abc53247569af670785336f539fb22a13f52d99b47ca71a6"
 
 [[paths.probes]]
 line = 113
