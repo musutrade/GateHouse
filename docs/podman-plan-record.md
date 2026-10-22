@@ -14,18 +14,18 @@ proves execution of validation, not actual connected transfer. A later installed
 host must fix the exchange to the verified transport before making any stronger
 claim. Public `decode_image` and `ImageFacts` cannot construct this witness.
 
-## Required durable format (not implemented yet)
+## Evidence codec (implemented; storage not implemented)
 
 Schema `gate-runtime/podman-plan-evidence-v1`. Fixed struct field order:
 `schema`, `profile`, `asserted_installation_sha256`,
-`asserted_executable_sha256`, `config_base64`, `config_sha256`, `operator_epoch`,
-`image_id`, `image_base64`, `image_sha256`, `inputs`, `exposed_ports`,
-`plan_base64`, `plan_sha256`. Raw fields use padded standard base64. Digests use
+`asserted_executable_sha256`, `config_json`, `config_sha256`, `operator_epoch`,
+`image_id`, `image_json`, `image_sha256`, `inputs`,
+`plan_json`, `plan_sha256`. Raw fields use JSON strings preserving exact valid UTF-8 bytes (including inner whitespace). This deliberately replaces the proposed base64 format; no binary/non-UTF-8 JSON is accepted. Exposures are rederived from the raw image rather than stored a second time. Digests use
 64 lowercase hexadecimal characters. Labels use sorted keys; exposures use a
 sorted unique array. No trailing newline, whitespace or alternate key ordering.
 Profile is the existing exact Podman tuple. Inputs contain only name, operator
 labels and optional fixed port. Existing bounds on name/labels/port apply;
-config and image are each at most 1 MiB, whole record at most 4 MiB.
+config and image are each at most 1 MiB, whole record at most 16 MiB (accounting for JSON escaping).
 
 Typed decoding must reject unknown/missing/duplicate fields and noncanonical
 bytes, independently bound decoded fields, recompute all digests, re-decode the

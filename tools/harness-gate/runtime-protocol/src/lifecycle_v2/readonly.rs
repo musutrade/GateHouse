@@ -14,12 +14,16 @@ use super::{
 /// freshness, restart continuity, installation verification or dispatch authority.
 /// There is deliberately no public constructor or deserializer. The injected
 /// exchange remains a trust boundary and can supply fabricated HTTP responses.
-#[derive(Debug)]
 pub struct CapturedImage {
     facts: ImageFacts,
     image_bytes: Vec<u8>,
     config_bytes: Vec<u8>,
     epoch: String,
+}
+impl std::fmt::Debug for CapturedImage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CapturedImage").finish_non_exhaustive()
+    }
 }
 impl CapturedImage {
     pub fn facts(&self) -> &ImageFacts {

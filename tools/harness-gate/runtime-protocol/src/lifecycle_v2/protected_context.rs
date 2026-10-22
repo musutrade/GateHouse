@@ -626,7 +626,76 @@ mod tests {
         );
         assert_eq!(captured.facts().id(), id);
         captured.match_context(&held).unwrap();
+        use super::super::{
+            plan_record::{PlanInputs, PlanRecord},
+            profile::{Profile, SlotIdentity, PRODUCT, PROTOCOL, VERSION},
+        };
+        use sha2::{Digest, Sha256};
+        let identity = SlotIdentity {
+            profile: Profile {
+                protocol: PROTOCOL.into(),
+                product: PRODUCT.into(),
+                version: VERSION.into(),
+                engine: "podman".into(),
+            },
+            installation_sha256: "a".repeat(64),
+            executable_sha256: "c".repeat(64),
+            config_sha256: format!("{:x}", Sha256::digest(captured.config_bytes())),
+        };
+        let inputs = PlanInputs {
+            name: "fixture".into(),
+            labels: [("owner".into(), "fixture".into())].into(),
+            port: None,
+        };
+        let record = PlanRecord::capture(&held, &captured, &identity, inputs.clone()).unwrap();
+        let bytes = record.encode().unwrap();
+        let reopened = PlanRecord::decode(&bytes, &held).unwrap();
+        assert_eq!(reopened.plan_bytes(), record.plan_bytes());
+        assert!(!reopened.installation_verified());
+        assert_eq!(format!("{captured:?}"), "CapturedImage { .. }");
+        let original: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        for field in [
+            "schema",
+            "operator_epoch",
+            "config_json",
+            "config_sha256",
+            "image_id",
+            "image_json",
+            "image_sha256",
+            "plan_json",
+            "plan_sha256",
+        ] {
+            let pattern = format!(
+                "\"{field}\":{}",
+                serde_json::to_string(&original[field]).unwrap()
+            );
+            let changed = String::from_utf8(bytes.clone()).unwrap().replacen(
+                &pattern,
+                &format!("\"{field}\":\"altered\""),
+                1,
+            );
+            assert!(
+                PlanRecord::decode(changed.as_bytes(), &held).is_err(),
+                "{field}"
+            );
+        }
+        let mut trailing = bytes.clone();
+        trailing.push(b' ');
+        assert!(PlanRecord::decode(&trailing, &held).is_err());
+        assert!(PlanRecord::decode(&bytes[..bytes.len() - 1], &held).is_err());
+        let text = String::from_utf8(bytes.clone()).unwrap();
+        let duplicate = text.replacen("{", "{\"schema\":\"extra\",", 1);
+        assert!(PlanRecord::decode(duplicate.as_bytes(), &held).is_err());
+        let unknown = text.replacen("{", "{\"unknown\":0,", 1);
+        assert!(PlanRecord::decode(unknown.as_bytes(), &held).is_err());
+        let mut wrong_identity = identity.clone();
+        wrong_identity.config_sha256 = "d".repeat(64);
+        assert!(PlanRecord::capture(&held, &captured, &wrong_identity, inputs).is_err());
+
         let other = Fixture::new();
+        assert!(
+            PlanRecord::decode(&bytes, &ProtectedContext::load(&other.config).unwrap()).is_err()
+        );
         assert!(captured
             .match_context(&ProtectedContext::load(&other.config).unwrap())
             .is_err());
