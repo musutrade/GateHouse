@@ -4,3 +4,5 @@
 pub mod profile;
 
 pub mod encoding;
+
+pub mod observation;

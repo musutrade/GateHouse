@@ -87,3 +87,33 @@ levels, without `serde_json::Value` or `Map`. Field order therefore does not dep
 on `serde_json/preserve_order`. A complete literal-byte regression fixes the
 entire envelope representation; extra top-level and identity-level fields have
 explicit negative vectors in addition to typed duplicate/missing-field tests.
+
+## Native observation proposal (source-pinned, not live-engine proof)
+
+The first observation profile selects native Libpod API **6.1.4** and exact server
+version **6.1.4**, with no compat fallback or automatic API negotiation. Podman's
+[v6.1.4 version source](https://github.com/podman-container-tools/podman/blob/v6.1.4/version/version.go)
+defines native minimum 4.0.0; accepting that entire range is not this profile's
+policy. The selected info route is `/v6.1.4/libpod/info`.
+
+The [compat info handler](https://github.com/podman-container-tools/podman/blob/v6.1.4/pkg/api/handlers/compat/info.go)
+creates a random UUID for each response. It cannot be used as a stable daemon ID.
+The [native info types](https://github.com/podman-container-tools/podman/blob/v6.1.4/libpod/define/info.go)
+provide host/store/version observations rather than a stable daemon-instance ID.
+
+The new pure `observation` types keep protected `operator_epoch` and principal UID
+outside engine observations. The epoch is an explicit 128-bit lowercase hex
+operator assertion; it is neither authentication nor evidence of restart. Exact
+before/after observations bind hostname, rootless, graph/run roots, selected API,
+server version and local socket path/device/inode/UID/full mode. Optional advertised
+remote socket data, when present, must exist and match the selected path. Its
+presence or absence must remain stable across the operation.
+
+These are normalized protocol data, not an HTTP parser. The adapter must obtain
+native fields and local socket metadata independently; Core must verify protected
+configuration and held files. Lexically absolute paths do not prove filesystem
+canonicality. Equal observations can survive socket activation or restart and
+must never be presented as continuity proof. A changed context or observation
+returns a refusal for callers to retain uncertainty; it cannot establish absence.
+Create/status/absence/health bodies, exact native decoding, mutation authorization
+and actual slot persistence remain unimplemented gates.
