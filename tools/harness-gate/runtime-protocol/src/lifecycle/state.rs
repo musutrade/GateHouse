@@ -44,6 +44,9 @@ pub enum Event {
     BeginRemove,
     RemoveClaimed,
     AbsenceVerified,
+    OperatorCleanupRunningVerified,
+    OperatorCleanupTerminalVerified,
+    OperatorAbsenceVerified,
 }
 
 impl State {
@@ -112,6 +115,9 @@ impl State {
                 Phase::KnownCreated | Phase::Running | Phase::Retained,
                 Event::CleanupTerminalVerified,
             ) => Phase::Stopped,
+            (Phase::ReconcilingRemove, Event::OperatorCleanupRunningVerified) => Phase::Stopping,
+            (Phase::ReconcilingRemove, Event::OperatorCleanupTerminalVerified) => Phase::Stopped,
+            (Phase::Retained, Event::OperatorAbsenceVerified) => Phase::VerifiedAbsent,
             (Phase::Stopping, Event::StoppedVerified) => Phase::Stopped,
             (Phase::Stopped, Event::BeginRemove) => Phase::Removing,
             (Phase::Removing, Event::RemoveClaimed) => Phase::AwaitingAbsence,
@@ -275,5 +281,53 @@ mod tests {
             assert!(!absent.blocks_acquisition());
             assert_eq!(absent.recover().unwrap(), absent);
         }
+    }
+    #[test]
+    fn present_reconciliation_requires_new_operator_authorization() {
+        for phase in [Phase::Removing, Phase::AwaitingAbsence] {
+            let state = State {
+                phase,
+                object_id: Some("e".repeat(64)),
+            }
+            .recover()
+            .unwrap();
+            assert!(state.transition(Event::BeginRemove).is_err());
+            assert!(state.transition(Event::CleanupRunningVerified).is_err());
+            let stopped = state
+                .transition(Event::OperatorCleanupRunningVerified)
+                .unwrap()
+                .transition(Event::StoppedVerified)
+                .unwrap();
+            let absent = stopped
+                .transition(Event::BeginRemove)
+                .unwrap()
+                .transition(Event::RemoveClaimed)
+                .unwrap()
+                .transition(Event::AbsenceVerified)
+                .unwrap();
+            assert!(!absent.blocks_acquisition());
+            assert_eq!(absent.object_id(), state.object_id());
+            let terminal = state
+                .transition(Event::OperatorCleanupTerminalVerified)
+                .unwrap();
+            assert_eq!(terminal.phase(), Phase::Stopped);
+        }
+    }
+
+    #[test]
+    fn retained_absence_needs_operator_evidence_and_never_a_remove_claim() {
+        let retained = created().recover().unwrap();
+        assert!(retained.transition(Event::AbsenceVerified).is_err());
+        assert!(retained.transition(Event::RemoveClaimed).is_err());
+        let absent = retained.transition(Event::OperatorAbsenceVerified).unwrap();
+        assert!(!absent.blocks_acquisition());
+        assert!(State::pending_create()
+            .transition(Event::OperatorAbsenceVerified)
+            .is_err());
+        assert!(State::pending_create()
+            .recover()
+            .unwrap()
+            .transition(Event::OperatorAbsenceVerified)
+            .is_err());
     }
 }

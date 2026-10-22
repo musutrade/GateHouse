@@ -352,3 +352,58 @@ Domain-prefixed SHA256 with omitted operation_key: `53c04196d0ecf86a07b1e5cb1244
 The full-schema/fd4 tests must also reject whitespace variation, null operation_key,
 stale generation, duplicate fields, changed target and a matching echo with the
 wrong digest. This document does not claim those wire validators are implemented.
+
+## Revision 4: explicit operator reconciliation
+
+Under the same exclusive resource lock, a new operator cleanup invocation reserves
+and fsyncs a strictly greater generation before obtaining fresh exact-ID status.
+From reconciling-remove, only this new authorization plus fresh matching running
+status permits stopping, or matching created/exited status permits stopped ->
+new nonforced remove. The old request is never resent. Ordinary recovery/status
+cannot produce the operator events. Preserve previous remove digests in an
+append-only bounded attempt history; reject additional attempts if full rather
+than discarding evidence. Each attempt records its new generation/nonce/request
+and links the old digest. Persistence failure prevents dispatch.
+
+Retained known-ID leases may be released by a new operator reconciliation status
+that proves exact-ID absence; no remove claim is synthesized. Its tombstone records
+reason `operator-observed-absence`, with remove_request_sha256 null if no removal
+was dispatched. For post-remove absence use `post-remove-absence` and the durable
+remove digest. Both require matching installation/config/daemon/target, a fresh
+status request digest, and evidence-before-marker-removal durability. Unknown,
+wrong ID/daemon, unresolved-no-id and pending-create cannot take either release
+path. New operator authorization is explicit action, not inferred from expiry,
+start failure, recovery or a status response. Existing global authorization to
+execute tests does not stand in for this runtime journal authorization token.
+
+State-only events model this distinction but do not verify authorization; the
+journal wrapper must construct them only after validating those fresh facts.
+
+## Implemented wire surface (development only)
+
+`runtime-protocol/src/lifecycle/wire.rs` now defines request/response types and
+bounded canonical parsers. `Object` additionally requires `image_id` so the create
+result can be checked against the immutable requested image. `absent` carries an
+`evidence` object with object_id, route, http_status, error_message_sha256; its
+before/after observations remain on the response envelope. `removed` has only
+kind and is never treated as absence. `observations` must be present, null only
+for unknown/rejected-before-effect. Missing RepoDigests is invalid; an empty list
+is valid only for a non-digest-pinned image request. All nonfailure operations
+require matching observations. Health nonzero exit is a validated health outcome,
+not success/readiness. The caller must interpret exit_code; wire validation alone
+does not select a successful state transition.
+
+The independent Python-generated complete status request is checked in as
+`runtime-protocol/src/lifecycle/wire/status-request.json` (no trailing newline).
+Tests compare Rust's domain hash and complete canonical bytes against that file,
+exercise protected-input equality and response binding, and cross-check every
+successful operation/outcome pair. Typed roundtrip equality rejects fields that
+Serde's tagged unit variants otherwise silently discard. The initial failing
+extra-field test is retained in external evidence.
+
+These parsers verify bytes and their expected binding, not fd4 file ownership,
+process exit, network route execution, monotonic deadlines or replay consumption.
+Those remain host/adapter/journal responsibilities and are NOT implemented here.
+In particular, accepting the same response twice against the same supplied
+expected request is possible until the durable wrapper consumes the generation.
+No host or engine is connected to these types.
