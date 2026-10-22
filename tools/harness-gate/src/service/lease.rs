@@ -1068,6 +1068,24 @@ fn process_alive(pid: u32) -> Option<bool> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
+    impl super::ResourceLease {
+        pub(in crate::service) fn make_renewal_due_for_test(&mut self) {
+            self.stop_heartbeat();
+            let due = super::Instant::now()
+                .checked_sub(super::RENEW_AFTER)
+                .unwrap_or_else(|| {
+                    // Very young monotonic clocks may not represent an earlier instant.
+                    // Let the real renewal interval elapse rather than skip the error path.
+                    std::thread::sleep(super::RENEW_AFTER);
+                    super::Instant::now()
+                        .checked_sub(super::RENEW_AFTER)
+                        .expect("a complete renewal interval has elapsed")
+                });
+            *self.last_renewed.lock().unwrap() = due;
+        }
+    }
+
     use super::process_start_identity_checked;
 
     type ProcessObservation = fn(u32) -> (Option<bool>, Option<String>);
@@ -2895,14 +2913,5 @@ mod tests {
     #[cfg(target_os = "linux")]
     fn checked_release_ends_guard_lifetime_before_fork_child_exec() {
         consumed_report_guard_releases_while_fork_child_is_blocked(true);
-    }
-}
-
-#[cfg(test)]
-#[cfg(unix)]
-impl ResourceLease {
-    pub(super) fn make_renewal_due_for_test(&mut self) {
-        self.stop_heartbeat();
-        *self.last_renewed.lock().unwrap() = Instant::now() - RENEW_AFTER;
     }
 }
