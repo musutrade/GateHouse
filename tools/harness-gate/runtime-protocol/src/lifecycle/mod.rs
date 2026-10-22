@@ -5,3 +5,5 @@ pub mod state;
 
 mod canonical;
 pub mod wire;
+
+pub mod journal;

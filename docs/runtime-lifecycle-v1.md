@@ -433,3 +433,45 @@ one matching binding. Status with no binding is not service readiness; retaining
 this observation lets Core safely clean a container that failed port allocation.
 Create/stop may legitimately have no assigned port. No lifecycle adapter exists
 yet; these HTTP create fields are the specification for its future implementation.
+
+## Journal implementation checkpoint
+
+`lifecycle/journal` now implements a distinct record with immutable create request,
+state, revision, pending request/purpose, bounded complete attempt history and
+absence response. Full requests retain operation digests, nonces, endpoint pins
+and every remove intent. This concrete record supersedes the earlier illustrative
+flat field list; no historical lease reader is reused. Root is one resource's
+protected directory for this lease, provisioned explicitly by Core. There is no
+automatic directory discovery, archival, second-lease acquisition or resolve-image
+reservation implementation yet.
+
+On Unix the guard opens/locks a protected directory, reads only regular 0600
+single-link members using descriptor-relative no-follow opens, and rejects
+unprotected ancestors. Active marker is fsynced before initial lease creation;
+a marker without a valid record blocks reuse. Request intents are committed via
+exclusive temporary file, file fsync, renameat and directory fsync before a
+non-Clone borrowed Dispatch is returned. Failed commit poisons the guard. Dropping
+a token cannot authorize another dispatch. Reopen consumes unresolved pending
+requests as unknown and never issues an old token. Nonces and generations must
+be fresh; successful mutations require a fresh in-guard status observation.
+
+OperatorCleanup is an explicit trusted Core policy input, not human authentication
+and not something an adapter can request. Known-ID recovery requires explicit
+reconciliation/operator purpose. Retained absence requires operator purpose;
+post-remove absence also permits read-only reconciliation. All returned objects
+must retain the original immutable image ID. Attempts are bounded at 128 and
+record bytes at 65536; exhaustion fails closed without discarding history.
+
+Verified absence is committed with its complete request/response first. Release
+then commits an identical tombstone, removes active, and fsyncs the directory.
+Record and tombstone are retained. Each crash window can resume release without
+another mutation. Missing marker without matching durable absence/tombstone is
+rejected. Directory locking is cooperative; no protection against a hostile same
+UID or rollback of an entire protected directory is claimed. Tests inject I/O
+failures; they are not power-loss/hardware durability certification.
+
+This checkpoint does not implement the Core command policy, full normal teardown,
+resource reacquisition, installed host verifier, fd4 process transport or an
+adapter. Dispatch::observe must only be called after host process checks; bytes
+alone cannot prove process exit success. A valid lifecycle record alone must never
+be used to bypass these remaining integration requirements.
