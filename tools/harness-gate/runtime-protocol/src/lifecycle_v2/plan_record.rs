@@ -12,7 +12,7 @@ use std::collections::BTreeMap;
 type Result<T> = std::result::Result<T, &'static str>;
 const SCHEMA: &str = "gate-runtime/podman-plan-evidence-v1";
 const LIMIT: usize = 16 * 1024 * 1024;
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PlanInputs {
     pub name: String,
@@ -37,7 +37,7 @@ impl PlanInputs {
         )
     }
 }
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PlanPort {
     pub container: u16,
@@ -122,6 +122,16 @@ impl PlanRecord {
         }
         record.validate(context)?;
         Ok(record)
+    }
+    /// Bind decoded evidence to the exact host request, including operator
+    /// overrides rather than merely accepting an internally consistent plan.
+    pub fn match_capture_request(&self, image_id: &str, inputs: &PlanInputs) -> Result<()> {
+        super::native_image::image_route(image_id)?;
+        inputs.validate()?;
+        if self.wire.image_id != image_id || self.wire.inputs != *inputs {
+            return Err("capture record request mismatch");
+        }
+        Ok(())
     }
     pub(super) fn match_installation_snapshot(
         &self,

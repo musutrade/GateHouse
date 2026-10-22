@@ -1274,4 +1274,37 @@ mod tests {
             assert!(installed.revalidate().is_err(), "{name}");
         }
     }
+    #[test]
+    fn capture_request_matches_all_operator_fields_and_exact_image() {
+        use super::super::plan_record::{PlanInputs, PlanPort};
+        let (_f, _held, record) = evidence_fixture();
+        let inputs = PlanInputs {
+            name: "fixture".into(),
+            labels: [("owner".into(), "fixture".into())].into(),
+            port: None,
+        };
+        let id = "b".repeat(64);
+        record.match_capture_request(&id, &inputs).unwrap();
+        assert!(record
+            .match_capture_request(&"c".repeat(64), &inputs)
+            .is_err());
+        for case in 0..4 {
+            let mut changed = inputs.clone();
+            match case {
+                0 => changed.name = "another".into(),
+                1 => {
+                    changed.labels.insert("owner".into(), "another".into());
+                }
+                2 => changed.labels.clear(),
+                3 => {
+                    changed.port = Some(PlanPort {
+                        container: 80,
+                        host: 8080,
+                    })
+                }
+                _ => unreachable!(),
+            };
+            assert!(record.match_capture_request(&id, &changed).is_err());
+        }
+    }
 }

@@ -34,3 +34,5 @@ pub mod plan_storage;
 
 #[cfg(target_os = "linux")]
 pub mod installation;
+
+pub mod capture_binding;
