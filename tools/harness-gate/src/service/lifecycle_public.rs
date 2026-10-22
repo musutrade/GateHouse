@@ -10,8 +10,8 @@ pub(crate) struct Config {
 #[cfg(target_os = "linux")]
 mod linux;
 #[cfg(target_os = "linux")]
-pub(crate) use linux::ManagedLifecycle;
+pub(crate) use linux::{cleanup_known, ManagedLifecycle};
 #[cfg(not(any(target_os = "linux")))]
 mod unsupported;
 #[cfg(not(any(target_os = "linux")))]
-pub(crate) use unsupported::ManagedLifecycle;
+pub(crate) use unsupported::{cleanup_known, ManagedLifecycle};

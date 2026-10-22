@@ -68,3 +68,50 @@ impl ManagedLifecycle {
         self.0.cleanup(deadline, || false)
     }
 }
+
+/// Called only by the explicit CLI operator route; never by normal acquisition.
+pub(crate) fn cleanup_known(
+    project: &Project,
+    service: &str,
+    fence: u64,
+    invocation: &str,
+) -> Result<String> {
+    use crate::config::{ContainerRuntimeKind, ServiceConfig};
+    use anyhow::{bail, Context};
+    use gatehouse_runtime_protocol::lifecycle::journal::OperatorRecovery;
+    let Some(ServiceConfig::Docker {
+        runtime: ContainerRuntimeKind::Docker,
+        lifecycle_host: Some(host),
+        external_env: None,
+        ..
+    }) = project.config.services.get(service)
+    else {
+        bail!("operator cleanup requires explicit Docker lifecycle_host without external_env");
+    };
+    if fence == 0 {
+        bail!("operator cleanup requires a nonzero exact fence");
+    }
+    let installation = VerifiedInstallation::load(Path::new(host))?;
+    let base = ServiceSlot::project_state_base(&project.root)?;
+    let authorization = lifecycle::nonce()?;
+    let recovery = OperatorRecovery::open_mapped(
+        &base,
+        &project.input().project_identity,
+        &format!("service:{service}"),
+        fence,
+        invocation,
+        &authorization,
+    )?;
+    lifecycle::recovery::cleanup_known(
+        recovery,
+        installation,
+        Instant::now() + std::time::Duration::from_secs(30),
+        crate::process::cancelled,
+    )
+    .with_context(|| {
+        format!(
+            "operator authorization {authorization} retained; inspect current slot before retrying"
+        )
+    })?;
+    Ok(authorization)
+}

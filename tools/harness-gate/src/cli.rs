@@ -145,6 +145,15 @@ pub(crate) enum Commands {
         #[arg(long)]
         strict: bool,
     },
+    /// Explicitly reconcile a retained lifecycle service by exact fence and invocation.
+    LifecycleCleanup {
+        #[arg(long)]
+        service: String,
+        #[arg(long)]
+        fence: u64,
+        #[arg(long)]
+        lease_invocation: String,
+    },
     /// Inspect and reclaim stale Harness-Gate resource leases.
     Cleanup {
         /// Only report stale marked resources without reclaiming them.
@@ -416,5 +425,40 @@ impl ScopeArgs {
         } else {
             ScopeMode::WorkingTree
         }
+    }
+}
+
+#[cfg(test)]
+mod lifecycle_cli_tests {
+    use super::*;
+    #[test]
+    fn recovery_requires_explicit_exact_identity_and_has_no_state_root_override() {
+        let invocation = "1".repeat(32);
+        let args = [
+            "harness-gate",
+            "lifecycle-cleanup",
+            "--service",
+            "db",
+            "--fence",
+            "4",
+            "--lease-invocation",
+            &invocation,
+        ];
+        let cli = Cli::try_parse_from(args).unwrap();
+        assert!(
+            matches!(cli.command, Commands::LifecycleCleanup { service, fence: 4, lease_invocation } if service == "db" && lease_invocation == invocation)
+        );
+        for omit in [2, 4, 6] {
+            let incomplete: Vec<_> = args
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| *i != omit && *i != omit + 1)
+                .map(|(_, a)| *a)
+                .collect();
+            assert!(Cli::try_parse_from(incomplete).is_err());
+        }
+        let mut overridden = args.to_vec();
+        overridden.extend(["--state-root", "/another-root"]);
+        assert!(Cli::try_parse_from(overridden).is_err());
     }
 }

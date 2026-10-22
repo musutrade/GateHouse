@@ -70,6 +70,10 @@ fn public_service_manager_uses_fixed_slot_and_native_lifecycle_cleanup() {
 fn public_service_manager_failed_start_keeps_fixed_slot_across_config_changes() {
     joint(17);
 }
+#[test]
+fn public_operator_cleanup_requires_exact_fence_and_releases_failed_start() {
+    joint(18);
+}
 fn joint(service_path: u8) {
     let path = std::env::var_os("GATEHOUSE_LIFECYCLE_ADAPTER")
         .expect("explicit native adapter path required");
@@ -172,7 +176,7 @@ fn joint(service_path: u8) {
                     "GET",
                     format!("{exec}/json"),
                     200,
-                    json!({"ID":"b".repeat(64),"ContainerID":"a".repeat(64),"Running":false,"ExitCode":if service_path >= 2 && service_path != 9 && service_path != 17 {0} else {7}}),
+                    json!({"ID":"b".repeat(64),"ContainerID":"a".repeat(64),"Running":false,"ExitCode":if service_path >= 2 && service_path != 9 && service_path != 17 && service_path != 18 {0} else {7}}),
                 ),
                 ("GET", inspect.clone(), 200, running.clone()),
             ],
@@ -373,11 +377,10 @@ fn joint(service_path: u8) {
             .unwrap(),
         );
         let mut manager = crate::service::ServiceManager::new(&project);
-        if service_path == 17 {
+        if matches!(service_path, 17 | 18) {
             let error = manager.handle("fixture").unwrap().acquire().err().unwrap();
             assert!(format!("{error:#}").contains("health failed"), "{error:#}");
             drop(manager);
-            server.join().unwrap();
             let base = directory.path().join(".harness-gate/lifecycle-services");
             let root = ServiceSlot::mapped_root(
                 &base,
@@ -388,6 +391,31 @@ fn joint(service_path: u8) {
             let retained = fs::read(root.join("service.json")).unwrap();
             let record: Value = serde_json::from_slice(&retained).unwrap();
             assert_eq!(record["released"], false);
+            if service_path == 18 {
+                let invocation = record["resolve"]["binding"]["lease_invocation"]
+                    .as_str()
+                    .unwrap();
+                assert!(
+                    crate::service::cleanup_lifecycle(&project, "fixture", 2, invocation).is_err()
+                );
+                assert!(
+                    crate::service::cleanup_lifecycle(&project, "fixture", 1, &"0".repeat(32))
+                        .is_err()
+                );
+                let auth =
+                    crate::service::cleanup_lifecycle(&project, "fixture", 1, invocation).unwrap();
+                assert_eq!(auth.len(), 32);
+                assert!(root.join(format!("operator-{auth}.proof.json")).exists());
+                let done: Value =
+                    serde_json::from_slice(&fs::read(root.join("service.json")).unwrap()).unwrap();
+                assert_eq!(done["released"], true);
+                assert!(
+                    crate::service::cleanup_lifecycle(&project, "fixture", 1, invocation).is_err()
+                );
+                server.join().unwrap();
+                return;
+            }
+            server.join().unwrap();
             if let crate::config::ServiceConfig::Docker { image, .. } =
                 project.config.services.get_mut("fixture").unwrap()
             {

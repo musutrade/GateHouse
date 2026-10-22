@@ -741,3 +741,18 @@ that proof does not mean the service slot is free; the slot record remains the
 release authority. Retrying explicit recovery requires a fresh authorization
 identity; the prior intent remains replay-blocked. Already released slots reject
 operator recovery instead of creating another intent.
+
+
+## Explicit operator command
+
+`harness-gate lifecycle-cleanup --service <id> --fence <current-fence>
+--lease-invocation <recorded-invocation>` is a separate operator action. It uses the
+same fixed project/resource mapping and the service's explicit lifecycle host.
+Core mints a fresh 128-bit audit authorization. The current fence and invocation
+must be supplied exactly; configuration never infers them or grants authority to a
+new slot. The command permits only known-ID Status/Stop/Remove and exact absence
+release, including completion of a previously journal-released slot. Normal
+startup, doctor, generic cleanup and cancellation never invoke this command.
+A changed installation cannot clean up a journal bound to another installation.
+Unknown-ID and pre-Create states remain retained; no name discovery or automatic
+start retry is added. This command does not establish external user authentication.

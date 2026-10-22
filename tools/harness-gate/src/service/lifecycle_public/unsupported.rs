@@ -14,3 +14,7 @@ impl ManagedLifecycle {
         bail!("lifecycle services require Linux")
     }
 }
+
+pub(crate) fn cleanup_known(_: &Project, _: &str, _: u64, _: &str) -> Result<String> {
+    bail!("lifecycle recovery requires Linux; no CLI fallback")
+}

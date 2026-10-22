@@ -26,6 +26,15 @@ use std::time::{Duration, Instant};
 pub(crate) use lease::{cleanup as cleanup_resources, ResourceLease};
 pub(crate) use report_directory::ReportDirectoryGuard;
 
+pub(crate) fn cleanup_lifecycle(
+    project: &Project,
+    service: &str,
+    fence: u64,
+    invocation: &str,
+) -> Result<String> {
+    lifecycle_public::cleanup_known(project, service, fence, invocation)
+}
+
 const RESOURCE_LOCK_POLL: Duration = Duration::from_millis(25);
 const RESOURCE_LOCK_WAIT: Duration = Duration::from_secs(30);
 

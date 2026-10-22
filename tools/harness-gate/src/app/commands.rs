@@ -39,6 +39,16 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
         }
         Commands::Doctor { json, strict } => run_doctor(project, json, strict),
         Commands::Cleanup { dry_run, json } => run_cleanup(project, dry_run, json),
+        Commands::LifecycleCleanup {
+            service,
+            fence,
+            lease_invocation,
+        } => {
+            let authorization =
+                crate::service::cleanup_lifecycle(project, &service, fence, &lease_invocation)?;
+            println!("Lifecycle service released; operator authorization {authorization}");
+            Ok(true)
+        }
         Commands::Scope {
             scope: args,
             json,
