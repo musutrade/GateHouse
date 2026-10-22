@@ -650,6 +650,23 @@ mod tests {
         let record = PlanRecord::capture(&held, &captured, &identity, inputs.clone()).unwrap();
         let bytes = record.encode().unwrap();
         let reopened = PlanRecord::decode(&bytes, &held).unwrap();
+        let disk = f.config.parent().unwrap().join("plan-record");
+        record.create_new(&disk, &held).unwrap();
+        assert_eq!(
+            PlanRecord::open(&disk, &held).unwrap().encode().unwrap(),
+            bytes
+        );
+        assert!(record.create_new(&disk, &held).is_err());
+        std::fs::set_permissions(&disk, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(PlanRecord::open(&disk, &held).is_err());
+        std::fs::set_permissions(&disk, std::fs::Permissions::from_mode(0o600)).unwrap();
+        let linked = disk.with_extension("link");
+        std::fs::hard_link(&disk, &linked).unwrap();
+        assert!(PlanRecord::open(&disk, &held).is_err());
+        std::fs::remove_file(&linked).unwrap();
+        std::fs::write(&disk, b"{").unwrap();
+        assert!(PlanRecord::open(&disk, &held).is_err());
+
         assert_eq!(reopened.plan_bytes(), record.plan_bytes());
         assert!(!reopened.installation_verified());
         assert_eq!(format!("{captured:?}"), "CapturedImage { .. }");
@@ -684,6 +701,20 @@ mod tests {
         assert!(PlanRecord::decode(&trailing, &held).is_err());
         assert!(PlanRecord::decode(&bytes[..bytes.len() - 1], &held).is_err());
         let text = String::from_utf8(bytes.clone()).unwrap();
+        let wrong_profile = text.replace("podman-lifecycle", "docker-lifecycle");
+        assert!(PlanRecord::decode(wrong_profile.as_bytes(), &held).is_err());
+        let wrong_inputs = text.replace("\"name\":\"fixture\"", "\"name\":\"other\"");
+        assert_ne!(wrong_inputs, text);
+        assert!(PlanRecord::decode(wrong_inputs.as_bytes(), &held).is_err());
+        let duplicate_labels = text.replace("\"labels\":{", "\"labels\":{\"owner\":\"duplicate\",");
+        assert!(PlanRecord::decode(duplicate_labels.as_bytes(), &held).is_err());
+        let asserted_change = text.replace(&"a".repeat(64), &"f".repeat(64));
+        assert!(!PlanRecord::decode(asserted_change.as_bytes(), &held)
+            .unwrap()
+            .installation_verified());
+        let malformed_assertion = text.replace(&"a".repeat(64), "invalid");
+        assert!(PlanRecord::decode(malformed_assertion.as_bytes(), &held).is_err());
+        assert!(PlanRecord::decode(&vec![b' '; 16 * 1024 * 1024 + 1], &held).is_err());
         let duplicate = text.replacen("{", "{\"schema\":\"extra\",", 1);
         assert!(PlanRecord::decode(duplicate.as_bytes(), &held).is_err());
         let unknown = text.replacen("{", "{\"unknown\":0,", 1);

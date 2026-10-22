@@ -14,15 +14,14 @@ proves execution of validation, not actual connected transfer. A later installed
 host must fix the exchange to the verified transport before making any stronger
 claim. Public `decode_image` and `ImageFacts` cannot construct this witness.
 
-## Evidence codec (implemented; storage not implemented)
+## Evidence codec
 
 Schema `gate-runtime/podman-plan-evidence-v1`. Fixed struct field order:
 `schema`, `profile`, `asserted_installation_sha256`,
 `asserted_executable_sha256`, `config_json`, `config_sha256`, `operator_epoch`,
 `image_id`, `image_json`, `image_sha256`, `inputs`,
 `plan_json`, `plan_sha256`. Raw fields use JSON strings preserving exact valid UTF-8 bytes (including inner whitespace). This deliberately replaces the proposed base64 format; no binary/non-UTF-8 JSON is accepted. Exposures are rederived from the raw image rather than stored a second time. Digests use
-64 lowercase hexadecimal characters. Labels use sorted keys; exposures use a
-sorted unique array. No trailing newline, whitespace or alternate key ordering.
+64 lowercase hexadecimal characters. Labels use sorted keys; exposures are rederived from image JSON. No trailing newline, whitespace or alternate key ordering.
 Profile is the existing exact Podman tuple. Inputs contain only name, operator
 labels and optional fixed port. Existing bounds on name/labels/port apply;
 config and image are each at most 1 MiB, whole record at most 16 MiB (accounting for JSON escaping).
@@ -33,7 +32,7 @@ image, rederive the plan and exposures, and compare exact current context bytes.
 Installation and executable hashes remain assertions. No lease, dispatch or
 freshness fields exist. Reopen does not mint a new CapturedImage.
 
-## Storage requirements (not implemented yet)
+## Storage implementation and limits
 
 Create a new 0600 single-link current-UID regular file with O_EXCL/O_NOFOLLOW in
 a protected canonical parent. Retain held file/parent identities and revalidate
@@ -54,10 +53,12 @@ Exact config includes socket inode/device/path: socket recreation and restart
 are not adopted. Same UID/root can forge, replay, remove or roll back a complete
 canonical record. Metadata checks are race detection, not containment.
 
-## Remaining tests before storage acceptance
+## Required validation before storage acceptance
 
 Re-derivation and every independent field substitution; duplicate/unknown and
 noncanonical encoding; raw/decoded limits; another config/socket/epoch;
 short/partial writes, file sync, parent sync and close failures; collision and
 concurrent creators; symlink/hardlink/mode/metadata replacement. A successful
 capture test alone does not establish any persistence property.
+
+Storage now uses held-parent /proc/self/fd anchoring, create-new, file/parent sync and explicit close. Boundary interruption tests are not simulated kernel fsync/close errors or power-loss proof. Full fault injection and independent review remain required.
