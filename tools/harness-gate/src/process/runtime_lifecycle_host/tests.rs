@@ -109,10 +109,11 @@ fn fixture(mode: &str) -> Fixture {
 }
 #[test]
 fn descriptor_execution_receives_sealed_exact_inputs_and_empty_environment() {
-    let mut f = fixture("ok");
+    let mut f = fixture("created");
     let result = dispatch(f.journal.dispatch().unwrap(), &f.installed, 3000, || false).unwrap();
-    assert!(matches!(result.outcome, Outcome::Unknown { .. }));
-    assert_eq!(f.journal.phase(), Phase::UnresolvedNoId);
+    assert!(matches!(result.outcome, Outcome::Created { .. }));
+    assert_eq!(f.journal.phase(), Phase::KnownCreated);
+    assert_eq!(f.journal.target().unwrap().object_id, "a".repeat(64));
     assert!(f.journal.dispatch().is_err());
 }
 #[test]
@@ -147,4 +148,103 @@ fn replaced_host_is_rejected_before_spawn() {
     fs::rename(replacement, &f.host).unwrap();
     assert!(dispatch(f.journal.dispatch().unwrap(), &f.installed, 3000, || false).is_err());
     assert_eq!(f.journal.phase(), Phase::UnresolvedNoId);
+}
+
+#[test]
+fn valid_unknown_and_rejection_are_explicit_errors() {
+    for (mode, error) in [
+        ("ok", DispatchError::Unknown(Reason::Transport)),
+        (
+            "rejected",
+            DispatchError::RejectedBeforeEffect(Reason::UnsupportedState),
+        ),
+    ] {
+        let mut f = fixture(mode);
+        assert_eq!(
+            dispatch(f.journal.dispatch().unwrap(), &f.installed, 3000, || false),
+            Err(error)
+        );
+        assert_eq!(f.journal.phase(), Phase::UnresolvedNoId);
+        assert!(f.journal.dispatch().is_err());
+    }
+}
+#[test]
+fn final_cancellation_occurs_after_validated_created_response() {
+    use std::cell::Cell;
+    let mut f = fixture("created");
+    let crossed = Cell::new(false);
+    let final_checks = Cell::new(0);
+    let result = dispatch_observed(
+        f.journal.dispatch().unwrap(),
+        &f.installed,
+        3000,
+        || {
+            if crossed.get() {
+                final_checks.set(final_checks.get() + 1);
+                true
+            } else {
+                false
+            }
+        },
+        |boundary| {
+            if let Boundary::ResponseValidated(response) = boundary {
+                assert!(matches!(response.outcome, Outcome::Created { .. }));
+                crossed.set(true);
+            }
+        },
+    );
+    assert!(crossed.get());
+    assert_eq!(final_checks.get(), 1);
+    assert_eq!(
+        result,
+        Err(DispatchError::Boundary(
+            "lifecycle final boundary cancelled or expired"
+        ))
+    );
+    assert_eq!(f.journal.phase(), Phase::UnresolvedNoId);
+    assert!(f.journal.dispatch().is_err());
+}
+#[test]
+fn same_byte_replacement_at_both_boundaries_prevents_commit() {
+    for filename in ["host.json", "installation.json", "config.json", "adapter"] {
+        for after_response in [false, true] {
+            let mut f = fixture("created");
+            let path = f.host.parent().unwrap().join(filename);
+            let mut replaced = false;
+            let mut validated = false;
+            let result = dispatch_observed(
+                f.journal.dispatch().unwrap(),
+                &f.installed,
+                3000,
+                || false,
+                |boundary| {
+                    let at_response = matches!(boundary, Boundary::ResponseValidated(_));
+                    if let Boundary::ResponseValidated(response) = boundary {
+                        assert!(matches!(response.outcome, Outcome::Created { .. }));
+                        validated = true;
+                    }
+                    if at_response == after_response {
+                        let replacement = path.with_extension("replacement");
+                        fs::write(&replacement, fs::read(&path).unwrap()).unwrap();
+                        fs::set_permissions(
+                            &replacement,
+                            fs::metadata(&path).unwrap().permissions(),
+                        )
+                        .unwrap();
+                        fs::rename(replacement, &path).unwrap();
+                        replaced = true;
+                    }
+                },
+            );
+            assert!(replaced);
+            assert_eq!(validated, after_response);
+            assert_eq!(
+                result,
+                Err(DispatchError::Boundary("lifecycle installation changed")),
+                "{filename}"
+            );
+            assert_eq!(f.journal.phase(), Phase::UnresolvedNoId);
+            assert!(f.journal.dispatch().is_err());
+        }
+    }
 }

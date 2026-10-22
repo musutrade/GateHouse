@@ -4,7 +4,7 @@ use super::{fd_inputs::SealedInputs, raw_adapter, HostPolicy};
 use gatehouse_runtime_protocol::lifecycle::{
     installation::VerifiedInstallation,
     journal::Dispatch,
-    wire::{self, Request, Response},
+    wire::{self, Outcome, Reason, Request, Response},
 };
 use std::{
     fs::File,
@@ -18,6 +18,20 @@ use std::{
 
 type Result<T> = std::result::Result<T, &'static str>;
 
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum DispatchError {
+    Unknown(Reason),
+    RejectedBeforeEffect(Reason),
+    Boundary(&'static str),
+}
+
+// Private deterministic observer seam; production always supplies a no-op.
+#[allow(dead_code)]
+enum Boundary<'a> {
+    InputsPrepared,
+    ResponseValidated(&'a Response),
+}
+
 /// Consumes the token even on pre-spawn failure: uncertain work is never retried.
 /// Service orchestration must reconcile the retained journal explicitly.
 #[allow(dead_code)]
@@ -26,20 +40,42 @@ pub(crate) fn dispatch(
     installation: &VerifiedInstallation,
     timeout_ms: u64,
     cancelled: impl Fn() -> bool,
-) -> Result<Response> {
-    let result = run(token.request(), installation, timeout_ms, &cancelled);
+) -> std::result::Result<Response, DispatchError> {
+    dispatch_observed(token, installation, timeout_ms, cancelled, |_| {})
+}
+
+fn dispatch_observed(
+    token: Dispatch<'_>,
+    installation: &VerifiedInstallation,
+    timeout_ms: u64,
+    cancelled: impl Fn() -> bool,
+    mut observer: impl FnMut(Boundary<'_>),
+) -> std::result::Result<Response, DispatchError> {
+    let result = run(
+        token.request(),
+        installation,
+        timeout_ms,
+        &cancelled,
+        &mut observer,
+    );
     match result {
         Ok((response, bytes)) => {
             token
                 .observe(Some(&bytes))
-                .map_err(|_| "lifecycle journal commit failed")?;
-            Ok(response)
+                .map_err(|_| DispatchError::Boundary("lifecycle journal commit failed"))?;
+            match response.outcome {
+                Outcome::Unknown { reason } => Err(DispatchError::Unknown(reason)),
+                Outcome::RejectedBeforeEffect { reason } => {
+                    Err(DispatchError::RejectedBeforeEffect(reason))
+                }
+                _ => Ok(response),
+            }
         }
         Err(error) => {
             token
                 .observe(None)
-                .map_err(|_| "lifecycle unknown result commit failed")?;
-            Err(error)
+                .map_err(|_| DispatchError::Boundary("lifecycle unknown result commit failed"))?;
+            Err(DispatchError::Boundary(error))
         }
     }
 }
@@ -49,6 +85,7 @@ fn run(
     installation: &VerifiedInstallation,
     timeout_ms: u64,
     cancelled: &impl Fn() -> bool,
+    observer: &mut impl FnMut(Boundary<'_>),
 ) -> Result<(Response, Vec<u8>)> {
     let started = Instant::now();
     if !(1..=30_000).contains(&timeout_ms) || cancelled() {
@@ -84,6 +121,7 @@ fn run(
         reader_deadline: Duration::from_secs(2),
         ..HostPolicy::default()
     };
+    observer(Boundary::InputsPrepared);
     installation
         .revalidate()
         .map_err(|_| "lifecycle installation changed")?;
@@ -103,6 +141,7 @@ fn run(
     }
     let response = wire::parse_response(&output.stdout.bytes, request)
         .map_err(|_| "lifecycle response invalid")?;
+    observer(Boundary::ResponseValidated(&response));
     installation
         .revalidate()
         .map_err(|_| "lifecycle installation changed")?;

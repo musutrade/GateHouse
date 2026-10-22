@@ -553,3 +553,19 @@ identity and cannot contact Docker. Service configuration, identity acquisition,
 lease orchestration and the lifecycle adapter still need integration; this host
 checkpoint is not a claim that Docker lifecycle has left Core or passed real
 engine acceptance.
+
+The Core-facing host returns explicit `DispatchError::Unknown` and
+`DispatchError::RejectedBeforeEffect` after persisting those envelopes, and
+`DispatchError::Boundary` after persisting a transport/boundary failure as unknown.
+These outcomes cannot be mistaken for `Ok(Response)`. Even an accepted nonfailure
+response is operation-specific: Created does not mean Started, Status does not
+mean healthy, and Removed does not mean absence or lease release. Service
+orchestration must match the operation/outcome and durable phase explicitly.
+
+The host requires Linux procfs `/proc/self/fd` access; descriptor execution failure
+is consumed as unknown with no fallback. Deterministic private observer tests now
+prove that a valid Created response commits its exact ID, and that cancellation
+or same-byte host/installation/config/executable replacement after input creation
+or after response validation prevents that commit. The production observer is a
+no-op; tests do not depend on sleeps or guessed callback counts to place the final
+cancellation boundary.
