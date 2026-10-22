@@ -213,6 +213,13 @@ impl ResourceLease {
         }
     }
 
+    #[cfg(test)]
+    #[cfg(unix)]
+    pub(super) fn make_renewal_due_for_test(&mut self) {
+        self.stop_heartbeat();
+        *self.last_renewed.lock().unwrap() = Instant::now() - RENEW_AFTER;
+    }
+
     pub(crate) fn renew(&self) -> Result<()> {
         renew_parts(&self.path, &self.record, &self.last_renewed, false)
     }

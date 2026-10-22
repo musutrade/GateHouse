@@ -193,7 +193,8 @@ esac
             )
             .unwrap();
             std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o700)).unwrap();
-            for mode in ["timeout", "health", "cancel"] {
+            for mode in ["timeout", "health", "cancel", "port-error", "renew-error"] {
+                std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o700)).unwrap();
                 let output = std::process::Command::new(std::env::current_exe().unwrap())
                     .args(["--exact", "service::docker::tests::readiness_timeout_and_cancellation_preserve_failed_cleanup", "--nocapture"])
                     .env("HG_WAIT_CHILD", mode)
@@ -221,7 +222,7 @@ esac
             "container",
             "wait-invocation",
         );
-        let lease = ResourceLease::acquire(
+        let mut lease = ResourceLease::acquire(
             &project,
             "service:wait",
             "container",
@@ -246,6 +247,23 @@ esac
         );
         let log = std::env::var_os("HG_WAIT_LOG").unwrap();
         std::fs::write(&log, "").unwrap();
+        if mode == "renew-error" {
+            lease.make_renewal_due_for_test();
+            let marker = std::fs::read_dir(&project.resource_leases)
+                .unwrap()
+                .next()
+                .unwrap()
+                .unwrap()
+                .path();
+            std::fs::write(marker, "invalid lease bytes").unwrap();
+        }
+        if mode == "port-error" {
+            let binary = std::env::split_paths(&std::env::var_os("PATH").unwrap())
+                .next()
+                .unwrap()
+                .join("podman");
+            std::fs::set_permissions(binary, std::fs::Permissions::from_mode(0o600)).unwrap();
+        }
         let errors = Arc::new(Mutex::new(vec![]));
         let running = RunningService {
             lifecycle: None,
@@ -274,14 +292,13 @@ esac
         )
         .err()
         .unwrap();
-        assert!(
-            error.to_string().contains(if mode == "cancel" {
-                "verification cancelled"
-            } else {
-                "did not become ready"
-            }),
-            "{error:#}"
-        );
+        let expected = match mode.as_str() {
+            "cancel" => "verification cancelled",
+            "renew-error" => "read lease",
+            "port-error" => "podman",
+            _ => "did not become ready",
+        };
+        assert!(format!("{error:#}").contains(expected), "{error:#}");
         assert_eq!(
             std::fs::read_dir(&project.resource_leases).unwrap().count(),
             1
@@ -291,7 +308,27 @@ esac
             "failed cleanup must be observable"
         );
         let calls = std::fs::read_to_string(log).unwrap();
-        if mode == "cancel" {
+        if mode == "port-error" {
+            assert!(
+                calls.is_empty(),
+                "no runtime retry after boundary failure: {calls}"
+            );
+        } else if mode == "renew-error" {
+            assert_eq!(
+                calls, "container\nrm\n",
+                "only one ownership-checked cleanup, no readiness retry"
+            );
+            let marker = std::fs::read_dir(&project.resource_leases)
+                .unwrap()
+                .next()
+                .unwrap()
+                .unwrap()
+                .path();
+            assert_eq!(
+                std::fs::read_to_string(marker).unwrap(),
+                "invalid lease bytes"
+            );
+        } else if mode == "cancel" {
             assert!(!calls.contains("port"));
         } else {
             assert!(calls.contains("port\n"));
