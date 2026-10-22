@@ -1,12 +1,24 @@
 # Published releases and acceptance
 
-## Core 0.9.0 readiness candidate
+## Core 0.10.0 lifecycle candidate
 
-Core 0.9.0 is not published. It adds the Linux opt-in v3 readiness host and
-requires protocol 0.2.0 publication before Core registry packaging.
-Exact-source Windows cancellation validation, release CI and downloaded artifact
-verification remain pending. See [candidate scope](releases/0.9.0.zh-CN.md).
-Separate docker-readiness and importer delivery is unfinished.
+Unreleased. Protocol 0.3.0 must publish before Core registry packaging. Managed
+Docker now requires an explicit lifecycle host; old Docker leases are retained
+and must be resolved with the prior approved version after quiescing old Core
+processes. See [candidate scope](releases/0.10.0.zh-CN.md).
+
+Local real rootful normal and failed-health/operator runs passed. Rootless,
+daemon restart, lifecycle product/importer publication and downloaded acceptance
+remain pending. Podman still uses its legacy Core route; #62 remains open.
+
+## Core 0.9.0 published
+
+Immutable v0.9.0 source is `0a7bd647` (PR177). Exact PR CI 39610094958 and
+main CI 39611144409 passed; release 39612595746 published protocol 0.2.0 and
+Core 0.9.0. Windows normal shards and ten targeted cancellation repeats passed.
+Downloaded Core with onboarding 1.0.4 passed 29 acceptance steps. Separate
+readiness 0.2.0 and importer 0.2.0 were subsequently published; these artifacts
+remain immutable and do not provide lifecycle mutation authority.
 
 ## Core 0.8.0 published
 
