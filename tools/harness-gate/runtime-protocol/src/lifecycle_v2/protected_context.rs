@@ -136,6 +136,7 @@ impl ProtectedContext {
         let context: ExpectedContext = serde_json::from_value(native_json::decode(&bytes)?)
             .map_err(|_| "protected context schema rejected")?;
         context.validate()?;
+        context.validate_local_socket_policy()?;
         if context.principal_uid != unsafe { libc::geteuid() } {
             return Err("configured principal differs from euid");
         }
@@ -209,7 +210,7 @@ mod tests {
             let listener = UnixListener::bind(&socket).unwrap();
             fs::set_permissions(&socket, fs::Permissions::from_mode(0o600)).unwrap();
             let m = fs::metadata(&socket).unwrap();
-            let value = serde_json::json!({"operator_epoch":"a".repeat(32),"principal_uid":unsafe{libc::geteuid()},"observation":{"engine":"podman","api_surface":"libpod","selected_api":"6.1.4","server_version":"6.1.4","hostname":"fixture","rootless":false,"graph_root":"/var/lib/containers/storage","run_root":"/run/containers/storage","remote_socket":null,"socket":{"path":socket,"device":m.dev(),"inode":m.ino(),"uid":m.uid(),"mode":m.mode()}}});
+            let value = serde_json::json!({"operator_epoch":"a".repeat(32),"principal_uid":unsafe{libc::geteuid()},"observation":{"engine":"podman","api_surface":"libpod","selected_api":"6.1.4","server_version":"6.1.4","hostname":"fixture","rootless":unsafe{libc::geteuid()}!=0,"graph_root":"/var/lib/containers/storage","run_root":"/run/containers/storage","remote_socket":null,"socket":{"path":socket,"device":m.dev(),"inode":m.ino(),"uid":m.uid(),"mode":m.mode()}}});
             let config = dir.path().join("context.json");
             fs::write(&config, serde_json::to_vec(&value).unwrap()).unwrap();
             fs::set_permissions(&config, fs::Permissions::from_mode(0o600)).unwrap();
@@ -321,5 +322,187 @@ mod tests {
             assert!(held.revalidate().is_err());
             assert!(ProtectedContext::load(&f.config).is_err());
         }
+    }
+    fn info(held: &ProtectedContext) -> Vec<u8> {
+        let (c, _) = held.snapshot().unwrap();
+        let o = &c.observation;
+        serde_json::to_vec(&serde_json::json!({"host":{"hostname":o.hostname,"security":{"rootless":o.rootless}},"store":{"graphRoot":o.graph_root,"runRoot":o.run_root},"version":{"APIVersion":"6.1.4","Version":"6.1.4"}})).unwrap()
+    }
+    fn absence(id: &str) -> Vec<u8> {
+        serde_json::to_vec(&serde_json::json!({"cause":"no such container","message":format!("no container with name or ID \"{id}\" found: no such container"),"response":404})).unwrap()
+    }
+    #[test]
+    fn readonly_sequence_releases_result_only_after_final_info() {
+        let f = Fixture::new();
+        let held = ProtectedContext::load(&f.config).unwrap();
+        let body = info(&held);
+        let id = "a".repeat(64);
+        let mut routes = vec![];
+        let result = held
+            .inspect_with(&id, |route| {
+                routes.push(route.to_owned());
+                Ok(if routes.len() == 2 {
+                    (404, absence(&id))
+                } else {
+                    (200, body.clone())
+                })
+            })
+            .unwrap();
+        assert_eq!(result, super::super::native_status::InspectOutcome::Missing);
+        assert_eq!(
+            routes,
+            vec![
+                super::super::observation::INFO_ROUTE.to_string(),
+                super::super::native_status::inspect_route(&id).unwrap(),
+                super::super::observation::INFO_ROUTE.to_string()
+            ]
+        );
+    }
+    #[test]
+    fn readonly_info_failure_and_invalid_id_do_not_inspect() {
+        let f = Fixture::new();
+        let held = ProtectedContext::load(&f.config).unwrap();
+        let mut calls = 0;
+        assert!(held
+            .inspect_with("name", |_| {
+                calls += 1;
+                Ok((200, vec![]))
+            })
+            .is_err());
+        assert_eq!(calls, 0);
+        for status in [200, 401, 500] {
+            calls = 0;
+            assert!(held
+                .inspect_with(&"a".repeat(64), |_| {
+                    calls += 1;
+                    Ok((status, b"{}".to_vec()))
+                })
+                .is_err());
+            assert_eq!(calls, 1);
+        }
+    }
+    #[test]
+    fn readonly_final_failure_or_observation_change_withholds_absence() {
+        for change in 0..3 {
+            let f = Fixture::new();
+            let held = ProtectedContext::load(&f.config).unwrap();
+            let body = info(&held);
+            let id = "a".repeat(64);
+            let mut calls = 0;
+            assert!(held
+                .inspect_with(&id, |_| {
+                    calls += 1;
+                    match calls {
+                        1 => Ok((200, body.clone())),
+                        2 => Ok((404, absence(&id))),
+                        _ => match change {
+                            0 => Err("timeout"),
+                            1 => Ok((500, body.clone())),
+                            _ => {
+                                let mut v: serde_json::Value =
+                                    serde_json::from_slice(&body).unwrap();
+                                v["host"]["hostname"] = "other".into();
+                                Ok((200, serde_json::to_vec(&v).unwrap()))
+                            }
+                        },
+                    }
+                })
+                .is_err());
+            assert_eq!(calls, 3);
+        }
+    }
+    #[test]
+    fn readonly_revalidates_after_each_exchange_without_retry() {
+        for boundary in 1..=3 {
+            let f = Fixture::new();
+            let held = ProtectedContext::load(&f.config).unwrap();
+            let body = info(&held);
+            let id = "a".repeat(64);
+            let mut calls = 0;
+            assert!(held
+                .inspect_with(&id, |_| {
+                    calls += 1;
+                    if calls == boundary {
+                        fs::set_permissions(&f.config, fs::Permissions::from_mode(0o644)).unwrap();
+                    }
+                    Ok(if calls == 2 {
+                        (404, absence(&id))
+                    } else {
+                        (200, body.clone())
+                    })
+                })
+                .is_err());
+            assert_eq!(calls, boundary);
+        }
+    }
+    #[test]
+    fn readonly_initial_observation_mismatch_stops_before_inspect() {
+        let f = Fixture::new();
+        let held = ProtectedContext::load(&f.config).unwrap();
+        let mut v: serde_json::Value = serde_json::from_slice(&info(&held)).unwrap();
+        v["store"]["runRoot"] = "/run/other".into();
+        let mut calls = 0;
+        assert!(held
+            .inspect_with(&"a".repeat(64), |_| {
+                calls += 1;
+                Ok((200, serde_json::to_vec(&v).unwrap()))
+            })
+            .is_err());
+        assert_eq!(calls, 1);
+    }
+    #[test]
+    fn readonly_socket_change_at_each_boundary_rejects_result() {
+        for boundary in 1..=3 {
+            let f = Fixture::new();
+            let held = ProtectedContext::load(&f.config).unwrap();
+            let body = info(&held);
+            let id = "a".repeat(64);
+            let mut calls = 0;
+            assert!(held
+                .inspect_with(&id, |_| {
+                    calls += 1;
+                    if calls == boundary {
+                        fs::set_permissions(&f.socket, fs::Permissions::from_mode(0o660)).unwrap();
+                    }
+                    Ok(if calls == 2 {
+                        (404, absence(&id))
+                    } else {
+                        (200, body.clone())
+                    })
+                })
+                .is_err());
+            assert_eq!(calls, boundary);
+        }
+    }
+    #[test]
+    fn readonly_inspect_failure_does_not_retry() {
+        let f = Fixture::new();
+        let held = ProtectedContext::load(&f.config).unwrap();
+        let body = info(&held);
+        let mut calls = 0;
+        assert!(held
+            .inspect_with(&"a".repeat(64), |_| {
+                calls += 1;
+                if calls == 1 {
+                    Ok((200, body.clone()))
+                } else {
+                    Err("cancelled")
+                }
+            })
+            .is_err());
+        assert_eq!(calls, 2);
+    }
+    #[test]
+    fn readonly_present_is_also_finally_checked() {
+        let f = Fixture::new();
+        let held = ProtectedContext::load(&f.config).unwrap();
+        let body = info(&held);
+        let id = "a".repeat(64);
+        let mut calls = 0;
+        let result=held.inspect_with(&id, |_|{calls+=1;Ok((200,if calls==2{serde_json::to_vec(&serde_json::json!({"Id":id,"State":{"Status":"initialized","Running":false,"Paused":false,"Restarting":false,"Dead":false,"ExitCode":0}})).unwrap()}else{body.clone()}))}).unwrap();
+        assert_eq!(calls, 3);
+        assert!(
+            matches!(result,super::super::native_status::InspectOutcome::Present(state) if state.status=="initialized")
+        );
     }
 }

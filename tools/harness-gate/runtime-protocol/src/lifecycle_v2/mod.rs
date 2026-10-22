@@ -14,3 +14,6 @@ pub mod native_status;
 
 #[cfg(target_os = "linux")]
 pub mod protected_context;
+
+#[cfg(target_os = "linux")]
+pub mod readonly;

@@ -107,6 +107,22 @@ impl ExpectedContext {
         self.observation.validate()
     }
 
+    /// Supported local deployment policy, not an authentication claim.
+    /// Rootful sockets must belong to root; rootless sockets to the non-root
+    /// configured principal. Other deployments require an explicit future profile.
+    pub fn validate_local_socket_policy(&self) -> Result<(), &'static str> {
+        self.validate()?;
+        let uid = self.observation.socket.uid;
+        if self.observation.rootless {
+            if self.principal_uid == 0 || uid != self.principal_uid {
+                return Err("rootless socket must belong to non-root principal");
+            }
+        } else if uid != 0 {
+            return Err("rootful socket must belong to root");
+        }
+        Ok(())
+    }
+
     /// Integration entry on Unix: compare the configured principal to actual
     /// process euid, not another caller-supplied identity. Config protection is
     /// still the host's responsibility; this does not open any file.
@@ -313,5 +329,22 @@ mod tests {
             c.observation.socket.mode = mode;
             assert!(c.validate().is_err());
         }
+    }
+    #[test]
+    fn local_socket_owner_policy_is_explicit() {
+        let mut c = context();
+        c.principal_uid = 1000;
+        c.observation.rootless = false;
+        c.observation.socket.uid = 0;
+        assert!(c.validate_local_socket_policy().is_ok());
+        c.observation.socket.uid = 1000;
+        assert!(c.validate_local_socket_policy().is_err());
+        c.observation.rootless = true;
+        assert!(c.validate_local_socket_policy().is_ok());
+        c.observation.socket.uid = 1001;
+        assert!(c.validate_local_socket_policy().is_err());
+        c.principal_uid = 0;
+        c.observation.socket.uid = 0;
+        assert!(c.validate_local_socket_policy().is_err());
     }
 }

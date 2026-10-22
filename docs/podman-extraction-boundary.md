@@ -182,3 +182,21 @@ The transport must still bind its connection to the selected endpoint, enforce
 deadlines and pair before/after native observations. Same-UID malicious rollback,
 filesystem races during future connect, authentication and daemon restart proof
 are not solved by holding O_PATH. No real engine is contacted by these tests.
+
+### Protected read-only composition (94, Linux)
+
+`ProtectedContext::inspect_with` composes GET info, exact full-ID inspect and GET
+info using an injected exchange. It revalidates protected inputs before and after
+each call, matches the first observation before inspecting, and withholds both
+Present and Missing until the second observation matches and final revalidation
+succeeds. Invalid IDs fail before any exchange. Errors do not trigger retries.
+The callback must enforce HTTP framing, bounded reads, cancellation and deadlines;
+this composition does not provide those transport properties or peer identity.
+
+The supported local policy is explicit: rootful sockets are root-owned; rootless
+sockets belong to the configured non-root principal. Protected loading enforces
+this policy and current euid. This is a restricted product policy, not a claim
+about every Podman deployment, user namespaces, authentication or restart safety.
+The fake exchange tests do not establish real rootless or engine acceptance.
+Installation, request generation, slot/lease authority and ownership fields remain
+unconnected; a returned Missing is still not lease-release authorization.
