@@ -31,3 +31,6 @@ pub mod plan_record;
 
 #[cfg(target_os = "linux")]
 pub mod plan_storage;
+
+#[cfg(target_os = "linux")]
+pub mod installation;

@@ -123,6 +123,22 @@ impl PlanRecord {
         record.validate(context)?;
         Ok(record)
     }
+    pub(super) fn match_installation_snapshot(
+        &self,
+        identity: &SlotIdentity,
+        config: &[u8],
+    ) -> Result<()> {
+        identity.validate()?;
+        if self.wire.profile != identity.profile
+            || self.wire.asserted_installation_sha256 != identity.installation_sha256
+            || self.wire.asserted_executable_sha256 != identity.executable_sha256
+            || self.wire.config_sha256 != identity.config_sha256
+            || self.wire.config_json.as_bytes() != config
+        {
+            return Err("record installation snapshot mismatch");
+        }
+        Ok(())
+    }
     pub fn plan_bytes(&self) -> &[u8] {
         self.wire.plan_json.as_bytes()
     }

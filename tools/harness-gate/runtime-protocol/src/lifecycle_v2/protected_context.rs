@@ -19,7 +19,7 @@ fn io<T>(r: std::io::Result<T>) -> Result<T> {
     r.map_err(|_| "protected Podman filesystem rejected")
 }
 #[derive(PartialEq, Eq)]
-struct Identity {
+pub(super) struct Identity {
     dev: u64,
     ino: u64,
     mode: u32,
@@ -33,7 +33,7 @@ struct Identity {
     mtime_ns: i64,
 }
 impl Identity {
-    fn of(m: &fs::Metadata) -> Self {
+    pub(super) fn of(m: &fs::Metadata) -> Self {
         Self {
             dev: m.dev(),
             ino: m.ino(),
@@ -49,7 +49,7 @@ impl Identity {
         }
     }
 }
-fn protected(path: &Path) -> Result<()> {
+pub(super) fn protected(path: &Path) -> Result<()> {
     let text = path.to_str().ok_or("non-UTF8 path")?;
     if !path.is_absolute()
         || text.len() > 4096
@@ -1100,5 +1100,178 @@ mod tests {
             File::open(&other.config).unwrap()
         )
         .is_err());
+    }
+    fn installed_fixture() -> (Fixture, PathBuf) {
+        let f = Fixture::new();
+        let raw = ProtectedContext::load(&f.config).unwrap();
+        let config = serde_json::to_vec(&VersionedContext {
+            schema: CONTEXT_SCHEMA.into(),
+            context: raw.snapshot().unwrap().0.clone(),
+        })
+        .unwrap();
+        fs::write(&f.config, &config).unwrap();
+        let exe = f.dir.path().join("adapter");
+        fs::write(&exe, b"\x7fELFfake-no-execution").unwrap();
+        fs::set_permissions(
+            &exe,
+            fs::Permissions::from_mode(if unsafe { libc::geteuid() } == 0 {
+                0o755
+            } else {
+                0o700
+            }),
+        )
+        .unwrap();
+        let descriptor=format!("{{\"schema\":\"gate-runtime/podman-installation-v1\",\"product\":\"podman-lifecycle\",\"version\":\"0.1.0\",\"protocol\":\"gate-runtime/lifecycle-v2\",\"executable_path\":{},\"executable_sha256\":\"{:x}\",\"config_schema\":\"{}\"}}",serde_json::to_string(&exe).unwrap(),Sha256::digest(fs::read(&exe).unwrap()),CONTEXT_SCHEMA);
+        let install = f.dir.path().join("installation.json");
+        fs::write(&install, &descriptor).unwrap();
+        fs::set_permissions(&install, fs::Permissions::from_mode(0o600)).unwrap();
+        let host=format!("{{\"schema\":\"gate-runtime/podman-host-v1\",\"installation_path\":{},\"installation_sha256\":\"{:x}\",\"config_path\":{},\"config_sha256\":\"{:x}\"}}",serde_json::to_string(&install).unwrap(),Sha256::digest(descriptor.as_bytes()),serde_json::to_string(&f.config).unwrap(),Sha256::digest(&config));
+        let path = f.dir.path().join("host.json");
+        fs::write(&path, host).unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+        (f, path)
+    }
+    #[test]
+    fn held_installation_record_match_revalidates_without_upgrading_record() {
+        use super::super::{
+            installation::VerifiedPodmanInstallation,
+            plan_record::{PlanInputs, PlanRecord},
+        };
+        let (f, path) = installed_fixture();
+        let installed = VerifiedPodmanInstallation::load(&path).unwrap();
+        let context = installed.context().unwrap();
+        assert!(context.is_versioned());
+        let info = info(context);
+        let mut calls = 0;
+        let id = "b".repeat(64);
+        let capture = context
+            .capture_image_for_plan(&id, |_| {
+                calls += 1;
+                Ok((
+                    200,
+                    if calls == 2 {
+                        serde_json::to_vec(&serde_json::json!({"Id":id,"Config":{}})).unwrap()
+                    } else {
+                        info.clone()
+                    },
+                ))
+            })
+            .unwrap();
+        let inputs = super::super::plan_record::PlanInputs {
+            name: "fixture".into(),
+            labels: [("owner".into(), "fixture".into())].into(),
+            port: None,
+        };
+        let record = PlanRecord::capture(
+            context,
+            &capture,
+            installed.identity().unwrap(),
+            inputs.clone(),
+        )
+        .unwrap();
+        installed
+            .match_record(&record)
+            .unwrap()
+            .revalidate()
+            .unwrap();
+        assert!(!record.installation_verified());
+        let mut mismatch = installed.identity().unwrap().clone();
+        mismatch.executable_sha256 = "f".repeat(64);
+        let wrong =
+            PlanRecord::capture(context, &capture, &mismatch, PlanInputs { ..inputs }).unwrap();
+        assert!(installed.match_record(&wrong).is_err());
+        let matched = installed.match_record(&record).unwrap();
+        fs::write(f.dir.path().join("adapter"), b"\x7fELFreplaced").unwrap();
+        assert!(matched.revalidate().is_err());
+        assert!(!record.installation_verified());
+    }
+    #[test]
+    fn installation_substitution_modes_schema_and_digests_refuse() {
+        use super::super::installation::VerifiedPodmanInstallation;
+        for case in 0..7 {
+            let (f, path) = installed_fixture();
+            match case {
+                0 => fs::set_permissions(
+                    f.dir.path().join("adapter"),
+                    fs::Permissions::from_mode(0o777),
+                )
+                .unwrap(),
+                1 => {
+                    fs::write(f.dir.path().join("adapter"), b"not ELF").unwrap();
+                }
+                2 => {
+                    fs::write(&f.config, b"{}").unwrap();
+                }
+                3 => {
+                    let text = fs::read_to_string(&path)
+                        .unwrap()
+                        .replace("podman-host-v1", "docker-host-v1");
+                    fs::write(&path, text).unwrap();
+                }
+                4 => {
+                    fs::hard_link(f.dir.path().join("adapter"), f.dir.path().join("alias"))
+                        .unwrap();
+                }
+                5 => {
+                    let text = fs::read_to_string(&path).unwrap();
+                    fs::write(&path, format!("{text} ")).unwrap();
+                }
+                6 => {
+                    let exe = f.dir.path().join("adapter");
+                    fs::rename(&exe, f.dir.path().join("real-adapter")).unwrap();
+                    std::os::unix::fs::symlink(f.dir.path().join("real-adapter"), &exe).unwrap();
+                }
+                _ => unreachable!(),
+            }
+            assert!(
+                VerifiedPodmanInstallation::load(&path).is_err(),
+                "case {case}"
+            );
+        }
+    }
+    #[test]
+    fn held_config_rejects_opath_no_cloexec_hardlink_and_symlink() {
+        for case in 0..4 {
+            let (f, _) = installed_fixture();
+            let file = if case == 0 {
+                OpenOptions::new()
+                    .read(true)
+                    .custom_flags(libc::O_PATH)
+                    .open(&f.config)
+                    .unwrap()
+            } else {
+                File::open(&f.config).unwrap()
+            };
+            if case == 1 {
+                assert_eq!(
+                    unsafe { libc::fcntl(file.as_raw_fd(), libc::F_SETFD, 0) },
+                    0
+                );
+            }
+            if case == 2 {
+                fs::hard_link(&f.config, f.dir.path().join("config-link")).unwrap();
+            }
+            if case == 3 {
+                fs::rename(&f.config, f.dir.path().join("config-original")).unwrap();
+                std::os::unix::fs::symlink(f.dir.path().join("config-original"), &f.config)
+                    .unwrap();
+            }
+            assert!(ProtectedContext::from_held_versioned(&f.config, file).is_err());
+        }
+    }
+    #[test]
+    fn every_held_installation_member_replacement_is_rejected() {
+        use super::super::installation::VerifiedPodmanInstallation;
+        for name in ["host.json", "installation.json", "context.json", "adapter"] {
+            let (f, path) = installed_fixture();
+            let installed = VerifiedPodmanInstallation::load(&path).unwrap();
+            let member = f.dir.path().join(name);
+            let bytes = fs::read(&member).unwrap();
+            let mode = fs::metadata(&member).unwrap().permissions();
+            fs::rename(&member, f.dir.path().join("old-member")).unwrap();
+            fs::write(&member, bytes).unwrap();
+            fs::set_permissions(&member, mode).unwrap();
+            assert!(installed.revalidate().is_err(), "{name}");
+        }
     }
 }

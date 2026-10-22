@@ -100,3 +100,26 @@ path, writable/O_PATH descriptors and invalid wrappers fail. Socket opening is
 still a separate protected socket operation, not a connected transfer.
 Versioned capture -> PlanRecord -> create-new -> reopen is covered; this remains
 a context prerequisite, not held host/installation/executable verification.
+
+## Held installation checkpoint
+
+`VerifiedPodmanInstallation::load` holds host, installation, versioned config and
+executable snapshots. Canonical host keys: schema, installation_path,
+installation_sha256, config_path, config_sha256. Installation keys: schema,
+product, version, protocol, executable_path, executable_sha256, config_schema.
+Schemas are gate-runtime/podman-host-v1 and gate-runtime/podman-installation-v1;
+product/version/protocol/config_schema match the explicit Podman tuple/context.
+Descriptors are euid-owned, single-link 0400/0600, at most 1MiB. Executable is a
+single-link regular file at most 128MiB: nonroot euid owner 0500/0700 or root owner
+0555/0755; ELF magic required. ELF magic does not validate architecture, ABI or
+entrypoint. No file is executed. Protected ancestors and same held/path identity
+are rechecked; every snapshot is reread positionally for exact byte equality.
+Config is passed using a cloned original descriptor, never reopened by pathname.
+
+A live `RecordInstallationMatch` borrows the installation and record, compares
+profile, config bytes and asserted digests, and revalidates on each use. It cannot
+be deserialized. It does not change installation_verified(), grant a lease, or
+protect saved assertions against same-UID forgery/replay. Host path selection is
+still an explicit caller input; fixed Core-owned mapping and installed process
+launch are future integration work. Same-UID/root changes after checks, daemon
+identity, signature trust and real Podman remain outside this checkpoint.
