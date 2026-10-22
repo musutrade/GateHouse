@@ -549,4 +549,44 @@ mod tests {
             }
         }
     }
+    #[test]
+    fn image_metadata_is_withheld_until_final_protected_observation() {
+        for failure in 0..3 {
+            let f = Fixture::new();
+            let held = ProtectedContext::load(&f.config).unwrap();
+            let info_body = info(&held);
+            let id = "b".repeat(64);
+            let mut routes = vec![];
+            let image = serde_json::json!({"Id":id,"Labels":{"image":"value"},"Config":{"Labels":{"image":"value"},"ExposedPorts":{"80/tcp":{}}}});
+            let result = held.inspect_image_with(&id, |route| {
+                routes.push(route.to_string());
+                if failure == 1 && routes.len() == 2 {
+                    return Ok((404, b"{}".to_vec()));
+                }
+                if failure == 2 && routes.len() == 3 {
+                    return Err("cancelled");
+                }
+                Ok((
+                    200,
+                    if routes.len() == 2 {
+                        serde_json::to_vec(&image).unwrap()
+                    } else {
+                        info_body.clone()
+                    },
+                ))
+            });
+            if failure == 0 {
+                let facts = result.unwrap();
+                assert_eq!(facts.id(), id);
+                assert_eq!(routes.len(), 3);
+            } else {
+                assert!(result.is_err());
+                assert_eq!(routes.len(), if failure == 1 { 2 } else { 3 });
+            }
+            assert_eq!(
+                routes[1],
+                super::super::native_image::image_route(&id).unwrap()
+            );
+        }
+    }
 }

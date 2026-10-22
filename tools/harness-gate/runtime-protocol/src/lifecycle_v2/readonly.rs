@@ -2,6 +2,7 @@
 //! The exchange must supply bounded, deadline-controlled HTTP transport. This
 //! module does not prove a connection's identity, authentication or lifetime.
 use super::{
+    native_image::{decode_image, image_route, ImageFacts},
     native_info::decode_info,
     native_status::{decode_inspect, inspect_route, InspectOutcome, State},
     observation::INFO_ROUTE,
@@ -16,7 +17,7 @@ impl ProtectedContext {
     where
         F: FnMut(&str) -> Result<(u16, Vec<u8>), &'static str>,
     {
-        self.inspect_checked_with(id, get, |route, status, bytes| {
+        self.inspect_checked_with(&inspect_route(id)?, get, |route, status, bytes| {
             decode_inspect(id, "GET", route, status, bytes)
         })
     }
@@ -31,13 +32,22 @@ impl ProtectedContext {
         F: FnMut(&str) -> Result<(u16, Vec<u8>), &'static str>,
     {
         owner.validate()?;
-        self.inspect_checked_with(&owner.id, get, |route, status, bytes| {
+        self.inspect_checked_with(&inspect_route(&owner.id)?, get, |route, status, bytes| {
             owner.match_inspect("GET", route, status, bytes)
+        })
+    }
+    /// Image facts are returned only after matching both protected observations.
+    pub fn inspect_image_with<F>(&self, id: &str, get: F) -> Result<ImageFacts, &'static str>
+    where
+        F: FnMut(&str) -> Result<(u16, Vec<u8>), &'static str>,
+    {
+        self.inspect_checked_with(&image_route(id)?, get, |route, status, bytes| {
+            decode_image(id, "GET", route, status, bytes)
         })
     }
     fn inspect_checked_with<F, T, D>(
         &self,
-        id: &str,
+        route: &str,
         mut get: F,
         decode: D,
     ) -> Result<T, &'static str>
@@ -45,7 +55,6 @@ impl ProtectedContext {
         F: FnMut(&str) -> Result<(u16, Vec<u8>), &'static str>,
         D: FnOnce(&str, u16, &[u8]) -> Result<T, &'static str>,
     {
-        let route = inspect_route(id)?;
         let (expected, _) = self.snapshot()?;
         expected.validate_local_socket_policy()?;
         let exchange = |get: &mut F, path: &str| {
@@ -60,8 +69,8 @@ impl ProtectedContext {
         }
         let before = decode_info(&bytes, expected.observation.socket.clone())?;
         expected.match_current_operation(expected, &before, &before)?;
-        let (status, bytes) = exchange(&mut get, &route)?;
-        let result = decode(&route, status, &bytes)?;
+        let (status, bytes) = exchange(&mut get, route)?;
+        let result = decode(route, status, &bytes)?;
         let (status, bytes) = exchange(&mut get, INFO_ROUTE)?;
         if status != 200 {
             return Err("final native info unavailable");

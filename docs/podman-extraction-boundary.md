@@ -294,3 +294,28 @@ not automatic image discovery. Image inspection/provenance and durable binding
 must still supply/verify this set before dispatch. Config.ExposedPorts is not a
 separate authority source in this matcher. Native live state and rootless behavior,
 transport, durable dispatch and lease authority remain unproven.
+
+### Native image metadata derivation (99)
+
+`native_image` accepts only GET of a full lowercase image ID at the native
+v6.1.4 image inspect route, status 200 and exact Id equality. Config is required.
+Top-level Labels and Config.Labels must agree after missing/null/empty
+normalization. Config.ExposedPorts alone supplies the bounded canonical exposed
+set: missing/empty is empty; null or non-empty member objects are rejected.
+A top-level ExposedPorts alias is rejected. The shared bounded decoder rejects
+recursive duplicates. Digest/RepoTags/RepoDigests are not identity inputs.
+All non-200 responses, including 404, are unavailable; no image-absence outcome,
+pull, tag lookup, discovery or retry is introduced.
+
+ImageFacts has private fields, retains the exact response SHA256, merges explicit
+operator label overrides over the inspected image labels, and carries inspected
+EXPOSE metadata into CreatePlan. `inspect_image_with` brackets this decode with
+the same protected info/response/info sequence; final errors withhold the facts.
+Pure decoding and injected exchange do not prove a real engine or durable
+provenance. The raw response hash is not a signature or persistent reservation.
+Future integration must persist/bind image facts to the installation/context and
+create token; command/env/entrypoint/workdir/user/health defaults are still outside
+this selected metadata policy.
+
+Sources: [native ImageData](https://github.com/podman-container-tools/podman/blob/v6.1.4/vendor/go.podman.io/common/libimage/inspect.go),
+[OCI Config fields](https://github.com/podman-container-tools/podman/blob/v6.1.4/vendor/github.com/opencontainers/image-spec/specs-go/v1/config.go).

@@ -23,3 +23,5 @@ pub mod native_exec;
 pub mod ownership;
 
 pub mod native_create;
+
+pub mod native_image;
