@@ -407,3 +407,29 @@ Those remain host/adapter/journal responsibilities and are NOT implemented here.
 In particular, accepting the same response twice against the same supplied
 expected request is possible until the durable wrapper consumes the generation.
 No host or engine is connected to these types.
+
+## Exact Docker create and port policy
+
+Create emits POST /v{api}/containers/create?name={encoded name} with JSON keys:
+Image = immutable image_id; Labels = unique requested labels; Env = sorted
+`key=value` entries; ExposedPorts = {"{container_port}/tcp": {}};
+AttachStdin=false, AttachStdout=false, AttachStderr=false, OpenStdin=false,
+StdinOnce=false, Tty=false; HostConfig = {AutoRemove:false, Privileged:false,
+PublishAllPorts:false, NetworkMode:"bridge", RestartPolicy:{Name:"no",
+MaximumRetryCount:0}, PortBindings:{"{container_port}/tcp":[{HostIp:"127.0.0.1",
+HostPort:""}]}}. No host binds, device mappings, extra capabilities, host namespace,
+volume deletion, command/entrypoint override or pull. Image-declared configuration
+still applies (including volumes and entrypoint); this is not an image sandbox.
+The empty HostPort requests allocation by Docker. Image/label/port policy must be
+verified against fresh inspection after create/start; ignoring surplus port
+bindings is prohibited. Any unsupported configuration fails closed.
+
+Every exact-ID Target now includes nonzero container_port, saved in the lease and
+bound into the request digest. A response may contain zero port bindings (a fact
+usable for cleanup) or exactly one binding for that same TCP port on 127.0.0.1
+with a nonzero host port. Additional/wrong-port/non-loopback/UDP/ambiguous bindings
+are invalid; never select the first binding. Started and health require exactly
+one matching binding. Status with no binding is not service readiness; retaining
+this observation lets Core safely clean a container that failed port allocation.
+Create/stop may legitimately have no assigned port. No lifecycle adapter exists
+yet; these HTTP create fields are the specification for its future implementation.

@@ -44,6 +44,7 @@ pub struct Entry {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Target {
+    pub container_port: u16,
     pub object_id: String,
     pub name: String,
     pub labels: Vec<Entry>,
@@ -323,6 +324,9 @@ impl Operation {
     }
     fn validate(&self, b: &Binding) -> Result<()> {
         if let Some(t) = self.target() {
+            if t.container_port == 0 {
+                return Err(Invalid("invalid target port"));
+            }
             digest(&t.object_id)?;
             name(&t.name)?;
             ownership(&t.labels, b)?;
@@ -430,13 +434,13 @@ fn object_matches(object: &Object, target: &Target) -> Result<()> {
     digest(&object.object_id)?;
     name(&object.name)?;
     entries(&object.labels)?;
-    if object.ports.len() > 16 {
+    if object.ports.len() > 1 {
         return Err(Invalid("too many port bindings"));
     }
     for p in &object.ports {
         if p.protocol != "tcp"
             || p.host_ip != "127.0.0.1"
-            || p.container_port == 0
+            || p.container_port != target.container_port
             || p.host_port == 0
         {
             return Err(Invalid("invalid port binding"));
@@ -512,6 +516,7 @@ impl Response {
                     name,
                     labels,
                     image_id,
+                    container_port,
                     ..
                 },
                 Outcome::Created { object },
@@ -519,6 +524,7 @@ impl Response {
                 object_matches(
                     object,
                     &Target {
+                        container_port: *container_port,
                         object_id: object.object_id.clone(),
                         name: name.clone(),
                         labels: labels.clone(),
@@ -533,7 +539,7 @@ impl Response {
             }
             (Operation::Start { target }, Outcome::Started { object }) => {
                 object_matches(object, target)?;
-                if object.state != S::Running {
+                if object.state != S::Running || object.ports.len() != 1 {
                     return Err(Invalid("running state required"));
                 }
             }
@@ -566,7 +572,7 @@ impl Response {
             ) => {
                 digest(exec_id)?;
                 object_matches(object, target)?;
-                if object.state != S::Running {
+                if object.state != S::Running || object.ports.len() != 1 {
                     return Err(Invalid("health container not running"));
                 }
             }

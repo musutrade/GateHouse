@@ -22,6 +22,7 @@ fn labels() -> Vec<Entry> {
 }
 fn target() -> Target {
     Target {
+        container_port: 1234,
         object_id: "a".repeat(64),
         name: "test-container".into(),
         labels: labels(),
@@ -65,7 +66,16 @@ fn object(state: ContainerState) -> Object {
         name: t.name,
         labels: t.labels,
         state,
-        ports: vec![],
+        ports: if state == ContainerState::Running {
+            vec![Port {
+                container_port: 1234,
+                protocol: "tcp".into(),
+                host_ip: "127.0.0.1".into(),
+                host_port: 49152,
+            }]
+        } else {
+            vec![]
+        },
         image_id: format!("sha256:{}", "e".repeat(64)),
     }
 }
@@ -389,4 +399,110 @@ fn health_invalid_bounds_and_noninteger_exit_rejected() {
     .unwrap();
     v["outcome"]["exit_code"] = Value::Null;
     assert!(parse_response(&bytes(&v), &r).is_err());
+}
+
+#[test]
+fn ports_are_bound_to_requested_service_not_merely_loopback() {
+    let r = request(Operation::Status { target: target() });
+    let good = object(ContainerState::Running);
+    assert!(response(
+        &r,
+        Outcome::Status {
+            object: good.clone()
+        }
+    )
+    .validate(&r)
+    .is_ok());
+    for port in [
+        Port {
+            container_port: 9999,
+            ..good.ports[0].clone()
+        },
+        Port {
+            host_ip: "0.0.0.0".into(),
+            ..good.ports[0].clone()
+        },
+        Port {
+            host_port: 0,
+            ..good.ports[0].clone()
+        },
+        Port {
+            protocol: "udp".into(),
+            ..good.ports[0].clone()
+        },
+    ] {
+        let bad = Object {
+            ports: vec![port],
+            ..good.clone()
+        };
+        assert!(response(&r, Outcome::Status { object: bad })
+            .validate(&r)
+            .is_err());
+    }
+    let duplicate = Object {
+        ports: vec![good.ports[0].clone(); 2],
+        ..good.clone()
+    };
+    assert!(response(&r, Outcome::Status { object: duplicate })
+        .validate(&r)
+        .is_err());
+    // Empty bindings are a valid observation for cleanup, never readiness.
+    let empty = Object {
+        ports: vec![],
+        ..good
+    };
+    assert!(response(
+        &r,
+        Outcome::Status {
+            object: empty.clone()
+        }
+    )
+    .validate(&r)
+    .is_ok());
+    let start = request(Operation::Start { target: target() });
+    assert!(response(
+        &start,
+        Outcome::Started {
+            object: empty.clone()
+        }
+    )
+    .validate(&start)
+    .is_err());
+    let health = request(Operation::HealthExec {
+        target: target(),
+        argv: vec!["check".into()],
+        timeout_ms: 100,
+    });
+    assert!(response(
+        &health,
+        Outcome::Health {
+            exec_id: "f".repeat(64),
+            exit_code: 0,
+            object: empty
+        }
+    )
+    .validate(&health)
+    .is_err());
+}
+
+#[test]
+fn zero_target_port_is_not_authority_and_port_changes_change_digest() {
+    let original = request(Operation::Status { target: target() });
+    let mut changed = target();
+    changed.container_port = 9999;
+    let changed = request(Operation::Status { target: changed });
+    assert_ne!(
+        original.binding.operation_key,
+        changed.binding.operation_key
+    );
+    assert!(parse_protected_request(
+        &changed.canonical_bytes().unwrap(),
+        &original.canonical_bytes().unwrap()
+    )
+    .is_err());
+    let mut zero = target();
+    zero.container_port = 0;
+    assert!(request(Operation::Status { target: zero })
+        .validate()
+        .is_err());
 }
