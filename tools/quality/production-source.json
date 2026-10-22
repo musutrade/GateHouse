@@ -160,7 +160,16 @@
         "src/process/runtime_host_v3.rs",
         "src/process/runtime_host_files_v3.rs",
         "src/process/runtime_request_v3.rs",
-        "runtime-protocol/src/v3.rs"
+        "runtime-protocol/src/v3.rs",
+        "runtime-protocol/src/lifecycle/canonical.rs",
+        "runtime-protocol/src/lifecycle/installation/files.rs",
+        "runtime-protocol/src/lifecycle/installation/sealed.rs",
+        "runtime-protocol/src/lifecycle/installation.rs",
+        "runtime-protocol/src/lifecycle/journal/storage.rs",
+        "runtime-protocol/src/lifecycle/journal.rs",
+        "runtime-protocol/src/lifecycle/mod.rs",
+        "runtime-protocol/src/lifecycle/state.rs",
+        "runtime-protocol/src/lifecycle/wire.rs"
       ]
     },
     "project": {
@@ -395,6 +404,21 @@
       "path": "runtime-protocol/src/contract.rs",
       "kind": "test",
       "reason": "Inline cfg(test) contract module for the runtime protocol crate; no production code or executable mapping."
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/installation/files/tests.rs",
+      "kind": "test",
+      "reason": "Lifecycle regression tests reached only through cfg(test) modules; no production execution."
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/journal/storage/tests.rs",
+      "kind": "test",
+      "reason": "Lifecycle regression tests reached only through cfg(test) modules; no production execution."
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/wire/tests.rs",
+      "kind": "test",
+      "reason": "Lifecycle regression tests reached only through cfg(test) modules; no production execution."
     }
   ],
   "external_exclusions": [
@@ -473,6 +497,11 @@
       "path": "src/config/quality/model.rs",
       "reason": "Type declarations and derived implementations have no executable LLVM source mapping on this target; the AST inventory contains no handwritten functions or closures.",
       "sha256": "4206caf213e60bfa47ba267a58ce3c0d2bb2fb4bf65e8fb58d431f54c1d15a0e"
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/mod.rs",
+      "reason": "Module declarations/re-exports only, no executable LLVM mapping; implementation files remain measured.",
+      "sha256": "1c9fe3fbb19abead3287543acd4f20418b405201a4e254afa58807697dde108e"
     }
   ],
   "source_roots": [

@@ -96,6 +96,8 @@ SOURCE_FILES = sorted({"report_history/dashboard.rs", "report_history/dashboard/
     # full production inventory rather than rely on standalone unit tests.
     {"../runtime-protocol/src/lib.rs", "../runtime-protocol/src/wire.rs",
      "../runtime-protocol/src/intent.rs", "../runtime-protocol/src/store.rs", "../runtime-protocol/src/v2.rs", "../runtime-protocol/src/v3.rs"} |
+    # Explicit lifecycle authority, journal and protected installation; no threshold changes.
+    {'../runtime-protocol/src/lifecycle/canonical.rs', '../runtime-protocol/src/lifecycle/installation/files.rs', '../runtime-protocol/src/lifecycle/installation/sealed.rs', '../runtime-protocol/src/lifecycle/installation.rs', '../runtime-protocol/src/lifecycle/journal/storage.rs', '../runtime-protocol/src/lifecycle/journal.rs', '../runtime-protocol/src/lifecycle/mod.rs', '../runtime-protocol/src/lifecycle/state.rs', '../runtime-protocol/src/lifecycle/wire.rs'} |
     # Operator lifecycle extraction: the compatibility module loses the canary
     # state writer while run/compare remain. Include it in the measured risk
     # inventory and recollect both commits; series and thresholds are unchanged.
