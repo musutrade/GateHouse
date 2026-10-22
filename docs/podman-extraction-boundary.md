@@ -233,7 +233,7 @@ and supported state. Image labels must be accounted for in that complete map;
 unreviewed extra labels fail closed. Native inspect uses Name without a Docker
 leading slash and Image without a fabricated sha256 prefix.
 
-The initial port policy supports no published/exposed ports (empty Ports map),
+The initial checkpoint supported no published/exposed ports (empty Ports map),
 or one fixed nonzero TCP mapping on 127.0.0.1 with exactly the planned container
 and host port. Null, empty/multiple bindings, UDP, wildcard/IPv6, extra exposed
 ports and noncanonical host-port strings are refused. This is a restricted matcher,
@@ -274,3 +274,23 @@ and [vendored port mapping](https://github.com/podman-container-tools/podman/blo
 are pinned to v6.1.4. Image resolution/label derivation, durable plan binding,
 transport, mutation dispatch, cancellation/deadlines and lease integration remain
 required. No engine operation or publication is enabled by this checkpoint.
+
+
+### Image EXPOSE distinction (98)
+
+ExpectedContainer now carries an exact bounded canonical image-exposed port set.
+NetworkSettings.Ports must contain exactly the union of that set and the planned
+published TCP key. Image-only entries must be explicit null; the published key
+must still have the exact single loopback binding, even if also image-exposed.
+HostConfig.PortBindings remains strictly empty or the one planned binding: no
+exposed-null entries are admitted there. Missing/extra image keys, non-null image
+bindings, extra host bindings and null published bindings all fail closed.
+
+This supersedes checkpoint96's rejection of every exposed-null entry. CreatePlan
+can carry reviewed image-exposed metadata through the successful response to the
+expected object; adding metadata does not change the request or publish ports.
+The default empty set is an assertion that the selected image has no EXPOSE data,
+not automatic image discovery. Image inspection/provenance and durable binding
+must still supply/verify this set before dispatch. Config.ExposedPorts is not a
+separate authority source in this matcher. Native live state and rootless behavior,
+transport, durable dispatch and lease authority remain unproven.

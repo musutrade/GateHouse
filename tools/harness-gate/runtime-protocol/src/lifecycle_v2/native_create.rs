@@ -1,10 +1,10 @@
 //! Restricted native SpecGenerator encoding. No dispatch or durable authority.
 use super::{
     native_exec::decode_created,
-    ownership::{validate_plan, ExpectedContainer, FixedPort},
+    ownership::{validate_exposed, validate_plan, ExpectedContainer, FixedPort},
 };
 use serde::Serialize;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 type Result<T> = std::result::Result<T, &'static str>;
 pub const CREATE_ROUTE: &str = "/v6.1.4/libpod/containers/create";
 
@@ -13,6 +13,7 @@ pub struct CreatePlan {
     image: String,
     labels: BTreeMap<String, String>,
     port: Option<FixedPort>,
+    image_exposed_ports: BTreeSet<String>,
 }
 #[derive(Serialize)]
 struct Wire<'a> {
@@ -58,7 +59,15 @@ impl CreatePlan {
             image,
             labels,
             port,
+            image_exposed_ports: BTreeSet::new(),
         })
+    }
+    /// Carry reviewed image metadata without turning it into host mappings.
+    /// Image inspection/provenance must supply this exact set at integration.
+    pub fn with_image_exposed_ports(mut self, ports: BTreeSet<String>) -> Result<Self> {
+        validate_exposed(&ports)?;
+        self.image_exposed_ports = ports;
+        Ok(self)
     }
     pub fn body(&self) -> Result<Vec<u8>> {
         let ports = self
@@ -99,6 +108,7 @@ impl CreatePlan {
             image_id: self.image.clone(),
             labels: self.labels.clone(),
             port: self.port.clone(),
+            image_exposed_ports: self.image_exposed_ports.clone(),
         };
         expected.validate()?;
         Ok(expected)
@@ -167,5 +177,23 @@ mod tests {
             })
         )
         .is_err());
+    }
+    #[test]
+    fn image_expose_metadata_does_not_publish_ports() {
+        let empty_body = plan(None).body().unwrap();
+        let ports = BTreeSet::from(["80/tcp".into(), "53/udp".into()]);
+        let p = plan(None).with_image_exposed_ports(ports.clone()).unwrap();
+        assert_eq!(p.body().unwrap(), empty_body);
+        let expected = p
+            .expected_from_response(
+                201,
+                &serde_json::to_vec(&json!({"Id":"a".repeat(64),"Warnings":[]})).unwrap(),
+            )
+            .unwrap();
+        assert_eq!(expected.image_exposed_ports, ports);
+        assert!(expected.port.is_none());
+        assert!(plan(None)
+            .with_image_exposed_ports(BTreeSet::from(["080/tcp".into()]))
+            .is_err());
     }
 }

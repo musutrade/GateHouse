@@ -5,7 +5,7 @@ use super::{
     native_status::{decode_inspect, inspect_route, InspectOutcome, State},
 };
 use serde::Deserialize;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 type Result<T> = std::result::Result<T, &'static str>;
 
 #[derive(Debug, Clone)]
@@ -18,6 +18,8 @@ pub struct ExpectedContainer {
     pub labels: BTreeMap<String, String>,
     /// Fixed single TCP loopback mapping, or no published ports.
     pub port: Option<FixedPort>,
+    /// Exact image-declared ports; not host publishing authority.
+    pub image_exposed_ports: BTreeSet<String>,
 }
 #[derive(Debug, Clone)]
 pub struct FixedPort {
@@ -58,7 +60,7 @@ struct Restart {
     name: String,
     maximum_retry_count: u32,
 }
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Port {
     #[serde(rename = "HostIp")]
@@ -69,6 +71,7 @@ struct Port {
 impl ExpectedContainer {
     pub fn validate(&self) -> Result<()> {
         inspect_route(&self.id)?;
+        validate_exposed(&self.image_exposed_ports)?;
         validate_plan(&self.name, &self.image_id, &self.labels, self.port.as_ref())
     }
     /// Present only: never convert a missing container into an owned object.
@@ -96,7 +99,7 @@ impl ExpectedContainer {
         {
             return Err("native ownership facts mismatch");
         }
-        self.match_ports(&object.network_settings.ports)?;
+        self.match_network_ports(&object.network_settings.ports)?;
         self.match_ports(&object.host_config.port_bindings)?;
         let host = object.host_config;
         if host.privileged
@@ -108,6 +111,25 @@ impl ExpectedContainer {
             return Err("native host policy mismatch");
         }
         Ok(state)
+    }
+    fn match_network_ports(&self, ports: &BTreeMap<String, Option<Vec<Port>>>) -> Result<()> {
+        let published = self.port.as_ref().map(|p| format!("{}/tcp", p.container));
+        let mut expected = self.image_exposed_ports.clone();
+        if let Some(key) = &published {
+            expected.insert(key.clone());
+        }
+        if ports.keys().cloned().collect::<BTreeSet<_>>() != expected {
+            return Err("native exposed/published port keys mismatch");
+        }
+        let mut published_map = BTreeMap::new();
+        for (key, value) in ports {
+            if Some(key) == published.as_ref() {
+                published_map.insert(key.clone(), value.clone());
+            } else if value.is_some() {
+                return Err("image exposed port unexpectedly published");
+            }
+        }
+        self.match_ports(&published_map)
     }
     fn match_ports(&self, ports: &BTreeMap<String, Option<Vec<Port>>>) -> Result<()> {
         match &self.port {
@@ -129,6 +151,20 @@ impl ExpectedContainer {
             _ => Err("unexpected native port map"),
         }
     }
+}
+
+pub(super) fn validate_exposed(ports: &BTreeSet<String>) -> Result<()> {
+    if ports.len() > 64 {
+        return Err("too many image exposed ports");
+    }
+    for key in ports {
+        let (number, protocol) = key.split_once('/').ok_or("invalid exposed port")?;
+        let port = number.parse::<u16>().map_err(|_| "invalid exposed port")?;
+        if port == 0 || port.to_string() != number || !matches!(protocol, "tcp" | "udp" | "sctp") {
+            return Err("noncanonical exposed port");
+        }
+    }
+    Ok(())
 }
 
 pub(super) fn validate_plan(
@@ -181,6 +217,7 @@ mod tests {
                 ("io.gatehouse.lease".into(), "fixture-owned".into()),
                 ("image.label".into(), "inherited".into()),
             ]),
+            image_exposed_ports: BTreeSet::new(),
             port: Some(FixedPort {
                 container: 8080,
                 host: 18080,
@@ -347,5 +384,68 @@ mod tests {
             v["HostConfig"]["PortBindings"] = ports;
             assert!(check(&expected(), &v).is_err());
         }
+    }
+    #[test]
+    fn exposed_null_ports_are_not_host_bindings() {
+        let mut e = expected();
+        e.image_exposed_ports = BTreeSet::from(["53/udp".into(), "8080/tcp".into()]);
+        let mut v = fixture();
+        v["NetworkSettings"]["Ports"]["53/udp"] = Value::Null;
+        assert!(check(&e, &v).is_ok());
+        e.port = None;
+        v["HostConfig"]["PortBindings"] = json!({});
+        v["NetworkSettings"]["Ports"]["8080/tcp"] = Value::Null;
+        assert!(check(&e, &v).is_ok());
+    }
+    #[test]
+    fn exposed_keys_must_be_exact_and_unpublished() {
+        let mut e = expected();
+        e.image_exposed_ports = BTreeSet::from(["53/udp".into()]);
+        assert!(check(&e, &fixture()).is_err());
+        for value in [
+            json!([]),
+            json!([{"HostIp":"127.0.0.1","HostPort":"18053"}]),
+            json!({}),
+        ] {
+            let mut v = fixture();
+            v["NetworkSettings"]["Ports"]["53/udp"] = value;
+            assert!(check(&e, &v).is_err());
+        }
+        let mut v = fixture();
+        v["NetworkSettings"]["Ports"]["53/udp"] = Value::Null;
+        v["NetworkSettings"]["Ports"]["54/udp"] = Value::Null;
+        assert!(check(&e, &v).is_err());
+    }
+    #[test]
+    fn exposed_metadata_never_weakens_published_host_policy() {
+        let mut e = expected();
+        e.image_exposed_ports = BTreeSet::from(["53/udp".into(), "8080/tcp".into()]);
+        let mut v = fixture();
+        v["NetworkSettings"]["Ports"]["53/udp"] = Value::Null;
+        v["HostConfig"]["PortBindings"]["53/udp"] = Value::Null;
+        assert!(check(&e, &v).is_err());
+        v["HostConfig"]["PortBindings"]
+            .as_object_mut()
+            .unwrap()
+            .remove("53/udp");
+        v["NetworkSettings"]["Ports"]["8080/tcp"] = Value::Null;
+        assert!(check(&e, &v).is_err());
+    }
+    #[test]
+    fn exposed_keys_bounded_and_canonical() {
+        for key in [
+            "0/tcp",
+            "65536/tcp",
+            "080/tcp",
+            "80/TCP",
+            "80",
+            "80/tcp/other",
+            "+80/tcp",
+            "80/icmp",
+        ] {
+            assert!(validate_exposed(&BTreeSet::from([key.into()])).is_err());
+        }
+        assert!(validate_exposed(&(1..=65).map(|p| format!("{p}/tcp")).collect()).is_err());
+        assert!(validate_exposed(&BTreeSet::from(["65535/sctp".into()])).is_ok());
     }
 }
