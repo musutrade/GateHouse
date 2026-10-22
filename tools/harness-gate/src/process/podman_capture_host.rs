@@ -12,6 +12,37 @@ use std::{
     time::{Duration, Instant},
 };
 type Result<T> = std::result::Result<T, &'static str>;
+/// Project-selected, fixed read-only installation mapping. Never discovers a socket
+/// or executable from the environment and never persists the returned evidence.
+#[allow(dead_code)]
+pub(crate) fn capture_installed(
+    project: &crate::project::Project,
+    image_id: String,
+    inputs: PlanInputs,
+    timeout_ms: u32,
+    cancelled: impl Fn() -> bool,
+) -> Result<PlanRecord> {
+    capture_mapped(&project.root, image_id, inputs, timeout_ms, cancelled)
+}
+fn capture_mapped(
+    root: &std::path::Path,
+    image_id: String,
+    inputs: PlanInputs,
+    timeout_ms: u32,
+    cancelled: impl Fn() -> bool,
+) -> Result<PlanRecord> {
+    if !root.is_absolute()
+        || root
+            .canonicalize()
+            .map_err(|_| "Podman project root unavailable")?
+            != root
+    {
+        return Err("Podman project root must be canonical and absolute");
+    }
+    let host = root.join(".harness-gate/runtime/podman-capture-v1/host.json");
+    let installation = VerifiedPodmanInstallation::load(&host)?;
+    capture(&installation, image_id, inputs, timeout_ms, cancelled)
+}
 #[allow(dead_code)]
 pub(crate) fn capture(
     installation: &VerifiedPodmanInstallation,

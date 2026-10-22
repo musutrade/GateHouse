@@ -383,3 +383,66 @@ fn actual_native_host_get_signal_and_cancellation_discard_and_reap() {
         );
     }
 }
+
+#[test]
+fn fixed_project_mapping_captures_without_implicit_persistence() {
+    let (dir, _installed, listener, info) = fixture();
+    let root = dir.path();
+    let mapped = root.join(".harness-gate/runtime/podman-capture-v1");
+    fs::create_dir_all(&mapped).unwrap();
+    for p in [
+        root.join(".harness-gate"),
+        root.join(".harness-gate/runtime"),
+        mapped.clone(),
+    ] {
+        fs::set_permissions(p, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    fs::copy(root.join("host.json"), mapped.join("host.json")).unwrap();
+    let server = serve(listener, info);
+    let record = capture_mapped(root, "b".repeat(64), inputs(), 3000, || false).unwrap();
+    server.join().unwrap();
+    assert_eq!(fs::read_dir(&mapped).unwrap().count(), 1);
+    assert!(!record.installation_verified());
+    let installed = VerifiedPodmanInstallation::load(&mapped.join("host.json")).unwrap();
+    record
+        .create_new(&root.join("explicit-record"), installed.context().unwrap())
+        .unwrap();
+    assert_eq!(
+        PlanRecord::open(&root.join("explicit-record"), installed.context().unwrap())
+            .unwrap()
+            .encode()
+            .unwrap(),
+        record.encode().unwrap()
+    );
+}
+
+#[test]
+fn fixed_project_mapping_refuses_missing_and_symlink_hosts_without_fallback() {
+    let (dir, _installed, listener, _) = fixture();
+    let root = dir.path();
+    // A valid arbitrary host.json already exists at root; never use it as fallback.
+    assert!(capture_mapped(root, "b".repeat(64), inputs(), 3000, || false).is_err());
+    let mapped = root.join(".harness-gate/runtime/podman-capture-v1");
+    fs::create_dir_all(&mapped).unwrap();
+    for p in [
+        root.join(".harness-gate"),
+        root.join(".harness-gate/runtime"),
+        mapped.clone(),
+    ] {
+        fs::set_permissions(p, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    std::os::unix::fs::symlink(root.join("host.json"), mapped.join("host.json")).unwrap();
+    assert!(capture_mapped(root, "b".repeat(64), inputs(), 3000, || false).is_err());
+    assert!(capture_mapped(
+        std::path::Path::new("."),
+        "b".repeat(64),
+        inputs(),
+        3000,
+        || false
+    )
+    .is_err());
+    assert_eq!(
+        listener.accept().unwrap_err().kind(),
+        std::io::ErrorKind::WouldBlock
+    );
+}

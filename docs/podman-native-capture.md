@@ -157,3 +157,27 @@ explicit test source and never linked into production. These tests do not yet
 cover actual adapter SIGTERM/SIGINT during all three I/O phases, full stderr,
 blocked output below the cap, descendant reaping or arbitrary same-UID mutation
 after the final check. They do not establish real engine behavior.
+
+## Project mapping checkpoint 126
+
+Core's internal `capture_installed(Project, image_id, inputs, timeout, cancelled)`
+selects exactly `.harness-gate/runtime/podman-capture-v1/host.json` under the
+canonical absolute project root. No caller host path, environment lookup,
+default socket, alternate product or fallback is accepted at this entry.
+The existing held loader validates the protected host and its referenced members;
+installation/config/executable paths remain explicit descriptor fields, not
+required to reside beneath the project. The project selects the configuration;
+this mapping is not signed distribution trust or authentication.
+
+The call returns only a validated PlanRecord. It creates no directory, record,
+lease, reservation or mutation. The caller may separately use create_new, with
+its existing evidence-only and same-context limitations. Fake-native tests cover
+mapped capture, separate explicit persistence, missing mapped host despite a
+valid host elsewhere, and symlink refusal with zero socket connections.
+
+This is an internal mapping API, not a CLI or ServiceManager route. The native
+binary still requires the pinned local protocol source. No real Podman socket,
+installed release, public command, restart or rootless acceptance is claimed.
+Protected installation loading precedes the runner's request budget; filesystem
+work is not preempted. This does not strengthen the previously documented
+same-UID race or process-containment guarantees.
