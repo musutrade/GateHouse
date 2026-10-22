@@ -17,3 +17,5 @@ pub mod protected_context;
 
 #[cfg(target_os = "linux")]
 pub mod readonly;
+
+pub mod native_exec;

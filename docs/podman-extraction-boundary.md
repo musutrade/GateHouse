@@ -200,3 +200,27 @@ about every Podman deployment, user namespaces, authentication or restart safety
 The fake exchange tests do not establish real rootless or engine acceptance.
 Installation, request generation, slot/lease authority and ownership fields remain
 unconnected; a returned Missing is still not lease-release authorization.
+
+### Native exec wire checkpoint (95)
+
+`native_exec` freezes bounded explicit argv and deterministic exec-create/start
+bodies, full-ID native routes, 201 ID responses and detached-start empty 200.
+Container-create response validation requires an explicit empty Warnings array;
+null/missing/nonempty warnings fail closed. Container create request network/port
+policy and follow-up ownership inspection are not implemented in this checkpoint.
+
+Health inspection binds exact exec/container IDs, command arguments, user,
+privilege, TTY and attachment flags. Completed requires `Running=false` AND
+`CanRemove=true`: Podman's newly created, unstarted exec also has false Running
+and zero ExitCode. Pending is not successful health. A terminal exit code is
+preserved (0..255), including nonzero failure. No mutation is sent by these helpers.
+There is no idempotency key: the future host/adapter must durably reserve sends,
+retain unknown outcomes, never retry create/start, and bind deadline/cancellation
+and before/after context. Pure decoding is not a durable no-replay guarantee.
+
+Pinned source:
+
+- [Exec handlers](https://github.com/podman-container-tools/podman/blob/v6.1.4/pkg/api/handlers/compat/exec.go)
+- [Exec inspect construction](https://github.com/podman-container-tools/podman/blob/v6.1.4/libpod/container_exec.go)
+- [Exec inspect JSON fields](https://github.com/podman-container-tools/podman/blob/v6.1.4/libpod/define/container_inspect.go)
+- [Exec create fields](https://github.com/podman-container-tools/podman/blob/v6.1.4/vendor/github.com/moby/moby/api/types/container/exec_create_request.go)
