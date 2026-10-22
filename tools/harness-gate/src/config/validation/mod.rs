@@ -680,20 +680,21 @@ pub(super) fn validate_impact_input_path(path: &str) -> Result<()> {
     primitives::validate_repo_path("scope.impact.inputs", path)
 }
 
-fn validate_readiness_host(
+fn validate_service_host(
     runtime: crate::config::ContainerRuntimeKind,
     host: Option<&str>,
     image: &str,
+    field: &str,
 ) -> Result<()> {
     if let Some(host) = host {
         if runtime != crate::config::ContainerRuntimeKind::Docker
             || !std::path::Path::new(host).is_absolute()
             || host.chars().any(char::is_control)
         {
-            bail!("service readiness_host requires Docker and an absolute host path");
+            bail!("service {field} requires Docker and an absolute host path");
         }
         gatehouse_runtime_protocol::v3::validate_image(image)
-            .map_err(|_| anyhow::anyhow!("invalid v3 readiness image"))?;
+            .map_err(|_| anyhow::anyhow!("invalid {field} image"))?;
     }
     Ok(())
 }
@@ -711,6 +712,7 @@ fn validate_service_entry(id: &str, service: &ServiceConfig) -> Result<()> {
         ServiceConfig::Docker {
             runtime,
             readiness_host,
+            lifecycle_host,
             image,
             image_env,
             external_env,
@@ -723,7 +725,11 @@ fn validate_service_entry(id: &str, service: &ServiceConfig) -> Result<()> {
             connection,
         } => {
             validate_image(image)?;
-            validate_readiness_host(*runtime, readiness_host.as_deref(), image)?;
+            validate_service_host(*runtime, readiness_host.as_deref(), image, "readiness_host")?;
+            validate_service_host(*runtime, lifecycle_host.as_deref(), image, "lifecycle_host")?;
+            if lifecycle_host.is_some() && external_env.is_some() {
+                bail!("lifecycle_host cannot be combined with external_env");
+            }
             if *startup_timeout_secs == 0 || *startup_timeout_secs > 300 {
                 bail!("service {id:?} startup_timeout_secs must be between 1 and 300");
             }
@@ -1603,5 +1609,28 @@ mod service_validation_tests {
                 "{field}"
             );
         }
+    }
+    #[test]
+    fn lifecycle_contract_requires_explicit_docker_host_without_external_override() {
+        let absolute = std::env::current_dir().unwrap().join("lifecycle-host.json");
+        let mut valid = service();
+        valid["lifecycle_host"] = json!(absolute);
+        validate_service_entry("db", &serde_json::from_value(valid.clone()).unwrap()).unwrap();
+        for (field, value) in [
+            ("runtime", json!("podman")),
+            ("lifecycle_host", json!("relative.json")),
+            ("lifecycle_host", json!(format!("{}\n", absolute.display()))),
+            ("image", json!("repo?tag")),
+            ("external_env", json!("EXTERNAL_DATABASE")),
+        ] {
+            let mut invalid = valid.clone();
+            invalid[field] = value;
+            assert!(
+                validate_service_entry("db", &serde_json::from_value(invalid).unwrap()).is_err(),
+                "{field}"
+            );
+        }
+        valid["readiness_host"] = json!(absolute);
+        validate_service_entry("db", &serde_json::from_value(valid).unwrap()).unwrap();
     }
 }

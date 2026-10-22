@@ -66,6 +66,7 @@ impl ContainerRuntime for Fake {
 fn service(runtime: ContainerRuntimeKind, external_env: Option<String>) -> ServiceConfig {
     ServiceConfig::Docker {
         readiness_host: None,
+        lifecycle_host: None,
         runtime,
         image: "fixture-image".into(),
         image_env: None,
@@ -239,4 +240,29 @@ fn external_value_bypasses_installed_host_but_podman_managed_is_refused() {
         })
         .unwrap_err();
     assert!(e.to_string().contains("requires Docker"));
+}
+
+#[test]
+fn lifecycle_authority_is_neither_readiness_nor_external_override() {
+    let (_workspace, mut project) = project();
+    for external in [None, Some("HG_LIFECYCLE_EXTERNAL_81".into())] {
+        let mut config = service(ContainerRuntimeKind::Docker, external.clone());
+        if let ServiceConfig::Docker { lifecycle_host, .. } = &mut config {
+            *lifecycle_host = Some("/missing-lifecycle-host.json".into());
+        }
+        project.config.services.insert("fixture".into(), config);
+        let error = check_available_with_runtime::<Fake>(
+            &project,
+            "fixture",
+            Duration::from_secs(1),
+            |_| panic!("lifecycle authority must never select a CLI backend"),
+        )
+        .unwrap_err();
+        let expected = if external.is_some() {
+            "cannot be combined"
+        } else {
+            "explicit readiness_host"
+        };
+        assert!(format!("{error:#}").contains(expected), "{error:#}");
+    }
 }

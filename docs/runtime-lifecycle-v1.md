@@ -706,3 +706,38 @@ parent closes it. The guard records its owner PID so a child's destructor cannot
 unlock a still-live parent's guard. A deterministic blocked-child regression retains
 the original failure and verifies the fix; the durable slot fence still prevents
 reacquisition after failure even though the process lock is released.
+
+
+## Public managed-service routing checkpoint
+
+On Linux, `services.<id>.lifecycle_host` selects a protected lifecycle installation
+explicitly. Core derives the state base as the canonical project root plus
+`.harness-gate/lifecycle-services`, and the resource as `service:<id>` using the
+project input identity. No user-selected state base or environment-selected host
+is accepted. Existing group/world-writable ancestors, symlinks and a nonprivate
+state directory are rejected without permission repair. Immutable loaded service
+configuration supplies image, environment, one container port and health command;
+Core mints the invocation and ownership labels before acquiring the resource slot.
+Failed startup keeps the durable slot. ServiceManager teardown uses the lifecycle
+host and exact-ID absence proof; neither startup nor cleanup falls back to CLI.
+
+`external_env` cannot accompany `lifecycle_host`. Availability remains a separate
+read-only `readiness_host` operation; without that explicit host, availability
+returns an error rather than interpreting lifecycle installation as readiness.
+Other operating systems reject lifecycle service startup. Services without the new
+field keep the existing legacy engine route until subsequent migration. The public
+operator command, versioned protocol publication and real Docker acceptance remain
+gates; this checkpoint does not claim that all service engine calls are extracted.
+
+If a lock owner dies without running Drop, a surviving fork child can retain its
+open file description. Policy is conservative: refuse lock acquisition until all
+inherited holders close/exec/exit. Never force-unlock, clear the durable fence or
+start a second container. A subprocess regression tests actual owner `_exit` and a
+surviving blocked child. This is an availability limitation, not proof of daemon
+or process containment.
+
+An operator audit proof is persisted before service-slot release. If release fails,
+that proof does not mean the service slot is free; the slot record remains the
+release authority. Retrying explicit recovery requires a fresh authorization
+identity; the prior intent remains replay-blocked. Already released slots reject
+operator recovery instead of creating another intent.

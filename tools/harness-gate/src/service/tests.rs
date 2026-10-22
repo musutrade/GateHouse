@@ -389,6 +389,7 @@ fn docker_service_uses_a_valid_external_value_without_docker() {
         "database".into(),
         ServiceConfig::Docker {
             readiness_host: None,
+            lifecycle_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -423,6 +424,7 @@ fn docker_service_rejects_an_invalid_external_value_before_any_runtime() {
         "database".into(),
         ServiceConfig::Docker {
             readiness_host: None,
+            lifecycle_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -454,6 +456,7 @@ fn exclusive_external_service_is_not_reused_after_its_last_lease() {
         "database".into(),
         ServiceConfig::Docker {
             readiness_host: None,
+            lifecycle_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -496,6 +499,7 @@ fn podman_runtime_uses_external_service_without_starting_a_container() {
         "database".into(),
         ServiceConfig::Docker {
             readiness_host: None,
+            lifecycle_host: None,
             runtime: crate::config::ContainerRuntimeKind::Podman,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -527,6 +531,7 @@ fn managed_service_lease_excludes_concurrent_users() {
         "exclusive".into(),
         ServiceConfig::Docker {
             readiness_host: None,
+            lifecycle_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "postgres:16-alpine".into(),
             image_env: None,
@@ -607,6 +612,7 @@ esac
         "database".into(),
         ServiceConfig::Docker {
             readiness_host: None,
+            lifecycle_host: None,
             runtime: crate::config::ContainerRuntimeKind::Docker,
             image: "fixture-image".into(),
             image_env: None,
@@ -776,6 +782,7 @@ esac
             let errors = Arc::new(Mutex::new(Vec::new()));
             std::fs::write(std::env::var_os("HG_ID_REMOVE_LOG").unwrap(), "").unwrap();
             drop(super::RunningService {
+                lifecycle: None,
                 runtime,
                 inject_env: String::new(),
                 value: String::new(),

@@ -62,6 +62,14 @@ fn configured_image_service_rejects_wrong_container_port() {
 fn configured_image_service_retains_remove_failure() {
     joint(15);
 }
+#[test]
+fn public_service_manager_uses_fixed_slot_and_native_lifecycle_cleanup() {
+    joint(16);
+}
+#[test]
+fn public_service_manager_failed_start_keeps_fixed_slot_across_config_changes() {
+    joint(17);
+}
 fn joint(service_path: u8) {
     let path = std::env::var_os("GATEHOUSE_LIFECYCLE_ADAPTER")
         .expect("explicit native adapter path required");
@@ -164,7 +172,7 @@ fn joint(service_path: u8) {
                     "GET",
                     format!("{exec}/json"),
                     200,
-                    json!({"ID":"b".repeat(64),"ContainerID":"a".repeat(64),"Running":false,"ExitCode":if service_path >= 2 && service_path != 9 {0} else {7}}),
+                    json!({"ID":"b".repeat(64),"ContainerID":"a".repeat(64),"Running":false,"ExitCode":if service_path >= 2 && service_path != 9 && service_path != 17 {0} else {7}}),
                 ),
                 ("GET", inspect.clone(), 200, running.clone()),
             ],
@@ -208,6 +216,7 @@ fn joint(service_path: u8) {
             ]);
         }
         match service_path {
+            17 => operations.truncate(6),
             11 => {
                 operations[6][0].2 = 404;
                 operations[6][0].3 =
@@ -249,6 +258,7 @@ fn joint(service_path: u8) {
             }
             _ => {}
         }
+        let mut public_object: Option<(String, Value)> = None;
         let last = operations.len() - 1;
         for (index, operation) in operations.into_iter().enumerate() {
             // A malformed final absence response aborts before after-observation.
@@ -257,7 +267,7 @@ fn joint(service_path: u8) {
             } else {
                 identity()
             };
-            for (method, path, status, value) in
+            for (method, path, status, mut value) in
                 identity().into_iter().chain(operation).chain(after)
             {
                 let deadline = Instant::now() + Duration::from_secs(5);
@@ -285,7 +295,23 @@ fn joint(service_path: u8) {
                     assert!(header.len() < 16384);
                 }
                 let header = String::from_utf8(header).unwrap();
-                assert!(header.starts_with(&format!("{method} {path} HTTP/1.1\r\n")));
+                if service_path >= 16 && path.contains("/containers/create?") {
+                    let route = header
+                        .lines()
+                        .next()
+                        .unwrap()
+                        .split_whitespace()
+                        .nth(1)
+                        .unwrap();
+                    let name = route
+                        .strip_prefix("/v1.47/containers/create?name=gatehouse-")
+                        .unwrap();
+                    assert_eq!(name.len(), 32);
+                    assert!(name.bytes().all(|b| b.is_ascii_hexdigit()));
+                    public_object = Some((format!("/gatehouse-{name}"), Value::Null));
+                } else {
+                    assert!(header.starts_with(&format!("{method} {path} HTTP/1.1\r\n")));
+                }
                 let length: usize = header
                     .lines()
                     .find_map(|s| s.strip_prefix("Content-Length: "))
@@ -297,8 +323,18 @@ fn joint(service_path: u8) {
                 stream.read_exact(&mut body).unwrap();
                 if path.contains("/containers/create?") {
                     let body: Value = serde_json::from_slice(&body).unwrap();
+                    if let Some((_, labels)) = &mut public_object {
+                        *labels = body["Labels"].clone();
+                        assert_eq!(labels["gatehouse.lifecycle.resource"], "service:fixture");
+                    }
                     assert_eq!(body["HostConfig"]["AutoRemove"], false);
                     assert_eq!(body["Image"], format!("sha256:{}", "e".repeat(64)));
+                }
+                if value.get("Config").is_some() {
+                    if let Some((name, labels)) = &public_object {
+                        value["Name"] = name.clone().into();
+                        value["Config"]["Labels"] = labels.clone();
+                    }
                 }
                 let bytes = if value.is_null() {
                     vec![]
@@ -315,6 +351,74 @@ fn joint(service_path: u8) {
             }
         }
     });
+    if service_path >= 16 {
+        use gatehouse_runtime_protocol::lifecycle::journal::ServiceSlot;
+        crate::preset::init(directory.path(), "generic", false).unwrap();
+        assert!(std::process::Command::new("git")
+            .args(["init", "--quiet"])
+            .current_dir(directory.path())
+            .status()
+            .unwrap()
+            .success());
+        let mut project =
+            crate::project::Project::discover(Some(directory.path().to_path_buf()), None).unwrap();
+        project.config.services.insert(
+            "fixture".into(),
+            serde_json::from_value(json!({
+                "kind":"docker", "runtime":"docker", "image":"example:latest",
+                "lifecycle_host":host_path, "inject_env":"FIXTURE_URL", "startup_timeout_secs":20,
+                "container_port":1234, "environment":{}, "healthcheck":["check"],
+                "connection":"tcp://127.0.0.1:{host_port}"
+            }))
+            .unwrap(),
+        );
+        let mut manager = crate::service::ServiceManager::new(&project);
+        if service_path == 17 {
+            let error = manager.handle("fixture").unwrap().acquire().err().unwrap();
+            assert!(format!("{error:#}").contains("health failed"), "{error:#}");
+            drop(manager);
+            server.join().unwrap();
+            let base = directory.path().join(".harness-gate/lifecycle-services");
+            let root = ServiceSlot::mapped_root(
+                &base,
+                &project.input().project_identity,
+                "service:fixture",
+            )
+            .unwrap();
+            let retained = fs::read(root.join("service.json")).unwrap();
+            let record: Value = serde_json::from_slice(&retained).unwrap();
+            assert_eq!(record["released"], false);
+            if let crate::config::ServiceConfig::Docker { image, .. } =
+                project.config.services.get_mut("fixture").unwrap()
+            {
+                *image = "another:latest".into();
+            }
+            let mut next = crate::service::ServiceManager::new(&project);
+            let error = next.handle("fixture").unwrap().acquire().err().unwrap();
+            assert!(format!("{error:#}").contains("slot retained"), "{error:#}");
+            assert_eq!(fs::read(root.join("service.json")).unwrap(), retained);
+            return;
+        }
+        let lease = manager.handle("fixture").unwrap().acquire().unwrap();
+        assert_eq!(
+            lease.environment(),
+            ("FIXTURE_URL".into(), "tcp://127.0.0.1:49152".into())
+        );
+        let base = directory.path().join(".harness-gate/lifecycle-services");
+        let root =
+            ServiceSlot::mapped_root(&base, &project.input().project_identity, "service:fixture")
+                .unwrap();
+        let active: Value =
+            serde_json::from_slice(&fs::read(root.join("service.json")).unwrap()).unwrap();
+        assert_eq!(active["released"], false);
+        drop(lease);
+        manager.cleanup().unwrap();
+        let released: Value =
+            serde_json::from_slice(&fs::read(root.join("service.json")).unwrap()).unwrap();
+        assert_eq!(released["released"], true);
+        server.join().unwrap();
+        return;
+    }
     let base_root = directory.path().join("journal");
     let root = if service_path != 0 {
         gatehouse_runtime_protocol::lifecycle::journal::ServiceSlot::mapped_root(

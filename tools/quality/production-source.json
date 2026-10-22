@@ -219,7 +219,10 @@
         "src/service/mod.rs",
         "src/service/report_directory.rs",
         "src/service/lifecycle.rs",
-        "src/service/lifecycle/recovery.rs"
+        "src/service/lifecycle/recovery.rs",
+        "src/service/lifecycle_public.rs",
+        "src/service/lifecycle_public/linux.rs",
+        "src/service/lifecycle_public/unsupported.rs"
       ]
     },
     "service-adapters": {

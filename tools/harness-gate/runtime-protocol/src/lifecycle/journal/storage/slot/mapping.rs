@@ -41,3 +41,61 @@ impl ServiceSlot {
         Ok(slot)
     }
 }
+
+impl ServiceSlot {
+    /// Fixed Core namespace below the canonical project root. No environment or
+    /// host/config path selects the base. Existing unsafe entries are never fixed.
+    pub fn project_state_base(project: &Path) -> Result<PathBuf> {
+        if !project.is_absolute() || io(fs::canonicalize(project))? != project {
+            return Err(Invalid("project state root must be canonical"));
+        }
+        for path in project.ancestors() {
+            let m = io(fs::symlink_metadata(path))?;
+            if !m.is_dir()
+                || m.mode() & 0o022 != 0
+                || ![0, unsafe { libc::geteuid() }].contains(&m.uid())
+            {
+                return Err(Invalid("unprotected project state ancestor"));
+            }
+        }
+        let mut directory = io(OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+            .open(project))?;
+        let mut path = project.to_path_buf();
+        for component in [".harness-gate", "lifecycle-services"] {
+            let name = CString::new(component).unwrap();
+            if unsafe { libc::mkdirat(directory.as_raw_fd(), name.as_ptr(), 0o700) } != 0
+                && std::io::Error::last_os_error().kind() != std::io::ErrorKind::AlreadyExists
+            {
+                return Err(Invalid("cannot provision fixed lifecycle state"));
+            }
+            io(directory.sync_all())?;
+            let fd = unsafe {
+                libc::openat(
+                    directory.as_raw_fd(),
+                    name.as_ptr(),
+                    libc::O_RDONLY | libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+                )
+            };
+            if fd < 0 {
+                return Err(Invalid("invalid lifecycle state directory"));
+            }
+            let child = unsafe { File::from_raw_fd(fd) };
+            let m = io(child.metadata())?;
+            if m.uid() != unsafe { libc::geteuid() } || m.mode() & 0o022 != 0 {
+                return Err(Invalid("unprotected lifecycle state directory"));
+            }
+            path.push(component);
+            directory = child;
+        }
+        // Require exact private final directory, canonical ancestors and lockability.
+        let verified = Journal::directory(&path)?;
+        let actual = io(verified.metadata())?;
+        let held = io(directory.metadata())?;
+        if (actual.dev(), actual.ino()) != (held.dev(), held.ino()) {
+            return Err(Invalid("lifecycle state directory changed"));
+        }
+        Ok(path)
+    }
+}

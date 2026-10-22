@@ -35,6 +35,9 @@ impl OperatorRecovery {
         let record: Record = serde_json::from_value(canonical::parse_canonical(&bytes)?)
             .map_err(|_| Invalid("invalid operator slot record"))?;
         record.validate()?;
+        if record.released {
+            return Err(Invalid("released slot does not require operator recovery"));
+        }
         if record.fence != fence
             || record.resolve.binding.lease_invocation != lease_invocation
             || record.resolve.binding.project_id != project

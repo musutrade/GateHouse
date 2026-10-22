@@ -208,3 +208,94 @@ fn nonowner_guard_drop_cannot_unlock_live_owner() {
     drop(held);
     assert!(Journal::directory(d.path()).is_ok());
 }
+
+#[test]
+fn owner_death_retains_lock_until_surviving_child_closes_it() {
+    use std::io::{BufRead, Write};
+    use std::process::{Command, Stdio};
+    if let Some(root) = std::env::var_os("GATEHOUSE_LOCK_DEATH_FIXTURE") {
+        let _guard = Journal::directory(Path::new(&root)).unwrap();
+        // SAFETY: after fork the child uses only async-signal-safe libc calls.
+        let pid = unsafe { libc::fork() };
+        assert!(pid >= 0);
+        if pid == 0 {
+            unsafe {
+                libc::write(1, b"LOCK_CHILD_READY\n".as_ptr().cast(), 17);
+                let mut byte = 0u8;
+                libc::read(0, (&mut byte as *mut u8).cast(), 1);
+                libc::_exit(0);
+            }
+        }
+        // Deliberately bypass Drop, modelling abrupt owner death.
+        unsafe {
+            libc::_exit(0);
+        }
+    }
+    let (d, _, _) = fixture();
+    let mut owner = Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", "lifecycle::journal::storage::slot::tests::owner_death_retains_lock_until_surviving_child_closes_it", "--nocapture"])
+        .env("GATEHOUSE_LOCK_DEATH_FIXTURE", d.path())
+        .stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().unwrap();
+    let mut output = std::io::BufReader::new(owner.stdout.take().unwrap());
+    loop {
+        let mut line = String::new();
+        assert!(
+            output.read_line(&mut line).unwrap() != 0,
+            "child never became ready"
+        );
+        if line.contains("LOCK_CHILD_READY") {
+            break;
+        }
+    }
+    let mut control = owner.stdin.take().unwrap();
+    assert!(owner.wait().unwrap().success());
+    let blocked = Journal::directory(d.path()).is_err();
+    control.write_all(b"x").unwrap();
+    let mut remaining = vec![];
+    output.read_to_end(&mut remaining).unwrap();
+    assert!(
+        blocked,
+        "owner death must not authorize breaking the child's lock"
+    );
+    assert!(Journal::directory(d.path()).is_ok());
+}
+
+#[test]
+fn project_state_base_is_fixed_private_and_rejects_unsafe_existing_paths() {
+    let (d, _, _) = fixture();
+    let base = ServiceSlot::project_state_base(d.path()).unwrap();
+    assert_eq!(base, d.path().join(".harness-gate/lifecycle-services"));
+    assert_eq!(fs::metadata(&base).unwrap().mode() & 0o777, 0o700);
+    assert_eq!(ServiceSlot::project_state_base(d.path()).unwrap(), base);
+    fs::set_permissions(&base, fs::Permissions::from_mode(0o755)).unwrap();
+    assert!(ServiceSlot::project_state_base(d.path()).is_err());
+    assert_eq!(fs::metadata(&base).unwrap().mode() & 0o777, 0o755);
+    let (other, _, _) = fixture();
+    std::os::unix::fs::symlink(d.path().join(".harness-gate"), other.path().join(".harness-gate")).unwrap();
+    assert!(ServiceSlot::project_state_base(other.path()).is_err());
+    let (writable, _, _) = fixture();
+    fs::set_permissions(writable.path(), fs::Permissions::from_mode(0o770)).unwrap();
+    assert!(ServiceSlot::project_state_base(writable.path()).is_err());
+    assert!(!writable.path().join(".harness-gate").exists());
+}
+
+#[test]
+fn operator_entry_rejects_precreate_and_released_slots_without_intent() {
+    let (d, r, p) = fixture();
+    let slot = ServiceSlot::acquire_mapped(d.path(), r.clone(), p, vec![]).unwrap();
+    let root = slot.root.clone();
+    drop(slot);
+    for released in [false, true] {
+        let path = root.join("service.json");
+        let mut record: Record = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        record.released = released;
+        fs::write(path, record.bytes().unwrap()).unwrap();
+        let error = OperatorRecovery::open_mapped(d.path(), &r.binding.project_id,
+            &r.binding.resource_id, 1, &r.binding.lease_invocation, &"9".repeat(32))
+            .err().expect("no recovery authority");
+        if released {
+            assert!(error.to_string().contains("released slot"));
+        }
+        assert!(!root.join(format!("operator-{}.json", "9".repeat(32))).exists());
+    }
+}

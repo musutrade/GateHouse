@@ -289,9 +289,12 @@ pub enum ServiceConfig {
         #[serde(default)]
         runtime: ContainerRuntimeKind,
         /// Protected installed-v2 host used only for read-only availability.
-        /// Startup and cleanup retain their existing engine implementation.
+        /// Startup and cleanup use the separately selected lifecycle route.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         readiness_host: Option<String>,
+        /// Explicit protected lifecycle-v1 host. Never falls back to an engine CLI.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        lifecycle_host: Option<String>,
         image: String,
         #[serde(default)]
         image_env: Option<String>,

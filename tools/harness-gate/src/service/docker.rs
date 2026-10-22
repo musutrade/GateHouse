@@ -100,6 +100,7 @@ pub(super) fn start_docker(
     }
 
     let mut running = RunningService {
+        lifecycle: None,
         runtime,
         inject_env,
         value: String::new(),

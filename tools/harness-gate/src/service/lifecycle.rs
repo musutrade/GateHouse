@@ -25,7 +25,7 @@ pub(crate) struct LifecycleService {
     port: u16,
 }
 
-fn nonce() -> Result<String> {
+pub(super) fn nonce() -> Result<String> {
     let mut bytes = [0u8; 16];
     let mut offset = 0;
     while offset < bytes.len() {
