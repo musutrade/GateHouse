@@ -121,3 +121,90 @@ fn standalone_or_legacy_lease_is_never_implicitly_adopted() {
         assert!(!d.path().join("service.json").exists());
     }
 }
+
+#[test]
+fn mapping_is_stable_across_config_changes_and_separates_resources() {
+    let (d, mut r, p) = fixture();
+    let root =
+        ServiceSlot::mapped_root(d.path(), &r.binding.project_id, &r.binding.resource_id).unwrap();
+    let slot = ServiceSlot::acquire_mapped(d.path(), r.clone(), p.clone(), vec![]).unwrap();
+    assert_eq!(slot.root, root);
+    drop(slot);
+    r.operation = Operation::ResolveImage {
+        image: "different:tag".into(),
+    };
+    r.binding.operation_key = r.operation_key().unwrap();
+    assert!(ServiceSlot::acquire_mapped(d.path(), r.clone(), p, vec![]).is_err());
+    assert_ne!(
+        root,
+        ServiceSlot::mapped_root(d.path(), &r.binding.project_id, "another").unwrap()
+    );
+    let escaped = ServiceSlot::mapped_root(d.path(), "../outside", "../../resource").unwrap();
+    assert_eq!(escaped.parent(), Some(d.path()));
+}
+#[test]
+fn mapping_rejects_symlinks_and_unprotected_existing_directories() {
+    for symlink in [true, false] {
+        let (d, r, p) = fixture();
+        let root =
+            ServiceSlot::mapped_root(d.path(), &r.binding.project_id, &r.binding.resource_id)
+                .unwrap();
+        if symlink {
+            std::os::unix::fs::symlink(d.path(), &root).unwrap();
+        } else {
+            fs::create_dir(&root).unwrap();
+            fs::set_permissions(&root, fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        assert!(ServiceSlot::acquire_mapped(d.path(), r, p, vec![]).is_err());
+    }
+}
+
+#[test]
+fn ending_directory_guard_revokes_incidental_fork_inheritance() {
+    let (d, _, _) = fixture();
+    let held = Journal::directory(d.path()).unwrap();
+    let mut fds = [-1; 2];
+    // SAFETY: writable two-int array; child below uses only async-signal-safe calls.
+    assert_eq!(unsafe { libc::pipe(fds.as_mut_ptr()) }, 0);
+    let pid = unsafe { libc::fork() };
+    assert!(pid >= 0);
+    if pid == 0 {
+        unsafe {
+            libc::close(fds[1]);
+            let mut byte = 0u8;
+            libc::read(fds[0], (&mut byte as *mut u8).cast(), 1);
+            libc::_exit(0);
+        }
+    }
+    unsafe {
+        libc::close(fds[0]);
+    }
+    drop(held);
+    // The child is still blocked with an inherited descriptor. The owner's guard
+    // lifetime has ended, so that incidental descriptor must not retain its lock.
+    let acquired = Journal::directory(d.path());
+    unsafe {
+        let byte = 1u8;
+        libc::write(fds[1], (&byte as *const u8).cast(), 1);
+        libc::close(fds[1]);
+        libc::waitpid(pid, std::ptr::null_mut(), 0);
+    }
+    assert!(
+        acquired.is_ok(),
+        "fork child prolonged the owner's ended guard"
+    );
+}
+
+#[test]
+fn nonowner_guard_drop_cannot_unlock_live_owner() {
+    let (d, _, _) = fixture();
+    let held = Journal::directory(d.path()).unwrap();
+    let inherited = LockedDirectory {
+        file: held.file.try_clone().unwrap(),
+        owner_pid: -1,
+    };
+    drop(inherited);
+    assert!(Journal::directory(d.path()).is_err());
+    drop(held);
+    assert!(Journal::directory(d.path()).is_ok());
+}

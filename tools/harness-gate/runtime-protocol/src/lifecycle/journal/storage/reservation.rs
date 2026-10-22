@@ -59,7 +59,7 @@ impl ReservationRecord {
 }
 pub struct Reservation {
     root: PathBuf,
-    directory: File,
+    directory: LockedDirectory,
     record: ReservationRecord,
     bytes: Vec<u8>,
     ready_resolve: bool,

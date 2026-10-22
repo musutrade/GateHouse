@@ -28,12 +28,42 @@ fn private(m: &fs::Metadata, directory: bool) -> Result<()> {
     Ok(())
 }
 
+/// Explicitly revoke the owner's lock before descriptor close. CLOEXEC alone
+/// does not prevent an incidental fork child from prolonging a flock lifetime.
+struct LockedDirectory {
+    file: File,
+    owner_pid: libc::pid_t,
+}
+impl std::ops::Deref for LockedDirectory {
+    type Target = File;
+    fn deref(&self) -> &File {
+        &self.file
+    }
+}
+impl Drop for LockedDirectory {
+    fn drop(&mut self) {
+        // SAFETY: live owned directory descriptor. This ends the parent's guard,
+        // including incidental copies inherited by children before exec.
+        if unsafe { libc::getpid() } != self.owner_pid {
+            return;
+        }
+        loop {
+            let result = unsafe { libc::flock(self.file.as_raw_fd(), libc::LOCK_UN) };
+            if result == 0
+                || std::io::Error::last_os_error().kind() != std::io::ErrorKind::Interrupted
+            {
+                break;
+            }
+        }
+    }
+}
+
 /// Holds a nonblocking exclusive resource-directory lock. Dispatch is unavailable
 /// after reopen until a new request has been durably prepared. Directory must be
 /// provisioned by Core; this store never discovers or migrates another lease.
 pub struct Journal {
     root: PathBuf,
-    directory: File,
+    directory: LockedDirectory,
     record: Record,
     bytes: Vec<u8>,
     poisoned: bool,
@@ -88,7 +118,7 @@ impl Dispatch<'_> {
     }
 }
 impl Journal {
-    fn directory(root: &Path) -> Result<File> {
+    fn directory(root: &Path) -> Result<LockedDirectory> {
         if !root.is_absolute() || io(fs::canonicalize(root))? != root {
             return Err(Invalid("journal path must be canonical"));
         }
@@ -112,7 +142,10 @@ impl Journal {
         if unsafe { libc::flock(directory.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } != 0 {
             return Err(Invalid("lifecycle resource is locked"));
         }
-        Ok(directory)
+        Ok(LockedDirectory {
+            file: directory,
+            owner_pid: unsafe { libc::getpid() },
+        })
     }
     fn at(directory: &File, name: &str, flags: i32) -> Result<Option<File>> {
         let name = CString::new(name).map_err(|_| Invalid("invalid journal member"))?;
@@ -264,7 +297,7 @@ impl Journal {
         let directory = Self::directory(root)?;
         Self::open_held(root, create, directory)
     }
-    fn open_held(root: &Path, create: &Request, directory: File) -> Result<Self> {
+    fn open_held(root: &Path, create: &Request, directory: LockedDirectory) -> Result<Self> {
         let bytes = Self::read(&directory, "lease.json")?
             .ok_or(Invalid("missing journal; no automatic adoption"))?;
         let value = canonical::parse_canonical(&bytes)?;
@@ -387,4 +420,4 @@ mod reservation;
 pub use reservation::{Reservation, ResolutionDispatch};
 
 mod slot;
-pub use slot::ServiceSlot;
+pub use slot::{OperatorRecovery, ServiceSlot};

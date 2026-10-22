@@ -42,6 +42,26 @@ fn configured_image_service_retains_exited_for_operator_recovery() {
 fn configured_image_service_retains_failed_stop() {
     joint(8);
 }
+#[test]
+fn configured_image_service_failed_health_requires_explicit_operator_cleanup() {
+    joint(9);
+}
+#[test]
+fn configured_image_service_initial_absence_requires_operator_recovery() {
+    joint(11);
+}
+#[test]
+fn configured_image_service_rejects_multiple_ports() {
+    joint(13);
+}
+#[test]
+fn configured_image_service_rejects_wrong_container_port() {
+    joint(14);
+}
+#[test]
+fn configured_image_service_retains_remove_failure() {
+    joint(15);
+}
 fn joint(service_path: u8) {
     let path = std::env::var_os("GATEHOUSE_LIFECYCLE_ADAPTER")
         .expect("explicit native adapter path required");
@@ -60,7 +80,8 @@ fn joint(service_path: u8) {
     let socket = socket_dir.path().join("engine.sock");
     let listener = UnixListener::bind(&socket).unwrap();
     listener.set_nonblocking(true).unwrap();
-    let (directory, installed, mut request, _) = fixture_inputs("created", &binary, Some(&socket));
+    let (directory, installed, mut request, host_path) =
+        fixture_inputs("created", &binary, Some(&socket));
     let Operation::Create {
         name,
         labels,
@@ -143,7 +164,7 @@ fn joint(service_path: u8) {
                     "GET",
                     format!("{exec}/json"),
                     200,
-                    json!({"ID":"b".repeat(64),"ContainerID":"a".repeat(64),"Running":false,"ExitCode":if service_path >= 2 {0} else {7}}),
+                    json!({"ID":"b".repeat(64),"ContainerID":"a".repeat(64),"Running":false,"ExitCode":if service_path >= 2 && service_path != 9 {0} else {7}}),
                 ),
                 ("GET", inspect.clone(), 200, running.clone()),
             ],
@@ -187,6 +208,25 @@ fn joint(service_path: u8) {
             ]);
         }
         match service_path {
+            11 => {
+                operations[6][0].2 = 404;
+                operations[6][0].3 =
+                    json!({"message":format!("No such container: {}", "a".repeat(64))});
+                operations.truncate(7);
+            }
+            13 | 14 => {
+                operations[3][2].3["NetworkSettings"]["Ports"] = if service_path == 13 {
+                    json!({"1234/tcp":[{"HostIp":"127.0.0.1","HostPort":"49152"},{"HostIp":"127.0.0.1","HostPort":"49153"}]})
+                } else {
+                    json!({"4321/tcp":[{"HostIp":"127.0.0.1","HostPort":"49152"}]})
+                };
+                operations.truncate(4);
+            }
+            15 => {
+                operations[9][1].2 = 500;
+                operations[9][1].3 = json!({"message":"remove failed"});
+                operations.truncate(10);
+            }
             5 => {
                 operations[2][0].3 = running.clone();
                 operations.truncate(3);
@@ -212,7 +252,7 @@ fn joint(service_path: u8) {
         let last = operations.len() - 1;
         for (index, operation) in operations.into_iter().enumerate() {
             // A malformed final absence response aborts before after-observation.
-            let after = if matches!(service_path, 4 | 8) && index == last {
+            let after = if matches!(service_path, 4 | 8 | 13 | 14 | 15) && index == last {
                 vec![]
             } else {
                 identity()
@@ -275,11 +315,21 @@ fn joint(service_path: u8) {
             }
         }
     });
-    let root = directory.path().join("journal");
+    let base_root = directory.path().join("journal");
+    let root = if service_path != 0 {
+        gatehouse_runtime_protocol::lifecycle::journal::ServiceSlot::mapped_root(
+            &base_root,
+            &request.binding.project_id,
+            &request.binding.resource_id,
+        )
+        .unwrap()
+    } else {
+        base_root.clone()
+    };
     if service_path != 0 {
         use crate::service::lifecycle::{LifecycleService, ServiceIdentity};
         let prepared = LifecycleService::prepare(
-            &root,
+            &base_root,
             installed,
             ServiceIdentity {
                 project_id: request.binding.project_id.clone(),
@@ -293,12 +343,57 @@ fn joint(service_path: u8) {
         .unwrap();
         let result = prepared.start(Instant::now() + Duration::from_secs(20), || false);
         let journal_root = root.join(format!("journal-{}", request.binding.lease_invocation));
-        if service_path == 5 {
-            assert!(result
-                .err()
-                .unwrap()
-                .to_string()
-                .contains("unexpected state"));
+        if service_path == 9 {
+            use gatehouse_runtime_protocol::lifecycle::journal::OperatorRecovery;
+            assert!(result.err().unwrap().to_string().contains("health failed"));
+            let mut recovery = OperatorRecovery::open_mapped(
+                &base_root,
+                &request.binding.project_id,
+                &request.binding.resource_id,
+                1,
+                &request.binding.lease_invocation,
+                &"9".repeat(32),
+            )
+            .unwrap();
+            assert!(recovery
+                .begin(
+                    Operation::ResolveImage {
+                        image: "example:latest".into()
+                    },
+                    &"8".repeat(32)
+                )
+                .is_err());
+            crate::service::lifecycle::recovery::cleanup_known(
+                recovery,
+                VerifiedInstallation::load(&host_path).unwrap(),
+                Instant::now() + Duration::from_secs(20),
+                || false,
+            )
+            .unwrap();
+            assert!(journal_root.join("tombstone.json").exists());
+            assert!(!journal_root.join("active").exists());
+            assert!(root
+                .join(format!("operator-{}.proof.json", "9".repeat(32)))
+                .exists());
+            assert!(OperatorRecovery::open_mapped(
+                &base_root,
+                &request.binding.project_id,
+                &request.binding.resource_id,
+                1,
+                &request.binding.lease_invocation,
+                &"9".repeat(32)
+            )
+            .is_err());
+            server.join().unwrap();
+            return;
+        }
+        if matches!(service_path, 5 | 13 | 14) {
+            let error = result.err().unwrap().to_string();
+            if service_path == 5 {
+                assert!(error.contains("unexpected state"));
+            } else {
+                assert!(error.contains("dispatch failed"));
+            }
             assert!(journal_root.join("active").exists());
             server.join().unwrap();
             return;
@@ -311,7 +406,46 @@ fn joint(service_path: u8) {
                 cleanup.unwrap();
                 assert!(!journal_root.join("active").exists());
                 assert!(journal_root.join("tombstone.json").exists());
-                use gatehouse_runtime_protocol::lifecycle::journal::ServiceSlot;
+                // Exact crash state: journal released, slot publication not done.
+                let slot_file = root.join("service.json");
+                let mut slot_record: Value =
+                    serde_json::from_slice(&fs::read(&slot_file).unwrap()).unwrap();
+                slot_record["released"] = false.into();
+                fs::write(&slot_file, serde_json::to_vec(&slot_record).unwrap()).unwrap();
+                use gatehouse_runtime_protocol::lifecycle::journal::{
+                    OperatorRecovery, ServiceSlot,
+                };
+                assert!(
+                    ServiceSlot::acquire(&root, request.clone(), plan.clone(), vec![]).is_err()
+                );
+                assert!(OperatorRecovery::open_mapped(
+                    &base_root,
+                    &request.binding.project_id,
+                    &request.binding.resource_id,
+                    2,
+                    &request.binding.lease_invocation,
+                    &"9".repeat(32)
+                )
+                .is_err());
+                let recovery = OperatorRecovery::open_mapped(
+                    &base_root,
+                    &request.binding.project_id,
+                    &request.binding.resource_id,
+                    1,
+                    &request.binding.lease_invocation,
+                    &"9".repeat(32),
+                )
+                .unwrap();
+                crate::service::lifecycle::recovery::cleanup_known(
+                    recovery,
+                    VerifiedInstallation::load(&host_path).unwrap(),
+                    Instant::now() + Duration::from_secs(5),
+                    || false,
+                )
+                .unwrap();
+                assert!(root
+                    .join(format!("operator-{}.proof.json", "9".repeat(32)))
+                    .exists());
                 // A released flag alone is insufficient; reacquisition validates
                 // the old resolution/journal/tombstone, retains it and increments.
                 assert!(
@@ -328,6 +462,17 @@ fn joint(service_path: u8) {
                     .find(|e| e.key == "gatehouse.lifecycle.invocation")
                     .unwrap()
                     .value = next.binding.lease_invocation.clone();
+                let history = root.join("service-history-1.json");
+                let prior_history = fs::read(&history).unwrap();
+                fs::write(&history, b"{}").unwrap();
+                assert!(ServiceSlot::acquire(
+                    &root,
+                    next.clone(),
+                    next_plan.clone(),
+                    vec!["check".into()]
+                )
+                .is_err());
+                fs::write(&history, prior_history).unwrap();
                 let slot =
                     ServiceSlot::acquire(&root, next, next_plan, vec!["check".into()]).unwrap();
                 assert_eq!(slot.fence(), 2);

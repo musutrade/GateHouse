@@ -659,8 +659,7 @@ archives the prior slot record, increments the fence and requires a new invocati
 directory. An unresolved slot cannot be reacquired even when its process has died.
 A crash before slot publication has no dispatch capability; a published slot with
 missing child journal is retained. A crash after journal release but before slot
-release remains fenced for explicit recovery. No automatic recovery API is offered
-at this checkpoint. As with the journal, this is cooperative same-user protection,
+release remains fenced for explicit recovery. Normal acquisition never performs operator recovery. As with the journal, this is cooperative same-user protection,
 not anti-rollback protection against a hostile same-UID writer.
 
 The coordinator requires Created status before Start, Running before Health, and
@@ -670,3 +669,40 @@ wrong absence remain operator-recovery cases. Public config routing must derive
 the resource root from one protected state location/project/resource mapping;
 it must not expose arbitrary per-start roots or adopt legacy lease-v2 records.
 That routing and explicit recovery remain integration gates.
+
+
+## Mapped roots and explicit known-ID recovery checkpoint
+
+Core preparation now uses a resource directory derived from the protected state
+base and a length-delimited SHA256 of project/resource identity. Image, installation
+path, configuration and invocation changes do not change that resource directory.
+The allocator holds the base lock while provisioning a private child, rejects
+symlinks/unprotected children, and then holds the resource lock. The public Core
+configuration route must still supply one fixed Core-owned state base; arbitrary
+per-start bases are not a supported public interface.
+
+`OperatorRecovery::open_mapped` is a separate trusted Core operator entry. It requires
+exact project/resource, current fence, lease invocation and a fresh 128-bit operator
+authorization identity, persists an intent before dispatch, and reopens only the
+exact reservation-derived journal. Its token can issue only Status, Stop and Remove;
+no resolution, Create, Start, Health or name discovery is permitted. Core validates
+the recorded request against the held installation before dispatch. A verified
+absence produces a durable audit proof bound to the slot and journal digests before
+publishing slot release. A partial-release crash (journal tombstone present, slot
+still unreleased) can be completed explicitly without an engine call.
+
+Failed health/known-ID startup can be explicitly stopped and removed after fresh
+status and exact absence. Unknown-ID Create and pre-Create reservation failures
+remain fenced: this checkpoint intentionally has no operator name-discovery or
+pre-Create abandonment entry. The API expresses trusted Core policy, not human
+authentication. Public operator CLI/configuration routing and those remaining
+recovery modes are still gates; normal startup never calls this entry.
+
+
+Directory-lock guards explicitly unlock when their owning process ends the guard,
+then close the descriptor. CLOEXEC alone is insufficient when another thread forks:
+a blocked child can inherit the open file description and prolong flock after the
+parent closes it. The guard records its owner PID so a child's destructor cannot
+unlock a still-live parent's guard. A deterministic blocked-child regression retains
+the original failure and verifies the fix; the durable slot fence still prevents
+reacquisition after failure even though the process lock is released.

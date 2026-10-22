@@ -173,7 +173,9 @@
         "src/process/runtime_request_v3.rs",
         "src/process/signal.rs",
         "src/process/task.rs",
-        "runtime-protocol/src/lifecycle/journal/storage/slot.rs"
+        "runtime-protocol/src/lifecycle/journal/storage/slot.rs",
+        "runtime-protocol/src/lifecycle/journal/storage/slot/mapping.rs",
+        "runtime-protocol/src/lifecycle/journal/storage/slot/recovery.rs"
       ]
     },
     "project": {
@@ -216,7 +218,8 @@
         "src/service/lease/container.rs",
         "src/service/mod.rs",
         "src/service/report_directory.rs",
-        "src/service/lifecycle.rs"
+        "src/service/lifecycle.rs",
+        "src/service/lifecycle/recovery.rs"
       ]
     },
     "service-adapters": {

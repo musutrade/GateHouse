@@ -99,7 +99,7 @@ impl LifecycleService {
             operation: Operation::ResolveImage { image },
         };
         resolve.binding.operation_key = resolve.operation_key()?;
-        let slot = ServiceSlot::acquire(root, resolve, plan, healthcheck.to_vec())?;
+        let slot = ServiceSlot::acquire_mapped(root, resolve, plan, healthcheck.to_vec())?;
         Ok(PreparedService { installation, slot })
     }
     fn start(
@@ -123,6 +123,7 @@ impl LifecycleService {
         // Compute the deadline before borrowing/consuming the token. Any failure
         // leaves durable obstruction; this API never retries a reservation.
         let timeout = remaining(deadline)?;
+        slot.check()?;
         outcome(host::resolve(
             reservation.dispatch()?,
             &installation,
@@ -138,6 +139,7 @@ impl LifecycleService {
         if create.binding.generation != 2 {
             bail!("configured-image service requires resolved generation-2 create");
         }
+        slot.check()?;
         let created = outcome(host::dispatch(token, &installation, timeout, &cancelled))?;
         if !matches!(created.outcome, Outcome::Created { .. }) {
             bail!("lifecycle service creation not proved; retain journal");
@@ -299,3 +301,5 @@ impl LifecycleService {
         Ok(())
     }
 }
+
+pub(crate) mod recovery;

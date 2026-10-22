@@ -47,7 +47,7 @@ impl Record {
 /// the durable fence. Only the bound journal's verified absence can release it.
 pub struct ServiceSlot {
     root: PathBuf,
-    directory: File,
+    directory: LockedDirectory,
     record: Record,
     bytes: Vec<u8>,
     reserved: bool,
@@ -208,3 +208,7 @@ impl ServiceSlot {
 
 #[cfg(test)]
 mod tests;
+
+mod mapping;
+mod recovery;
+pub use recovery::OperatorRecovery;
