@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(unix)]
 mod storage;
 #[cfg(unix)]
-pub use storage::{Dispatch, Journal, Reservation, ResolutionDispatch};
+pub use storage::{Dispatch, Journal, Reservation, ResolutionDispatch, ServiceSlot};
 
 mod resolution;
 pub use resolution::CreatePlan;

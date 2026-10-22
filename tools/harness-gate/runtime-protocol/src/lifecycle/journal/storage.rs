@@ -385,3 +385,6 @@ mod tests;
 
 mod reservation;
 pub use reservation::{Reservation, ResolutionDispatch};
+
+mod slot;
+pub use slot::ServiceSlot;

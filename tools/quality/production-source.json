@@ -172,7 +172,8 @@
         "src/process/runtime_lifecycle_host.rs",
         "src/process/runtime_request_v3.rs",
         "src/process/signal.rs",
-        "src/process/task.rs"
+        "src/process/task.rs",
+        "runtime-protocol/src/lifecycle/journal/storage/slot.rs"
       ]
     },
     "project": {
@@ -436,6 +437,11 @@
     },
     {
       "path": "runtime-protocol/src/lifecycle/journal/storage/reservation/tests.rs",
+      "kind": "test",
+      "reason": "Test-only reservation durability module compiled under cfg(test)."
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/journal/storage/slot/tests.rs",
       "kind": "test",
       "reason": "Test-only reservation durability module compiled under cfg(test)."
     }

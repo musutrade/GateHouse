@@ -620,11 +620,11 @@ or establish real Docker, rootless or daemon restart behavior.
 
 ## Service coordinator checkpoint
 
-The Linux `LifecycleService` coordinator accepts a configured image, a Core-owned
-resource identity, immutable CreatePlan, protected state directory and held
-installation. Its fields are private. It constructs a fresh 128-bit invocation
+The Linux `LifecycleService::prepare` entry binds a configured image, Core-owned
+resource identity, immutable CreatePlan, health argv, protected resource directory
+and held installation into a private PreparedService. It constructs a fresh 128-bit invocation
 using kernel entropy and obtains engine identity/digests only from a revalidated
-installation snapshot. Its only constructor creates a Resolution reservation;
+installation snapshot. Its start path consumes the prepared slot and creates a Resolution reservation;
 it cannot adopt a free Request or direct generation-1 journal. After resolution
 it requires the evidence-bound generation-2 Create, fresh Status before Start,
 and fresh Status before optional HealthExec. A nonzero health exit fails startup
@@ -639,3 +639,34 @@ The native joint tests cover failed-health retention and successful health follo
 by normal teardown against fake Unix HTTP. Public configuration routing, protected
 state-directory provisioning, ServiceManager ownership and explicit operator
 recovery still need connection before this coordinator replaces the legacy path.
+
+
+## Protected service slot checkpoint
+
+`ServiceSlot` holds an exclusive lock on a preprovisioned protected resource
+root and persists a strict canonical `gatehouse-lifecycle-service-slot/v1` record.
+The immutable record binds the exact resolution request (installation/config/
+engine/project/resource/invocation/image), CreatePlan and health argv to a fence.
+Health arguments are validated before claiming the slot. A private PreparedService
+owns this slot plus the held installation; start consumes it and accepts no separate
+identity, image, plan, health argv or journal root. The slot creates the only allowed
+per-invocation reservation directory. Slot identity/bytes are rechecked before and
+after host calls. Dropping a prepared/start-failed service leaves its fence active.
+
+Normal cleanup commits journal absence/tombstone before marking the slot released.
+A later acquisition verifies the previous exact reserved journal and tombstone,
+archives the prior slot record, increments the fence and requires a new invocation
+directory. An unresolved slot cannot be reacquired even when its process has died.
+A crash before slot publication has no dispatch capability; a published slot with
+missing child journal is retained. A crash after journal release but before slot
+release remains fenced for explicit recovery. No automatic recovery API is offered
+at this checkpoint. As with the journal, this is cooperative same-user protection,
+not anti-rollback protection against a hostile same-UID writer.
+
+The coordinator requires Created status before Start, Running before Health, and
+Created/Exited after Stop before Remove. It requires exactly one TCP loopback port
+matching the immutable plan. Exited services, failed startup, uncertain stop or
+wrong absence remain operator-recovery cases. Public config routing must derive
+the resource root from one protected state location/project/resource mapping;
+it must not expose arbitrary per-start roots or adopt legacy lease-v2 records.
+That routing and explicit recovery remain integration gates.

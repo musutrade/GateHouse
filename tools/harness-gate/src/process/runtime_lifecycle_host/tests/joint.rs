@@ -26,6 +26,22 @@ fn configured_image_service_retains_present_object_after_remove_claim() {
 fn configured_image_service_rejects_nonexact_absence_after_remove() {
     joint(4);
 }
+#[test]
+fn configured_image_service_requires_created_before_start() {
+    joint(5);
+}
+#[test]
+fn configured_image_service_requires_stopped_before_remove() {
+    joint(6);
+}
+#[test]
+fn configured_image_service_retains_exited_for_operator_recovery() {
+    joint(7);
+}
+#[test]
+fn configured_image_service_retains_failed_stop() {
+    joint(8);
+}
 fn joint(service_path: u8) {
     let path = std::env::var_os("GATEHOUSE_LIFECYCLE_ADAPTER")
         .expect("explicit native adapter path required");
@@ -132,7 +148,7 @@ fn joint(service_path: u8) {
                 ("GET", inspect.clone(), 200, running.clone()),
             ],
         ];
-        if service_path >= 2 {
+        if service_path >= 2 && service_path != 5 {
             let final_status = if service_path == 3 {
                 (200, running.clone())
             } else if service_path == 4 {
@@ -148,7 +164,7 @@ fn joint(service_path: u8) {
             operations.extend([
                 vec![("GET", inspect.clone(), 200, running.clone())],
                 vec![
-                    ("GET", inspect.clone(), 200, running),
+                    ("GET", inspect.clone(), 200, running.clone()),
                     (
                         "POST",
                         format!("/v1.47/containers/{}/stop?t=5", "a".repeat(64)),
@@ -159,7 +175,7 @@ fn joint(service_path: u8) {
                 ],
                 vec![("GET", inspect.clone(), 200, stopped.clone())],
                 vec![
-                    ("GET", inspect.clone(), 200, stopped),
+                    ("GET", inspect.clone(), 200, stopped.clone()),
                     (
                         "DELETE",
                         format!("/v1.47/containers/{}?force=false&v=false", "a".repeat(64)),
@@ -170,10 +186,33 @@ fn joint(service_path: u8) {
                 vec![("GET", inspect, final_status.0, final_status.1)],
             ]);
         }
+        match service_path {
+            5 => {
+                operations[2][0].3 = running.clone();
+                operations.truncate(3);
+            }
+            6 => {
+                operations[8][0].3 = running.clone();
+                operations.truncate(9);
+            }
+            7 => {
+                let mut exited = running.clone();
+                exited["State"]["Status"] = "exited".into();
+                operations[6][0].3 = exited;
+                operations.truncate(7);
+            }
+            8 => {
+                operations[7].truncate(2);
+                operations[7][1].2 = 500;
+                operations[7][1].3 = json!({"message":"stop failed"});
+                operations.truncate(8);
+            }
+            _ => {}
+        }
         let last = operations.len() - 1;
         for (index, operation) in operations.into_iter().enumerate() {
             // A malformed final absence response aborts before after-observation.
-            let after = if service_path == 4 && index == last {
+            let after = if matches!(service_path, 4 | 8) && index == last {
                 vec![]
             } else {
                 identity()
@@ -239,7 +278,7 @@ fn joint(service_path: u8) {
     let root = directory.path().join("journal");
     if service_path != 0 {
         use crate::service::lifecycle::{LifecycleService, ServiceIdentity};
-        let result = LifecycleService::start(
+        let prepared = LifecycleService::prepare(
             &root,
             installed,
             ServiceIdentity {
@@ -248,34 +287,76 @@ fn joint(service_path: u8) {
                 lease_invocation: request.binding.lease_invocation.clone(),
             },
             "example:latest".into(),
-            plan,
+            plan.clone(),
             &["check".into()],
-            Instant::now() + Duration::from_secs(20),
-            || false,
-        );
+        )
+        .unwrap();
+        let result = prepared.start(Instant::now() + Duration::from_secs(20), || false);
+        let journal_root = root.join(format!("journal-{}", request.binding.lease_invocation));
+        if service_path == 5 {
+            assert!(result
+                .err()
+                .unwrap()
+                .to_string()
+                .contains("unexpected state"));
+            assert!(journal_root.join("active").exists());
+            server.join().unwrap();
+            return;
+        }
         if service_path >= 2 {
             let service = result.unwrap();
             assert_eq!(service.port(), 49152);
             let cleanup = service.cleanup(Instant::now() + Duration::from_secs(20), || false);
             if service_path == 2 {
                 cleanup.unwrap();
-                assert!(!root.join("active").exists());
-                assert!(root.join("tombstone.json").exists());
+                assert!(!journal_root.join("active").exists());
+                assert!(journal_root.join("tombstone.json").exists());
+                use gatehouse_runtime_protocol::lifecycle::journal::ServiceSlot;
+                // A released flag alone is insufficient; reacquisition validates
+                // the old resolution/journal/tombstone, retains it and increments.
+                assert!(
+                    ServiceSlot::acquire(&root, request.clone(), plan.clone(), vec![]).is_err()
+                );
+                let mut next = request.clone();
+                next.binding.lease_invocation = "7".repeat(32);
+                next.binding.invocation = "8".repeat(32);
+                next.binding.operation_key = next.operation_key().unwrap();
+                let mut next_plan = plan.clone();
+                next_plan
+                    .labels
+                    .iter_mut()
+                    .find(|e| e.key == "gatehouse.lifecycle.invocation")
+                    .unwrap()
+                    .value = next.binding.lease_invocation.clone();
+                let slot =
+                    ServiceSlot::acquire(&root, next, next_plan, vec!["check".into()]).unwrap();
+                assert_eq!(slot.fence(), 2);
+                assert!(root.join("service-history-1.json").exists());
+                assert!(journal_root.join("tombstone.json").exists());
             } else {
                 assert!(cleanup.is_err());
-                assert!(root.join("active").exists());
-                assert!(!root.join("tombstone.json").exists());
+                assert!(journal_root.join("active").exists());
+                assert!(!journal_root.join("tombstone.json").exists());
             }
             server.join().unwrap();
             return;
         }
         assert!(result.err().unwrap().to_string().contains("health failed"));
         let record: Value =
-            serde_json::from_slice(&fs::read(root.join("lease.json")).unwrap()).unwrap();
+            serde_json::from_slice(&fs::read(journal_root.join("lease.json")).unwrap()).unwrap();
         assert_eq!(record["create"]["binding"]["generation"], 2);
         assert!(!record["resolution"].is_null());
-        assert!(root.join("active").exists());
-        assert!(root.join("reservation.json").exists());
+        assert!(journal_root.join("active").exists());
+        assert!(journal_root.join("reservation.json").exists());
+        assert!(
+            gatehouse_runtime_protocol::lifecycle::journal::ServiceSlot::acquire(
+                &root,
+                request.clone(),
+                plan,
+                vec![]
+            )
+            .is_err()
+        );
         server.join().unwrap();
         return;
     }

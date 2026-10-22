@@ -4,7 +4,7 @@ use crate::process::runtime_lifecycle_host as host;
 use anyhow::{bail, Context, Result};
 use gatehouse_runtime_protocol::lifecycle::{
     installation::VerifiedInstallation,
-    journal::{CreatePlan, Journal, Purpose, Reservation},
+    journal::{CreatePlan, Journal, Purpose, ServiceSlot},
     wire::{Binding, ContainerState, Operation, Outcome, Request, Response, PROTOCOL},
 };
 use std::{path::Path, time::Instant};
@@ -19,6 +19,7 @@ pub(crate) struct ServiceIdentity {
 /// Dropping a session retains its durable journal; cleanup is an explicit action.
 pub(crate) struct LifecycleService {
     installation: VerifiedInstallation,
+    slot: ServiceSlot,
     journal: Journal,
     create: Request,
     port: u16,
@@ -55,19 +56,31 @@ fn outcome(result: std::result::Result<Response, host::DispatchError>) -> Result
     result.map_err(|e| anyhow::anyhow!("lifecycle dispatch failed; retain journal: {e:?}"))
 }
 
+/// Immutable, fenced configured-service inputs. Only prepare() constructs it.
+pub(crate) struct PreparedService {
+    installation: VerifiedInstallation,
+    slot: ServiceSlot,
+}
+impl PreparedService {
+    pub(crate) fn start(
+        self,
+        deadline: Instant,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<LifecycleService> {
+        LifecycleService::start(self, deadline, cancelled)
+    }
+}
 impl LifecycleService {
     /// The caller supplies a Core-owned resource identity and protected directory.
     /// Only the held installation supplies engine identity and artifact digests.
-    pub(crate) fn start(
+    pub(crate) fn prepare(
         root: &Path,
         installation: VerifiedInstallation,
         identity: ServiceIdentity,
         image: String,
         plan: CreatePlan,
         healthcheck: &[String],
-        deadline: Instant,
-        cancelled: impl Fn() -> bool,
-    ) -> Result<Self> {
+    ) -> Result<PreparedService> {
         let snapshot = installation.snapshot()?;
         let mut resolve = Request {
             protocol: PROTOCOL.into(),
@@ -86,11 +99,27 @@ impl LifecycleService {
             operation: Operation::ResolveImage { image },
         };
         resolve.binding.operation_key = resolve.operation_key()?;
+        let slot = ServiceSlot::acquire(root, resolve, plan, healthcheck.to_vec())?;
+        Ok(PreparedService { installation, slot })
+    }
+    fn start(
+        prepared: PreparedService,
+        deadline: Instant,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<Self> {
+        let PreparedService {
+            installation,
+            mut slot,
+        } = prepared;
+        slot.check()?;
+        installation.validate_request(slot.resolve_request())?;
+        let container_port = slot.plan().container_port;
+        let healthcheck = slot.healthcheck().to_vec();
         remaining(deadline)?;
         if cancelled() {
-            bail!("lifecycle service cancelled before reservation");
+            bail!("lifecycle service cancelled; slot retained");
         }
-        let mut reservation = Reservation::create(root, &resolve, plan)?;
+        let mut reservation = slot.reserve()?;
         // Compute the deadline before borrowing/consuming the token. Any failure
         // leaves durable obstruction; this API never retries a reservation.
         let timeout = remaining(deadline)?;
@@ -100,6 +129,7 @@ impl LifecycleService {
             timeout,
             &cancelled,
         ))?;
+        slot.check()?;
         let invocation = nonce()?;
         let mut journal = reservation.into_journal(&invocation)?;
         let timeout = remaining(deadline)?;
@@ -112,13 +142,20 @@ impl LifecycleService {
         if !matches!(created.outcome, Outcome::Created { .. }) {
             bail!("lifecycle service creation not proved; retain journal");
         }
+        slot.check()?;
         let mut service = Self {
             installation,
+            slot,
             journal,
             create,
             port: 0,
         };
-        service.status(Purpose::Service, deadline, &cancelled)?;
+        service.require_state(
+            Purpose::Service,
+            &[ContainerState::Created],
+            deadline,
+            &cancelled,
+        )?;
         let target = service.journal.target()?;
         let started = service.execute(
             Operation::Start { target },
@@ -129,13 +166,24 @@ impl LifecycleService {
         let Outcome::Started { object } = started.outcome else {
             bail!("lifecycle service start not proved; retain journal");
         };
-        service.port = object
-            .ports
-            .first()
-            .context("started service has no bound port")?
-            .host_port;
+        let [port] = object.ports.as_slice() else {
+            bail!("service requires exactly one bound port; retain journal");
+        };
+        if port.container_port != container_port
+            || port.protocol != "tcp"
+            || port.host_ip != "127.0.0.1"
+            || port.host_port == 0
+        {
+            bail!("service port differs from immutable plan; retain journal");
+        }
+        service.port = port.host_port;
         if !healthcheck.is_empty() {
-            service.status(Purpose::Service, deadline, &cancelled)?;
+            service.require_state(
+                Purpose::Service,
+                &[ContainerState::Running],
+                deadline,
+                &cancelled,
+            )?;
             let target = service.journal.target()?;
             let timeout_ms = remaining(deadline)?.min(30_000) as u32;
             let health = service.execute(
@@ -166,6 +214,7 @@ impl LifecycleService {
         deadline: Instant,
         cancelled: &impl Fn() -> bool,
     ) -> Result<Response> {
+        self.slot.check()?;
         let timeout = remaining(deadline)?;
         let mut request = self.create.clone();
         request.operation = operation;
@@ -176,12 +225,14 @@ impl LifecycleService {
             .context("lifecycle generation exhausted")?;
         request.binding.invocation = nonce()?;
         request.binding.operation_key = request.operation_key()?;
-        outcome(host::dispatch(
+        let response = outcome(host::dispatch(
             self.journal.begin(&request, purpose)?,
             &self.installation,
             timeout,
             cancelled,
-        ))
+        ))?;
+        self.slot.check()?;
+        Ok(response)
     }
     fn status(
         &mut self,
@@ -193,12 +244,25 @@ impl LifecycleService {
         self.execute(Operation::Status { target }, purpose, deadline, cancelled)
     }
 
+    fn require_state(
+        &mut self,
+        purpose: Purpose,
+        expected: &[ContainerState],
+        deadline: Instant,
+        cancelled: &impl Fn() -> bool,
+    ) -> Result<()> {
+        match self.status(purpose, deadline, cancelled)?.outcome {
+            Outcome::Status { object } if expected.contains(&object.state) => Ok(()),
+            _ => bail!("service observed unexpected state; retain slot/journal"),
+        }
+    }
+
     /// Only normal live-service teardown; recovery needs separate explicit operator
     /// policy. Never force-remove or treat a successful DELETE as proof of absence.
     pub(crate) fn cleanup(mut self, deadline: Instant, cancelled: impl Fn() -> bool) -> Result<()> {
         let status = self.status(Purpose::ServiceCleanup, deadline, &cancelled)?;
         match status.outcome {
-            Outcome::Absent { .. } => return self.journal.finish_release().map_err(Into::into),
+            Outcome::Absent { .. } => return self.slot.finish(self.journal).map_err(Into::into),
             Outcome::Status { object } if object.state == ContainerState::Running => {
                 let target = self.journal.target()?;
                 self.execute(
@@ -210,7 +274,12 @@ impl LifecycleService {
                     deadline,
                     &cancelled,
                 )?;
-                self.status(Purpose::ServiceCleanup, deadline, &cancelled)?;
+                self.require_state(
+                    Purpose::ServiceCleanup,
+                    &[ContainerState::Created, ContainerState::Exited],
+                    deadline,
+                    &cancelled,
+                )?;
             }
             _ => bail!("service cleanup requires live running ownership; retain journal"),
         }
@@ -226,7 +295,7 @@ impl LifecycleService {
         if !matches!(absent.outcome, Outcome::Absent { .. }) {
             bail!("service removal absence not proved; retain journal");
         }
-        self.journal.finish_release()?;
+        self.slot.finish(self.journal)?;
         Ok(())
     }
 }
