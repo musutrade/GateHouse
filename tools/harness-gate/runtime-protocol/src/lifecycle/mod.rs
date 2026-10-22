@@ -7,3 +7,5 @@ mod canonical;
 pub mod wire;
 
 pub mod journal;
+
+pub mod installation;

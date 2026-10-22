@@ -289,7 +289,15 @@ impl Binding {
         if self.generation == 0 {
             return Err(Invalid("invalid lifecycle generation"));
         }
-        let e = &self.engine_binding;
+        self.engine_binding.validate()
+    }
+}
+impl EngineBinding {
+    pub fn validate(&self) -> Result<()> {
+        let e = self;
+        for s in [&e.server_version, &e.daemon_id, &e.scope] {
+            nonempty(s)?;
+        }
         if e.engine != "docker"
             || e.transport != "unix-http"
             || !e.socket_path.starts_with('/')

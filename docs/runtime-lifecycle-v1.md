@@ -475,3 +475,31 @@ resource reacquisition, installed host verifier, fd4 process transport or an
 adapter. Dispatch::observe must only be called after host process checks; bytes
 alone cannot prove process exit success. A valid lifecycle record alone must never
 be used to bypass these remaining integration requirements.
+
+## Protected installation/input implementation checkpoint
+
+`lifecycle/installation` loads the exact host/installation/config schemas, verifies
+all three canonical documents and external installation/config/executable SHA256
+pins, rejects old protocols/public expected paths, checks protected ancestors,
+owner/mode/single-link regular files, and holds descriptors with complete file
+identity revalidation (including inode, ctime and mtime). The new product identity
+is `docker-lifecycle` version `0.1.0`; this is an unreleased implementation target,
+not a change to old runtime/readiness artifacts. Executable bytes are bounded at
+64 MiB. A request must match the held digests, complete engine config and current
+principal before a host can use it. These checks do not pin dynamic libraries or
+prove a daemon's authentication/containment.
+
+Linux adapter-input validation requires both fd3 config and fd4 expected input to
+be private 0600 unlinked regular memory files with all F_SEAL_WRITE/GROW/SHRINK/SEAL
+flags, at most 65536 bytes each. This specifies kernel write-sealed memfds (as used
+by Core's existing SealedInputs), not necessarily an O_RDONLY open-file flag.
+Pread avoids shared-cursor assumptions. Expected and stdin are exact canonical
+matches; config digest and all engine fields must match that request. Ordinary
+files, unsealed/public/empty/oversized descriptors are rejected. Seals prove byte
+immutability, not that a trusted Core created the descriptor: the future host must
+combine the held installation and journal Dispatch when creating these inputs.
+
+No process-spawn path yet consumes this new installation snapshot or Dispatch.
+The Core host, native lifecycle adapter, service config/lease orchestration and
+real Docker validation remain required. The current tests use never-executed
+fixture executables and memfd descriptors; they are not daemon tests.
