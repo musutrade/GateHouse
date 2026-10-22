@@ -3,17 +3,47 @@
 //! module does not prove a connection's identity, authentication or lifetime.
 use super::{
     native_info::decode_info,
-    native_status::{decode_inspect, inspect_route, InspectOutcome},
+    native_status::{decode_inspect, inspect_route, InspectOutcome, State},
     observation::INFO_ROUTE,
+    ownership::ExpectedContainer,
     protected_context::ProtectedContext,
 };
 
 impl ProtectedContext {
     /// No retry, mutation or lease authority. Even an exact Missing result is
     /// withheld until the final info observation and filesystem check succeed.
-    pub fn inspect_with<F>(&self, id: &str, mut get: F) -> Result<InspectOutcome, &'static str>
+    pub fn inspect_with<F>(&self, id: &str, get: F) -> Result<InspectOutcome, &'static str>
     where
         F: FnMut(&str) -> Result<(u16, Vec<u8>), &'static str>,
+    {
+        self.inspect_checked_with(id, get, |route, status, bytes| {
+            decode_inspect(id, "GET", route, status, bytes)
+        })
+    }
+    /// Selected ownership facts under the same protected observation sequence.
+    /// The expected plan still requires durable installation/slot binding.
+    pub fn inspect_owned_with<F>(
+        &self,
+        owner: &ExpectedContainer,
+        get: F,
+    ) -> Result<State, &'static str>
+    where
+        F: FnMut(&str) -> Result<(u16, Vec<u8>), &'static str>,
+    {
+        owner.validate()?;
+        self.inspect_checked_with(&owner.id, get, |route, status, bytes| {
+            owner.match_inspect("GET", route, status, bytes)
+        })
+    }
+    fn inspect_checked_with<F, T, D>(
+        &self,
+        id: &str,
+        mut get: F,
+        decode: D,
+    ) -> Result<T, &'static str>
+    where
+        F: FnMut(&str) -> Result<(u16, Vec<u8>), &'static str>,
+        D: FnOnce(&str, u16, &[u8]) -> Result<T, &'static str>,
     {
         let route = inspect_route(id)?;
         let (expected, _) = self.snapshot()?;
@@ -31,7 +61,7 @@ impl ProtectedContext {
         let before = decode_info(&bytes, expected.observation.socket.clone())?;
         expected.match_current_operation(expected, &before, &before)?;
         let (status, bytes) = exchange(&mut get, &route)?;
-        let result = decode_inspect(id, "GET", &route, status, &bytes)?;
+        let result = decode(&route, status, &bytes)?;
         let (status, bytes) = exchange(&mut get, INFO_ROUTE)?;
         if status != 200 {
             return Err("final native info unavailable");

@@ -505,4 +505,47 @@ mod tests {
             matches!(result,super::super::native_status::InspectOutcome::Present(state) if state.status=="initialized")
         );
     }
+    #[test]
+    fn ownership_composition_binds_body_and_final_observation() {
+        use super::super::ownership::ExpectedContainer;
+        use std::collections::BTreeMap;
+        for failure in 0..3 {
+            let f = Fixture::new();
+            let held = ProtectedContext::load(&f.config).unwrap();
+            let info_body = info(&held);
+            let owner = ExpectedContainer {
+                id: "a".repeat(64),
+                name: "fixture".into(),
+                image_id: "b".repeat(64),
+                labels: BTreeMap::from([("lease".into(), "owned".into())]),
+                port: None,
+            };
+            let mut object = serde_json::json!({"Id":owner.id,"Name":owner.name,"Image":owner.image_id,"Config":{"Labels":owner.labels},"NetworkSettings":{"Ports":{}},"State":{"Status":"running","Running":true,"Paused":false,"Restarting":false,"Dead":false,"ExitCode":0}});
+            if failure == 1 {
+                object["Config"]["Labels"]["lease"] = "foreign".into();
+            }
+            let mut calls = 0;
+            let result = held.inspect_owned_with(&owner, |_| {
+                calls += 1;
+                if failure == 2 && calls == 3 {
+                    return Err("timeout");
+                }
+                Ok((
+                    200,
+                    if calls == 2 {
+                        serde_json::to_vec(&object).unwrap()
+                    } else {
+                        info_body.clone()
+                    },
+                ))
+            });
+            if failure == 0 {
+                assert_eq!(result.unwrap().status, "running");
+                assert_eq!(calls, 3);
+            } else {
+                assert!(result.is_err());
+                assert_eq!(calls, if failure == 1 { 2 } else { 3 });
+            }
+        }
+    }
 }

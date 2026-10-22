@@ -224,3 +224,29 @@ Pinned source:
 - [Exec inspect construction](https://github.com/podman-container-tools/podman/blob/v6.1.4/libpod/container_exec.go)
 - [Exec inspect JSON fields](https://github.com/podman-container-tools/podman/blob/v6.1.4/libpod/define/container_inspect.go)
 - [Exec create fields](https://github.com/podman-container-tools/podman/blob/v6.1.4/vendor/github.com/moby/moby/api/types/container/exec_create_request.go)
+
+### Native ownership facts checkpoint (96)
+
+The matcher requires the exact native Name, full raw RootfsImageID and complete
+merged Config.Labels map from the expected plan, in addition to the same full ID
+and supported state. Image labels must be accounted for in that complete map;
+unreviewed extra labels fail closed. Native inspect uses Name without a Docker
+leading slash and Image without a fabricated sha256 prefix.
+
+The initial port policy supports no published/exposed ports (empty Ports map),
+or one fixed nonzero TCP mapping on 127.0.0.1 with exactly the planned container
+and host port. Null, empty/multiple bindings, UDP, wildcard/IPv6, extra exposed
+ports and noncanonical host-port strings are refused. This is a restricted matcher,
+not a claim that every native state exposes the same port map. Create request
+policy and created/running/stopped native port representation still need source
+and engine validation before integration. Dynamic ports are not implemented.
+
+Expected facts remain caller values until the durable plan/installation/slot
+binding is added. Matching these fields does not prove privilege, mounts, env,
+namespace policy or journal authority, and Missing never becomes an owned object.
+Source fields are pinned to v6.1.4 libpod/define/container_inspect.go and
+libpod/container_inspect.go, as linked above.
+
+`inspect_owned_with` runs this matcher on the inspect response within the same
+protected info/inspect/info sequence. Wrong ownership stops without retry;
+a matching object is withheld if final info or input revalidation fails.
