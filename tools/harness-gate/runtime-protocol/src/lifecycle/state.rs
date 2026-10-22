@@ -17,6 +17,7 @@ pub enum Phase {
     Stopped,
     Removing,
     AwaitingAbsence,
+    ReconcilingRemove,
     VerifiedAbsent,
 }
 
@@ -80,6 +81,9 @@ impl State {
         let mut next = self.clone();
         next.phase = match self.phase {
             Phase::PendingCreate | Phase::UnresolvedNoId => Phase::UnresolvedNoId,
+            Phase::Removing | Phase::AwaitingAbsence | Phase::ReconcilingRemove => {
+                Phase::ReconcilingRemove
+            }
             Phase::VerifiedAbsent => Phase::VerifiedAbsent,
             _ => Phase::Retained,
         };
@@ -111,7 +115,13 @@ impl State {
             (Phase::Stopping, Event::StoppedVerified) => Phase::Stopped,
             (Phase::Stopped, Event::BeginRemove) => Phase::Removing,
             (Phase::Removing, Event::RemoveClaimed) => Phase::AwaitingAbsence,
-            (Phase::AwaitingAbsence, Event::AbsenceVerified) => Phase::VerifiedAbsent,
+            (Phase::AwaitingAbsence | Phase::ReconcilingRemove, Event::AbsenceVerified) => {
+                Phase::VerifiedAbsent
+            }
+            (
+                Phase::Removing | Phase::AwaitingAbsence | Phase::ReconcilingRemove,
+                Event::Failed,
+            ) => Phase::ReconcilingRemove,
             (
                 Phase::KnownCreated
                 | Phase::Starting
@@ -119,9 +129,7 @@ impl State {
                 | Phase::CheckingHealth
                 | Phase::Retained
                 | Phase::Stopping
-                | Phase::Stopped
-                | Phase::Removing
-                | Phase::AwaitingAbsence,
+                | Phase::Stopped,
                 Event::Failed,
             ) => Phase::Retained,
             _ => return Err(Invalid("invalid lifecycle transition")),
@@ -182,8 +190,6 @@ mod tests {
             Phase::CheckingHealth,
             Phase::Stopping,
             Phase::Stopped,
-            Phase::Removing,
-            Phase::AwaitingAbsence,
         ] {
             let state = State {
                 phase,
@@ -238,5 +244,36 @@ mod tests {
         assert!(state.object_id().is_some());
         assert!(state.transition(Event::BeginHealth).is_err());
         assert!(state.transition(Event::BeginRemove).is_err());
+    }
+    #[test]
+    fn every_post_remove_crash_window_reconciles_without_second_remove() {
+        // Removing is durable before dispatch, so it also covers a crash before
+        // sending and a lost HTTP response. AwaitingAbsence covers response and
+        // inspection windows; neither recovery may replay the mutation.
+        for phase in [
+            Phase::Removing,
+            Phase::AwaitingAbsence,
+            Phase::ReconcilingRemove,
+        ] {
+            let state = State {
+                phase,
+                object_id: Some("d".repeat(64)),
+            };
+            let recovered = state.recover().unwrap();
+            assert_eq!(recovered.phase(), Phase::ReconcilingRemove);
+            assert_eq!(recovered.object_id(), state.object_id());
+            assert!(recovered.blocks_acquisition());
+            assert!(recovered.transition(Event::BeginRemove).is_err());
+            assert!(recovered.transition(Event::RemoveClaimed).is_err());
+            assert!(recovered.transition(Event::RunningVerified).is_err());
+            assert!(recovered
+                .transition(Event::CleanupTerminalVerified)
+                .is_err());
+            let failed = recovered.transition(Event::Failed).unwrap();
+            assert_eq!(failed.phase(), Phase::ReconcilingRemove);
+            let absent = failed.transition(Event::AbsenceVerified).unwrap();
+            assert!(!absent.blocks_acquisition());
+            assert_eq!(absent.recover().unwrap(), absent);
+        }
     }
 }

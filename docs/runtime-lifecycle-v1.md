@@ -227,3 +227,128 @@ no restart occurred. The implementation must not advertise restart detection fro
 these fields. Real restart tests must measure actual retained-ID/state behavior
 and uncertainty handling on an isolated daemon. A stronger epoch attestation is
 outside this protocol's present guarantee; no claim of complete restart detection.
+
+## Revision 3: reconciliation and evidence boundary
+
+This section supersedes revision 2 where it maps all known-ID crashes to retained.
+Removing and awaiting-absence recover to `reconciling-remove`, preserving object
+ID and the original durable remove request digest. Failed absence verification
+also preserves this state. Reconciliation may issue a fresh read-only exact-ID
+status request, but never another remove. A verified absence transitions to
+verified-absent; present (including running), mismatch or unknown leaves it locked.
+This includes crashes before dispatch, after dispatch, after a success response,
+after the removal claim is saved, and during absence verification. A crash before
+dispatch can leave a present container requiring operator intervention; safety
+must not be traded for an automatic replay.
+
+The pure state module is NOT the durable lease layer or evidence validator. Its
+Event values may only be used in production by the forthcoming journal wrapper.
+That wrapper must validate the protected expected request, full response, exact
+pending request digest/revision, installation/config/engine binding and target
+before constructing an event. An adapter cannot deserialize an Event. The wrapper
+must reject reused responses, wrong ID/daemon, stale generation and wrong operation
+before invoking transition. State-model tests do not prove those checks exist.
+Do not connect this module directly to the process host.
+
+The journal adds `remove_request_sha256` and `absence_evidence` (both explicit
+null until established). Absence evidence contains status_request_sha256,
+remove_request_sha256, object_id, exact_route, http_status (404),
+error_message_sha256, observed_before and observed_after. The adapter's validated
+response supplies these route facts; Core also reconstructs the exact route and
+expected message from the full target ID. This remains trust in the pinned adapter,
+not independent proof from an adversarial daemon. Save evidence and verified-absent
+in one atomic fsynced transition, then remove the active marker and fsync its
+parent. Keep a protected tombstone containing evidence. A crash before marker
+removal resumes marker cleanup from that tombstone; a missing marker without a
+valid verified-absent tombstone never grants reacquisition. Reacquisition uses a
+fresh lease invocation under the resource lock and preserves the old tombstone.
+
+Startup failure returns a failing service result with static classification
+`lifecycle-retained`, resource ID, lease path and known object ID (or explicit
+unknown). It does not return a RunningService whose destructor invokes cleanup.
+It schedules no cleanup, retry or background task. Operator-requested Core cleanup
+is the only subsequent mutation path; unresolved-no-id has no mutation path.
+
+## Revision 3: operation matrix
+
+All successful facts below require matching before/after GET /version and GET
+/v{api}/info observations. Every request is one bounded invocation. `unknown` and
+`rejected-before-effect` are the only shared failure outcomes; both have exactly
+`kind` and a static `reason` enum (invalid-input, identity-mismatch, transport,
+deadline, cancelled, invalid-response, unsupported-state). Observations on these
+failures are explicit null. Unknown means effects may have occurred; rejected is
+permitted only if no effect-capable HTTP request was dispatched. Both retain the
+lease. A nonzero process exit or invalid envelope is host-level unknown, regardless
+of any JSON. Valid envelopes, including known failures, exit zero.
+
+| Operation | Only nonfailure outcome | HTTP and body requirements | Core action |
+| --- | --- | --- | --- |
+| resolve-image | image | GET /images/{encoded exact ref}/json, 200; Id is sha256: plus 64 lowercase hex, RepoDigests unique strings; requested digest reference must match RepoDigests | persist image ID before pending-create; no pull |
+| create | created | POST /containers/create?name={encoded name}, 201, full 64-hex Id, Warnings null or empty; fresh exact-ID inspect 200 matching name, image ID and labels | durably store ID, never start on create claim alone |
+| status | status or absent | GET /containers/{full-id}/json, 200 with exact ID/name/labels and known state; absent only bounded exact-route 404 described above | read proof; no mutation implied |
+| start | started | POST /containers/{id}/start, 204 or 304; fresh inspect 200 running matching target | starting -> running |
+| stop | stopped | inspect first; created/exited no-op, running POST /containers/{id}/stop?t={grace} 204/304 then inspect created/exited | stopping -> stopped |
+| remove | removed | inspect created/exited, DELETE /containers/{id}?force=false&v=false, 204 | awaiting-absence only |
+| health-exec | health | sequence below; exit_code required signed i32, exec and container identities match | zero -> ready, nonzero -> retained failure |
+
+Resolve-image is read-only but uses the same protected binding. Core acquires the
+resource lock, allocates the new lease invocation and writes an exclusive
+`gatehouse-lifecycle-reservation/v1` reservation before resolution. Reservation
+contains project_id,resource_id,lease_invocation and expected request digest. It
+blocks concurrent acquisition; crash recovery performs no automatic resolution
+or create. Resolution success creates and fsyncs the complete pending-create lease
+before removing the reservation. A resolution failure retains the reservation
+for explicit abandonment (no container mutation has occurred). Create uses only
+the pinned image ID, never the tag; another tag change cannot change that request.
+A resolve-image 404 is unknown/unavailable, never container absence.
+
+Health uses POST /containers/{id}/exec -> 201 with exactly Id (full 64 lowercase
+hex), then POST /exec/{id}/start -> 200 with empty body for detached execution.
+Exec create body has Cmd, AttachStdin=false, AttachStdout=false, AttachStderr=false,
+Tty=false, Privileged=false; no Env/User/WorkingDir overrides. Start body is
+Detach=true,Tty=false. GET /exec/{id}/json -> 200 requires exact ID, ContainerID,
+Running boolean and integer ExitCode when Running=false. Polling interval is
+100ms, bounded by the original monotonic deadline, never a fresh timeout per poll.
+Any missing/wrong ID, unknown exit, non-200/201 or lost response is unknown and
+retained. Container identity is checked before exec and after completion. Every
+poll remains read-only; no second exec create/start is allowed. Nonzero exit is
+returned in health, not converted to unknown. Tests must cover cancellation before
+create, after create, after start and during polling, plus mismatched ContainerID.
+
+## Revision 3: canonical bytes
+
+Use only UTF-8 JSON objects, arrays, strings, booleans, null and integers within
+signed i64 or unsigned u64 bounds. Reject floats, negative zero, exponent forms,
+invalid Unicode, duplicate keys and unknown fields before canonicalization.
+Sort object keys by unsigned UTF-8 bytes. Preserve array order; labels/environment
+must already be sorted uniquely by key. Emit integers in minimal decimal (no plus
+or leading zeros), booleans/null lowercase, no whitespace or trailing newline.
+Strings escape quote and backslash, use \b, \t, \n, \f, \r for those controls,
+and lowercase \u00xx for other U+0000..001F controls; emit all other Unicode as
+UTF-8 without normalization or slash escaping. Field validators reject NUL where
+applicable. This is the project's integer-only canonical JSON profile, not a
+claim of arbitrary JSON canonicalization support.
+
+To calculate operation_key, OMIT binding.operation_key entirely (never null),
+canonicalize the remaining complete request and prefix the exact ASCII domain
+`gate-runtime/lifecycle-v1/request` followed by one NUL byte. SHA256 is lowercase
+hex. Insert this value, canonicalize again; these complete bytes are both fd4 and
+stdin. Each must independently pass strict schema validation and canonical-byte
+comparison; then compare the two byte strings exactly, including operation_key.
+Recompute operation_key and require the response echo it, generation and the full
+binding/operation exactly. No whitespace-tolerant equality or field omission is
+allowed at this boundary. Generation is the durable lease revision reserved for
+this invocation; increment under lock and persist before dispatch. Read-only calls
+also reserve a revision, preventing response reuse across reconciliations.
+
+Canonicalization primitive test vector (deliberately not a schema-valid lifecycle
+request; full request vectors will accompany wire types):
+
+```json
+{"binding":{"generation":7},"operation":{"kind":"status"},"protocol":"gate-runtime/lifecycle-v1"}
+```
+
+Domain-prefixed SHA256 with omitted operation_key: `53c04196d0ecf86a07b1e5cb1244d3170f0b21fd1cc565394683c1c833f350e9`.
+The full-schema/fd4 tests must also reject whitespace variation, null operation_key,
+stale generation, duplicate fields, changed target and a matching echo with the
+wrong digest. This document does not claim those wire validators are implemented.
