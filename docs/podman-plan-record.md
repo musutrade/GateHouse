@@ -69,3 +69,11 @@ prevent a same-UID writer changing bytes after the check. Tests inject short-wri
 ENOSPC, file/parent-sync EIO and close failure through the private I/O adapter,
 and replace valid evidence at the reopen boundary. These are deterministic
 software fault simulations, not kernel fault injection or power-loss proof.
+
+Boundary regression tests explicitly show that replacing only EXPOSE without
+updating the response hash is rejected, while recomputing an unkeyed hash can
+produce valid different evidence with the same create body. Likewise, valid
+replacement after create_new returns can be read successfully. Neither behavior
+is authentication or a guarantee against same-UID writers. Consumers needing a
+specific saved record must keep their own trusted expected identity; this API
+alone supplies no such authority.

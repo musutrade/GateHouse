@@ -748,4 +748,142 @@ mod tests {
             .match_context(&ProtectedContext::load(&other.config).unwrap())
             .is_err());
     }
+    fn evidence_fixture() -> (
+        Fixture,
+        ProtectedContext,
+        super::super::plan_record::PlanRecord,
+    ) {
+        use super::super::{
+            plan_record::{PlanInputs, PlanRecord},
+            profile::{Profile, SlotIdentity, PRODUCT, PROTOCOL, VERSION},
+        };
+        let f = Fixture::new();
+        let held = ProtectedContext::load(&f.config).unwrap();
+        let id = "b".repeat(64);
+        let raw = serde_json::to_vec(
+            &serde_json::json!({"Id":id,"Config":{"ExposedPorts":{"80/tcp":{}}}}),
+        )
+        .unwrap();
+        let info = info(&held);
+        let mut calls = 0;
+        let captured = held
+            .capture_image_for_plan(&id, |_| {
+                calls += 1;
+                Ok((
+                    200,
+                    if calls == 2 {
+                        raw.clone()
+                    } else {
+                        info.clone()
+                    },
+                ))
+            })
+            .unwrap();
+        let identity = SlotIdentity {
+            profile: Profile {
+                protocol: PROTOCOL.into(),
+                product: PRODUCT.into(),
+                version: VERSION.into(),
+                engine: "podman".into(),
+            },
+            installation_sha256: "a".repeat(64),
+            executable_sha256: "c".repeat(64),
+            config_sha256: held.config_sha256().unwrap(),
+        };
+        let record = PlanRecord::capture(
+            &held,
+            &captured,
+            &identity,
+            PlanInputs {
+                name: "fixture".into(),
+                labels: [("owner".into(), "fixture".into())].into(),
+                port: None,
+            },
+        )
+        .unwrap();
+        (f, held, record)
+    }
+    fn replace_record_field(bytes: &[u8], field: &str, value: serde_json::Value) -> Vec<u8> {
+        let original: serde_json::Value = serde_json::from_slice(bytes).unwrap();
+        let old = format!(
+            "\"{field}\":{}",
+            serde_json::to_string(&original[field]).unwrap()
+        );
+        let new = format!("\"{field}\":{}", serde_json::to_string(&value).unwrap());
+        let text = String::from_utf8(bytes.to_vec()).unwrap();
+        assert!(text.contains(&old));
+        text.replacen(&old, &new, 1).into_bytes()
+    }
+    #[test]
+    fn evidence_exposure_change_requires_hash_but_is_not_authenticity() {
+        use super::super::plan_record::PlanRecord;
+        let (_f, held, record) = evidence_fixture();
+        let bytes = record.encode().unwrap();
+        let original: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        let image = original["image_json"]
+            .as_str()
+            .unwrap()
+            .replace("80/tcp", "81/tcp");
+        let changed = replace_record_field(&bytes, "image_json", serde_json::json!(image));
+        assert!(PlanRecord::decode(&changed, &held).is_err());
+        // Recomputed unkeyed hashes yield internally consistent evidence. They
+        // cannot authenticate EXPOSE, which does not change native create body.
+        let consistent = replace_record_field(
+            &changed,
+            "image_sha256",
+            serde_json::json!(format!("{:x}", Sha256::digest(image.as_bytes()))),
+        );
+        let reopened = PlanRecord::decode(&consistent, &held).unwrap();
+        assert_eq!(reopened.plan_bytes(), record.plan_bytes());
+        assert!(!reopened.installation_verified());
+    }
+    #[test]
+    fn evidence_nested_schema_and_decoded_bounds_refuse() {
+        use super::super::plan_record::PlanRecord;
+        let (_f, held, record) = evidence_fixture();
+        let bytes = record.encode().unwrap();
+        let text = String::from_utf8(bytes.clone()).unwrap();
+        for (needle, replacement) in [
+            ("\"profile\":{", "\"profile\":{\"engine\":\"podman\","),
+            ("\"inputs\":{", "\"inputs\":{\"extra\":true,"),
+            ("\"labels\":{", "\"labels\":{\"owner\":\"duplicate\","),
+        ] {
+            let altered = text.replacen(needle, replacement, 1);
+            assert_ne!(altered, text);
+            assert!(PlanRecord::decode(altered.as_bytes(), &held).is_err());
+        }
+        for field in ["config_json", "image_json"] {
+            let altered = replace_record_field(
+                &bytes,
+                field,
+                serde_json::json!(" ".repeat(1024 * 1024 + 1)),
+            );
+            assert!(PlanRecord::decode(&altered, &held).is_err());
+        }
+        let oversized_label = text.replacen(
+            "\"owner\":\"fixture\"",
+            &format!("\"owner\":\"{}\"", "x".repeat(4097)),
+            1,
+        );
+        assert_ne!(oversized_label, text);
+        assert!(PlanRecord::decode(oversized_label.as_bytes(), &held).is_err());
+    }
+    #[test]
+    fn evidence_postcheck_replacement_remains_possible_and_non_authoritative() {
+        use super::super::plan_record::PlanRecord;
+        let (f, held, record) = evidence_fixture();
+        let path = f.config.parent().unwrap().join("postcheck");
+        record.create_new(&path, &held).unwrap();
+        let intended = record.encode().unwrap();
+        let replacement = replace_record_field(
+            &intended,
+            "asserted_installation_sha256",
+            serde_json::json!("f".repeat(64)),
+        );
+        // Deterministic ordering after final return, no sleep/race timing.
+        fs::write(&path, &replacement).unwrap();
+        let reopened = PlanRecord::open(&path, &held).unwrap();
+        assert_ne!(reopened.encode().unwrap(), intended);
+        assert!(!reopened.installation_verified());
+    }
 }
