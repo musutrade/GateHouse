@@ -43,6 +43,8 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
+    /// Explicit read-only Podman evidence capture; executes the selected project's trusted host.
+    PodmanCapture(PodmanCaptureArgs),
     /// Verify one pinned saved result and its evidence without loading a project.
     ReportVerify {
         /// Existing v1/v2 history index containing exactly one invocation and trusted pins.
@@ -460,5 +462,55 @@ mod lifecycle_cli_tests {
         let mut overridden = args.to_vec();
         overridden.extend(["--state-root", "/another-root"]);
         assert!(Cli::try_parse_from(overridden).is_err());
+    }
+}
+
+#[derive(Debug, Args)]
+pub(crate) struct PodmanCaptureArgs {
+    /// Explicitly trust execution of the selected project host's declared binary.
+    #[arg(long, required = true)]
+    pub trust_host: bool,
+    #[arg(long)]
+    pub image_id: String,
+    #[arg(long)]
+    pub name: String,
+    /// Operator label KEY=VALUE; duplicate keys are rejected.
+    #[arg(long)]
+    pub label: Vec<String>,
+    #[arg(long, requires = "host_port")]
+    pub container_port: Option<u16>,
+    #[arg(long, requires = "container_port")]
+    pub host_port: Option<u16>,
+    #[arg(long, default_value_t = 3000, value_parser = clap::value_parser!(u32).range(1..=30000))]
+    pub timeout_ms: u32,
+}
+
+#[cfg(test)]
+mod podman_capture_cli_tests {
+    use super::*;
+    #[test]
+    fn podman_capture_requires_trust_and_rejects_overrides() {
+        let base = [
+            "harness-gate",
+            "--project-root",
+            "/project",
+            "podman-capture",
+            "--trust-host",
+            "--image-id",
+            "abc",
+            "--name",
+            "fixture",
+        ];
+        assert!(Cli::try_parse_from(base).is_ok());
+        assert!(Cli::try_parse_from(base.into_iter().filter(|a| *a != "--trust-host")).is_err());
+        for extra in [
+            vec!["--host", "/tmp/host"],
+            vec!["--output", "/tmp/out"],
+            vec!["--socket", "/tmp/s"],
+            vec!["--container-port", "80"],
+            vec!["--timeout-ms", "30001"],
+        ] {
+            assert!(Cli::try_parse_from(base.into_iter().chain(extra)).is_err());
+        }
     }
 }

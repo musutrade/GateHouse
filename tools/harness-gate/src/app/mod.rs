@@ -55,6 +55,7 @@ fn run_report(command: &Commands) -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
+        Commands::PodmanCapture(args) => run_podman_capture(&cli, args),
         Commands::ReportVerify { .. }
         | Commands::ReportDashboard { .. }
         | Commands::ReportHistory { .. }
@@ -577,4 +578,79 @@ fn print_human_config_error(error: &anyhow::Error) {
     eprintln!("Minimal flow.toml shape:");
     eprintln!("{}", crate::config::MINIMAL_CONFIG_SNIPPET);
     eprintln!("Then run: harness-gate config check");
+}
+
+fn run_podman_capture(cli: &Cli, args: &crate::cli::PodmanCaptureArgs) -> Result<bool, CliError> {
+    let bytes = podman_capture_bytes(cli, args)?;
+    use std::io::Write;
+    std::io::stdout()
+        .lock()
+        .write_all(&bytes)
+        .context("write Podman evidence")?;
+    Ok(true)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn podman_capture_bytes(
+    _cli: &Cli,
+    _args: &crate::cli::PodmanCaptureArgs,
+) -> anyhow::Result<Vec<u8>> {
+    anyhow::bail!("Podman capture requires Linux")
+}
+
+#[cfg(target_os = "linux")]
+pub(crate) fn podman_capture_bytes(
+    cli: &Cli,
+    args: &crate::cli::PodmanCaptureArgs,
+) -> anyhow::Result<Vec<u8>> {
+    use gatehouse_runtime_protocol::lifecycle_v2::plan_record::{PlanInputs, PlanPort};
+    anyhow::ensure!(
+        args.trust_host,
+        "Podman capture requires explicit --trust-host"
+    );
+    let root = cli
+        .project_root
+        .as_ref()
+        .context("Podman capture requires explicit --project-root")?;
+    anyhow::ensure!(
+        root.is_absolute() && root.canonicalize()? == *root,
+        "Podman project root must be canonical and absolute"
+    );
+    anyhow::ensure!(
+        (1..=30000).contains(&args.timeout_ms),
+        "Podman capture timeout rejected"
+    );
+    gatehouse_runtime_protocol::lifecycle_v2::native_image::image_route(&args.image_id)
+        .map_err(anyhow::Error::msg)?;
+    let mut labels = std::collections::BTreeMap::new();
+    for entry in &args.label {
+        let (key, value) = entry
+            .split_once('=')
+            .context("Podman label requires KEY=VALUE")?;
+        anyhow::ensure!(
+            labels.insert(key.to_owned(), value.to_owned()).is_none(),
+            "duplicate Podman label"
+        );
+    }
+    let port = match (args.container_port, args.host_port) {
+        (None, None) => None,
+        (Some(container), Some(host)) => Some(PlanPort { container, host }),
+        _ => anyhow::bail!("Podman ports must be supplied together"),
+    };
+    let inputs = PlanInputs {
+        name: args.name.clone(),
+        labels,
+        port,
+    };
+    inputs.validate().map_err(anyhow::Error::msg)?;
+    let project = Project::discover(Some(root.clone()), cli.config.clone())?;
+    let record = crate::process::podman_capture_host::capture_installed(
+        &project,
+        args.image_id.clone(),
+        inputs,
+        args.timeout_ms,
+        crate::process::cancelled,
+    )
+    .map_err(anyhow::Error::msg)?;
+    record.encode().map_err(anyhow::Error::msg)
 }

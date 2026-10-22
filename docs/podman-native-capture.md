@@ -222,3 +222,25 @@ It should accept only the existing image ID, PlanInputs and bounded timeout, and
 return evidence separately from persistence. No host path override, identity
 hash override, environment-derived endpoint or mutation authority belongs in that
 route. Command naming and argument/error behavior still need implementation tests.
+
+## Explicit CLI (checkpoint 129, unpublished)
+
+`harness-gate --project-root /canonical/project podman-capture --trust-host
+--image-id FULL_STORAGE_ID --name NAME --label owner=VALUE` explicitly executes
+the mapped host's binary. `--label` may repeat with distinct keys. Optional
+`--container-port` and `--host-port` must appear together; `--timeout-ms` is
+1..30000 (default 3000). Empty operator labels may inherit image labels.
+
+The project root must be explicit, absolute and canonical. The trust flag is a
+statement by the invoking operator, not authentication. Missing trust/root,
+invalid image/inputs/budget and duplicate labels are rejected before project
+loading or socket access. This command is not invoked from doctor or verify.
+Linux is required. There are no host/socket/hash/output-path overrides.
+
+Success writes only canonical PlanRecord bytes to stdout, without a newline.
+There is no implicit file persistence. On capture failure no evidence is written;
+a stdout write failure can leave partial bytes and returns failure, so consumers
+must require success and validate the complete record. The evidence may contain
+configuration/image metadata and is not an authority token. Published protocol
+and artifacts still lack this route; local pinned-source testing is separate
+from a release or real Podman proof.

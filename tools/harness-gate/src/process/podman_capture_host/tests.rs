@@ -513,3 +513,80 @@ fn mapped_host_is_explicit_trust_root_for_protected_external_members() {
         }
     }
 }
+
+#[test]
+fn cli_capture_preflight_and_canonical_success() {
+    use clap::Parser;
+    let (dir, _installed, listener, info) = fixture();
+    let root = dir.path();
+    crate::preset::init(root, "generic", false).unwrap();
+    assert!(std::process::Command::new("git")
+        .args(["init", "--quiet"])
+        .current_dir(root)
+        .status()
+        .unwrap()
+        .success());
+    let mapped = root.join(".harness-gate/runtime/podman-capture-v1");
+    fs::create_dir_all(&mapped).unwrap();
+    for p in [
+        root.join(".harness-gate"),
+        root.join(".harness-gate/runtime"),
+        mapped.clone(),
+    ] {
+        fs::set_permissions(p, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    fs::copy(root.join("host.json"), mapped.join("host.json")).unwrap();
+    let argv = vec![
+        "harness-gate".to_string(),
+        "--project-root".into(),
+        root.to_str().unwrap().into(),
+        "podman-capture".into(),
+        "--trust-host".into(),
+        "--image-id".into(),
+        "b".repeat(64),
+        "--name".into(),
+        "fixture".into(),
+        "--label".into(),
+        "owner=fixture".into(),
+    ];
+    for negative in 0..6 {
+        let mut cli = crate::cli::Cli::try_parse_from(&argv).unwrap();
+        if negative == 0 {
+            cli.project_root = None;
+        }
+        if negative == 1 {
+            cli.project_root = Some(".".into());
+        }
+        let crate::cli::Commands::PodmanCapture(ref mut args) = cli.command else {
+            panic!()
+        };
+        match negative {
+            2 => args.trust_host = false,
+            3 => args.image_id = "short".into(),
+            4 => args.label.push("owner=duplicate".into()),
+            5 => args.timeout_ms = 0,
+            _ => {}
+        }
+        let crate::cli::Commands::PodmanCapture(ref args) = cli.command else {
+            panic!()
+        };
+        assert!(crate::app::podman_capture_bytes(&cli, args).is_err());
+        assert_eq!(
+            listener.accept().unwrap_err().kind(),
+            std::io::ErrorKind::WouldBlock
+        );
+    }
+    let cli = crate::cli::Cli::try_parse_from(&argv).unwrap();
+    let crate::cli::Commands::PodmanCapture(ref args) = cli.command else {
+        panic!()
+    };
+    let server = serve(listener, info);
+    let bytes = crate::app::podman_capture_bytes(&cli, args).unwrap();
+    server.join().unwrap();
+    let installed = VerifiedPodmanInstallation::load(&mapped.join("host.json")).unwrap();
+    let record = PlanRecord::decode(&bytes, installed.context().unwrap()).unwrap();
+    assert_eq!(record.encode().unwrap(), bytes);
+    assert_eq!(fs::read_dir(&mapped).unwrap().count(), 1);
+    fs::remove_file(mapped.join("host.json")).unwrap();
+    assert!(crate::app::podman_capture_bytes(&cli, args).is_err());
+}

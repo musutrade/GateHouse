@@ -12,7 +12,7 @@ pub(super) fn run(project: &Project, command: Commands) -> Result<bool, CliError
         Commands::Quality { .. } => {
             unreachable!("generic evaluation is handled before project discovery")
         }
-        Commands::Adapter { .. } => {
+        Commands::PodmanCapture(_) | Commands::Adapter { .. } => {
             unreachable!("adapter execution is handled before project discovery")
         }
         Commands::Compat {
