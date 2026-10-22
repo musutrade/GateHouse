@@ -501,6 +501,13 @@ jobs:
         with:
           tool: cargo-llvm-cov
 
+      - name: Build pinned lifecycle joint fixture
+        run: |
+          python3 -B tools/quality/lifecycle_fixture.py build \
+            --crate tools/harness-gate \
+            --bundle target/quality/fast-archive/lifecycle \
+            --work "$RUNNER_TEMP/lifecycle-build"
+
       - name: Build instrumented nextest archive
         shell: bash
         run: |
@@ -511,7 +518,7 @@ jobs:
           eval "$(cargo llvm-cov show-env --sh --manifest-path Cargo.toml)"
           export CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target/quality/fast-build-target"
           mkdir -p "$CARGO_TARGET_DIR"
-          cargo nextest archive --workspace --locked --archive-file "$archive" \
+          cargo nextest archive --workspace --locked --features harness-gate/lifecycle-joint-tests --archive-file "$archive" \
             > "$GITHUB_WORKSPACE/target/quality/fast-archive/build.log" 2>&1
 
       - name: Upload fast coverage archive
@@ -522,6 +529,7 @@ jobs:
           path: |
             target/quality/fast-archive/tests.tar.zst
             target/quality/fast-archive/build.log
+            target/quality/fast-archive/lifecycle/
           if-no-files-found: error
 
   quality-fast-shard:
@@ -562,6 +570,14 @@ jobs:
         with:
           name: quality-fast-archive-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/quality/fast-archive
+
+      - name: Verify lifecycle fixture and private journal root
+        run: |
+          python3 -B tools/quality/lifecycle_fixture.py activate \
+            --crate tools/harness-gate \
+            --bundle target/quality/fast-archive/lifecycle \
+            --journal "$HOME/.gatehouse-lifecycle-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.shard }}" \
+            --env-file "$GITHUB_ENV"
 
       - name: Run fast coverage shard
         shell: bash
