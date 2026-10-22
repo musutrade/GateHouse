@@ -36,3 +36,6 @@ pub mod plan_storage;
 pub mod installation;
 
 pub mod capture_binding;
+
+#[cfg(target_os = "linux")]
+pub mod capture_wire;

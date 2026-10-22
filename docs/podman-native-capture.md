@@ -1,6 +1,6 @@
 # Native Podman capture contract corrections (114)
 
-Wire/runner design for independent review, not implemented or published. Request matching and operation-key primitive are implemented separately. First operation is
+Wire checkpoint with runner design for independent review; unpublished. Typed wire, request matching and operation-key primitives are implemented; the runner is not. First operation is
 read-only image plan capture. No create/start/stop/remove/exec, lease, reservation
 or mutation token. Docker v1 and old Podman raw-context records are not accepted.
 The existing lifecycle-v2 profile selects the product; the wire envelope uses a
@@ -82,8 +82,18 @@ zero-socket negatives, cancellation/deadline and no retry. Keep protocol crate
 unpublished/local-patched until its versioned release is coordinated. No real
 engine or daemon changes are part of this contract slice.
 
-Review questions: is the separate capture schema within lifecycle-v2 unambiguous;
-is host-derived expected sufficiently complete for held-snapshot binding; should
-response use a less inflated bounded representation; does fd3 CLOEXEC ownership
-handling conflict with the existing loader; what minimum Core process changes
-are necessary without coupling to Docker host authority?
+
+## Implemented wire checkpoint (115)
+
+capture_wire now implements canonical typed request and expected envelopes,
+request/key matching, and base64 response encode/decode. Limits are 64KiB request,
+16KiB expected, 24MiB response, and 16MiB decoded record. Response processing
+checks bindings, canonical base64 and SHA256 before PlanRecord parsing, exact
+image/operator inputs and installation/config digest comparison. There is no
+fallback to lifecycle-v2 outer schema. base64 uses the existing locked 0.23.1
+crate; no custom base64 implementation is introduced.
+
+These are pure data APIs. CaptureExpected::bind takes caller assertions and does
+not mint trusted fd4 contents. The future Core host must derive them from held
+snapshots. FD ownership/seals, executable ABI, process exit/stderr, deadlines,
+cancellation and real native spawn remain unimplemented integration gates.

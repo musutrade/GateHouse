@@ -1307,4 +1307,111 @@ mod tests {
             assert!(record.match_capture_request(&id, &changed).is_err());
         }
     }
+    #[test]
+    fn capture_wire_roundtrip_and_binding_negatives() {
+        use super::super::{
+            capture_wire::*,
+            plan_record::PlanInputs,
+            profile::{Profile, SlotIdentity, PRODUCT, PROTOCOL, VERSION},
+        };
+        let (_f, held, record) = evidence_fixture();
+        let profile = Profile {
+            protocol: PROTOCOL.into(),
+            product: PRODUCT.into(),
+            version: VERSION.into(),
+            engine: "podman".into(),
+        };
+        let request = CaptureRequest {
+            schema: "gate-runtime/podman-capture-v1".into(),
+            profile: profile.clone(),
+            invocation: "1".repeat(32),
+            image_id: "b".repeat(64),
+            inputs: PlanInputs {
+                name: "fixture".into(),
+                labels: [("owner".into(), "fixture".into())].into(),
+                port: None,
+            },
+            timeout_ms: 1000,
+        };
+        let identity = SlotIdentity {
+            profile,
+            installation_sha256: "a".repeat(64),
+            config_sha256: held.config_sha256().unwrap(),
+            executable_sha256: "c".repeat(64),
+        };
+        let expected = CaptureExpected::bind(
+            &request,
+            &identity,
+            "d".repeat(64),
+            held.config.path.to_str().unwrap().into(),
+        )
+        .unwrap();
+        let rbytes = request.encode().unwrap();
+        CaptureRequest::decode(&rbytes).unwrap();
+        let ebytes = expected.encode(&request).unwrap();
+        CaptureExpected::decode(&ebytes, &request).unwrap();
+        let response = encode_response(&record, &request, &expected, &held).unwrap();
+        assert_eq!(
+            decode_response(&response, &request, &expected, &held)
+                .unwrap()
+                .encode()
+                .unwrap(),
+            record.encode().unwrap()
+        );
+        for field in [
+            "schema",
+            "invocation",
+            "operation_key",
+            "request_sha256",
+            "record_b64",
+            "record_sha256",
+        ] {
+            let bad = replace_record_field(&response, field, serde_json::json!("invalid"));
+            assert!(
+                decode_response(&bad, &request, &expected, &held).is_err(),
+                "{field}"
+            );
+        }
+        for field in [
+            "schema",
+            "invocation",
+            "request_sha256",
+            "host_sha256",
+            "installation_sha256",
+            "config_sha256",
+            "executable_sha256",
+            "config_path",
+            "operation_key",
+        ] {
+            let bad = replace_record_field(&ebytes, field, serde_json::json!("invalid"));
+            assert!(CaptureExpected::decode(&bad, &request).is_err(), "{field}");
+        }
+        for (field, value) in [
+            ("schema", serde_json::json!("gate-runtime/lifecycle-v2")),
+            ("invocation", serde_json::json!("BAD")),
+            ("timeout_ms", serde_json::json!(0)),
+            ("timeout_ms", serde_json::json!(30001)),
+            ("image_id", serde_json::json!("short")),
+        ] {
+            assert!(CaptureRequest::decode(&replace_record_field(&rbytes, field, value)).is_err());
+        }
+        let duplicate = String::from_utf8(rbytes.clone()).unwrap().replacen(
+            "{",
+            "{\"schema\":\"duplicate\",",
+            1,
+        );
+        assert!(CaptureRequest::decode(duplicate.as_bytes()).is_err());
+        let mut trailing = response.clone();
+        trailing.push(b'\n');
+        assert!(decode_response(&trailing, &request, &expected, &held).is_err());
+        assert!(CaptureRequest::decode(&vec![b' '; 65537]).is_err());
+        assert!(CaptureExpected::decode(&vec![b' '; 16385], &request).is_err());
+        assert!(decode_response(
+            &vec![b' '; 24 * 1024 * 1024 + 1],
+            &request,
+            &expected,
+            &held
+        )
+        .is_err());
+    }
 }
