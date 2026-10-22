@@ -42,7 +42,7 @@ fn req(j: &Journal, op: Operation) -> Request {
     r.binding.operation_key = r.operation_key().unwrap();
     r
 }
-fn reply(r: &Request, outcome: Outcome) -> Vec<u8> {
+pub(super) fn reply(r: &Request, outcome: Outcome) -> Vec<u8> {
     let e = &r.binding.engine_binding;
     let o = Observation {
         api_version: e.api_version.clone(),
@@ -61,7 +61,7 @@ fn reply(r: &Request, outcome: Outcome) -> Vec<u8> {
     };
     canonical::encode(&serde_json::to_value(response).unwrap()).unwrap()
 }
-fn object(r: &Request, state: ContainerState) -> Object {
+pub(super) fn object(r: &Request, state: ContainerState) -> Object {
     let Operation::Create {
         name,
         image_id,
@@ -117,7 +117,7 @@ fn status(j: &mut Journal, state: ContainerState, purpose: Purpose) {
     );
     j.begin(&r, purpose).unwrap().observe(Some(&b)).unwrap();
 }
-fn absent(r: &Request) -> Vec<u8> {
+pub(super) fn absent(r: &Request) -> Vec<u8> {
     let Operation::Status { target } = &r.operation else {
         panic!()
     };

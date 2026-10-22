@@ -756,3 +756,14 @@ startup, doctor, generic cleanup and cancellation never invoke this command.
 A changed installation cannot clean up a journal bound to another installation.
 Unknown-ID and pre-Create states remain retained; no name discovery or automatic
 start retry is added. This command does not establish external user authentication.
+
+
+Recovery-boundary regression coverage now injects failure immediately after the
+operator proof is durably published and before slot release. It verifies the
+unchanged unreleased slot, journal tombstone and removed active marker, refusal of
+normal reacquisition, refusal of the old authorization, and successful fresh
+explicit authorization that completes release without any dispatch. The production
+path supplies a no-op boundary observer; no persistence checks or thresholds change.
+Readiness success validates the selected readiness installation only. Even when
+both host fields are set, it does not validate lifecycle installation or prove that
+lifecycle startup will succeed.

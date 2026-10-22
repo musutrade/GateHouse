@@ -1,6 +1,6 @@
 use super::*;
 use std::os::unix::fs::PermissionsExt;
-fn fixture() -> (tempfile::TempDir, Request, CreatePlan) {
+pub(super) fn fixture() -> (tempfile::TempDir, Request, CreatePlan) {
     let root = std::env::var_os("GATEHOUSE_JOURNAL_TEST_ROOT")
         .or_else(|| std::env::var_os("HOME"))
         .unwrap();
