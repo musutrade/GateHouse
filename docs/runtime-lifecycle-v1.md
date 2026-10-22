@@ -616,3 +616,26 @@ exit 7 is valid health evidence but leaves the journal Retained, never healthy.
 Transfer filesystem failure tests retain conservative recovery evidence. These
 checks do not yet connect the public Service lifecycle, publish the new protocol,
 or establish real Docker, rootless or daemon restart behavior.
+
+
+## Service coordinator checkpoint
+
+The Linux `LifecycleService` coordinator accepts a configured image, a Core-owned
+resource identity, immutable CreatePlan, protected state directory and held
+installation. Its fields are private. It constructs a fresh 128-bit invocation
+using kernel entropy and obtains engine identity/digests only from a revalidated
+installation snapshot. Its only constructor creates a Resolution reservation;
+it cannot adopt a free Request or direct generation-1 journal. After resolution
+it requires the evidence-bound generation-2 Create, fresh Status before Start,
+and fresh Status before optional HealthExec. A nonzero health exit fails startup
+and leaves the durable state retained. There is no automatic replay or Drop cleanup.
+
+Explicit normal cleanup requests fresh status, Stop without force, another status,
+Remove without force/volumes, then a new exact-ID absence status. Only the journal's
+absence proof permits tombstone/release. Any failure leaves durable records.
+Recovery is deliberately not exposed as normal cleanup or automatic resume.
+
+The native joint tests cover failed-health retention and successful health followed
+by normal teardown against fake Unix HTTP. Public configuration routing, protected
+state-directory provisioning, ServiceManager ownership and explicit operator
+recovery still need connection before this coordinator replaces the legacy path.

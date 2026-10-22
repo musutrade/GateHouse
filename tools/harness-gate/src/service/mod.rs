@@ -3,6 +3,9 @@ mod docker;
 mod inspection;
 mod lease;
 mod legacy_cli;
+#[cfg(target_os = "linux")]
+#[allow(dead_code)]
+pub(crate) mod lifecycle;
 mod report_directory;
 mod runtime;
 

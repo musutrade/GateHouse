@@ -16,7 +16,7 @@ mod runtime_host_v2;
 #[cfg(target_os = "linux")]
 mod runtime_host_v3;
 #[cfg(target_os = "linux")]
-mod runtime_lifecycle_host;
+pub(crate) mod runtime_lifecycle_host;
 mod runtime_request_v3;
 mod signal;
 mod task;

@@ -8,6 +8,25 @@ use std::{
 };
 #[test]
 fn pinned_native_adapter_resolution_creation_start_and_health_through_core_host() {
+    joint(0);
+}
+#[test]
+fn configured_image_service_requires_reservation_and_retains_failed_health() {
+    joint(1);
+}
+#[test]
+fn configured_image_service_normal_cleanup_requires_exact_absence() {
+    joint(2);
+}
+#[test]
+fn configured_image_service_retains_present_object_after_remove_claim() {
+    joint(3);
+}
+#[test]
+fn configured_image_service_rejects_nonexact_absence_after_remove() {
+    joint(4);
+}
+fn joint(service_path: u8) {
     let path = std::env::var_os("GATEHOUSE_LIFECYCLE_ADAPTER")
         .expect("explicit native adapter path required");
     let digest = std::env::var("GATEHOUSE_LIFECYCLE_ADAPTER_SHA256")
@@ -67,7 +86,7 @@ fn pinned_native_adapter_resolution_creation_start_and_health_through_core_host(
         };
         let inspect = format!("/v1.47/containers/{}/json", "a".repeat(64));
         let exec = format!("/v1.47/exec/{}", "b".repeat(64));
-        let operations: Vec<Vec<Step>> = vec![
+        let mut operations: Vec<Vec<Step>> = vec![
             vec![(
                 "GET",
                 "/v1.47/images/example%3Alatest/json".into(),
@@ -108,14 +127,59 @@ fn pinned_native_adapter_resolution_creation_start_and_health_through_core_host(
                     "GET",
                     format!("{exec}/json"),
                     200,
-                    json!({"ID":"b".repeat(64),"ContainerID":"a".repeat(64),"Running":false,"ExitCode":7}),
+                    json!({"ID":"b".repeat(64),"ContainerID":"a".repeat(64),"Running":false,"ExitCode":if service_path >= 2 {0} else {7}}),
                 ),
-                ("GET", inspect, 200, running),
+                ("GET", inspect.clone(), 200, running.clone()),
             ],
         ];
-        for operation in operations {
+        if service_path >= 2 {
+            let final_status = if service_path == 3 {
+                (200, running.clone())
+            } else if service_path == 4 {
+                (404, json!({"message":"wrong container"}))
+            } else {
+                (
+                    404,
+                    json!({"message":format!("No such container: {}", "a".repeat(64))}),
+                )
+            };
+            let mut stopped = running.clone();
+            stopped["State"]["Status"] = "exited".into();
+            operations.extend([
+                vec![("GET", inspect.clone(), 200, running.clone())],
+                vec![
+                    ("GET", inspect.clone(), 200, running),
+                    (
+                        "POST",
+                        format!("/v1.47/containers/{}/stop?t=5", "a".repeat(64)),
+                        204,
+                        Value::Null,
+                    ),
+                    ("GET", inspect.clone(), 200, stopped.clone()),
+                ],
+                vec![("GET", inspect.clone(), 200, stopped.clone())],
+                vec![
+                    ("GET", inspect.clone(), 200, stopped),
+                    (
+                        "DELETE",
+                        format!("/v1.47/containers/{}?force=false&v=false", "a".repeat(64)),
+                        204,
+                        Value::Null,
+                    ),
+                ],
+                vec![("GET", inspect, final_status.0, final_status.1)],
+            ]);
+        }
+        let last = operations.len() - 1;
+        for (index, operation) in operations.into_iter().enumerate() {
+            // A malformed final absence response aborts before after-observation.
+            let after = if service_path == 4 && index == last {
+                vec![]
+            } else {
+                identity()
+            };
             for (method, path, status, value) in
-                identity().into_iter().chain(operation).chain(identity())
+                identity().into_iter().chain(operation).chain(after)
             {
                 let deadline = Instant::now() + Duration::from_secs(5);
                 let mut stream = loop {
@@ -173,6 +237,48 @@ fn pinned_native_adapter_resolution_creation_start_and_health_through_core_host(
         }
     });
     let root = directory.path().join("journal");
+    if service_path != 0 {
+        use crate::service::lifecycle::{LifecycleService, ServiceIdentity};
+        let result = LifecycleService::start(
+            &root,
+            installed,
+            ServiceIdentity {
+                project_id: request.binding.project_id.clone(),
+                resource_id: request.binding.resource_id.clone(),
+                lease_invocation: request.binding.lease_invocation.clone(),
+            },
+            "example:latest".into(),
+            plan,
+            &["check".into()],
+            Instant::now() + Duration::from_secs(20),
+            || false,
+        );
+        if service_path >= 2 {
+            let service = result.unwrap();
+            assert_eq!(service.port(), 49152);
+            let cleanup = service.cleanup(Instant::now() + Duration::from_secs(20), || false);
+            if service_path == 2 {
+                cleanup.unwrap();
+                assert!(!root.join("active").exists());
+                assert!(root.join("tombstone.json").exists());
+            } else {
+                assert!(cleanup.is_err());
+                assert!(root.join("active").exists());
+                assert!(!root.join("tombstone.json").exists());
+            }
+            server.join().unwrap();
+            return;
+        }
+        assert!(result.err().unwrap().to_string().contains("health failed"));
+        let record: Value =
+            serde_json::from_slice(&fs::read(root.join("lease.json")).unwrap()).unwrap();
+        assert_eq!(record["create"]["binding"]["generation"], 2);
+        assert!(!record["resolution"].is_null());
+        assert!(root.join("active").exists());
+        assert!(root.join("reservation.json").exists());
+        server.join().unwrap();
+        return;
+    }
     let mut reservation = Reservation::create(&root, &request, plan.clone()).unwrap();
     let response = resolve(reservation.dispatch().unwrap(), &installed, 3000, || false).unwrap();
     assert!(matches!(response.outcome, Outcome::Image { .. }));
