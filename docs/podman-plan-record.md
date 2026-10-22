@@ -91,3 +91,12 @@ records or rewrites config. Future installation verification must require the
 versioned loader; `is_versioned` only reports format, never installation truth.
 Executable/host/installation held verification and RecordInstallationMatch are
 not implemented by this prerequisite.
+
+`from_held_versioned(path, File)` now consumes the original read-only CLOEXEC
+regular config descriptor, checks protected path identity against it, and reads
+with explicit offsets (the caller's cursor is ignored and unchanged). No config
+path reopen or caller-supplied verified bytes is accepted. Wrong inode, replaced
+path, writable/O_PATH descriptors and invalid wrappers fail. Socket opening is
+still a separate protected socket operation, not a connected transfer.
+Versioned capture -> PlanRecord -> create-new -> reopen is covered; this remains
+a context prerequisite, not held host/installation/executable verification.

@@ -5,10 +5,12 @@ use super::{
     observation::{ExpectedContext, SocketObservation},
 };
 use sha2::{Digest, Sha256};
-use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+use std::os::{
+    fd::AsRawFd,
+    unix::fs::{FileExt, MetadataExt, OpenOptionsExt},
+};
 use std::{
     fs::{self, File, OpenOptions},
-    io::Read,
     path::{Path, PathBuf},
 };
 
@@ -84,6 +86,22 @@ impl Held {
             | libc::O_NONBLOCK
             | if socket { libc::O_PATH } else { 0 };
         let file = io(OpenOptions::new().read(true).custom_flags(flags).open(path))?;
+        Self::from_file(path, file, socket)
+    }
+    fn from_file(path: &Path, file: File, socket: bool) -> Result<Self> {
+        protected(path)?;
+        if !socket {
+            let flags = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GETFL) };
+            let fd_flags = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GETFD) };
+            if flags < 0
+                || flags & libc::O_ACCMODE != libc::O_RDONLY
+                || flags & libc::O_PATH != 0
+                || fd_flags < 0
+                || fd_flags & libc::FD_CLOEXEC == 0
+            {
+                return Err("read-only cloexec config descriptor required");
+            }
+        }
         let m = io(file.metadata())?;
         if socket {
             if m.mode() & 0o170000 != 0o140000
@@ -144,15 +162,29 @@ impl ProtectedContext {
     pub fn load_versioned(path: &Path) -> Result<Self> {
         Self::load_format(path, true)
     }
+    /// Takes ownership of the original read-only CLOEXEC config descriptor.
+    /// Path is checked for identity only, never reopened for config bytes.
+    /// Reads at explicit offsets, independent of the caller's shared cursor.
+    pub fn from_held_versioned(path: &Path, file: File) -> Result<Self> {
+        Self::from_config(Held::from_file(path, file, false)?, true)
+    }
     pub fn is_versioned(&self) -> bool {
         self.versioned
     }
     fn load_format(path: &Path, versioned: bool) -> Result<Self> {
-        let config = Held::open(path, false)?;
+        Self::from_config(Held::open(path, false)?, versioned)
+    }
+    fn from_config(config: Held, versioned: bool) -> Result<Self> {
         let mut bytes = Vec::new();
-        io((&config.file)
-            .take(native_json::LIMIT as u64 + 1)
-            .read_to_end(&mut bytes))?;
+        let mut buffer = [0; 8192];
+        while bytes.len() <= native_json::LIMIT {
+            let count = io(config.file.read_at(&mut buffer, bytes.len() as u64))?;
+            if count == 0 {
+                break;
+            }
+            bytes.extend_from_slice(&buffer[..count]);
+        }
+        config.check()?;
         let value = native_json::decode(&bytes)?;
         let context: ExpectedContext = if versioned {
             let wrapper: VersionedContext =
@@ -977,5 +1009,96 @@ mod tests {
             fs::write(&f.config, bad).unwrap();
             assert!(ProtectedContext::load_versioned(&f.config).is_err());
         }
+    }
+    #[test]
+    fn held_versioned_cursor_independence_and_record_roundtrip() {
+        use super::super::{
+            plan_record::{PlanInputs, PlanRecord},
+            profile::{Profile, SlotIdentity, PRODUCT, PROTOCOL, VERSION},
+        };
+        use std::io::{Seek, SeekFrom};
+        let f = Fixture::new();
+        let raw = ProtectedContext::load(&f.config).unwrap();
+        let bytes = serde_json::to_vec(&VersionedContext {
+            schema: CONTEXT_SCHEMA.into(),
+            context: raw.snapshot().unwrap().0.clone(),
+        })
+        .unwrap();
+        fs::write(&f.config, &bytes).unwrap();
+        let mut file = File::open(&f.config).unwrap();
+        file.seek(SeekFrom::End(0)).unwrap();
+        let held = ProtectedContext::from_held_versioned(&f.config, file).unwrap();
+        assert_eq!(held.snapshot().unwrap().1, bytes);
+        let info = info(&held);
+        let mut calls = 0;
+        let id = "b".repeat(64);
+        let captured = held
+            .capture_image_for_plan(&id, |_| {
+                calls += 1;
+                Ok((
+                    200,
+                    if calls == 2 {
+                        serde_json::to_vec(&serde_json::json!({"Id":id,"Config":{}})).unwrap()
+                    } else {
+                        info.clone()
+                    },
+                ))
+            })
+            .unwrap();
+        let identity = SlotIdentity {
+            profile: Profile {
+                protocol: PROTOCOL.into(),
+                product: PRODUCT.into(),
+                version: VERSION.into(),
+                engine: "podman".into(),
+            },
+            installation_sha256: "a".repeat(64),
+            executable_sha256: "c".repeat(64),
+            config_sha256: held.config_sha256().unwrap(),
+        };
+        let record = PlanRecord::capture(
+            &held,
+            &captured,
+            &identity,
+            PlanInputs {
+                name: "fixture".into(),
+                labels: [("owner".into(), "fixture".into())].into(),
+                port: None,
+            },
+        )
+        .unwrap();
+        let path = f.dir.path().join("versioned-record");
+        record.create_new(&path, &held).unwrap();
+        let reopened = PlanRecord::open(&path, &held).unwrap();
+        assert_eq!(reopened.encode().unwrap(), record.encode().unwrap());
+        assert!(!reopened.installation_verified());
+    }
+    #[test]
+    fn held_versioned_rejects_wrong_inode_replaced_path_and_writable_descriptor() {
+        let f = Fixture::new();
+        let raw = ProtectedContext::load(&f.config).unwrap();
+        let bytes = serde_json::to_vec(&VersionedContext {
+            schema: CONTEXT_SCHEMA.into(),
+            context: raw.snapshot().unwrap().0.clone(),
+        })
+        .unwrap();
+        fs::write(&f.config, &bytes).unwrap();
+        let writable = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&f.config)
+            .unwrap();
+        assert!(ProtectedContext::from_held_versioned(&f.config, writable).is_err());
+        let old = File::open(&f.config).unwrap();
+        fs::rename(&f.config, f.dir.path().join("original")).unwrap();
+        fs::write(&f.config, &bytes).unwrap();
+        fs::set_permissions(&f.config, fs::Permissions::from_mode(0o600)).unwrap();
+        assert!(ProtectedContext::from_held_versioned(&f.config, old).is_err());
+        let other = Fixture::new();
+        assert!(ProtectedContext::from_held_versioned(
+            &f.config,
+            File::open(&other.config).unwrap()
+        )
+        .is_err());
     }
 }
