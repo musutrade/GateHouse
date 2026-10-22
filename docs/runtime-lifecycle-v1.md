@@ -569,3 +569,20 @@ or same-byte host/installation/config/executable replacement after input creatio
 or after response validation prevents that commit. The production observer is a
 no-op; tests do not depend on sleeps or guessed callback counts to place the final
 cancellation boundary.
+
+## Paired native adapter regression
+
+The opt-in `lifecycle-joint-tests` Cargo feature requires
+`GATEHOUSE_LIFECYCLE_ADAPTER` and `GATEHOUSE_LIFECYCLE_ADAPTER_SHA256`; missing inputs
+or a mismatched artifact fail the test instead of skipping it. The test copies the
+pinned executable into a protected installation, then runs Create and a fresh
+Status generation through the actual Core host, sealed descriptors, native adapter
+and a fake Unix HTTP socket. It verifies operation-specific outcomes and the exact
+journal identity; it performs no real Docker operation. Default tests need no
+external repository artifact.
+
+Additional host tests cancel at prepared inputs, exhaust the deadline only after
+a validated response, and alter the journal marker/lease at both host boundaries.
+A journal commit failure never returns success or makes the consumed dispatch
+reusable; damaged journal state remains an explicit recovery problem. These are
+process/filesystem regression tests, not real daemon/rootless/restart evidence.

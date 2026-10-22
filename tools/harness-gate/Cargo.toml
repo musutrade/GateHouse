@@ -61,6 +61,8 @@ windows-sys = { version = "0.61.2", features = [
 # binaries so isolated critical-path matrix runs never enumerate an ignored
 # sibling test; run through tools/quality/config_benchmark.py.
 config-benchmark = []
+# Explicit paired-repository test; requires a pinned native adapter binary.
+lifecycle-joint-tests = []
 
 [profile.dev]
 # Cargo's dev defaults (incremental = true, codegen-units = 256, opt-level = 0) are

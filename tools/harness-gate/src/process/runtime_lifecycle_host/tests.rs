@@ -49,6 +49,9 @@ struct Fixture {
     host: PathBuf,
 }
 fn fixture(mode: &str) -> Fixture {
+    fixture_binary(mode, executable(), None)
+}
+fn fixture_binary(mode: &str, binary: &[u8], socket: Option<&Path>) -> Fixture {
     let root = std::env::var_os("GATEHOUSE_JOURNAL_TEST_ROOT")
         .or_else(|| std::env::var_os("HOME"))
         .unwrap();
@@ -58,7 +61,7 @@ fn fixture(mode: &str) -> Fixture {
         .unwrap();
     fs::set_permissions(d.path(), fs::Permissions::from_mode(0o700)).unwrap();
     let exe = d.path().join("adapter");
-    fs::write(&exe, executable()).unwrap();
+    fs::write(&exe, binary).unwrap();
     fs::set_permissions(&exe, fs::Permissions::from_mode(0o500)).unwrap();
     let mut request = wire::parse_request(include_bytes!(
         "../../../runtime-protocol/src/lifecycle/wire/status-request.json"
@@ -78,10 +81,14 @@ fn fixture(mode: &str) -> Fixture {
         }],
     };
     request.binding.engine_binding.principal_uid = unsafe { libc::geteuid() };
+    if let Some(socket) = socket {
+        request.binding.engine_binding.socket_path = socket.to_str().unwrap().into();
+        request.binding.engine_binding.socket_uid = unsafe { libc::geteuid() };
+    }
     let config = d.path().join("config.json");
     let install = d.path().join("installation.json");
     let host = d.path().join("host.json");
-    request.binding.executable_sha256 = hash(executable());
+    request.binding.executable_sha256 = hash(binary);
     request.binding.config_sha256 = save(
         &config,
         &json!({"schema":"gate-runtime/lifecycle-config-v1","engine_binding":request.binding.engine_binding}),
@@ -245,6 +252,90 @@ fn same_byte_replacement_at_both_boundaries_prevents_commit() {
             );
             assert_eq!(f.journal.phase(), Phase::UnresolvedNoId);
             assert!(f.journal.dispatch().is_err());
+        }
+    }
+}
+
+#[cfg(feature = "lifecycle-joint-tests")]
+mod joint;
+
+#[test]
+fn cancellation_at_prepared_inputs_prevents_response_acceptance() {
+    use std::cell::Cell;
+    let mut f = fixture("created");
+    let cancelled = Cell::new(false);
+    let mut validated = false;
+    let result = dispatch_observed(
+        f.journal.dispatch().unwrap(),
+        &f.installed,
+        3000,
+        || cancelled.get(),
+        |boundary| match boundary {
+            Boundary::InputsPrepared => cancelled.set(true),
+            Boundary::ResponseValidated(_) => validated = true,
+        },
+    );
+    assert!(matches!(result, Err(DispatchError::Boundary(_))));
+    assert!(cancelled.get());
+    assert!(!validated);
+    assert_eq!(f.journal.phase(), Phase::UnresolvedNoId);
+    assert!(f.journal.dispatch().is_err());
+}
+#[test]
+fn deadline_expiring_after_valid_response_prevents_commit() {
+    let mut f = fixture("created");
+    let mut validated = false;
+    let result = dispatch_observed(
+        f.journal.dispatch().unwrap(),
+        &f.installed,
+        1000,
+        || false,
+        |boundary| {
+            if let Boundary::ResponseValidated(response) = boundary {
+                assert!(matches!(response.outcome, Outcome::Created { .. }));
+                validated = true;
+                // Exhaust a known budget only after the deterministic validation
+                // boundary. This sleep does not guess when the child has completed.
+                std::thread::sleep(Duration::from_millis(1001));
+            }
+        },
+    );
+    assert!(validated);
+    assert_eq!(
+        result,
+        Err(DispatchError::Boundary(
+            "lifecycle final boundary cancelled or expired"
+        ))
+    );
+    assert_eq!(f.journal.phase(), Phase::UnresolvedNoId);
+    assert!(f.journal.dispatch().is_err());
+}
+#[test]
+fn journal_marker_or_lease_tamper_at_host_boundaries_cannot_commit_success() {
+    for name in ["active", "lease.json"] {
+        for after_response in [false, true] {
+            let mut f = fixture("created");
+            let path = f._dir.path().join("journal").join(name);
+            let mut changed = false;
+            let result = dispatch_observed(
+                f.journal.dispatch().unwrap(),
+                &f.installed,
+                3000,
+                || false,
+                |boundary| {
+                    if matches!(boundary, Boundary::ResponseValidated(_)) == after_response {
+                        fs::write(&path, b"tampered").unwrap();
+                        changed = true;
+                    }
+                },
+            );
+            assert!(changed);
+            assert_eq!(
+                result,
+                Err(DispatchError::Boundary("lifecycle journal commit failed"))
+            );
+            assert!(f.journal.dispatch().is_err());
+            assert_ne!(f.journal.phase(), Phase::KnownCreated);
         }
     }
 }
