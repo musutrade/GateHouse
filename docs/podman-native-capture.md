@@ -206,3 +206,19 @@ across projects. It supplies neither artifact provenance nor Podman authenticati
 OS containment, lease authority or a trusted-project registry. Existing final-file
 replacement tests cover held-snapshot replacement; this checkpoint's new negatives
 cover pre-load digest/permission rejection, not postcheck race elimination.
+
+## Actual Project entry checkpoint 128
+
+The positive native mapping test now initializes a workflow and Git repository,
+discovers a real Project, asserts discovery itself made no socket connection, and
+calls capture_installed(&project, ...). The returned record is persisted only by
+the test's subsequent explicit create_new. This tests the Project wrapper rather
+than calling only its root-path helper. It does not introduce a public command.
+
+The next explicit CLI route must require operator selection of the project root
+and acknowledge execution of its host-declared binary; it must not be invoked by
+Project discovery, doctor, automatic verification or repository configuration.
+It should accept only the existing image ID, PlanInputs and bounded timeout, and
+return evidence separately from persistence. No host path override, identity
+hash override, environment-derived endpoint or mutation authority belongs in that
+route. Command naming and argument/error behavior still need implementation tests.

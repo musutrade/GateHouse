@@ -385,9 +385,16 @@ fn actual_native_host_get_signal_and_cancellation_discard_and_reap() {
 }
 
 #[test]
-fn fixed_project_mapping_captures_without_implicit_persistence() {
+fn actual_project_entry_captures_only_when_explicitly_called() {
     let (dir, _installed, listener, info) = fixture();
     let root = dir.path();
+    crate::preset::init(root, "generic", false).unwrap();
+    assert!(std::process::Command::new("git")
+        .args(["init", "--quiet"])
+        .current_dir(root)
+        .status()
+        .unwrap()
+        .success());
     let mapped = root.join(".harness-gate/runtime/podman-capture-v1");
     fs::create_dir_all(&mapped).unwrap();
     for p in [
@@ -398,8 +405,15 @@ fn fixed_project_mapping_captures_without_implicit_persistence() {
         fs::set_permissions(p, fs::Permissions::from_mode(0o700)).unwrap();
     }
     fs::copy(root.join("host.json"), mapped.join("host.json")).unwrap();
+    let project = crate::project::Project::discover(Some(root.to_path_buf()), None).unwrap();
+    assert_eq!(project.root, root);
+    // Discovery with a valid mapped host must not execute or connect.
+    assert_eq!(
+        listener.accept().unwrap_err().kind(),
+        std::io::ErrorKind::WouldBlock
+    );
     let server = serve(listener, info);
-    let record = capture_mapped(root, "b".repeat(64), inputs(), 3000, || false).unwrap();
+    let record = capture_installed(&project, "b".repeat(64), inputs(), 3000, || false).unwrap();
     server.join().unwrap();
     assert_eq!(fs::read_dir(&mapped).unwrap().count(), 1);
     assert!(!record.installation_verified());
