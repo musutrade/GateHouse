@@ -144,7 +144,9 @@
         "runtime-protocol/src/lifecycle/installation/files.rs",
         "runtime-protocol/src/lifecycle/installation/sealed.rs",
         "runtime-protocol/src/lifecycle/journal.rs",
+        "runtime-protocol/src/lifecycle/journal/resolution.rs",
         "runtime-protocol/src/lifecycle/journal/storage.rs",
+        "runtime-protocol/src/lifecycle/journal/storage/reservation.rs",
         "runtime-protocol/src/lifecycle/mod.rs",
         "runtime-protocol/src/lifecycle/state.rs",
         "runtime-protocol/src/lifecycle/wire.rs",
@@ -430,6 +432,11 @@
       "path": "src/process/runtime_lifecycle_host/tests/joint.rs",
       "kind": "test",
       "reason": "Opt-in paired native adapter test under cfg(test)."
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle/journal/storage/reservation/tests.rs",
+      "kind": "test",
+      "reason": "Test-only reservation durability module compiled under cfg(test)."
     }
   ],
   "external_exclusions": [

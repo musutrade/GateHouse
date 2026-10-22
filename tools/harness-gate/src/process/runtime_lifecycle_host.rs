@@ -3,7 +3,7 @@
 use super::{fd_inputs::SealedInputs, raw_adapter, HostPolicy};
 use gatehouse_runtime_protocol::lifecycle::{
     installation::VerifiedInstallation,
-    journal::Dispatch,
+    journal::{Dispatch, ResolutionDispatch},
     wire::{self, Outcome, Reason, Request, Response},
 };
 use std::{
@@ -32,6 +32,49 @@ enum Boundary<'a> {
     ResponseValidated(&'a Response),
 }
 
+// Closed authorization set: callers cannot supply a free Request or implement
+// an external token. Both variants originate in the protected durable store.
+enum Authorization<'a> {
+    Operation(Dispatch<'a>),
+    Resolution(ResolutionDispatch<'a>),
+}
+impl<'a> From<Dispatch<'a>> for Authorization<'a> {
+    fn from(token: Dispatch<'a>) -> Self {
+        Self::Operation(token)
+    }
+}
+impl<'a> From<ResolutionDispatch<'a>> for Authorization<'a> {
+    fn from(token: ResolutionDispatch<'a>) -> Self {
+        Self::Resolution(token)
+    }
+}
+impl Authorization<'_> {
+    fn request(&self) -> &Request {
+        match self {
+            Self::Operation(t) => t.request(),
+            Self::Resolution(t) => t.request(),
+        }
+    }
+    fn observe(
+        self,
+        bytes: Option<&[u8]>,
+    ) -> std::result::Result<(), gatehouse_runtime_protocol::Invalid> {
+        match self {
+            Self::Operation(t) => t.observe(bytes),
+            Self::Resolution(t) => t.observe(bytes),
+        }
+    }
+}
+#[allow(dead_code)]
+pub(crate) fn resolve(
+    token: ResolutionDispatch<'_>,
+    installation: &VerifiedInstallation,
+    timeout_ms: u64,
+    cancelled: impl Fn() -> bool,
+) -> std::result::Result<Response, DispatchError> {
+    dispatch_observed(token, installation, timeout_ms, cancelled, |_| {})
+}
+
 /// Consumes the token even on pre-spawn failure: uncertain work is never retried.
 /// Service orchestration must reconcile the retained journal explicitly.
 #[allow(dead_code)]
@@ -44,13 +87,14 @@ pub(crate) fn dispatch(
     dispatch_observed(token, installation, timeout_ms, cancelled, |_| {})
 }
 
-fn dispatch_observed(
-    token: Dispatch<'_>,
+fn dispatch_observed<'a>(
+    token: impl Into<Authorization<'a>>,
     installation: &VerifiedInstallation,
     timeout_ms: u64,
     cancelled: impl Fn() -> bool,
     mut observer: impl FnMut(Boundary<'_>),
 ) -> std::result::Result<Response, DispatchError> {
+    let token = token.into();
     let result = run(
         token.request(),
         installation,

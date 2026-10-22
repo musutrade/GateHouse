@@ -52,6 +52,20 @@ fn fixture(mode: &str) -> Fixture {
     fixture_binary(mode, executable(), None)
 }
 fn fixture_binary(mode: &str, binary: &[u8], socket: Option<&Path>) -> Fixture {
+    let (d, installed, request, host) = fixture_inputs(mode, binary, socket);
+    let journal = Journal::create(&d.path().join("journal"), &request).unwrap();
+    Fixture {
+        _dir: d,
+        installed,
+        journal,
+        host,
+    }
+}
+fn fixture_inputs(
+    mode: &str,
+    binary: &[u8],
+    socket: Option<&Path>,
+) -> (tempfile::TempDir, VerifiedInstallation, Request, PathBuf) {
     let root = std::env::var_os("GATEHOUSE_JOURNAL_TEST_ROOT")
         .or_else(|| std::env::var_os("HOME"))
         .unwrap();
@@ -106,13 +120,7 @@ fn fixture_binary(mode: &str, binary: &[u8], socket: Option<&Path>) -> Fixture {
     let journal_dir = d.path().join("journal");
     fs::create_dir(&journal_dir).unwrap();
     fs::set_permissions(&journal_dir, fs::Permissions::from_mode(0o700)).unwrap();
-    let journal = Journal::create(&journal_dir, &request).unwrap();
-    Fixture {
-        _dir: d,
-        installed,
-        journal,
-        host,
-    }
+    (d, installed, request, host)
 }
 #[test]
 fn descriptor_execution_receives_sealed_exact_inputs_and_empty_environment() {

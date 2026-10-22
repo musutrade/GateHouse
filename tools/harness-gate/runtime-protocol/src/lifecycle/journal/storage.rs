@@ -164,7 +164,7 @@ impl Journal {
         }
         if self.record.state.phase() != Phase::VerifiedAbsent
             && Self::read(&self.directory, "active")?.as_deref()
-                != Some(self.record.create.binding.operation_key.as_bytes())
+                != Some(self.record.marker().as_bytes())
         {
             return Err(Invalid("active lifecycle marker changed"));
         }
@@ -227,7 +227,13 @@ impl Journal {
         let directory = Self::directory(root)?;
         let record = Record::new(create)?;
         let bytes = Self::encode(&record)?;
-        for name in ["lease.json", "active", "tombstone.json"] {
+        for name in [
+            "lease.json",
+            "active",
+            "tombstone.json",
+            "reservation.json",
+            "reservation-tombstone.json",
+        ] {
             if Self::read(&directory, name)?.is_some() {
                 return Err(Invalid("lifecycle resource already recorded"));
             }
@@ -256,6 +262,9 @@ impl Journal {
     pub fn open(root: &Path, create: &Request) -> Result<Self> {
         create.validate()?;
         let directory = Self::directory(root)?;
+        Self::open_held(root, create, directory)
+    }
+    fn open_held(root: &Path, create: &Request, directory: File) -> Result<Self> {
         let bytes = Self::read(&directory, "lease.json")?
             .ok_or(Invalid("missing journal; no automatic adoption"))?;
         let value = canonical::parse_canonical(&bytes)?;
@@ -272,7 +281,7 @@ impl Journal {
             }
         }
         if let Some(m) = &marker {
-            if m != create.binding.operation_key.as_bytes() {
+            if m != record.marker().as_bytes() {
                 return Err(Invalid("journal marker mismatch"));
             }
         } else if record.state.phase() != Phase::VerifiedAbsent
@@ -373,3 +382,6 @@ impl Journal {
 
 #[cfg(test)]
 mod tests;
+
+mod reservation;
+pub use reservation::{Reservation, ResolutionDispatch};

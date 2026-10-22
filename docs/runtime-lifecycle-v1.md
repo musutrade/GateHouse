@@ -575,8 +575,7 @@ cancellation boundary.
 The opt-in `lifecycle-joint-tests` Cargo feature requires
 `GATEHOUSE_LIFECYCLE_ADAPTER` and `GATEHOUSE_LIFECYCLE_ADAPTER_SHA256`; missing inputs
 or a mismatched artifact fail the test instead of skipping it. The test copies the
-pinned executable into a protected installation, then runs Create and a fresh
-Status generation through the actual Core host, sealed descriptors, native adapter
+pinned executable into a protected installation, then runs durable ResolveImage, Create, Status, Start, another Status and HealthExec generations through the actual Core host, sealed descriptors, native adapter
 and a fake Unix HTTP socket. It verifies operation-specific outcomes and the exact
 journal identity; it performs no real Docker operation. Default tests need no
 external repository artifact.
@@ -586,3 +585,34 @@ a validated response, and alter the journal marker/lease at both host boundaries
 A journal commit failure never returns success or makes the consumed dispatch
 reusable; damaged journal state remains an explicit recovery problem. These are
 process/filesystem regression tests, not real daemon/rootless/restart evidence.
+
+
+## Durable image reservation checkpoint
+
+Service image resolution uses `Reservation::create` with the exact ResolveImage
+request and immutable CreatePlan. The protected directory lock and durable active
+marker are acquired before any resolution dispatch. The one-use ResolutionDispatch
+is accepted by the same sealed-input Core host as journal operations. A validated
+Image response is persisted before Create can be authorized; unknown, rejection,
+transport failure or interrupted pending resolution cannot automatically retry.
+
+The reservation transfers its exact evidence and plan into a generation-2 Create
+journal using a fresh invocation. The journal validates the resolution proof during
+history replay and retains the reservation's active marker. It persists lease.json
+before returning the Create token. Crashes before or after that transfer cannot
+produce a second automatic Create. A reopened resolved reservation requires an
+explicit trusted operator resume decision; ordinary recovery must not authorize it.
+A pre-Create abandonment persists its reason and tombstone before releasing the
+active marker, and retains its records. Once a lease exists, reservation abandonment
+and resolution dispatch are prohibited; journal recovery owns the resource.
+
+The older direct generation-1 Create journal API remains for callers that already
+hold an exact image identity and existing tests. The service integration must use
+the reservation path when resolving a configured image reference. No old lease or
+environment-derived authority is implicitly migrated.
+
+The paired native regression covers this transfer and a nonzero HealthExec result:
+exit 7 is valid health evidence but leaves the journal Retained, never healthy.
+Transfer filesystem failure tests retain conservative recovery evidence. These
+checks do not yet connect the public Service lifecycle, publish the new protocol,
+or establish real Docker, rootless or daemon restart behavior.

@@ -10,7 +10,11 @@ use serde::{Deserialize, Serialize};
 #[cfg(unix)]
 mod storage;
 #[cfg(unix)]
-pub use storage::{Dispatch, Journal};
+pub use storage::{Dispatch, Journal, Reservation, ResolutionDispatch};
+
+mod resolution;
+pub use resolution::CreatePlan;
+use resolution::ResolutionProof;
 
 const SCHEMA: &str = "gatehouse-lifecycle-lease/v1";
 const MAX_ATTEMPTS: usize = 128;
@@ -61,6 +65,7 @@ struct AbsenceProof {
 struct Record {
     schema: String,
     create: Request,
+    resolution: Option<ResolutionProof>,
     state: State,
     revision: u64,
     pending: Option<Pending>,
@@ -77,15 +82,24 @@ fn same_authority(a: &Binding, b: &Binding) -> bool {
 }
 impl Record {
     fn new(create: &Request) -> Result<Self> {
+        Self::new_resolved(create, None)
+    }
+    fn new_resolved(create: &Request, resolution: Option<ResolutionProof>) -> Result<Self> {
         create.validate()?;
-        if !matches!(create.operation, Operation::Create { .. }) || create.binding.generation != 1 {
+        if !matches!(create.operation, Operation::Create { .. })
+            || create.binding.generation != if resolution.is_some() { 2 } else { 1 }
+        {
             return Err(Invalid("journal requires first create generation"));
+        }
+        if let Some(proof) = &resolution {
+            proof.validate_create(create)?;
         }
         Ok(Self {
             schema: SCHEMA.into(),
             create: create.clone(),
+            resolution,
             state: State::pending_create(),
-            revision: 1,
+            revision: create.binding.generation,
             pending: Some(Pending {
                 request: create.clone(),
                 purpose: Purpose::Service,
@@ -94,6 +108,12 @@ impl Record {
             absence: None,
             recoveries: vec![],
         })
+    }
+    fn marker(&self) -> &str {
+        self.resolution
+            .as_ref()
+            .map(|p| p.request.binding.operation_key.as_str())
+            .unwrap_or(&self.create.binding.operation_key)
     }
     fn target(&self) -> Result<Target> {
         let Operation::Create {
@@ -141,12 +161,17 @@ impl Record {
         self.create.validate()?;
         self.state.validate()?;
         if !matches!(self.create.operation, Operation::Create { .. })
-            || self.create.binding.generation != 1
+            || self.create.binding.generation != if self.resolution.is_some() { 2 } else { 1 }
         {
             return Err(Invalid("invalid journal origin"));
         }
-        let mut revision = 0;
+        let base = self.create.binding.generation - 1;
+        let mut revision = base;
         let mut nonces = std::collections::BTreeSet::new();
+        if let Some(proof) = &self.resolution {
+            proof.validate_create(&self.create)?;
+            nonces.insert(&proof.request.binding.invocation);
+        }
         for a in &self.attempts {
             if a.request.binding.generation != revision + 1
                 || !nonces.insert(&a.request.binding.invocation)
@@ -154,7 +179,7 @@ impl Record {
                 return Err(Invalid("journal generation or nonce replay"));
             }
             a.request.validate()?;
-            if revision == 0 {
+            if revision == base {
                 if a.request != self.create || a.purpose != Purpose::Service {
                     return Err(Invalid("journal creation history mismatch"));
                 }
@@ -183,7 +208,7 @@ impl Record {
                 return Err(Invalid("journal pending replay"));
             }
             p.request.validate()?;
-            if revision == 0 {
+            if revision == base {
                 if p.request != self.create
                     || p.purpose != Purpose::Service
                     || self.state.phase() != Phase::PendingCreate
@@ -229,14 +254,14 @@ impl Record {
     }
     fn replay(&self) -> Result<()> {
         if self.recoveries.windows(2).any(|w| w[0] >= w[1])
-            || self
-                .recoveries
-                .iter()
-                .any(|g| *g == 0 || *g > self.attempts.len() as u64)
+            || self.recoveries.iter().any(|g| {
+                *g < self.create.binding.generation
+                    || *g > self.attempts.len() as u64 + self.create.binding.generation - 1
+            })
         {
             return Err(Invalid("invalid journal recovery history"));
         }
-        let mut replay = Self::new(&self.create)?;
+        let mut replay = Self::new_resolved(&self.create, self.resolution.clone())?;
         let mut fresh = false;
         for (index, a) in self.attempts.iter().enumerate() {
             if index > 0 {
