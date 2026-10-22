@@ -19,6 +19,24 @@ pub struct PlanInputs {
     pub labels: BTreeMap<String, String>,
     pub port: Option<PlanPort>,
 }
+impl PlanInputs {
+    /// Checks only caller-known fields. Empty operator labels are legal until
+    /// image inheritance is merged; final plan validation still applies.
+    pub fn validate(&self) -> Result<()> {
+        super::ownership::validate_plan_fields(
+            &self.name,
+            &self.labels,
+            self.port
+                .as_ref()
+                .map(|p| FixedPort {
+                    container: p.container,
+                    host: p.host,
+                })
+                .as_ref(),
+            false,
+        )
+    }
+}
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PlanPort {
@@ -56,6 +74,7 @@ impl PlanRecord {
         identity: &SlotIdentity,
         inputs: PlanInputs,
     ) -> Result<Self> {
+        inputs.validate()?;
         captured.match_context(context)?;
         identity.validate()?;
         if identity.config_sha256 != hash(captured.config_bytes()) {
@@ -148,14 +167,7 @@ impl PlanRecord {
     }
 }
 fn derive(facts: &super::native_image::ImageFacts, inputs: &PlanInputs) -> Result<String> {
-    if inputs.labels.len() > 64
-        || inputs
-            .labels
-            .iter()
-            .any(|(k, v)| k.is_empty() || k.len() > 256 || v.len() > 4096)
-    {
-        return Err("operator labels bounds");
-    }
+    inputs.validate()?;
     let plan = facts.create_plan(
         inputs.name.clone(),
         inputs.labels.clone(),

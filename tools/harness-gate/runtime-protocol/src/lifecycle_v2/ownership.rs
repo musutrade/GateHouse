@@ -174,6 +174,15 @@ pub(super) fn validate_plan(
     port: Option<&FixedPort>,
 ) -> Result<()> {
     inspect_route(image_id)?;
+    validate_plan_fields(name, labels, port, true)
+}
+/// Operator preflight allows no labels; the merged image plan must not be empty.
+pub(super) fn validate_plan_fields(
+    name: &str,
+    labels: &BTreeMap<String, String>,
+    port: Option<&FixedPort>,
+    require_labels: bool,
+) -> Result<()> {
     if name.is_empty()
         || name.len() > 128
         || !name
@@ -183,7 +192,7 @@ pub(super) fn validate_plan(
     {
         return Err("explicit container name required");
     }
-    if labels.is_empty()
+    if (require_labels && labels.is_empty())
         || labels.len() > 64
         || labels.iter().any(|(k, v)| {
             k.is_empty()
