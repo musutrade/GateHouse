@@ -128,7 +128,7 @@ fn unknown_wrong_identity_and_reused_nonce_cannot_authorize_create() {
     let (d, r, p) = fixture();
     let mut value = Reservation::create(d.path(), &r, p).unwrap();
     let mut wrong = r.clone();
-    wrong.binding.invocation = "4".repeat(32).into();
+    wrong.binding.invocation = "4".repeat(32);
     wrong.binding.operation_key = wrong.operation_key().unwrap();
     assert!(value
         .dispatch()

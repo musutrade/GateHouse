@@ -294,7 +294,7 @@ pub enum ServiceConfig {
         readiness_host: Option<String>,
         /// Explicit protected lifecycle-v1 host. Never falls back to an engine CLI.
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        lifecycle_host: Option<String>,
+        lifecycle_host: Option<Box<str>>,
         image: String,
         #[serde(default)]
         image_env: Option<String>,

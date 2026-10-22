@@ -92,7 +92,7 @@ pub(crate) fn cleanup_known(
     if fence == 0 {
         bail!("operator cleanup requires a nonzero exact fence");
     }
-    let installation = VerifiedInstallation::load(Path::new(host))?;
+    let installation = VerifiedInstallation::load(Path::new(host.as_ref()))?;
     let base = ServiceSlot::project_state_base(&project.root)?;
     let authorization = lifecycle::nonce()?;
     let recovery = OperatorRecovery::open_mapped(

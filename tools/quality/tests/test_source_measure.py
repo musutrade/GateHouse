@@ -415,7 +415,10 @@ fn both() {
                 self.assertEqual(len(self.inventory(transformed)['symbols']), len(symbols))
 
     def test_report_retention_sources_inventory_and_instrumentation(self):
-        paths = {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs'}
+        paths = {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs', 'service/docker.rs',
+                 'service/lifecycle.rs', 'service/lifecycle/recovery.rs',
+                 'service/lifecycle_public.rs', 'service/lifecycle_public/linux.rs',
+                 'service/lifecycle_public/unsupported.rs'}
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')}, paths)
         retained = Path(os.environ.get('RUST_MEASURE_NATIVE_EVIDENCE', ROOT / 'target/gh286-native-evidence')).resolve()
         retained.mkdir(parents=True, exist_ok=True)
@@ -429,7 +432,14 @@ fn both() {
                     source = source_file.read_text(encoding='utf-8')
                     inventory = ast(source_file, self.binary, compiler_configuration(target))
                     symbols = inventory['symbols']
-                    self.assertTrue(any(not symbol['test'] for symbol in symbols))
+                    if path == 'service/lifecycle_public.rs':
+                        # This routing module contains only a data struct and cfg module/reexports.
+                        self.assertEqual(symbols, [])
+                        self.assertIn('pub(crate) struct Config', source)
+                        self.assertIn('mod linux;', source)
+                        self.assertIn('mod unsupported;', source)
+                    else:
+                        self.assertTrue(any(not symbol['test'] for symbol in symbols))
                     self.assertFalse(any(symbol['test'] for symbol in symbols))
                     if path == 'service/lease.rs':
                         variants = [symbol for symbol in symbols if symbol['name'] == 'process_start_identity_checked']

@@ -134,33 +134,61 @@ impl OperatorRecovery {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lifecycle::{journal::storage::tests::{absent, object, reply}, wire::ContainerState};
+    use crate::lifecycle::{
+        journal::storage::tests::{absent, object, reply},
+        wire::ContainerState,
+    };
 
     #[test]
     fn persisted_operator_proof_never_substitutes_for_slot_release() {
         let (d, resolve, plan) = super::super::tests::fixture();
-        let mut slot = ServiceSlot::acquire_mapped(d.path(), resolve.clone(), plan.clone(), vec![]).unwrap();
+        let mut slot =
+            ServiceSlot::acquire_mapped(d.path(), resolve.clone(), plan.clone(), vec![]).unwrap();
         let root = slot.root.clone();
         let mut reservation = slot.reserve().unwrap();
-        let image = reply(&resolve, Outcome::Image { image_id: format!("sha256:{}", "e".repeat(64)), repo_digests: vec![] });
-        reservation.dispatch().unwrap().observe(Some(&image)).unwrap();
+        let image = reply(
+            &resolve,
+            Outcome::Image {
+                image_id: format!("sha256:{}", "e".repeat(64)),
+                repo_digests: vec![],
+            },
+        );
+        reservation
+            .dispatch()
+            .unwrap()
+            .observe(Some(&image))
+            .unwrap();
         let mut journal = reservation.into_journal(&"3".repeat(32)).unwrap();
         let token = journal.dispatch().unwrap();
         let create = token.request().clone();
-        let created = reply(&create, Outcome::Created { object: object(&create, ContainerState::Created) });
+        let created = reply(
+            &create,
+            Outcome::Created {
+                object: object(&create, ContainerState::Created),
+            },
+        );
         token.observe(Some(&created)).unwrap();
         drop(journal);
         drop(slot);
-        let open = |auth: &str| OperatorRecovery::open_mapped(d.path(), &resolve.binding.project_id,
-            &resolve.binding.resource_id, 1, &resolve.binding.lease_invocation, auth);
+        let open = |auth: &str| {
+            OperatorRecovery::open_mapped(
+                d.path(),
+                &resolve.binding.project_id,
+                &resolve.binding.resource_id,
+                1,
+                &resolve.binding.lease_invocation,
+                auth,
+            )
+        };
         let first = "9".repeat(32);
         let mut recovery = open(&first).unwrap();
         let target = recovery.target().unwrap();
-        let token = recovery.begin(Operation::Status { target }, &"4".repeat(32)).unwrap();
+        let token = recovery
+            .begin(Operation::Status { target }, &"4".repeat(32))
+            .unwrap();
         let status = token.request().clone();
         token.observe(Some(&absent(&status))).unwrap();
         let before = fs::read(root.join("service.json")).unwrap();
@@ -168,7 +196,10 @@ mod tests {
             assert!(root.join(format!("operator-{first}.proof.json")).exists());
             Err(Invalid("injected failure after proof before slot release"))
         });
-        assert!(failure.unwrap_err().to_string().contains("injected failure"));
+        assert!(failure
+            .unwrap_err()
+            .to_string()
+            .contains("injected failure"));
         assert_eq!(fs::read(root.join("service.json")).unwrap(), before);
         let journal_root = root.join(format!("journal-{}", resolve.binding.lease_invocation));
         assert!(journal_root.join("tombstone.json").exists());
@@ -180,9 +211,14 @@ mod tests {
         assert_eq!(recovery.phase(), Phase::VerifiedAbsent);
         // No dispatch: durable absence and the exact tombstone finish the slot.
         recovery.finish().unwrap();
-        let record: Record = serde_json::from_slice(&fs::read(root.join("service.json")).unwrap()).unwrap();
+        let record: Record =
+            serde_json::from_slice(&fs::read(root.join("service.json")).unwrap()).unwrap();
         assert!(record.released);
         assert!(root.join(format!("operator-{second}.proof.json")).exists());
-        assert!(open(&"7".repeat(32)).err().unwrap().to_string().contains("released slot"));
+        assert!(open(&"7".repeat(32))
+            .err()
+            .unwrap()
+            .to_string()
+            .contains("released slot"));
     }
 }

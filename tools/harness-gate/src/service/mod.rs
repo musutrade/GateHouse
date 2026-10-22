@@ -627,7 +627,7 @@ impl RunningService {
                         project,
                         id,
                         lifecycle_public::Config {
-                            host,
+                            host: host.into(),
                             image,
                             container_port,
                             environment,

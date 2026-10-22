@@ -87,7 +87,7 @@ class RiskScopeTests(unittest.TestCase):
         self.assertIn('config/suggestions.rs', SOURCE_FILES)
         self.assertIn('app/commands.rs', SOURCE_FILES)
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')},
-                         {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs',
+                         {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs', 'service/docker.rs',
                           'service/lifecycle.rs', 'service/lifecycle/recovery.rs',
                           'service/lifecycle_public.rs', 'service/lifecycle_public/linux.rs',
                           'service/lifecycle_public/unsupported.rs'})
@@ -97,6 +97,9 @@ class RiskScopeTests(unittest.TestCase):
             collector = gate.Collector(Path(temporary) / 'candidate', 'base', 'head', 'scope-test')
             for path, supported in (
                 ('tools/harness-gate/src/process/tests.rs', True),
+                ('tools/harness-gate/src/process/runtime_lifecycle_host/tests.rs', True),
+                ('tools/harness-gate/src/process/runtime_lifecycle_host/tests/joint.rs', True),
+                ('tools/harness-gate/src/service/docker.rs', True),
                 ('tools/harness-gate/src/process/replay.rs', True),
                 ('tools/harness-gate/src/process/command.rs', True),
                 ('tools/harness-gate/src/process/capture.rs', True),

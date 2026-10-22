@@ -197,7 +197,7 @@ fn nested_duplicate_unknown_fields_and_missing_keys_rejected() {
 }
 #[test]
 fn valid_outcomes_and_only_exact_operation_pairs() {
-    let pairs = vec![
+    let pairs = [
         (
             Operation::ResolveImage {
                 image: "repo:tag".into(),

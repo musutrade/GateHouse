@@ -361,15 +361,13 @@ impl Operation {
             }
             Self::HealthExec {
                 argv, timeout_ms, ..
-            } => {
-                if argv.is_empty()
-                    || argv.len() > 64
-                    || !(1..=30000).contains(timeout_ms)
-                    || argv.iter().any(|a| a.is_empty() || a.contains('\0'))
-                    || argv.iter().map(String::len).sum::<usize>() > 8192
-                {
-                    return Err(Invalid("invalid health command"));
-                }
+            } if argv.is_empty()
+                || argv.len() > 64
+                || !(1..=30000).contains(timeout_ms)
+                || argv.iter().any(|a| a.is_empty() || a.contains('\0'))
+                || argv.iter().map(String::len).sum::<usize>() > 8192 =>
+            {
+                return Err(Invalid("invalid health command"));
             }
             _ => {}
         }

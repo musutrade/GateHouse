@@ -271,7 +271,11 @@ fn project_state_base_is_fixed_private_and_rejects_unsafe_existing_paths() {
     assert!(ServiceSlot::project_state_base(d.path()).is_err());
     assert_eq!(fs::metadata(&base).unwrap().mode() & 0o777, 0o755);
     let (other, _, _) = fixture();
-    std::os::unix::fs::symlink(d.path().join(".harness-gate"), other.path().join(".harness-gate")).unwrap();
+    std::os::unix::fs::symlink(
+        d.path().join(".harness-gate"),
+        other.path().join(".harness-gate"),
+    )
+    .unwrap();
     assert!(ServiceSlot::project_state_base(other.path()).is_err());
     let (writable, _, _) = fixture();
     fs::set_permissions(writable.path(), fs::Permissions::from_mode(0o770)).unwrap();
@@ -290,12 +294,21 @@ fn operator_entry_rejects_precreate_and_released_slots_without_intent() {
         let mut record: Record = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
         record.released = released;
         fs::write(path, record.bytes().unwrap()).unwrap();
-        let error = OperatorRecovery::open_mapped(d.path(), &r.binding.project_id,
-            &r.binding.resource_id, 1, &r.binding.lease_invocation, &"9".repeat(32))
-            .err().expect("no recovery authority");
+        let error = OperatorRecovery::open_mapped(
+            d.path(),
+            &r.binding.project_id,
+            &r.binding.resource_id,
+            1,
+            &r.binding.lease_invocation,
+            &"9".repeat(32),
+        )
+        .err()
+        .expect("no recovery authority");
         if released {
             assert!(error.to_string().contains("released slot"));
         }
-        assert!(!root.join(format!("operator-{}.json", "9".repeat(32))).exists());
+        assert!(!root
+            .join(format!("operator-{}.json", "9".repeat(32)))
+            .exists());
     }
 }

@@ -381,7 +381,7 @@ fn joint(service_path: u8) {
             .unwrap(),
         );
         let mut manager = crate::service::ServiceManager::new(&project);
-        if matches!(service_path, 17 | 18 | 19) {
+        if matches!(service_path, 17..=19) {
             let error = manager.handle("fixture").unwrap().acquire().err().unwrap();
             assert!(format!("{error:#}").contains("health failed"), "{error:#}");
             drop(manager);
@@ -489,7 +489,8 @@ fn joint(service_path: u8) {
                                 .path()
                                 .join("missing-host.json")
                                 .to_string_lossy()
-                                .into_owned(),
+                                .into_owned()
+                                .into(),
                         );
                     }
                     fs::write(
