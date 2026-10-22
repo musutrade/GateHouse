@@ -20,6 +20,16 @@ pub(crate) fn capture(
     timeout_ms: u32,
     cancelled: impl Fn() -> bool,
 ) -> Result<PlanRecord> {
+    capture_observed(installation, image_id, inputs, timeout_ms, cancelled, || {})
+}
+fn capture_observed(
+    installation: &VerifiedPodmanInstallation,
+    image_id: String,
+    inputs: PlanInputs,
+    timeout_ms: u32,
+    cancelled: impl Fn() -> bool,
+    after_revalidation: impl FnOnce(),
+) -> Result<PlanRecord> {
     let started = Instant::now();
     if !(1..=30000).contains(&timeout_ms) || cancelled() {
         return Err("Podman capture budget rejected");
@@ -89,6 +99,10 @@ pub(crate) fn capture(
         return Err("Podman capture final boundary expired or cancelled");
     }
     installation.match_record(&record)?.revalidate()?;
+    after_revalidation();
+    if cancelled() || started.elapsed() >= Duration::from_millis(timeout_ms as u64) {
+        return Err("Podman capture post-revalidation expired or cancelled");
+    }
     Ok(record)
 }
 fn nonce() -> Result<String> {
@@ -108,3 +122,6 @@ fn nonce() -> Result<String> {
     }
     Ok(bytes.iter().map(|b| format!("{b:02x}")).collect())
 }
+
+#[cfg(all(test, feature = "podman-capture-joint-tests"))]
+mod tests;

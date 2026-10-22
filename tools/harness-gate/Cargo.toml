@@ -63,6 +63,8 @@ windows-sys = { version = "0.61.2", features = [
 config-benchmark = []
 # Explicit paired-repository test; requires a pinned native adapter binary.
 lifecycle-joint-tests = []
+# Opt-in exact pinned Podman native fixture; missing env fails, never silently skips.
+podman-capture-joint-tests = []
 
 [profile.dev]
 # Cargo's dev defaults (incremental = true, codegen-units = 256, opt-level = 0) are

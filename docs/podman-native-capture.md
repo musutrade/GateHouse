@@ -135,3 +135,15 @@ changes after the final check. Direct original-config FD tests cover child bytes
 parent flags/bytes, closure-owned descriptor release, reserved target holes and
 swapped source allocation. They exercise generic FD staging only; positive Core
 capture and process supervision joints are still required.
+
+Checkpoint 120 adds a final cancel/deadline check after the last installation
+revalidation, so revalidation time is charged before success. An internal no-op
+observer permits deterministic tests after that exact boundary; production
+callers cannot supply it. A dedicated opt-in podman-capture-joint-tests feature
+requires HG_PODMAN_NATIVE_BINARY and HG_PODMAN_NATIVE_SHA256 and fails if absent.
+It copies the exact hashed native ELF into a protected installation fixture,
+executes through the Core held-procfd runner, and checks three fake GETs plus
+record persist/reopen/live match. Separate final-boundary tests cancel or consume
+the budget after revalidation and require rejection. No real engine is used.
+Signal, TERM-resistant timeout/kill-reap, blocked stdout/stderr/oversize and
+partial-output discard tests remain required.
