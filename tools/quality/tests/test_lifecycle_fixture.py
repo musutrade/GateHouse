@@ -107,10 +107,11 @@ class LifecycleFixtureTests(unittest.TestCase):
         protocol = self.crate / 'runtime-protocol'
         protocol.mkdir()
         manifest = protocol / 'Cargo.toml'
-        for version in ('0.4.0', '0.4.1', '0.5.0'):
+        for version in ('0.4.0', '0.4.1', '0.5.0', '0.6.0'):
             with self.subTest(version=version):
                 manifest.write_text(f'[package]\nname = "protocol"\nversion = "{version}"\n')
                 self.assertIs(fixture.podman_fixture(self.crate), fixture.PODMAN_FIXTURES[version])
+        self.assertEqual(fixture.PODMAN_FIXTURES['0.6.0']['source'], 'local-archive')
         manifest.write_text('[package]\nname = "protocol"\nversion = "0.4.2"\n')
         with self.assertRaisesRegex(ValueError, 'unsupported Podman fixture'):
             fixture.podman_fixture(self.crate)

@@ -80,8 +80,10 @@ containment acceptance.
 
 Candidate matrix, in dependency order:
 
-1. onboarding-presets 1.0.8: retain 0.5.0–0.12.0, add 0.13.0; validate with the
-   candidate Core, publish the compatible package, then bind Core CI exactly.
+1. onboarding-presets 1.0.8: published and verified; Core CI now fetches the
+   exact archive `87cd7c8107a1082d3ff3113d14d4402abd241e651d168262038f569abfd89dc1`
+   and runs its 29-step acceptance. See
+   `docs/releases/onboarding-presets-1.0.8-acceptance.md`.
 2. protocol 0.6.0 and Core 0.13.0.
 3. podman-lifecycle 0.3.0 (archive, registry lock, manifest and hashes).
 4. runtime-importer 0.6.0 with the Podman 0.3.0 profile.

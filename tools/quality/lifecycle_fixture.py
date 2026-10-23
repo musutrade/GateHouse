@@ -38,6 +38,18 @@ PODMAN_FIXTURES = {
         'source_protocol': '0.4.1',
         'protocol': '0.5.0',
     },
+    # Local pre-publication source for protocol 0.6.0. The commit is a local
+    # product head, not a GitHub-downloadable commit. CI must not infer a remote
+    # archive from it; supply --podman-archive from the reviewed local source or
+    # replace this entry after the product branch is pushed and published.
+    '0.6.0': {
+        'commit': 'd69c59762bce6320f3d6e98ae1843af58d09e3b5',
+        'archive_sha256': '3b39a39545706df5632d2951517baee214b1669afabca593ffb872ca3b8c0c50',
+        'prefix': 'musutrade-GateProbes-d69c59762bce/plugins/podman-lifecycle/native/',
+        'source_protocol': '0.6.0',
+        'protocol': '0.6.0',
+        'source': 'local-archive',
+    },
 }
 PODMAN_FEATURE = 'harness-gate/podman-capture-joint-tests'
 LIMIT = 64 * 1024 * 1024
@@ -185,6 +197,11 @@ def build(crate, output, work, archive=None, podman_archive=None):
     podman_pin = None
     if podman_supported(crate):
         podman_pin = podman_fixture(crate)
+        if podman_archive is None and podman_pin.get('source') == 'local-archive':
+            raise ValueError(
+                'protocol 0.6.0 fixture uses a local product source; supply --podman-archive '
+                'from the reviewed head d69c59762bce6320f3d6e98ae1843af58d09e3b5, or push the '
+                'product branch and replace the mapping with the real GitHub archive identity')
         if podman_archive is None:
             podman_archive = work / 'podman-source.tar.gz'
             subprocess.run(['curl', '--fail', '--location', '--proto', '=https',
@@ -206,8 +223,9 @@ def build(crate, output, work, archive=None, podman_archive=None):
         binaries['fault'] = fault
     for name, manifest, extra, filename in builds:
         env['CARGO_TARGET_DIR'] = str(work / (name + '-target'))
+        locked = [] if name == 'podman' and podman_pin is not None and podman_pin.get('source') == 'local-archive' else ['--locked']
         with (work / (name + '-build.log')).open('w') as log:
-            subprocess.run(['cargo', 'build', '--locked', '--manifest-path', str(manifest), *extra],
+            subprocess.run(['cargo', 'build', *locked, '--manifest-path', str(manifest), *extra],
                            env=env, stdout=log, stderr=subprocess.STDOUT, check=True, cwd=crate)
         binaries[name] = Path(env['CARGO_TARGET_DIR']) / 'debug' / filename
     if before != source_digest(crate):
