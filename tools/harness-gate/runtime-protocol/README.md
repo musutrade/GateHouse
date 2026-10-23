@@ -1,6 +1,6 @@
-# Runtime protocol 0.3.0 candidate
+# Runtime protocol 0.4.0 candidate
 
-Version 0.3.0 adds the independent `gate-runtime/lifecycle-v1` contract for
+The published 0.3.0 contract added the independent `gate-runtime/lifecycle-v1` contract for
 explicit Docker lifecycle authority. Its lifecycle module defines protected
 installation snapshots, canonical per-invocation bindings, durable image
 reservations, exact-ID mutations, health exec, and journal/slot recovery.
@@ -196,3 +196,10 @@ The unreleased 0.2.0 source also exposes independent `v3` image-readiness types.
 V1/v2 wire types remain unchanged. V3 has only readiness and unavailable outcomes;
 capabilities, container absence and mutation are not readiness authority. See
 [the staged contract](../../../docs/runtime-readiness-v3.md).
+
+
+Unreleased 0.4.0 adds the separately versioned Podman context, installation and
+read-only capture wire/evidence contracts. The lifecycle_v2 namespace and product
+name do not grant mutation/lease authority. Docker v1 and existing v2/v3 contracts
+remain separate. This crate now includes its MIT license text in the package.
+No real Podman or published 0.4 artifact is claimed by this source checkpoint.

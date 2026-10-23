@@ -1,12 +1,14 @@
 # GateHouse
 
-Core 0.10.0 is an unreleased Docker lifecycle candidate. Managed Docker services
-require an explicitly installed lifecycle host; Core retains lease, recovery and
-cancellation coordination. The legacy Podman route is unchanged. See the
-[release scope](docs/releases/0.10.0.zh-CN.md) and
-[lifecycle contract](docs/runtime-lifecycle-v1.md).
-Core 0.9.0 and its readiness artifacts remain immutable. Lifecycle product
-publication, rootless and daemon-restart acceptance are still pending.
+Core 0.11.0 is an unreleased read-only Podman capture candidate. The explicit
+`podman-capture` command requires a canonical project root and operator trust of
+the fixed installed host. Capture returns evidence; it provides no mutation or
+lease authority. The legacy Podman service route remains unchanged.
+See the [candidate scope](docs/releases/0.11.0.zh-CN.md) and
+[capture contract](docs/podman-native-capture.md).
+Core 0.10.0 and its Docker lifecycle artifacts are published and immutable.
+Podman candidate acceptance uses fake Unix sockets; real Podman, rootless and
+restart acceptance remain unproven.
 
 > Development now lives in **GateHouse**. The `harness-gate` CLI and crate names remain unchanged. Historical releases through v0.4.8 retain their Harness-Gate download and signing identities. See [migration and test data](docs/gatehouse-migration.md).
 

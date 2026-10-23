@@ -36,3 +36,6 @@ pub use signal::{cancelled, install_signal_handlers};
 pub use task::{
     CacheEvidence, ParserEvidence, RunnerExecution, Task, TaskAttempt, TaskResult, WaiverEvidence,
 };
+
+#[cfg(target_os = "linux")]
+pub(crate) mod podman_capture_host;

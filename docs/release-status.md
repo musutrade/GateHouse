@@ -1,15 +1,24 @@
 # Published releases and acceptance
 
-## Core 0.10.0 lifecycle candidate
+## Core 0.11.0 read-only Podman candidate
 
-Unreleased. Protocol 0.3.0 must publish before Core registry packaging. Managed
-Docker now requires an explicit lifecycle host; old Docker leases are retained
-and must be resolved with the prior approved version after quiescing old Core
-processes. See [candidate scope](releases/0.10.0.zh-CN.md).
+Unreleased. Protocol 0.4.0 must publish or be verified before Core registry
+packaging. Explicit podman-capture selects the project host trust root; it does
+not run automatically during discovery, doctor or verify. Evidence is not
+mutation/lease authority. See [candidate scope](releases/0.11.0.zh-CN.md).
 
-Local real rootful normal and failed-health/operator runs passed. Rootless,
-daemon restart, lifecycle product/importer publication and downloaded acceptance
-remain pending. Podman still uses its legacy Core route; #62 remains open.
+Local fake-socket native/CLI tests pass. Product packaging, downloaded acceptance,
+importer support and real Podman remain pending. ENV131 blocks real-engine setup.
+The legacy Podman service route is retained; #62 remains open.
+
+## Core 0.10.0 published
+
+Immutable source `d8505fc` (PR178); main CI39777590175 and release39778581669
+passed. Protocol0.3.0 and Core0.10 crates were verified. Downloaded Core0.10 with
+onboarding1.0.5 passed 29 steps. Docker lifecycle0.1/importer0.3 were subsequently
+published; normal and failed-health/operator Docker cases have separately audited
+rootful evidence. Rootless and daemon restart remain unproven. Historical
+[candidate notes](releases/0.10.0.zh-CN.md) describe its original planned scope.
 
 ## Core 0.9.0 published
 

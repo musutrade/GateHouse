@@ -14,6 +14,10 @@ COMMIT = '76d0e0c188d0ac79f497ad50b7ff7464d47cbf2d'
 ARCHIVE_SHA256 = 'fc651690f3e8c3ce3968eb9dc3d9828ba89e562ed4537b1922e4a371d92872bf'
 PREFIX = 'musutrade-GateProbes-76d0e0c/plugins/docker-lifecycle/native/'
 FEATURE = 'harness-gate/lifecycle-joint-tests'
+PODMAN_COMMIT = '56f99ac0930018e73c693d38ddc9901cb5158053'
+PODMAN_SHA256 = '00fda426c6446e54969d6a9b6f70de25b8e884fd708b7bb203c59fd046d1db4d'
+PODMAN_PREFIX = 'musutrade-GateProbes-56f99ac/plugins/podman-lifecycle/native/'
+PODMAN_FEATURE = 'harness-gate/podman-capture-joint-tests'
 LIMIT = 64 * 1024 * 1024
 
 
@@ -25,6 +29,15 @@ def supported(crate):
     manifest = Path(crate) / 'Cargo.toml'
     return manifest.is_file() and 'lifecycle-joint-tests' in tomllib.loads(
         manifest.read_text()).get('features', {})
+
+
+def podman_supported(crate):
+    return 'podman-capture-joint-tests' in tomllib.loads(
+        (Path(crate) / 'Cargo.toml').read_text()).get('features', {})
+
+
+def features(crate):
+    return FEATURE + (',' + PODMAN_FEATURE if podman_supported(crate) else '')
 
 
 def source_digest(crate):
@@ -40,9 +53,11 @@ def source_digest(crate):
     return hashlib.sha256(json.dumps(rows, separators=(',', ':')).encode()).hexdigest()
 
 
-def extract(archive, destination):
+def extract(archive, destination, *, expected_sha=None, prefix=None):
+    expected_sha = ARCHIVE_SHA256 if expected_sha is None else expected_sha
+    prefix = PREFIX if prefix is None else prefix
     archive, destination = Path(archive), Path(destination)
-    if archive.stat().st_size > LIMIT or digest(archive) != ARCHIVE_SHA256:
+    if archive.stat().st_size > LIMIT or digest(archive) != expected_sha:
         raise ValueError('lifecycle fixture archive digest/size mismatch')
     # Never execute or import anything from unverified archive contents.
     with tarfile.open(archive, 'r:gz') as stream:
@@ -58,8 +73,8 @@ def extract(archive, destination):
             seen.add(member.name)
             if not (member.isdir() or member.isfile()):
                 raise ValueError('unsupported lifecycle fixture member type')
-            if member.name.startswith(PREFIX) and member.isfile():
-                relative = PurePosixPath(member.name[len(PREFIX):])
+            if member.name.startswith(prefix) and member.isfile():
+                relative = PurePosixPath(member.name[len(prefix):])
                 if not relative.parts or member.mode & 0o7000:
                     raise ValueError('invalid native fixture member')
                 selected.append((member, relative))
@@ -74,7 +89,23 @@ def extract(archive, destination):
             path.chmod(0o600)
 
 
-def build(crate, output, work, archive=None):
+def pin_registry_protocol(native):
+    """Keep the Docker v1 fixture on published 0.3, independent of Core's version."""
+    manifest = tomllib.loads((native / 'Cargo.toml').read_text())
+    if manifest['dependencies']['gatehouse-runtime-protocol'] != '=0.3.0':
+        raise ValueError('unexpected fixture protocol requirement')
+    path = native / 'Cargo.lock'
+    lock = path.read_text()
+    old = 'name = "gatehouse-runtime-protocol"\nversion = "0.3.0"\ndependencies = ['
+    if lock.count(old) != 1:
+        raise ValueError('unexpected fixture protocol lock')
+    new = ('name = "gatehouse-runtime-protocol"\nversion = "0.3.0"\n'
+           'source = "registry+https://github.com/rust-lang/crates.io-index"\n'
+           'checksum = "357cf18eb55a7a83d9b8840280e77c6f7efe263a74bdeafc7e132cad7a607e54"\ndependencies = [')
+    path.write_text(lock.replace(old, new))
+
+
+def build(crate, output, work, archive=None, podman_archive=None):
     crate, output, work = Path(crate).resolve(), Path(output).resolve(), Path(work).resolve()
     if not supported(crate):
         raise ValueError('Core snapshot has no lifecycle joint feature')
@@ -89,6 +120,7 @@ def build(crate, output, work, archive=None):
                         f'https://api.github.com/repos/musutrade/GateProbes/tarball/{COMMIT}'], check=True)
     native = work / 'native'
     extract(archive, native)
+    pin_registry_protocol(native)
     env = os.environ.copy()
     for key in list(env):
         if key.startswith('CARGO_LLVM_COV') or key in (
@@ -96,22 +128,41 @@ def build(crate, output, work, archive=None):
                 'CARGO_BUILD_TARGET'):
             env.pop(key, None)
     binaries = {}
-    for name, manifest, extra in (
-        ('adapter', native / 'Cargo.toml', ['--config',
-         'patch.crates-io.gatehouse-runtime-protocol.path=' + json.dumps(str(crate / 'runtime-protocol'))]),
-        ('core', crate / 'Cargo.toml', ['--package', 'harness-gate', '--bin', 'harness-gate']),
-    ):
+    builds = [
+        ('adapter', native / 'Cargo.toml', [], 'gateprobes-docker-lifecycle'),
+        ('core', crate / 'Cargo.toml', ['--package', 'harness-gate', '--bin', 'harness-gate'], 'harness-gate'),
+    ]
+    if podman_supported(crate):
+        if podman_archive is None:
+            podman_archive = work / 'podman-source.tar.gz'
+            subprocess.run(['curl', '--fail', '--location', '--proto', '=https',
+                            '--proto-redir', '=https', '--max-time', '120', '--max-filesize', str(LIMIT),
+                            '--output', str(podman_archive),
+                            f'https://api.github.com/repos/musutrade/GateProbes/tarball/{PODMAN_COMMIT}'], check=True)
+        podman = work / 'podman-native'
+        extract(podman_archive, podman, expected_sha=PODMAN_SHA256, prefix=PODMAN_PREFIX)
+        builds.append(('podman', podman / 'Cargo.toml', ['--config',
+                       'patch.crates-io.gatehouse-runtime-protocol.path=' + json.dumps(str(crate / 'runtime-protocol'))],
+                       'gateprobes-podman-lifecycle'))
+        fault = work / 'podman-fault'
+        with (work / 'fault-build.log').open('w') as log:
+            subprocess.run(['rustc', '--edition=2021',
+                            str(crate / 'src/process/podman_capture_host/fault_fixture.rs'),
+                            '-o', str(fault)], env=env, stdout=log, stderr=subprocess.STDOUT, check=True)
+        binaries['fault'] = fault
+    for name, manifest, extra, filename in builds:
         env['CARGO_TARGET_DIR'] = str(work / (name + '-target'))
         with (work / (name + '-build.log')).open('w') as log:
             subprocess.run(['cargo', 'build', '--locked', '--manifest-path', str(manifest), *extra],
                            env=env, stdout=log, stderr=subprocess.STDOUT, check=True, cwd=crate)
-        filename = 'gateprobes-docker-lifecycle' if name == 'adapter' else 'harness-gate'
         binaries[name] = Path(env['CARGO_TARGET_DIR']) / 'debug' / filename
     if before != source_digest(crate):
         raise ValueError('Core sources changed during fixture build')
     output.mkdir(mode=0o700, parents=True)
     receipt = {'schema': 1, 'source_only': True, 'gp_commit': COMMIT,
                'archive_sha256': ARCHIVE_SHA256, 'core_source_sha256': before, 'binaries': {}}
+    if podman_supported(crate):
+        receipt['podman'] = {'commit': PODMAN_COMMIT, 'archive_sha256': PODMAN_SHA256}
     for name, binary in binaries.items():
         shutil.copyfile(binary, output / name)
         (output / name).chmod(0o500)
@@ -128,7 +179,14 @@ def environment(crate, bundle, journal):
         receipt.get('archive_sha256'), receipt.get('core_source_sha256')) != (
             1, True, COMMIT, ARCHIVE_SHA256, source_digest(crate)):
         raise ValueError('lifecycle fixture receipt identity mismatch')
-    if set(receipt.get('binaries', {})) != {'adapter', 'core'}:
+    expected_binaries = {'adapter', 'core'}
+    if podman_supported(crate):
+        if receipt.get('podman') != {'commit': PODMAN_COMMIT, 'archive_sha256': PODMAN_SHA256}:
+            raise ValueError('Podman fixture receipt identity mismatch')
+        expected_binaries |= {'podman', 'fault'}
+    elif 'podman' in receipt:
+        raise ValueError('unexpected Podman fixture receipt')
+    if set(receipt.get('binaries', {})) != expected_binaries:
         raise ValueError('lifecycle fixture binary inventory mismatch')
     values = {}
     for name, expected in receipt['binaries'].items():
@@ -136,8 +194,14 @@ def environment(crate, bundle, journal):
         if path.is_symlink() or not path.is_file() or digest(path) != expected:
             raise ValueError('lifecycle fixture binary digest mismatch')
         path.chmod(0o500)  # Artifact transfer does not preserve executable modes.
-        key = 'GATEHOUSE_LIFECYCLE_' + name.upper()
+        key = {'podman': 'HG_PODMAN_NATIVE', 'fault': 'HG_PODMAN_FAULT'}.get(name, 'GATEHOUSE_LIFECYCLE_' + name.upper())
+        if name in ('podman', 'fault'):
+            values[key + '_BINARY'], values[key + '_SHA256'] = str(path), expected
+            continue
         values[key], values[key + '_SHA256'] = str(path), expected
+    if podman_supported(crate):
+        values['HG_PODMAN_CORE_BINARY'] = values['GATEHOUSE_LIFECYCLE_CORE']
+        values['HG_PODMAN_CORE_SHA256'] = values['GATEHOUSE_LIFECYCLE_CORE_SHA256']
     journal.mkdir(mode=0o700, parents=True, exist_ok=False)
     for path in journal.parents:
         stat = path.stat()
@@ -154,13 +218,14 @@ def main():
     parser.add_argument('--bundle', type=Path, required=True)
     parser.add_argument('--work', type=Path)
     parser.add_argument('--archive', type=Path)
+    parser.add_argument('--podman-archive', type=Path)
     parser.add_argument('--journal', type=Path)
     parser.add_argument('--env-file', type=Path)
     args = parser.parse_args()
     if args.operation == 'build':
         if args.work is None:
             parser.error('build requires --work')
-        build(args.crate, args.bundle, args.work, args.archive)
+        build(args.crate, args.bundle, args.work, args.archive, args.podman_archive)
     else:
         if args.journal is None or args.env_file is None:
             parser.error('activate requires --journal and --env-file')

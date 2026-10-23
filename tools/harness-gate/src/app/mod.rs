@@ -55,6 +55,7 @@ fn run_report(command: &Commands) -> Result<bool, CliError> {
 pub(crate) fn run_cli(cli: Cli) -> Result<bool, CliError> {
     crate::ui::configure(cli.color);
     match &cli.command {
+        Commands::PodmanCapture(args) => run_podman_capture(&cli, args),
         Commands::ReportVerify { .. }
         | Commands::ReportDashboard { .. }
         | Commands::ReportHistory { .. }
@@ -577,4 +578,190 @@ fn print_human_config_error(error: &anyhow::Error) {
     eprintln!("Minimal flow.toml shape:");
     eprintln!("{}", crate::config::MINIMAL_CONFIG_SNIPPET);
     eprintln!("Then run: harness-gate config check");
+}
+
+fn run_podman_capture(cli: &Cli, args: &crate::cli::PodmanCaptureArgs) -> Result<bool, CliError> {
+    let deadline =
+        std::time::Instant::now() + std::time::Duration::from_millis(args.timeout_ms as u64);
+    let bytes = podman_capture_bytes(cli, args)?;
+    #[cfg(target_os = "linux")]
+    write_podman_evidence(&bytes, deadline)?;
+    // On other platforms podman_capture_bytes has already returned an error.
+    #[cfg(not(any(target_os = "linux")))]
+    let _ = (bytes, deadline);
+    Ok(true)
+}
+
+#[cfg(target_os = "linux")]
+fn write_podman_evidence(bytes: &[u8], deadline: std::time::Instant) -> anyhow::Result<()> {
+    write_podman_evidence_to(1, bytes, deadline)
+}
+
+#[cfg(target_os = "linux")]
+fn write_podman_evidence_to(
+    fd: i32,
+    bytes: &[u8],
+    deadline: std::time::Instant,
+) -> anyhow::Result<()> {
+    struct Restore(i32, i32);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            unsafe {
+                libc::fcntl(self.0, libc::F_SETFL, self.1);
+            }
+        }
+    }
+    let flags = unsafe { libc::fcntl(fd, libc::F_GETFL) };
+    anyhow::ensure!(flags >= 0, "read Podman stdout flags");
+    anyhow::ensure!(
+        unsafe { libc::fcntl(fd, libc::F_SETFL, flags | libc::O_NONBLOCK) } == 0,
+        "set Podman stdout nonblocking"
+    );
+    let _restore = Restore(fd, flags);
+    let mut offset = 0;
+    loop {
+        anyhow::ensure!(
+            !crate::process::cancelled() && std::time::Instant::now() < deadline,
+            "Podman evidence output expired or cancelled"
+        );
+        if offset == bytes.len() {
+            return Ok(());
+        }
+        let n = unsafe { libc::write(fd, bytes[offset..].as_ptr().cast(), bytes.len() - offset) };
+        if n > 0 {
+            offset += n as usize;
+            continue;
+        }
+        if n == 0 {
+            anyhow::bail!("Podman evidence stdout made no progress");
+        }
+        let error = std::io::Error::last_os_error();
+        if error.kind() == std::io::ErrorKind::Interrupted {
+            continue;
+        }
+        if error.kind() != std::io::ErrorKind::WouldBlock {
+            return Err(error).context("write Podman evidence");
+        }
+        let mut poll = libc::pollfd {
+            fd,
+            events: libc::POLLOUT,
+            revents: 0,
+        };
+        let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+        let timeout = remaining.as_millis().min(20) as i32;
+        let result = unsafe { libc::poll(&mut poll, 1, timeout) };
+        if result < 0 && std::io::Error::last_os_error().kind() != std::io::ErrorKind::Interrupted {
+            return Err(std::io::Error::last_os_error()).context("poll Podman stdout");
+        }
+    }
+}
+
+#[cfg(not(any(target_os = "linux")))]
+fn podman_capture_bytes(
+    _cli: &Cli,
+    _args: &crate::cli::PodmanCaptureArgs,
+) -> anyhow::Result<Vec<u8>> {
+    anyhow::bail!("Podman capture requires Linux")
+}
+
+#[cfg(target_os = "linux")]
+pub(crate) fn podman_capture_bytes(
+    cli: &Cli,
+    args: &crate::cli::PodmanCaptureArgs,
+) -> anyhow::Result<Vec<u8>> {
+    use gatehouse_runtime_protocol::lifecycle_v2::plan_record::{PlanInputs, PlanPort};
+    anyhow::ensure!(
+        args.trust_host,
+        "Podman capture requires explicit --trust-host"
+    );
+    let root = cli
+        .project_root
+        .as_ref()
+        .context("Podman capture requires explicit --project-root")?;
+    anyhow::ensure!(
+        root.is_absolute() && root.canonicalize()? == *root,
+        "Podman project root must be canonical and absolute"
+    );
+    anyhow::ensure!(
+        (1..=30000).contains(&args.timeout_ms),
+        "Podman capture timeout rejected"
+    );
+    gatehouse_runtime_protocol::lifecycle_v2::native_image::image_route(&args.image_id)
+        .map_err(anyhow::Error::msg)?;
+    let mut labels = std::collections::BTreeMap::new();
+    for entry in &args.label {
+        let (key, value) = entry
+            .split_once('=')
+            .context("Podman label requires KEY=VALUE")?;
+        anyhow::ensure!(
+            labels.insert(key.to_owned(), value.to_owned()).is_none(),
+            "duplicate Podman label"
+        );
+    }
+    let port = match (args.container_port, args.host_port) {
+        (None, None) => None,
+        (Some(container), Some(host)) => Some(PlanPort { container, host }),
+        _ => anyhow::bail!("Podman ports must be supplied together"),
+    };
+    let inputs = PlanInputs {
+        name: args.name.clone(),
+        labels,
+        port,
+    };
+    inputs.validate().map_err(anyhow::Error::msg)?;
+    let project = Project::discover(Some(root.clone()), cli.config.clone())?;
+    let record = crate::process::podman_capture_host::capture_installed(
+        &project,
+        args.image_id.clone(),
+        inputs,
+        args.timeout_ms,
+        crate::process::cancelled,
+    )
+    .map_err(anyhow::Error::msg)?;
+    record.encode().map_err(anyhow::Error::msg)
+}
+
+#[cfg(test)]
+#[cfg(target_os = "linux")]
+mod podman_output_tests {
+    use super::write_podman_evidence_to;
+    use std::{
+        fs::File,
+        io::Read,
+        os::fd::{AsRawFd, FromRawFd},
+        time::{Duration, Instant},
+    };
+
+    #[test]
+    fn pipe_output_success_deadline_and_failure_restore_flags() {
+        let mut fds = [-1; 2];
+        assert_eq!(unsafe { libc::pipe2(fds.as_mut_ptr(), libc::O_CLOEXEC) }, 0);
+        let mut reader = unsafe { File::from_raw_fd(fds[0]) };
+        let writer = unsafe { File::from_raw_fd(fds[1]) };
+        let fd = writer.as_raw_fd();
+        let flags = unsafe { libc::fcntl(fd, libc::F_GETFL) };
+        write_podman_evidence_to(fd, b"evidence", Instant::now() + Duration::from_secs(1)).unwrap();
+        let mut bytes = [0; 8];
+        reader.read_exact(&mut bytes).unwrap();
+        assert_eq!(&bytes, b"evidence");
+        assert_eq!(unsafe { libc::fcntl(fd, libc::F_GETFL) }, flags);
+        assert!(write_podman_evidence_to(fd, b"x", Instant::now()).is_err());
+        let start = Instant::now();
+        assert!(write_podman_evidence_to(
+            fd,
+            &vec![b'x'; 1024 * 1024],
+            start + Duration::from_millis(30)
+        )
+        .is_err());
+        assert!(start.elapsed() < Duration::from_secs(2));
+        assert_eq!(unsafe { libc::fcntl(fd, libc::F_GETFL) }, flags);
+        drop(reader);
+        assert!(
+            write_podman_evidence_to(fd, b"x", Instant::now() + Duration::from_secs(1)).is_err()
+        );
+        assert_eq!(unsafe { libc::fcntl(fd, libc::F_GETFL) }, flags);
+        assert!(
+            write_podman_evidence_to(-1, b"x", Instant::now() + Duration::from_secs(1)).is_err()
+        );
+    }
 }

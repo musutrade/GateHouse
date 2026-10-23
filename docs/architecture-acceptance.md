@@ -1,6 +1,7 @@
-> 0.9.0 候选新增独立 v3 只读 readiness 宿主。本文既有验收不构成
-> 已发布 0.8.0 的 v3 兼容声明。服务生命周期仍在 Core，#62 尚未完成。
-> 新候选的 Windows、下载制品和插件交付验收仍待完成。
+> 0.11.0 候选新增显式 Podman 只读捕获入口，使用 protocol0.4。
+> 已有证据为假 socket/本地固定二进制；不代表真实 Podman、发布制品或 mutation 权限。
+> Core0.10/Docker 生命周期制品保持不可变；Podman legacy 服务路径仍在 Core，#62 未完成。
+> 真实 Podman 环境受 ENV131 阻塞，新增产品包和下载验收仍待完成。
 
 # Result-boundary acceptance
 

@@ -1,6 +1,6 @@
 [package]
 name = "harness-gate"
-version = "0.10.0"
+version = "0.11.0"
 edition = "2021"
 rust-version = "1.88"
 authors = ["Harness-Gate Contributors"]
@@ -17,7 +17,7 @@ all-features = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-gatehouse-runtime-protocol = { path = "runtime-protocol", version = "=0.3.0" }
+gatehouse-runtime-protocol = { path = "runtime-protocol", version = "=0.4.0" }
 anyhow = "1.0"
 thiserror = "2.0"
 serde = { version = "1.0.229", features = ["derive"] }
@@ -63,6 +63,8 @@ windows-sys = { version = "0.61.2", features = [
 config-benchmark = []
 # Explicit paired-repository test; requires a pinned native adapter binary.
 lifecycle-joint-tests = []
+# Opt-in exact pinned Podman native fixture; missing env fails, never silently skips.
+podman-capture-joint-tests = []
 
 [profile.dev]
 # Cargo's dev defaults (incremental = true, codegen-units = 256, opt-level = 0) are

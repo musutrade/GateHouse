@@ -2,6 +2,7 @@
 //! verification, ambient context discovery, or authority to delete a resource.
 pub mod intent;
 pub mod lifecycle;
+pub mod lifecycle_v2;
 #[cfg(unix)]
 pub mod store;
 pub mod v2;

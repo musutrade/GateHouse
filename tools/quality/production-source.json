@@ -147,9 +147,31 @@
         "runtime-protocol/src/lifecycle/journal/resolution.rs",
         "runtime-protocol/src/lifecycle/journal/storage.rs",
         "runtime-protocol/src/lifecycle/journal/storage/reservation.rs",
+        "runtime-protocol/src/lifecycle/journal/storage/slot.rs",
+        "runtime-protocol/src/lifecycle/journal/storage/slot/mapping.rs",
+        "runtime-protocol/src/lifecycle/journal/storage/slot/recovery.rs",
         "runtime-protocol/src/lifecycle/mod.rs",
         "runtime-protocol/src/lifecycle/state.rs",
         "runtime-protocol/src/lifecycle/wire.rs",
+        "runtime-protocol/src/lifecycle_v2/capture_binding.rs",
+        "runtime-protocol/src/lifecycle_v2/capture_inputs.rs",
+        "runtime-protocol/src/lifecycle_v2/capture_wire.rs",
+        "runtime-protocol/src/lifecycle_v2/encoding.rs",
+        "runtime-protocol/src/lifecycle_v2/installation.rs",
+        "runtime-protocol/src/lifecycle_v2/mod.rs",
+        "runtime-protocol/src/lifecycle_v2/native_create.rs",
+        "runtime-protocol/src/lifecycle_v2/native_exec.rs",
+        "runtime-protocol/src/lifecycle_v2/native_image.rs",
+        "runtime-protocol/src/lifecycle_v2/native_info.rs",
+        "runtime-protocol/src/lifecycle_v2/native_json.rs",
+        "runtime-protocol/src/lifecycle_v2/native_status.rs",
+        "runtime-protocol/src/lifecycle_v2/observation.rs",
+        "runtime-protocol/src/lifecycle_v2/ownership.rs",
+        "runtime-protocol/src/lifecycle_v2/plan_record.rs",
+        "runtime-protocol/src/lifecycle_v2/plan_storage.rs",
+        "runtime-protocol/src/lifecycle_v2/profile.rs",
+        "runtime-protocol/src/lifecycle_v2/protected_context.rs",
+        "runtime-protocol/src/lifecycle_v2/readonly.rs",
         "runtime-protocol/src/store.rs",
         "runtime-protocol/src/v2.rs",
         "runtime-protocol/src/v3.rs",
@@ -160,6 +182,7 @@
         "src/process/fd_inputs.rs",
         "src/process/isolation.rs",
         "src/process/mod.rs",
+        "src/process/podman_capture_host.rs",
         "src/process/raw_adapter.rs",
         "src/process/reader.rs",
         "src/process/replay.rs",
@@ -172,10 +195,7 @@
         "src/process/runtime_lifecycle_host.rs",
         "src/process/runtime_request_v3.rs",
         "src/process/signal.rs",
-        "src/process/task.rs",
-        "runtime-protocol/src/lifecycle/journal/storage/slot.rs",
-        "runtime-protocol/src/lifecycle/journal/storage/slot/mapping.rs",
-        "runtime-protocol/src/lifecycle/journal/storage/slot/recovery.rs"
+        "src/process/task.rs"
       ]
     },
     "project": {
@@ -450,6 +470,16 @@
       "path": "runtime-protocol/src/lifecycle/journal/storage/slot/tests.rs",
       "kind": "test",
       "reason": "Test-only reservation durability module compiled under cfg(test)."
+    },
+    {
+      "path": "src/process/podman_capture_host/tests.rs",
+      "kind": "test",
+      "reason": "Opt-in paired native Podman adapter tests under cfg(test)."
+    },
+    {
+      "path": "src/process/podman_capture_host/fault_fixture.rs",
+      "kind": "test",
+      "reason": "Standalone rustc-built native fault fixture; never linked into production."
     }
   ],
   "external_exclusions": [
@@ -507,7 +537,7 @@
     {
       "path": "src/process/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "8f1ee0422f98c07cf929df8dd78849818480ee21897196358c9b8e13089eeace"
+      "sha256": "4efa4a745bd063177f3e77dc71773f691087908742016a80c10d2ebb6f991331"
     },
     {
       "path": "src/scope/mod.rs",
@@ -543,6 +573,11 @@
       "path": "src/service/lifecycle_public/unsupported.rs",
       "reason": "Compiled only through cfg(not(any(target_os = \"linux\"))) in lifecycle_public.rs; absent from Linux LLVM reports. Remains production-owned and measured whenever target mappings exist; non-Linux refusal validation remains a cross-platform requirement.",
       "sha256": "d299b120ff83c0233e4e11350b528eafac7950460c990621b32c713f7815b976"
+    },
+    {
+      "path": "runtime-protocol/src/lifecycle_v2/mod.rs",
+      "reason": "Module declarations only; no executable LLVM mapping. All implementation files remain production-owned and measured.",
+      "sha256": "d45f89de1720fd10a4e4f7b49d0913efd80e97d57f0d2f5f4fc8814596ce5fc3"
     }
   ],
   "source_roots": [
