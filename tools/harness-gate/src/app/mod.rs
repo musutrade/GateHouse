@@ -581,13 +581,70 @@ fn print_human_config_error(error: &anyhow::Error) {
 }
 
 fn run_podman_capture(cli: &Cli, args: &crate::cli::PodmanCaptureArgs) -> Result<bool, CliError> {
+    let deadline =
+        std::time::Instant::now() + std::time::Duration::from_millis(args.timeout_ms as u64);
     let bytes = podman_capture_bytes(cli, args)?;
-    use std::io::Write;
-    std::io::stdout()
-        .lock()
-        .write_all(&bytes)
-        .context("write Podman evidence")?;
+    #[cfg(target_os = "linux")]
+    write_podman_evidence(&bytes, deadline)?;
+    // On other platforms podman_capture_bytes has already returned an error.
+    #[cfg(not(target_os = "linux"))]
+    let _ = (bytes, deadline);
     Ok(true)
+}
+
+#[cfg(target_os = "linux")]
+fn write_podman_evidence(bytes: &[u8], deadline: std::time::Instant) -> anyhow::Result<()> {
+    struct Restore(i32);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            unsafe {
+                libc::fcntl(1, libc::F_SETFL, self.0);
+            }
+        }
+    }
+    let flags = unsafe { libc::fcntl(1, libc::F_GETFL) };
+    anyhow::ensure!(flags >= 0, "read Podman stdout flags");
+    anyhow::ensure!(
+        unsafe { libc::fcntl(1, libc::F_SETFL, flags | libc::O_NONBLOCK) } == 0,
+        "set Podman stdout nonblocking"
+    );
+    let _restore = Restore(flags);
+    let mut offset = 0;
+    loop {
+        anyhow::ensure!(
+            !crate::process::cancelled() && std::time::Instant::now() < deadline,
+            "Podman evidence output expired or cancelled"
+        );
+        if offset == bytes.len() {
+            return Ok(());
+        }
+        let n = unsafe { libc::write(1, bytes[offset..].as_ptr().cast(), bytes.len() - offset) };
+        if n > 0 {
+            offset += n as usize;
+            continue;
+        }
+        if n == 0 {
+            anyhow::bail!("Podman evidence stdout made no progress");
+        }
+        let error = std::io::Error::last_os_error();
+        if error.kind() == std::io::ErrorKind::Interrupted {
+            continue;
+        }
+        if error.kind() != std::io::ErrorKind::WouldBlock {
+            return Err(error).context("write Podman evidence");
+        }
+        let mut poll = libc::pollfd {
+            fd: 1,
+            events: libc::POLLOUT,
+            revents: 0,
+        };
+        let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+        let timeout = remaining.as_millis().min(20) as i32;
+        let result = unsafe { libc::poll(&mut poll, 1, timeout) };
+        if result < 0 && std::io::Error::last_os_error().kind() != std::io::ErrorKind::Interrupted {
+            return Err(std::io::Error::last_os_error()).context("poll Podman stdout");
+        }
+    }
 }
 
 #[cfg(not(target_os = "linux"))]

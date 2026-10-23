@@ -618,6 +618,9 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
         "missing-host",
         "full-output",
         "partial-output",
+        "blocked-output",
+        "cancel-output",
+        "interrupt-output",
     ] {
         let (dir, _installed, listener, info) = fixture();
         let root = dir.path();
@@ -670,10 +673,22 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
         }
         let connects = matches!(
             mode,
-            "success" | "config" | "full-output" | "partial-output"
+            "success"
+                | "config"
+                | "full-output"
+                | "partial-output"
+                | "blocked-output"
+                | "cancel-output"
+                | "interrupt-output"
         );
         let check_listener = listener.try_clone().unwrap();
-        let server = connects.then(|| serve_sized(listener, info, mode == "partial-output"));
+        let server = connects.then(|| {
+            serve_sized(
+                listener,
+                info,
+                mode.ends_with("output") && mode != "full-output",
+            )
+        });
         if mode == "full-output" {
             command.stdout(
                 fs::OpenOptions::new()
@@ -683,7 +698,10 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
             );
         }
         let mut partial = Vec::new();
-        let output = if mode == "partial-output" {
+        let output = if matches!(
+            mode,
+            "partial-output" | "blocked-output" | "cancel-output" | "interrupt-output"
+        ) {
             let mut fds = [-1; 2];
             assert_eq!(unsafe { libc::pipe2(fds.as_mut_ptr(), libc::O_CLOEXEC) }, 0);
             let mut reader = unsafe { File::from_raw_fd(fds[0]) };
@@ -693,12 +711,57 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
                 4096
             );
             command.stdout(writer).stderr(std::process::Stdio::piped());
-            let child = command.spawn().unwrap();
+            let mut child = command.spawn().unwrap();
             drop(command);
             partial.resize(4096, 0);
             reader.read_exact(&mut partial).unwrap();
-            drop(reader); // Actual EPIPE after a nonempty evidence prefix.
-            child.wait_with_output().unwrap()
+            if mode == "partial-output" {
+                drop(reader); // Actual EPIPE after a nonempty evidence prefix.
+                child.wait_with_output().unwrap()
+            } else {
+                let bound = Instant::now() + Duration::from_secs(6);
+                loop {
+                    let mut available: libc::c_int = 0;
+                    assert_eq!(
+                        unsafe { libc::ioctl(reader.as_raw_fd(), libc::FIONREAD, &mut available) },
+                        0
+                    );
+                    if available >= 4096 {
+                        break;
+                    }
+                    if Instant::now() >= bound {
+                        let _ = child.kill();
+                        let _ = child.wait();
+                        panic!("stdout never filled");
+                    }
+                    thread::sleep(Duration::from_millis(2));
+                }
+                if mode != "blocked-output" {
+                    assert_eq!(
+                        unsafe {
+                            libc::kill(
+                                child.id() as i32,
+                                if mode == "cancel-output" {
+                                    libc::SIGTERM
+                                } else {
+                                    libc::SIGINT
+                                },
+                            )
+                        },
+                        0
+                    );
+                }
+                while child.try_wait().unwrap().is_none() {
+                    if Instant::now() >= bound {
+                        let _ = child.kill();
+                        let _ = child.wait();
+                        panic!("blocked stdout not bounded");
+                    }
+                    thread::sleep(Duration::from_millis(2));
+                }
+                reader.read_to_end(&mut partial).unwrap();
+                child.wait_with_output().unwrap()
+            }
         } else {
             command.output().unwrap()
         };
@@ -725,9 +788,12 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
             assert!(output.stdout.is_empty());
             assert!(!output.stderr.is_empty());
         }
-        if mode == "partial-output" {
+        if matches!(
+            mode,
+            "partial-output" | "blocked-output" | "cancel-output" | "interrupt-output"
+        ) {
             let installed = VerifiedPodmanInstallation::load(&mapped.join("host.json")).unwrap();
-            assert_eq!(partial.len(), 4096);
+            assert!((4096..=8192).contains(&partial.len()));
             assert!(PlanRecord::decode(&partial, installed.context().unwrap()).is_err());
         }
         assert_eq!(

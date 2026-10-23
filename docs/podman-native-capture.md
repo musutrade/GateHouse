@@ -267,3 +267,23 @@ requires exit1, a diagnostic, and refusal to decode the captured prefix as a
 complete PlanRecord. This is actual partial-output/broken-pipe evidence with the
 pinned normal binary. It is not proof that an indefinitely blocked consumer is
 preempted, nor process containment or real-engine acceptance.
+
+## Bounded CLI pipe output checkpoint 133
+
+The CLI starts an overall deadline before capture and checks it again throughout
+stdout emission. Linux stdout is temporarily nonblocking, with original flags
+restored by a scope guard; writes poll at most 20ms between deadline/cancellation
+checks. A full pipe now fails on expiry or SIGTERM/SIGINT instead of waiting for
+the consumer indefinitely. Checks also run after the last successful write;
+consumers must always require exit0 and validate the complete evidence.
+
+The normal-process matrix includes a pre-sized pipe whose reader remains open
+but stops draining, and signals delivered only after observed full-pipe occupancy.
+The test has an independent six-second supervisor bound and kills/reaps a stuck
+child before failing. These cases are distinct from EPIPE and /dev/full.
+
+Nonblocking flags share the inherited open-file description until restored; this
+is a standalone CLI output policy, not a safe library writer for arbitrary shared
+stdout use. Filesystem metadata/regular-file kernel I/O and diagnostic stderr are
+not forcibly preempted, and scope-guard flag restoration is best effort. No OS
+containment or real-engine proof is added.
