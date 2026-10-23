@@ -15,11 +15,18 @@ fn main() {
     if input.contains("\"value\":\"exit\"") { std::process::exit(3); }
     if input.contains("\"value\":\"stderr\"") { eprint!("not allowed"); }
     if input.contains("\"value\":\"malformed\"") { print!("{{}}"); return; }
+    let observations_for = |api:&str, daemon:&str, server:&str| format!(
+        r#"{{"observed_after":{{"api_version":"{api}","daemon_id":"{daemon}","server_version":"{server}"}},"observed_before":{{"api_version":"{api}","daemon_id":"{daemon}","server_version":"{server}"}}}}"#);
     let (observations,outcome)=if input.contains("\"value\":\"created\"") {
         // This controlled fixture only receives the fixed test request shape.
         let labels=input.split_once("\"labels\":").unwrap().1.split_once(']').unwrap().0.to_string()+"]";
         let object=format!(r#"{{"image_id":"sha256:{}","labels":{},"name":"test-container","object_id":"{}","ports":[],"state":"created"}}"#, "e".repeat(64),labels,"a".repeat(64));
-        (r#"{"observed_after":{"api_version":"1.47","daemon_id":"test-daemon","server_version":"27"},"observed_before":{"api_version":"1.47","daemon_id":"test-daemon","server_version":"27"}}"#.to_string(),format!(r#"{{"kind":"created","object":{object}}}"#))
+        let observations = if config.contains("\"engine\":\"podman\"") {
+            observations_for("5.7.0","test-daemon","5.7.0")
+        } else {
+            observations_for("1.47","test-daemon","27")
+        };
+        (observations,format!(r#"{{"kind":"created","object":{object}}}"#))
     } else if input.contains("\"value\":\"rejected\"") {
         ("null".to_string(),r#"{"kind":"rejected-before-effect","reason":"unsupported-state"}"#.to_string())
     } else {

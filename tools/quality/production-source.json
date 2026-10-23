@@ -567,12 +567,12 @@
     {
       "path": "src/service/lifecycle_public.rs",
       "reason": "Module/type declarations and cfg re-exports only; no handwritten executable mappings. Linux and unsupported implementations remain in production inventory.",
-      "sha256": "eda84d8326aafbfcb3859a8bbd95c116c168beff4e5672736459f99c47b90395"
+      "sha256": "045c818e35fd066f5ccd962577939a4d537c1d721fcddf25f9117d3db74e1ab2"
     },
     {
       "path": "src/service/lifecycle_public/unsupported.rs",
       "reason": "Compiled only through cfg(not(any(target_os = \"linux\"))) in lifecycle_public.rs; absent from Linux LLVM reports. Remains production-owned and measured whenever target mappings exist; non-Linux refusal validation remains a cross-platform requirement.",
-      "sha256": "d299b120ff83c0233e4e11350b528eafac7950460c990621b32c713f7815b976"
+      "sha256": "8abe4a5ee0ca7f0524743358dde4dbe4237c8eeab498dd7d56fbaf057b1d94e2"
     },
     {
       "path": "runtime-protocol/src/lifecycle_v2/mod.rs",

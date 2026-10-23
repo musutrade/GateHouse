@@ -77,6 +77,7 @@ fn service(runtime: ContainerRuntimeKind, external_env: Option<String>) -> Servi
         container_port: 5432,
         environment: Default::default(),
         healthcheck: vec![],
+        command: None,
         connection: "fixture".into(),
     }
 }

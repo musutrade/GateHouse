@@ -8,6 +8,9 @@ pub struct CreatePlan {
     pub labels: Vec<Entry>,
     pub environment: Vec<Entry>,
     pub container_port: u16,
+    /// Podman 5.7 only; omitted from old Docker plans and wire bytes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub command: Option<Vec<String>>,
 }
 impl CreatePlan {
     pub fn validate(&self, resolve: &Request) -> Result<()> {
@@ -32,6 +35,7 @@ impl CreatePlan {
             labels: self.labels.clone(),
             environment: self.environment.clone(),
             container_port: self.container_port,
+            command: self.command.clone(),
         };
         request.binding.generation = 2;
         request.binding.invocation = invocation.into();

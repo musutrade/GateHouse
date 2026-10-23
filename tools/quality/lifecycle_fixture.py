@@ -38,6 +38,21 @@ PODMAN_FIXTURES = {
         'source_protocol': '0.4.1',
         'protocol': '0.5.0',
     },
+    # Protocol 0.6.0 source is fetched from the reviewed GateProbes branch
+    # fixture/podman06-source-152 at this exact commit. The archive identity is
+    # the real GitHub tarball; the protocol itself is still an explicit local
+    # path override because 0.6.0 is not registered. The prepared lock hash is
+    # recorded and every build remains --locked.
+    '0.6.0': {
+        'commit': 'd69c59762bce6320f3d6e98ae1843af58d09e3b5',
+        'archive_sha256': '065fa6a2ff1fc452e4464bc7bff65149289e3c99ec7764d18fe4431df14f0e16',
+        'archive_size': 1045332,
+        'prefix': 'musutrade-GateProbes-d69c597/plugins/podman-lifecycle/native/',
+        'source_protocol': '0.6.0',
+        'protocol': '0.6.0',
+        'source': 'remote-archive',
+        'lock_sha256': 'e6e5ce69fc63e7a7767a02d204a6a959c8969167e94873153aa05261eb37356c',
+    },
 }
 PODMAN_FEATURE = 'harness-gate/podman-capture-joint-tests'
 LIMIT = 64 * 1024 * 1024
@@ -86,6 +101,42 @@ def pin_podman_protocol(native, source_protocol, protocol):
     lock.write_text(lock_text.replace(old, f'name = "gatehouse-runtime-protocol"\nversion = "{protocol}"\n'))
 
 
+PODMAN_06_LOCK = Path(__file__).with_name('fixtures') / 'podman06' / 'Cargo.lock'
+PODMAN_06_LOCK_SHA256 = 'e6e5ce69fc63e7a7767a02d204a6a959c8969167e94873153aa05261eb37356c'
+
+
+def pin_podman_local_protocol(native, crate, env):
+    """Apply the reviewed path override and its prepared lock, then build --locked."""
+    del env
+    native, crate = Path(native), Path(crate)
+    manifest = native / 'Cargo.toml'
+    lock = native / 'Cargo.lock'
+    protocol = crate / 'runtime-protocol'
+    expected = 'gatehouse-runtime-protocol = "=0.6.0"'
+    text = manifest.read_text()
+    if text.count(expected) != 1:
+        raise ValueError('unexpected local Podman fixture protocol requirement')
+    replacement = ('gatehouse-runtime-protocol = { path = '
+                   + json.dumps(str(protocol)) + ', version = "=0.6.0" }')
+    manifest.write_text(text.replace(expected, replacement))
+    prepared = PODMAN_06_LOCK.read_bytes()
+    if hashlib.sha256(prepared).hexdigest() != PODMAN_06_LOCK_SHA256:
+        raise ValueError('prepared Podman fixture lock changed')
+    record = tomllib.loads(prepared.decode())
+    entries = [row for row in record.get('package', [])
+               if row.get('name') == 'gatehouse-runtime-protocol']
+    roots = [row for row in record.get('package', [])
+             if row.get('name') == 'gateprobes-podman-lifecycle']
+    if len(entries) != 1 or entries[0].get('version') != '0.6.0':
+        raise ValueError('prepared Podman fixture protocol lock mismatch')
+    if 'source' in entries[0] or 'checksum' in entries[0]:
+        raise ValueError('prepared Podman fixture protocol must not claim a registry pin')
+    if len(roots) != 1 or roots[0].get('version') != '0.3.0':
+        raise ValueError('prepared Podman fixture root package mismatch')
+    lock.write_bytes(prepared)
+    return PODMAN_06_LOCK_SHA256
+
+
 def features(crate):
     return FEATURE + (',' + PODMAN_FEATURE if podman_supported(crate) else '')
 
@@ -103,11 +154,12 @@ def source_digest(crate):
     return hashlib.sha256(json.dumps(rows, separators=(',', ':')).encode()).hexdigest()
 
 
-def extract(archive, destination, *, expected_sha=None, prefix=None):
+def extract(archive, destination, *, expected_sha=None, prefix=None, expected_size=None):
     expected_sha = ARCHIVE_SHA256 if expected_sha is None else expected_sha
     prefix = PREFIX if prefix is None else prefix
     archive, destination = Path(archive), Path(destination)
-    if archive.stat().st_size > LIMIT or digest(archive) != expected_sha:
+    size = archive.stat().st_size
+    if size > LIMIT or (expected_size is not None and size != expected_size) or digest(archive) != expected_sha:
         raise ValueError('lifecycle fixture archive digest/size mismatch')
     # Never execute or import anything from unverified archive contents.
     with tarfile.open(archive, 'r:gz') as stream:
@@ -185,6 +237,11 @@ def build(crate, output, work, archive=None, podman_archive=None):
     podman_pin = None
     if podman_supported(crate):
         podman_pin = podman_fixture(crate)
+        if podman_archive is None and podman_pin.get('source') == 'local-archive':
+            raise ValueError(
+                'protocol 0.6.0 fixture uses a local product source; supply --podman-archive '
+                'from the reviewed head d69c59762bce6320f3d6e98ae1843af58d09e3b5, or push the '
+                'product branch and replace the mapping with the real GitHub archive identity')
         if podman_archive is None:
             podman_archive = work / 'podman-source.tar.gz'
             subprocess.run(['curl', '--fail', '--location', '--proto', '=https',
@@ -193,10 +250,16 @@ def build(crate, output, work, archive=None, podman_archive=None):
                             f"https://api.github.com/repos/musutrade/GateProbes/tarball/{podman_pin['commit']}"], check=True)
         podman = work / 'podman-native'
         extract(podman_archive, podman, expected_sha=podman_pin['archive_sha256'],
-                prefix=podman_pin['prefix'])
-        pin_podman_protocol(podman, podman_pin['source_protocol'], podman_pin['protocol'])
-        builds.append(('podman', podman / 'Cargo.toml', ['--config',
-                       'patch.crates-io.gatehouse-runtime-protocol.path=' + json.dumps(str(crate / 'runtime-protocol'))],
+                prefix=podman_pin['prefix'], expected_size=podman_pin.get('archive_size'))
+        if podman_pin.get('source') in ('local-archive', 'remote-archive'):
+            podman_lock_sha256 = pin_podman_local_protocol(podman, crate, env)
+            podman_extra = []
+        else:
+            pin_podman_protocol(podman, podman_pin['source_protocol'], podman_pin['protocol'])
+            podman_lock_sha256 = None
+            podman_extra = ['--config',
+                            'patch.crates-io.gatehouse-runtime-protocol.path=' + json.dumps(str(crate / 'runtime-protocol'))]
+        builds.append(('podman', podman / 'Cargo.toml', podman_extra,
                        'gateprobes-podman-lifecycle'))
         fault = work / 'podman-fault'
         with (work / 'fault-build.log').open('w') as log:
@@ -218,6 +281,12 @@ def build(crate, output, work, archive=None, podman_archive=None):
     if podman_pin is not None:
         receipt['podman'] = {'commit': podman_pin['commit'],
                              'archive_sha256': podman_pin['archive_sha256']}
+        if podman_pin.get('source') in ('local-archive', 'remote-archive'):
+            if podman_lock_sha256 is None:
+                raise ValueError('Podman fixture lock was not prepared')
+            receipt['podman']['source'] = podman_pin['source']
+            receipt['podman']['archive_size'] = podman_pin.get('archive_size')
+            receipt['podman']['lock_sha256'] = podman_lock_sha256
     for name, binary in binaries.items():
         shutil.copyfile(binary, output / name)
         (output / name).chmod(0o500)
@@ -237,8 +306,13 @@ def environment(crate, bundle, journal):
     expected_binaries = {'adapter', 'core'}
     if podman_supported(crate):
         podman_pin = podman_fixture(crate)
-        if receipt.get('podman') != {'commit': podman_pin['commit'],
-                                     'archive_sha256': podman_pin['archive_sha256']}:
+        expected_podman = {'commit': podman_pin['commit'],
+                           'archive_sha256': podman_pin['archive_sha256']}
+        if podman_pin.get('source') in ('local-archive', 'remote-archive'):
+            expected_podman['source'] = podman_pin['source']
+            expected_podman['archive_size'] = podman_pin.get('archive_size')
+            expected_podman['lock_sha256'] = podman_pin.get('lock_sha256', '')
+        if receipt.get('podman') != expected_podman:
             raise ValueError('Podman fixture receipt identity mismatch')
         expected_binaries |= {'podman', 'fault'}
     elif 'podman' in receipt:

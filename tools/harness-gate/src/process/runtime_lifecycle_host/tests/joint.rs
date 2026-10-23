@@ -6,6 +6,14 @@ use std::{
     os::unix::net::UnixListener,
     thread,
 };
+
+macro_rules! jtrace {
+    ($($arg:tt)*) => {
+        if std::env::var_os("GATEHOUSE_JOINT_TRACE").is_some() {
+            eprintln!($($arg)*);
+        }
+    };
+}
 #[test]
 fn pinned_native_adapter_resolution_creation_start_and_health_through_core_host() {
     joint(0);
@@ -139,6 +147,7 @@ fn joint(service_path: u8) {
         labels,
         environment,
         container_port,
+        command,
         ..
     } = request.operation.clone()
     else {
@@ -149,6 +158,7 @@ fn joint(service_path: u8) {
         labels: labels.clone(),
         environment,
         container_port,
+        command,
     };
     request.operation = Operation::ResolveImage {
         image: "example:latest".into(),
@@ -167,7 +177,14 @@ fn joint(service_path: u8) {
     // startup and recovery. They must not consume the fake engine's request
     // deadline: arm recovery only when the valid command is about to launch.
     let (operator_ready, wait_operator) = std::sync::mpsc::sync_channel(1);
+    let trace_socket = socket.clone();
     let server = thread::spawn(move || {
+        let server_start = std::time::Instant::now();
+        jtrace!(
+            "JOINT server start socket={} pid={}",
+            trace_socket.display(),
+            std::process::id()
+        );
         type Step = (&'static str, String, u16, Value);
         let version = json!({"Version":"27","MinAPIVersion":"1.40","ApiVersion":"1.47"});
         let info = json!({"ID":"test-daemon","SecurityOptions":["name=rootless"]});
@@ -338,7 +355,12 @@ fn joint(service_path: u8) {
         let mut public_object: Option<(String, Value)> = None;
         let last = operations.len() - 1;
         for (index, operation) in operations.into_iter().enumerate() {
+            jtrace!(
+                "JOINT op={index} start_ms={}",
+                server_start.elapsed().as_millis()
+            );
             if service_path == 19 && index == 6 {
+                jtrace!("JOINT op={index} wait_operator");
                 wait_operator
                     .recv_timeout(Duration::from_secs(30))
                     .expect("operator command not armed");
@@ -349,23 +371,35 @@ fn joint(service_path: u8) {
             } else {
                 identity()
             };
-            for (method, path, status, mut value) in
-                identity().into_iter().chain(operation).chain(after)
+            for (request_index, (method, path, status, mut value)) in identity()
+                .into_iter()
+                .chain(operation)
+                .chain(after)
+                .enumerate()
             {
                 let deadline = Instant::now() + Duration::from_secs(5);
+                jtrace!(
+                    "JOINT op={index} req={request_index} expect={method} {path} wait_ms={}",
+                    server_start.elapsed().as_millis()
+                );
                 let mut stream = loop {
                     match listener.accept() {
                         Ok((s, _)) => break s,
                         Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                            assert!(
-                                Instant::now() < deadline,
-                                "missing joint request {method} {path}"
-                            );
+                            if Instant::now() >= deadline {
+                                jtrace!("JOINT op={index} req={request_index} MISSING={method} {path} elapsed_ms={}",
+                                    server_start.elapsed().as_millis());
+                                panic!("missing joint request {method} {path}");
+                            }
                             thread::sleep(Duration::from_millis(2));
                         }
                         Err(e) => panic!("{e}"),
                     }
                 };
+                jtrace!(
+                    "JOINT op={index} req={request_index} accepted_ms={}",
+                    server_start.elapsed().as_millis()
+                );
                 stream
                     .set_read_timeout(Some(Duration::from_secs(1)))
                     .unwrap();
@@ -433,6 +467,10 @@ fn joint(service_path: u8) {
                 stream.write_all(&bytes).unwrap();
             }
         }
+        jtrace!(
+            "JOINT server done elapsed_ms={}",
+            server_start.elapsed().as_millis()
+        );
     });
     if matches!(service_path, 16..=19 | 27 | 28) {
         use gatehouse_runtime_protocol::lifecycle::journal::ServiceSlot;
@@ -593,10 +631,7 @@ fn joint(service_path: u8) {
                         toml::to_string_pretty(&changed).unwrap(),
                     )
                     .unwrap();
-                    refuse(
-                        run("1", invocation),
-                        "requires explicit Docker lifecycle_host",
-                    );
+                    refuse(run("1", invocation), "requires explicit lifecycle_host");
                     if let crate::config::ServiceConfig::Docker { lifecycle_host, .. } =
                         changed.services.get_mut("fixture").unwrap()
                     {

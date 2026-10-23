@@ -518,7 +518,7 @@ struct RunningService {
 impl Drop for RunningService {
     fn drop(&mut self) {
         if let Some(lifecycle) = self.lifecycle.take() {
-            if let Err(error) = lifecycle.cleanup(Instant::now() + Duration::from_secs(15)) {
+            if let Err(error) = lifecycle.cleanup(Instant::now() + Duration::from_secs(30)) {
                 let detail = format!("lifecycle cleanup retained the resource: {error:#}");
                 self.report_cleanup_error(detail);
             }
@@ -609,14 +609,13 @@ impl RunningService {
                 container_port,
                 environment,
                 healthcheck,
+                command,
                 connection,
                 ..
             } => {
                 if let Some(host) = lifecycle_host {
-                    if runtime != crate::config::ContainerRuntimeKind::Docker
-                        || external_env.is_some()
-                    {
-                        bail!("lifecycle_host requires Docker and cannot use external_env");
+                    if external_env.is_some() {
+                        bail!("lifecycle_host cannot use external_env");
                     }
                     run_checks(project, id, None, Duration::from_secs(startup_timeout_secs))?;
                     let deadline = Instant::now() + Duration::from_secs(startup_timeout_secs);
@@ -629,7 +628,9 @@ impl RunningService {
                             container_port,
                             environment,
                             healthcheck,
+                            command,
                         },
+                        runtime,
                         deadline,
                     )?;
                     let value = connection.replace("{host_port}", &lifecycle.port().to_string());
@@ -760,8 +761,11 @@ fn check_available_with_runtime<R: ContainerRuntime>(
                     Outcome::Unavailable => anyhow::bail!("docker readiness unavailable"),
                 };
             }
-            if lifecycle_host.is_some() {
-                bail!("lifecycle service availability requires an explicit readiness_host; no CLI fallback");
+            if let Some(host) = lifecycle_host {
+                if *runtime == crate::config::ContainerRuntimeKind::Docker {
+                    bail!("lifecycle service availability requires an explicit readiness_host; no CLI fallback");
+                }
+                return podman_lifecycle_availability(host.as_ref(), image, *runtime, deadline);
             }
             let runtime = select_runtime(*runtime);
             runtime
@@ -778,6 +782,45 @@ fn check_available_with_runtime<R: ContainerRuntime>(
             Ok(format!("{} and {image} ready", runtime.executable()))
         }
     }
+}
+
+#[cfg(target_os = "linux")]
+fn podman_lifecycle_availability(
+    host: &str,
+    image: &str,
+    runtime: crate::config::ContainerRuntimeKind,
+    deadline: Instant,
+) -> Result<String> {
+    use gatehouse_runtime_protocol::lifecycle::installation::VerifiedInstallation;
+    let installation = VerifiedInstallation::load(std::path::Path::new(host))?;
+    let engine = installation.engine_binding()?.engine.clone();
+    if engine != runtime.executable() {
+        bail!("lifecycle installation engine does not match configured runtime");
+    }
+    remaining(deadline)?;
+    Ok(format!(
+        "podman lifecycle installation configured; {image} resolution is checked during start"
+    ))
+}
+
+#[cfg(target_os = "macos")]
+fn podman_lifecycle_availability(
+    _: &str,
+    _: &str,
+    _: crate::config::ContainerRuntimeKind,
+    _: Instant,
+) -> Result<String> {
+    bail!("Podman lifecycle availability requires Linux; no CLI fallback")
+}
+
+#[cfg(target_os = "windows")]
+fn podman_lifecycle_availability(
+    _: &str,
+    _: &str,
+    _: crate::config::ContainerRuntimeKind,
+    _: Instant,
+) -> Result<String> {
+    bail!("Podman lifecycle availability requires Linux; no CLI fallback")
 }
 
 fn remaining(deadline: Instant) -> Result<Duration> {

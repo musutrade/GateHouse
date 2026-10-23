@@ -685,16 +685,49 @@ fn validate_service_host(
     host: Option<&str>,
     image: &str,
     field: &str,
+    allow_podman: bool,
 ) -> Result<()> {
     if let Some(host) = host {
-        if runtime != crate::config::ContainerRuntimeKind::Docker
+        let compatible = runtime == crate::config::ContainerRuntimeKind::Docker
+            || (allow_podman && runtime == crate::config::ContainerRuntimeKind::Podman);
+        if !compatible
             || !std::path::Path::new(host).is_absolute()
             || host.chars().any(char::is_control)
         {
-            bail!("service {field} requires Docker and an absolute host path");
+            bail!(
+                "service {field} requires {} and an absolute host path",
+                if allow_podman {
+                    "Docker or Podman"
+                } else {
+                    "Docker"
+                }
+            );
         }
         gatehouse_runtime_protocol::v3::validate_image(image)
             .map_err(|_| anyhow::anyhow!("invalid {field} image"))?;
+    }
+    Ok(())
+}
+
+fn validate_service_command(
+    runtime: crate::config::ContainerRuntimeKind,
+    lifecycle_host: Option<&str>,
+    command: Option<&[String]>,
+) -> Result<()> {
+    let Some(command) = command else {
+        return Ok(());
+    };
+    if runtime != crate::config::ContainerRuntimeKind::Podman || lifecycle_host.is_none() {
+        bail!("service command requires an explicit Podman lifecycle_host");
+    }
+    if command.is_empty()
+        || command.len() > 64
+        || command
+            .iter()
+            .any(|arg| arg.is_empty() || arg.contains('\0'))
+        || command.iter().map(String::len).sum::<usize>() > 8192
+    {
+        bail!("service command must be bounded nonempty argv");
     }
     Ok(())
 }
@@ -722,11 +755,25 @@ fn validate_service_entry(id: &str, service: &ServiceConfig) -> Result<()> {
             container_port,
             environment,
             healthcheck,
+            command,
             connection,
         } => {
             validate_image(image)?;
-            validate_service_host(*runtime, readiness_host.as_deref(), image, "readiness_host")?;
-            validate_service_host(*runtime, lifecycle_host.as_deref(), image, "lifecycle_host")?;
+            validate_service_host(
+                *runtime,
+                readiness_host.as_deref(),
+                image,
+                "readiness_host",
+                false,
+            )?;
+            validate_service_host(
+                *runtime,
+                lifecycle_host.as_deref(),
+                image,
+                "lifecycle_host",
+                true,
+            )?;
+            validate_service_command(*runtime, lifecycle_host.as_deref(), command.as_deref())?;
             if lifecycle_host.is_some() && external_env.is_some() {
                 bail!("lifecycle_host cannot be combined with external_env");
             }
@@ -1611,26 +1658,55 @@ mod service_validation_tests {
         }
     }
     #[test]
-    fn lifecycle_contract_requires_explicit_docker_host_without_external_override() {
+    fn lifecycle_contract_accepts_explicit_docker_or_podman_host_without_external_override() {
+        let absolute = std::env::current_dir().unwrap().join("lifecycle-host.json");
+        for runtime in ["docker", "podman"] {
+            let mut valid = service();
+            valid["runtime"] = json!(runtime);
+            valid["lifecycle_host"] = json!(absolute);
+            validate_service_entry("db", &serde_json::from_value(valid.clone()).unwrap()).unwrap();
+            for (field, value) in [
+                ("lifecycle_host", json!("relative.json")),
+                ("lifecycle_host", json!(format!("{}\n", absolute.display()))),
+                ("image", json!("repo?tag")),
+                ("external_env", json!("EXTERNAL_DATABASE")),
+            ] {
+                let mut invalid = valid.clone();
+                invalid[field] = value;
+                assert!(
+                    validate_service_entry("db", &serde_json::from_value(invalid).unwrap())
+                        .is_err(),
+                    "{runtime}/{field}"
+                );
+            }
+        }
+        let mut readiness = service();
+        readiness["runtime"] = json!("podman");
+        readiness["readiness_host"] = json!(absolute);
+        assert!(validate_service_entry("db", &serde_json::from_value(readiness).unwrap()).is_err());
+    }
+
+    #[test]
+    fn lifecycle_command_requires_bounded_podman_argv() {
         let absolute = std::env::current_dir().unwrap().join("lifecycle-host.json");
         let mut valid = service();
+        valid["runtime"] = json!("podman");
         valid["lifecycle_host"] = json!(absolute);
+        valid["command"] = json!(["/bin/sh", "-c", "sleep 30"]);
         validate_service_entry("db", &serde_json::from_value(valid.clone()).unwrap()).unwrap();
-        for (field, value) in [
-            ("runtime", json!("podman")),
-            ("lifecycle_host", json!("relative.json")),
-            ("lifecycle_host", json!(format!("{}\n", absolute.display()))),
-            ("image", json!("repo?tag")),
-            ("external_env", json!("EXTERNAL_DATABASE")),
-        ] {
+        for command in [json!([]), json!([""]), json!(["bad\u{0}arg"])] {
             let mut invalid = valid.clone();
-            invalid[field] = value;
+            invalid["command"] = command;
             assert!(
-                validate_service_entry("db", &serde_json::from_value(invalid).unwrap()).is_err(),
-                "{field}"
+                validate_service_entry("db", &serde_json::from_value(invalid).unwrap()).is_err()
             );
         }
-        valid["readiness_host"] = json!(absolute);
-        validate_service_entry("db", &serde_json::from_value(valid).unwrap()).unwrap();
+        let mut docker = valid.clone();
+        docker["runtime"] = json!("docker");
+        assert!(validate_service_entry("db", &serde_json::from_value(docker).unwrap()).is_err());
+        let mut legacy = service();
+        legacy["runtime"] = json!("podman");
+        legacy["command"] = json!(["sleep", "30"]);
+        assert!(validate_service_entry("db", &serde_json::from_value(legacy).unwrap()).is_err());
     }
 }

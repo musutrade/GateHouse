@@ -99,6 +99,19 @@ fn initialize(
             .map(|(path, content)| (path.as_path(), content.as_bytes())),
     );
     atomic_write_batch(&flow_entries)?;
+    // Lifecycle services require private state ancestors, and the directory also
+    // holds audit/secrets templates. Do not leave it group/world-accessible just
+    // because the caller's umask allowed it.
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(directory, fs::Permissions::from_mode(0o700)).with_context(|| {
+            format!(
+                "protect harness-gate state directory {}",
+                directory.display()
+            )
+        })?;
+    }
 
     println!(
         "Initialized preset {name:?} in {}",

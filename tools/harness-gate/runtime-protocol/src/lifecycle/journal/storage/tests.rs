@@ -30,6 +30,7 @@ fn create() -> Request {
         labels: target.labels,
         environment: Vec::<Entry>::new(),
         container_port: target.container_port,
+        command: None,
     };
     r.binding.operation_key = r.operation_key().unwrap();
     r

@@ -282,6 +282,10 @@ pub enum PathType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
+// The optional lifecycle command added to the managed-container variant keeps the
+// configuration enum just above Clippy's size threshold. The variant is a
+// short-lived config value, not a hot-path collection, so keep the existing API.
+#[allow(clippy::large_enum_variant)]
 pub enum ServiceConfig {
     Docker {
         /// Container CLI used for this service. Podman supports the Docker
@@ -308,6 +312,10 @@ pub enum ServiceConfig {
         #[serde(default)]
         environment: BTreeMap<String, String>,
         healthcheck: Vec<String>,
+        /// Explicit container argv for the native Podman 5.7 lifecycle profile.
+        /// Docker lifecycle-v1 and legacy CLI services reject this field.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        command: Option<Vec<String>>,
         connection: String,
     },
     Environment {
