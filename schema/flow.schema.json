@@ -1015,6 +1015,16 @@
             "startup_timeout_secs"
           ],
           "properties": {
+            "command": {
+              "description": "Explicit container argv for the native Podman 5.7 lifecycle profile. Docker lifecycle-v1 and legacy CLI services reject this field.",
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
             "connection": {
               "type": "string"
             },
