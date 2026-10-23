@@ -89,19 +89,20 @@ Candidate matrix, in dependency order:
 4. runtime-importer 0.6.0 with the Podman 0.3.0 profile.
 
 The lifecycle fixture keeps its historical 0.4.0/0.4.1/0.5.0 entries. The 0.6.0
-entry currently binds the reviewed local product head
-`d69c59762bce6320f3d6e98ae1843af58d09e3b5` and the deterministic local archive
-SHA-256 `3b39a39545706df5632d2951517baee214b1669afabca593ffb872ca3b8c0c50`;
-it is explicitly marked `local-archive` and refuses to infer a GitHub download.
-The local preparation rewrites only the one protocol dependency to a reviewed
-path, rejects any unrelated lock change, records the resolved lock SHA-256 in
-the receipt and then builds every fixture binary with `--locked`. No unpublished
-registry checksum is invented. A real GitHub mapping must be created only after
-that product branch is pushed and published. The local fixture build produced a
-real receipt with the Core source digest, product binary hashes and resolved
-path-lock hash. The joint test using the rebuilt fixture reached a different
-failure than the earlier fixture-Core operator-cleanup mismatch and still does
-not pass end-to-end; the red logs are retained and the assertion is not relaxed.
+entry binds the reviewed GateProbes branch `fixture/podman06-source-152` at commit
+`d69c59762bce6320f3d6e98ae1843af58d09e3b5`. Its real GitHub tarball identity is
+prefix `musutrade-GateProbes-d69c597/`, size 1,045,332 bytes and SHA-256
+`065fa6a2ff1fc452e4464bc7bff65149289e3c99ec7764d18fe4431df14f0e16`. The remote
+archive is downloaded and checked before extraction. The protocol crate 0.6.0 is
+still not registered, so the fixture prepares exactly one local path override,
+rejects unrelated lock changes, records the resolved lock SHA-256
+`e6e5ce69fc63e7a7767a02d204a6a959c8969167e94873153aa05261eb37356c` in the
+receipt, and builds every binary with `--locked`. No unpublished registry
+checksum is invented. The final fixture build produced a real receipt with the
+Core source digest and product binary hashes; all 27 lifecycle joint tests and
+all 11 Podman capture joint tests pass. The earlier config-recognition difference
+did not reproduce; the traced failure was a stale expected error string, now
+fixed. Its original cause remains unproven and is not attributed to disk-full.
 
 Core CLI contracts have been rebuilt for 0.13.0. Package and importer scripts now
 select the product/importer profile from the reviewed manifests, retain the

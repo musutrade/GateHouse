@@ -111,7 +111,9 @@ class LifecycleFixtureTests(unittest.TestCase):
             with self.subTest(version=version):
                 manifest.write_text(f'[package]\nname = "protocol"\nversion = "{version}"\n')
                 self.assertIs(fixture.podman_fixture(self.crate), fixture.PODMAN_FIXTURES[version])
-        self.assertEqual(fixture.PODMAN_FIXTURES['0.6.0']['source'], 'local-archive')
+        self.assertEqual(fixture.PODMAN_FIXTURES['0.6.0']['source'], 'remote-archive')
+        self.assertEqual(fixture.PODMAN_FIXTURES['0.6.0']['archive_size'], 1045332)
+        self.assertTrue(fixture.PODMAN_FIXTURES['0.6.0']['prefix'].startswith('musutrade-GateProbes-d69c597/'))
         manifest.write_text('[package]\nname = "protocol"\nversion = "0.4.2"\n')
         with self.assertRaisesRegex(ValueError, 'unsupported Podman fixture'):
             fixture.podman_fixture(self.crate)

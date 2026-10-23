@@ -38,17 +38,19 @@ PODMAN_FIXTURES = {
         'source_protocol': '0.4.1',
         'protocol': '0.5.0',
     },
-    # Local pre-publication source for protocol 0.6.0. The commit is a local
-    # product head, not a GitHub-downloadable commit. CI must not infer a remote
-    # archive from it; supply --podman-archive from the reviewed local source or
-    # replace this entry after the product branch is pushed and published.
+    # Protocol 0.6.0 source is fetched from the reviewed GateProbes branch
+    # fixture/podman06-source-152 at this exact commit. The archive identity is
+    # the real GitHub tarball; the protocol itself is still an explicit local
+    # path override because 0.6.0 is not registered. The prepared lock hash is
+    # recorded and every build remains --locked.
     '0.6.0': {
         'commit': 'd69c59762bce6320f3d6e98ae1843af58d09e3b5',
-        'archive_sha256': '3b39a39545706df5632d2951517baee214b1669afabca593ffb872ca3b8c0c50',
-        'prefix': 'musutrade-GateProbes-d69c59762bce/plugins/podman-lifecycle/native/',
+        'archive_sha256': '065fa6a2ff1fc452e4464bc7bff65149289e3c99ec7764d18fe4431df14f0e16',
+        'archive_size': 1045332,
+        'prefix': 'musutrade-GateProbes-d69c597/plugins/podman-lifecycle/native/',
         'source_protocol': '0.6.0',
         'protocol': '0.6.0',
-        'source': 'local-archive',
+        'source': 'remote-archive',
         'lock_sha256': 'e6e5ce69fc63e7a7767a02d204a6a959c8969167e94873153aa05261eb37356c',
     },
 }
@@ -150,11 +152,12 @@ def source_digest(crate):
     return hashlib.sha256(json.dumps(rows, separators=(',', ':')).encode()).hexdigest()
 
 
-def extract(archive, destination, *, expected_sha=None, prefix=None):
+def extract(archive, destination, *, expected_sha=None, prefix=None, expected_size=None):
     expected_sha = ARCHIVE_SHA256 if expected_sha is None else expected_sha
     prefix = PREFIX if prefix is None else prefix
     archive, destination = Path(archive), Path(destination)
-    if archive.stat().st_size > LIMIT or digest(archive) != expected_sha:
+    size = archive.stat().st_size
+    if size > LIMIT or (expected_size is not None and size != expected_size) or digest(archive) != expected_sha:
         raise ValueError('lifecycle fixture archive digest/size mismatch')
     # Never execute or import anything from unverified archive contents.
     with tarfile.open(archive, 'r:gz') as stream:
@@ -245,8 +248,8 @@ def build(crate, output, work, archive=None, podman_archive=None):
                             f"https://api.github.com/repos/musutrade/GateProbes/tarball/{podman_pin['commit']}"], check=True)
         podman = work / 'podman-native'
         extract(podman_archive, podman, expected_sha=podman_pin['archive_sha256'],
-                prefix=podman_pin['prefix'])
-        if podman_pin.get('source') == 'local-archive':
+                prefix=podman_pin['prefix'], expected_size=podman_pin.get('archive_size'))
+        if podman_pin.get('source') in ('local-archive', 'remote-archive'):
             podman_lock_sha256 = pin_podman_local_protocol(podman, crate, env)
             podman_extra = []
         else:
@@ -276,10 +279,11 @@ def build(crate, output, work, archive=None, podman_archive=None):
     if podman_pin is not None:
         receipt['podman'] = {'commit': podman_pin['commit'],
                              'archive_sha256': podman_pin['archive_sha256']}
-        if podman_pin.get('source') == 'local-archive':
+        if podman_pin.get('source') in ('local-archive', 'remote-archive'):
             if podman_lock_sha256 is None:
-                raise ValueError('local Podman fixture lock was not prepared')
-            receipt['podman']['source'] = 'local-archive'
+                raise ValueError('Podman fixture lock was not prepared')
+            receipt['podman']['source'] = podman_pin['source']
+            receipt['podman']['archive_size'] = podman_pin.get('archive_size')
             receipt['podman']['lock_sha256'] = podman_lock_sha256
     for name, binary in binaries.items():
         shutil.copyfile(binary, output / name)
@@ -302,8 +306,9 @@ def environment(crate, bundle, journal):
         podman_pin = podman_fixture(crate)
         expected_podman = {'commit': podman_pin['commit'],
                            'archive_sha256': podman_pin['archive_sha256']}
-        if podman_pin.get('source') == 'local-archive':
-            expected_podman['source'] = 'local-archive'
+        if podman_pin.get('source') in ('local-archive', 'remote-archive'):
+            expected_podman['source'] = podman_pin['source']
+            expected_podman['archive_size'] = podman_pin.get('archive_size')
             expected_podman['lock_sha256'] = podman_pin.get('lock_sha256', '')
         if receipt.get('podman') != expected_podman:
             raise ValueError('Podman fixture receipt identity mismatch')
