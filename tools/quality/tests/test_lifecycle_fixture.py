@@ -223,3 +223,39 @@ class LifecycleFixtureTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class LocalPodmanFixtureLockTests(unittest.TestCase):
+    def test_local_path_override_is_prepared_once_and_builds_locked(self):
+        import os
+        temporary = tempfile.TemporaryDirectory(prefix='.fixture-local-', dir=Path.home())
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name)
+        root.chmod(0o700)
+        protocol = root / 'runtime-protocol'
+        (protocol / 'src').mkdir(parents=True)
+        (protocol / 'Cargo.toml').write_text(
+            '[package]\nname = "gatehouse-runtime-protocol"\nversion = "0.6.0"\nedition = "2021"\n')
+        (protocol / 'src/lib.rs').write_text('pub fn fixture() {}\n')
+        native = root / 'native'
+        (native / 'src').mkdir(parents=True)
+        (native / 'Cargo.toml').write_text(
+            '[package]\nname = "gateprobes-podman-lifecycle"\nversion = "0.3.0"\nedition = "2021"\n'
+            '[dependencies]\ngatehouse-runtime-protocol = "=0.6.0"\n')
+        (native / 'src/main.rs').write_text('fn main() {}\n')
+        (native / 'Cargo.lock').write_text(
+            'version = 4\n\n[[package]]\nname = "gateprobes-podman-lifecycle"\nversion = "0.3.0"\n'
+            'dependencies = ["gatehouse-runtime-protocol"]\n\n'
+            '[[package]]\nname = "gatehouse-runtime-protocol"\nversion = "0.5.0"\n'
+            'source = "registry+https://github.com/rust-lang/crates.io-index"\n'
+            'checksum = "f1619c05a4069ca03b477f456ee08f831f873022080c8ed96c850dbe20f6f90b"\n')
+        env = os.environ.copy()
+        for key in ('RUSTFLAGS', 'RUSTDOCFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'CARGO_BUILD_TARGET'):
+            env.pop(key, None)
+        checksum = fixture.pin_podman_local_protocol(native, root, env)
+        manifest = (native / 'Cargo.toml').read_text()
+        self.assertIn('path = ' + json.dumps(str(protocol)), manifest)
+        lock = (native / 'Cargo.lock').read_text()
+        self.assertIn('version = "0.6.0"', lock)
+        self.assertNotIn('checksum =', lock)
+        self.assertEqual(checksum, fixture.digest(native / 'Cargo.lock'))

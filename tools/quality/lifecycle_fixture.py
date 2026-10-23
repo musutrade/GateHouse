@@ -49,6 +49,7 @@ PODMAN_FIXTURES = {
         'source_protocol': '0.6.0',
         'protocol': '0.6.0',
         'source': 'local-archive',
+        'lock_sha256': 'e6e5ce69fc63e7a7767a02d204a6a959c8969167e94873153aa05261eb37356c',
     },
 }
 PODMAN_FEATURE = 'harness-gate/podman-capture-joint-tests'
@@ -96,6 +97,40 @@ def pin_podman_protocol(native, source_protocol, protocol):
     if lock_text.count(old) != 1:
         raise ValueError('unexpected Podman fixture protocol lock')
     lock.write_text(lock_text.replace(old, f'name = "gatehouse-runtime-protocol"\nversion = "{protocol}"\n'))
+
+
+def pin_podman_local_protocol(native, crate, env):
+    """Prepare one reviewed path override, then let the build run --locked."""
+    native, crate = Path(native), Path(crate)
+    manifest = native / 'Cargo.toml'
+    lock = native / 'Cargo.lock'
+    protocol = crate / 'runtime-protocol'
+    expected = 'gatehouse-runtime-protocol = "=0.6.0"'
+    text = manifest.read_text()
+    if text.count(expected) != 1:
+        raise ValueError('unexpected local Podman fixture protocol requirement')
+    replacement = ('gatehouse-runtime-protocol = { path = '
+                   + json.dumps(str(protocol)) + ', version = "=0.6.0" }')
+    manifest.write_text(text.replace(expected, replacement))
+    before = tomllib.loads(lock.read_text())
+    subprocess.run(['cargo', 'update', '--offline', '--manifest-path', str(manifest),
+                    '-p', 'gatehouse-runtime-protocol'], env=env, cwd=crate,
+                   check=True, capture_output=True)
+    after = tomllib.loads(lock.read_text())
+    intended = {'gatehouse-runtime-protocol', 'gateprobes-podman-lifecycle'}
+    before_rows = [row for row in before.get('package', [])
+                   if row.get('name') not in intended]
+    after_rows = [row for row in after.get('package', [])
+                  if row.get('name') not in intended]
+    if before_rows != after_rows:
+        raise ValueError('local Podman fixture lock updated unrelated dependencies')
+    entries = [row for row in after.get('package', [])
+               if row.get('name') == 'gatehouse-runtime-protocol']
+    if len(entries) != 1 or entries[0].get('version') != '0.6.0':
+        raise ValueError('local Podman fixture protocol lock mismatch')
+    if 'source' in entries[0] or 'checksum' in entries[0]:
+        raise ValueError('local Podman fixture protocol must not claim a registry pin')
+    return digest(lock)
 
 
 def features(crate):
@@ -211,9 +246,15 @@ def build(crate, output, work, archive=None, podman_archive=None):
         podman = work / 'podman-native'
         extract(podman_archive, podman, expected_sha=podman_pin['archive_sha256'],
                 prefix=podman_pin['prefix'])
-        pin_podman_protocol(podman, podman_pin['source_protocol'], podman_pin['protocol'])
-        builds.append(('podman', podman / 'Cargo.toml', ['--config',
-                       'patch.crates-io.gatehouse-runtime-protocol.path=' + json.dumps(str(crate / 'runtime-protocol'))],
+        if podman_pin.get('source') == 'local-archive':
+            podman_lock_sha256 = pin_podman_local_protocol(podman, crate, env)
+            podman_extra = []
+        else:
+            pin_podman_protocol(podman, podman_pin['source_protocol'], podman_pin['protocol'])
+            podman_lock_sha256 = None
+            podman_extra = ['--config',
+                            'patch.crates-io.gatehouse-runtime-protocol.path=' + json.dumps(str(crate / 'runtime-protocol'))]
+        builds.append(('podman', podman / 'Cargo.toml', podman_extra,
                        'gateprobes-podman-lifecycle'))
         fault = work / 'podman-fault'
         with (work / 'fault-build.log').open('w') as log:
@@ -223,9 +264,8 @@ def build(crate, output, work, archive=None, podman_archive=None):
         binaries['fault'] = fault
     for name, manifest, extra, filename in builds:
         env['CARGO_TARGET_DIR'] = str(work / (name + '-target'))
-        locked = [] if name == 'podman' and podman_pin is not None and podman_pin.get('source') == 'local-archive' else ['--locked']
         with (work / (name + '-build.log')).open('w') as log:
-            subprocess.run(['cargo', 'build', *locked, '--manifest-path', str(manifest), *extra],
+            subprocess.run(['cargo', 'build', '--locked', '--manifest-path', str(manifest), *extra],
                            env=env, stdout=log, stderr=subprocess.STDOUT, check=True, cwd=crate)
         binaries[name] = Path(env['CARGO_TARGET_DIR']) / 'debug' / filename
     if before != source_digest(crate):
@@ -236,6 +276,11 @@ def build(crate, output, work, archive=None, podman_archive=None):
     if podman_pin is not None:
         receipt['podman'] = {'commit': podman_pin['commit'],
                              'archive_sha256': podman_pin['archive_sha256']}
+        if podman_pin.get('source') == 'local-archive':
+            if podman_lock_sha256 is None:
+                raise ValueError('local Podman fixture lock was not prepared')
+            receipt['podman']['source'] = 'local-archive'
+            receipt['podman']['lock_sha256'] = podman_lock_sha256
     for name, binary in binaries.items():
         shutil.copyfile(binary, output / name)
         (output / name).chmod(0o500)
@@ -255,8 +300,12 @@ def environment(crate, bundle, journal):
     expected_binaries = {'adapter', 'core'}
     if podman_supported(crate):
         podman_pin = podman_fixture(crate)
-        if receipt.get('podman') != {'commit': podman_pin['commit'],
-                                     'archive_sha256': podman_pin['archive_sha256']}:
+        expected_podman = {'commit': podman_pin['commit'],
+                           'archive_sha256': podman_pin['archive_sha256']}
+        if podman_pin.get('source') == 'local-archive':
+            expected_podman['source'] = 'local-archive'
+            expected_podman['lock_sha256'] = podman_pin.get('lock_sha256', '')
+        if receipt.get('podman') != expected_podman:
             raise ValueError('Podman fixture receipt identity mismatch')
         expected_binaries |= {'podman', 'fault'}
     elif 'podman' in receipt:

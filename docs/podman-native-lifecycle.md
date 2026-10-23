@@ -93,12 +93,15 @@ entry currently binds the reviewed local product head
 `d69c59762bce6320f3d6e98ae1843af58d09e3b5` and the deterministic local archive
 SHA-256 `3b39a39545706df5632d2951517baee214b1669afabca593ffb872ca3b8c0c50`;
 it is explicitly marked `local-archive` and refuses to infer a GitHub download.
-A real GitHub mapping must be created only after that product branch is pushed
-and published. The local fixture build produced a real receipt with the Core
-source digest and product binary hash; the joint test run using that fixture
-Core binary exposed a reproducible operator-cleanup mismatch while the current
-Core binary passed the same test. That fixture-only discrepancy remains open and
-is not being hidden by changing the assertion.
+The local preparation rewrites only the one protocol dependency to a reviewed
+path, rejects any unrelated lock change, records the resolved lock SHA-256 in
+the receipt and then builds every fixture binary with `--locked`. No unpublished
+registry checksum is invented. A real GitHub mapping must be created only after
+that product branch is pushed and published. The local fixture build produced a
+real receipt with the Core source digest, product binary hashes and resolved
+path-lock hash. The joint test using the rebuilt fixture reached a different
+failure than the earlier fixture-Core operator-cleanup mismatch and still does
+not pass end-to-end; the red logs are retained and the assertion is not relaxed.
 
 Core CLI contracts have been rebuilt for 0.13.0. Package and importer scripts now
 select the product/importer profile from the reviewed manifests, retain the
