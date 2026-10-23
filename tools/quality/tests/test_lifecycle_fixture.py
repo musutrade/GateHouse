@@ -107,13 +107,25 @@ class LifecycleFixtureTests(unittest.TestCase):
         protocol = self.crate / 'runtime-protocol'
         protocol.mkdir()
         manifest = protocol / 'Cargo.toml'
-        for version in ('0.4.0', '0.4.1'):
+        for version in ('0.4.0', '0.4.1', '0.5.0'):
             with self.subTest(version=version):
                 manifest.write_text(f'[package]\nname = "protocol"\nversion = "{version}"\n')
                 self.assertIs(fixture.podman_fixture(self.crate), fixture.PODMAN_FIXTURES[version])
         manifest.write_text('[package]\nname = "protocol"\nversion = "0.4.2"\n')
         with self.assertRaisesRegex(ValueError, 'unsupported Podman fixture'):
             fixture.podman_fixture(self.crate)
+
+    def test_podman_protocol_rewrite_is_exact_and_preserves_old_fixture(self):
+        native = self.root / 'native'
+        native.mkdir()
+        (native / 'Cargo.toml').write_text(
+            '[dependencies]\ngatehouse-runtime-protocol = "=0.4.1"\n')
+        (native / 'Cargo.lock').write_text(
+            '[[package]]\nname = "gatehouse-runtime-protocol"\nversion = "0.4.1"\n')
+        fixture.pin_podman_protocol(native, '0.4.1', '0.5.0')
+        self.assertIn('=0.5.0', (native / 'Cargo.toml').read_text())
+        self.assertIn('version = "0.5.0"', (native / 'Cargo.lock').read_text())
+        self.assertNotIn('=0.4.1', (native / 'Cargo.toml').read_text())
 
     def test_podman_feature_receipt_and_all_three_binary_bindings(self):
         (self.crate / 'Cargo.toml').write_text('[features]\nlifecycle-joint-tests = []\npodman-capture-joint-tests = []\n')

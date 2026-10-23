@@ -439,6 +439,13 @@ mod tests {
         c.validate_read_only().unwrap();
         c.match_operation_read_only(&c, &c.observation, &c.observation)
             .unwrap();
+        let mut mismatch = c.clone();
+        mismatch.observation.server_version = API.into();
+        assert!(mismatch.validate_read_only().is_err());
+        let mut unknown = c.clone();
+        unknown.observation.selected_api = "5.8.0".into();
+        unknown.observation.server_version = "5.8.0".into();
+        assert!(unknown.validate_read_only().is_err());
     }
 
     #[test]

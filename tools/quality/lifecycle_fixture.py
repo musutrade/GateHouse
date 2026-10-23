@@ -19,11 +19,24 @@ PODMAN_FIXTURES = {
         'commit': '56f99ac0930018e73c693d38ddc9901cb5158053',
         'archive_sha256': '00fda426c6446e54969d6a9b6f70de25b8e884fd708b7bb203c59fd046d1db4d',
         'prefix': 'musutrade-GateProbes-56f99ac/plugins/podman-lifecycle/native/',
+        'source_protocol': '0.4.0',
+        'protocol': '0.4.0',
     },
     '0.4.1': {
         'commit': '7afb658c9239c4e47d55012a8392c152f76bbf35',
         'archive_sha256': '99a573fe8cc5e9402415a01c7ef5231119bdd54941e388914e90fd43ac5b3d6c',
         'prefix': 'musutrade-GateProbes-7afb658/plugins/podman-lifecycle/native/',
+        'source_protocol': '0.4.1',
+        'protocol': '0.4.1',
+    },
+    # The reviewed 0.4.1 adapter source is also the deterministic 0.5 fixture;
+    # only its exact protocol dependency is rewritten before the path patch.
+    '0.5.0': {
+        'commit': '7afb658c9239c4e47d55012a8392c152f76bbf35',
+        'archive_sha256': '99a573fe8cc5e9402415a01c7ef5231119bdd54941e388914e90fd43ac5b3d6c',
+        'prefix': 'musutrade-GateProbes-7afb658/plugins/podman-lifecycle/native/',
+        'source_protocol': '0.4.1',
+        'protocol': '0.5.0',
     },
 }
 PODMAN_FEATURE = 'harness-gate/podman-capture-joint-tests'
@@ -54,6 +67,23 @@ def podman_fixture(crate):
     if version not in PODMAN_FIXTURES:
         raise ValueError(f'unsupported Podman fixture protocol version: {version}')
     return PODMAN_FIXTURES[version]
+
+
+def pin_podman_protocol(native, source_protocol, protocol):
+    if source_protocol == protocol:
+        return
+    manifest = Path(native) / 'Cargo.toml'
+    lock = Path(native) / 'Cargo.lock'
+    expected = f'gatehouse-runtime-protocol = "={source_protocol}"'
+    text = manifest.read_text()
+    if text.count(expected) != 1:
+        raise ValueError('unexpected Podman fixture protocol requirement')
+    manifest.write_text(text.replace(expected, f'gatehouse-runtime-protocol = "={protocol}"'))
+    old = f'name = "gatehouse-runtime-protocol"\nversion = "{source_protocol}"\n'
+    lock_text = lock.read_text()
+    if lock_text.count(old) != 1:
+        raise ValueError('unexpected Podman fixture protocol lock')
+    lock.write_text(lock_text.replace(old, f'name = "gatehouse-runtime-protocol"\nversion = "{protocol}"\n'))
 
 
 def features(crate):
@@ -164,6 +194,7 @@ def build(crate, output, work, archive=None, podman_archive=None):
         podman = work / 'podman-native'
         extract(podman_archive, podman, expected_sha=podman_pin['archive_sha256'],
                 prefix=podman_pin['prefix'])
+        pin_podman_protocol(podman, podman_pin['source_protocol'], podman_pin['protocol'])
         builds.append(('podman', podman / 'Cargo.toml', ['--config',
                        'patch.crates-io.gatehouse-runtime-protocol.path=' + json.dumps(str(crate / 'runtime-protocol'))],
                        'gateprobes-podman-lifecycle'))
