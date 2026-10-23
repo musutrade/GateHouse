@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.10.0 (unreleased)
+## 0.11.0 (unreleased)
+
+- Add explicit Linux read-only `podman-capture` with fixed project host mapping and operator trust opt-in.
+- Pin runtime protocol 0.4.0 with protected Podman context/installation, canonical capture wire and evidence codec; include MIT text in the protocol crate.
+- Bound pipe stdout by deadline/cancellation and preserve original shared descriptor flags on normal/error return.
+- Keep evidence persistence explicit; add no mutation, lease or freshness authority. Legacy Podman service operations remain in Core.
+- Candidate verification uses fake sockets and pinned local binaries. Real Podman, rootless/restart, published adapter and importer acceptance remain pending.
+
+## 0.10.0 (published)
 
 - Add protocol 0.3.0 with explicit Docker lifecycle authority and protected installed-host dispatch.
 - Retire Core Docker CLI operations; managed Docker requires lifecycle_host.
