@@ -14,9 +14,9 @@ COMMIT = '76d0e0c188d0ac79f497ad50b7ff7464d47cbf2d'
 ARCHIVE_SHA256 = 'fc651690f3e8c3ce3968eb9dc3d9828ba89e562ed4537b1922e4a371d92872bf'
 PREFIX = 'musutrade-GateProbes-76d0e0c/plugins/docker-lifecycle/native/'
 FEATURE = 'harness-gate/lifecycle-joint-tests'
-PODMAN_COMMIT = '56f99ac0930018e73c693d38ddc9901cb5158053'
-PODMAN_SHA256 = '00fda426c6446e54969d6a9b6f70de25b8e884fd708b7bb203c59fd046d1db4d'
-PODMAN_PREFIX = 'musutrade-GateProbes-56f99ac/plugins/podman-lifecycle/native/'
+PODMAN_COMMIT = '7afb658c9239c4e47d55012a8392c152f76bbf35'
+PODMAN_SHA256 = '99a573fe8cc5e9402415a01c7ef5231119bdd54941e388914e90fd43ac5b3d6c'
+PODMAN_PREFIX = 'musutrade-GateProbes-7afb658/plugins/podman-lifecycle/native/'
 PODMAN_FEATURE = 'harness-gate/podman-capture-joint-tests'
 LIMIT = 64 * 1024 * 1024
 
