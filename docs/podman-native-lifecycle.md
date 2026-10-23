@@ -88,9 +88,22 @@ Candidate matrix, in dependency order:
 3. podman-lifecycle 0.3.0 (archive, registry lock, manifest and hashes).
 4. runtime-importer 0.6.0 with the Podman 0.3.0 profile.
 
-The lifecycle fixture mapping keeps its historical 0.4.0/0.4.1/0.5.0 entries. A
-0.6.0 entry and real receipt must be built from the final product commit after
-publication; no hash is filled in advance. Core CLI contracts, onboarding
-compatibility, fixture mappings, CI exact counts and downloaded full-chain
-acceptance remain pending. Nothing in this document authorizes a push, tag,
-release or PR.
+The lifecycle fixture keeps its historical 0.4.0/0.4.1/0.5.0 entries. The 0.6.0
+entry currently binds the reviewed local product head
+`d69c59762bce6320f3d6e98ae1843af58d09e3b5` and the deterministic local archive
+SHA-256 `3b39a39545706df5632d2951517baee214b1669afabca593ffb872ca3b8c0c50`;
+it is explicitly marked `local-archive` and refuses to infer a GitHub download.
+A real GitHub mapping must be created only after that product branch is pushed
+and published. The local fixture build produced a real receipt with the Core
+source digest and product binary hash; the joint test run using that fixture
+Core binary exposed a reproducible operator-cleanup mismatch while the current
+Core binary passed the same test. That fixture-only discrepancy remains open and
+is not being hidden by changing the assertion.
+
+Core CLI contracts have been rebuilt for 0.13.0. Package and importer scripts now
+select the product/importer profile from the reviewed manifests, retain the
+historical 0.2.0/0.5.0 profiles and fail closed until the actual Core 0.13.0 and
+Podman 0.3.0 pins/acceptance are available. Downloaded full-chain Core 0.13.0
+acceptance, the real GitHub fixture mapping, CI exact counts and the remaining
+fixture discrepancy are still pending. Nothing in this document authorizes a
+push, tag, release or PR for Core, protocol, product or importer.
