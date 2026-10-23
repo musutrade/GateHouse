@@ -1,6 +1,6 @@
-# Runtime protocol 0.3.0 candidate
+# Runtime protocol 0.4.0 candidate
 
-Version 0.3.0 adds the independent `gate-runtime/lifecycle-v1` contract for
+The published 0.3.0 contract added the independent `gate-runtime/lifecycle-v1` contract for
 explicit Docker lifecycle authority. Its lifecycle module defines protected
 installation snapshots, canonical per-invocation bindings, durable image
 reservations, exact-ID mutations, health exec, and journal/slot recovery.
