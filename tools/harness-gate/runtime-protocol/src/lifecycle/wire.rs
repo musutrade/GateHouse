@@ -61,6 +61,10 @@ pub enum Operation {
         labels: Vec<Entry>,
         environment: Vec<Entry>,
         container_port: u16,
+        /// Explicit argv for Podman 5.7 lifecycle profiles. Docker lifecycle
+        /// requests omit this field and retain their original wire bytes.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        command: Option<Vec<String>>,
     },
     Status {
         target: Target,
@@ -137,6 +141,45 @@ pub struct Absence {
     pub route: String,
     pub http_status: u16,
     pub error_message_sha256: String,
+}
+
+fn absence_route(engine: &EngineBinding, object_id: &str) -> Result<String> {
+    digest(object_id)?;
+    Ok(match engine.engine.as_str() {
+        "docker" => format!("/v{}/containers/{object_id}/json", engine.api_version),
+        "podman" => format!(
+            "/v{}/libpod/containers/{object_id}/json",
+            engine.api_version
+        ),
+        _ => return Err(Invalid("invalid lifecycle engine")),
+    })
+}
+
+/// Engine-specific exact missing-object message. This is a route/message fact,
+/// never absence authority by itself.
+fn absence_message(engine: &EngineBinding, object_id: &str) -> Result<String> {
+    digest(object_id)?;
+    Ok(match engine.engine.as_str() {
+        "docker" => format!("No such container: {object_id}"),
+        "podman" => {
+            format!("no container with name or ID \"{object_id}\" found: no such container")
+        }
+        _ => return Err(Invalid("invalid lifecycle engine")),
+    })
+}
+
+/// Build exact absence evidence for a product adapter or a test. Core still
+/// requires a matching validated response and the durable journal transition.
+pub fn exact_absence(engine: &EngineBinding, target: &Target) -> Result<Absence> {
+    engine.validate()?;
+    let route = absence_route(engine, &target.object_id)?;
+    let message = absence_message(engine, &target.object_id)?;
+    Ok(Absence {
+        object_id: target.object_id.clone(),
+        route,
+        http_status: 404,
+        error_message_sha256: format!("{:x}", Sha256::digest(message.as_bytes())),
+    })
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -298,8 +341,7 @@ impl EngineBinding {
         for s in [&e.server_version, &e.daemon_id, &e.scope] {
             nonempty(s)?;
         }
-        if e.engine != "docker"
-            || e.transport != "unix-http"
+        if e.transport != "unix-http"
             || !e.socket_path.starts_with('/')
             || e.socket_path[1..]
                 .split('/')
@@ -308,13 +350,32 @@ impl EngineBinding {
             return Err(Invalid("invalid lifecycle endpoint"));
         }
         nonempty(&e.socket_path)?;
-        let api: Vec<_> = e.api_version.split('.').collect();
-        if api.len() != 2
-            || api
-                .iter()
-                .any(|v| !v.parse::<u16>().is_ok_and(|n| n.to_string() == *v))
-        {
-            return Err(Invalid("invalid lifecycle API version"));
+        match e.engine.as_str() {
+            "docker" => {}
+            // Native Libpod has no Docker API version negotiation and no daemon
+            // UUID. The selected 5.7 profile is rootless-only; `daemon_id` is the
+            // observed host name and `scope` the observed graph root, not an
+            // authentication claim or restart proof.
+            "podman" => {
+                if e.api_version != "5.7.0"
+                    || e.server_version != "5.7.0"
+                    || !e.rootless
+                    || e.principal_uid == 0
+                {
+                    return Err(Invalid("unsupported Podman lifecycle profile"));
+                }
+            }
+            _ => return Err(Invalid("invalid lifecycle engine")),
+        }
+        if e.engine == "docker" {
+            let api: Vec<_> = e.api_version.split('.').collect();
+            if api.len() != 2
+                || api
+                    .iter()
+                    .any(|v| !v.parse::<u16>().is_ok_and(|n| n.to_string() == *v))
+            {
+                return Err(Invalid("invalid lifecycle API version"));
+            }
         }
         Ok(())
     }
@@ -347,6 +408,7 @@ impl Operation {
                 labels,
                 environment,
                 container_port,
+                command,
             } => {
                 name(n)?;
                 image_id(id)?;
@@ -354,6 +416,15 @@ impl Operation {
                 entries(environment)?;
                 if *container_port == 0 || environment.iter().any(|e| e.key.contains('=')) {
                     return Err(Invalid("invalid create parameters"));
+                }
+                if let Some(command) = command {
+                    if command.is_empty()
+                        || command.len() > 64
+                        || command.iter().any(|a| a.is_empty() || a.contains('\0'))
+                        || command.iter().map(String::len).sum::<usize>() > 8192
+                    {
+                        return Err(Invalid("invalid create command"));
+                    }
                 }
             }
             Self::Stop { grace_seconds, .. } if !(1..=30).contains(grace_seconds) => {
@@ -553,16 +624,7 @@ impl Response {
             }
             (Operation::Remove { .. }, Outcome::Removed) => {}
             (Operation::Status { target }, Outcome::Absent { evidence }) => {
-                let route = format!("/v{}/containers/{}/json", e.api_version, target.object_id);
-                let hash = format!(
-                    "{:x}",
-                    Sha256::digest(format!("No such container: {}", target.object_id).as_bytes())
-                );
-                if evidence.object_id != target.object_id
-                    || evidence.route != route
-                    || evidence.http_status != 404
-                    || evidence.error_message_sha256 != hash
-                {
+                if *evidence != exact_absence(e, target)? {
                     return Err(Invalid("invalid absence evidence"));
                 }
             }

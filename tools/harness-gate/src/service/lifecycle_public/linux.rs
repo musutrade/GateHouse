@@ -16,6 +16,7 @@ impl ManagedLifecycle {
         project: &Project,
         id: &str,
         config: Config,
+        runtime: crate::config::ContainerRuntimeKind,
         deadline: Instant,
     ) -> Result<Self> {
         reject_legacy_marker(project, id)?;
@@ -47,10 +48,20 @@ impl ManagedLifecycle {
                 .map(|(key, value)| Entry { key, value })
                 .collect(),
             container_port: config.container_port,
+            command: config.command,
         };
+        let installation = VerifiedInstallation::load(Path::new(&config.host))?;
+        let binding = installation.engine_binding()?;
+        if binding.engine != runtime.executable() {
+            anyhow::bail!(
+                "lifecycle installation engine {:?} does not match configured runtime {:?}",
+                binding.engine,
+                runtime.executable()
+            );
+        }
         let prepared = LifecycleService::prepare(
             &base,
-            VerifiedInstallation::load(Path::new(&config.host))?,
+            installation,
             ServiceIdentity {
                 project_id,
                 resource_id,
@@ -81,18 +92,27 @@ pub(crate) fn cleanup_known(
     use anyhow::{bail, Context};
     use gatehouse_runtime_protocol::lifecycle::journal::OperatorRecovery;
     let Some(ServiceConfig::Docker {
-        runtime: ContainerRuntimeKind::Docker,
+        runtime,
         lifecycle_host: Some(host),
         external_env: None,
         ..
     }) = project.config.services.get(service)
     else {
-        bail!("operator cleanup requires explicit Docker lifecycle_host without external_env");
+        bail!("operator cleanup requires explicit lifecycle_host without external_env");
     };
+    if !matches!(
+        runtime,
+        ContainerRuntimeKind::Docker | ContainerRuntimeKind::Podman
+    ) {
+        bail!("operator cleanup requires a supported lifecycle runtime");
+    }
     if fence == 0 {
         bail!("operator cleanup requires a nonzero exact fence");
     }
     let installation = VerifiedInstallation::load(Path::new(host.as_ref()))?;
+    if installation.engine_binding()?.engine != runtime.executable() {
+        bail!("operator cleanup installation engine does not match configured runtime");
+    }
     let base = ServiceSlot::project_state_base(&project.root)?;
     let authorization = lifecycle::nonce()?;
     let recovery = OperatorRecovery::open_mapped(

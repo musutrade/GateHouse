@@ -61,6 +61,7 @@ fn doctor_service_check_keeps_recipe_validation_on_both_outcomes() {
             container_port: 5432,
             environment: Default::default(),
             healthcheck: vec!["true".into()],
+            command: None,
             connection: "postgres://unused".into(),
         },
     );

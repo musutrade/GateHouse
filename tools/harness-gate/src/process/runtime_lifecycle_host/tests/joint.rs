@@ -139,6 +139,7 @@ fn joint(service_path: u8) {
         labels,
         environment,
         container_port,
+        command,
         ..
     } = request.operation.clone()
     else {
@@ -149,6 +150,7 @@ fn joint(service_path: u8) {
         labels: labels.clone(),
         environment,
         container_port,
+        command,
     };
     request.operation = Operation::ResolveImage {
         image: "example:latest".into(),

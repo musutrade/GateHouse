@@ -5,7 +5,13 @@ use std::time::Instant;
 pub(crate) struct ManagedLifecycle;
 #[cfg(not(any(target_os = "linux")))]
 impl ManagedLifecycle {
-    pub(crate) fn start(_: &Project, _: &str, _: Config, _: Instant) -> Result<Self> {
+    pub(crate) fn start(
+        _: &Project,
+        _: &str,
+        _: Config,
+        _: crate::config::ContainerRuntimeKind,
+        _: Instant,
+    ) -> Result<Self> {
         bail!("lifecycle services require Linux; no CLI fallback")
     }
     pub(crate) fn port(&self) -> u16 {

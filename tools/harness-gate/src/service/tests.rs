@@ -400,6 +400,7 @@ fn docker_service_uses_a_valid_external_value_without_docker() {
             container_port: 5432,
             environment: Default::default(),
             healthcheck: vec!["true".into()],
+            command: None,
             connection: "postgres://unused".into(),
         },
     );
@@ -435,6 +436,7 @@ fn docker_service_rejects_an_invalid_external_value_before_any_runtime() {
             container_port: 5432,
             environment: Default::default(),
             healthcheck: vec!["true".into()],
+            command: None,
             connection: "postgres://unused".into(),
         },
     );
@@ -467,6 +469,7 @@ fn exclusive_external_service_is_not_reused_after_its_last_lease() {
             container_port: 5432,
             environment: Default::default(),
             healthcheck: vec!["true".into()],
+            command: None,
             connection: "postgres://unused".into(),
         },
     );
@@ -510,6 +513,7 @@ fn podman_runtime_uses_external_service_without_starting_a_container() {
             container_port: 5432,
             environment: Default::default(),
             healthcheck: vec!["true".into()],
+            command: None,
             connection: "postgres://unused".into(),
         },
     );
@@ -542,6 +546,7 @@ fn managed_service_lease_excludes_concurrent_users() {
             container_port: 5432,
             environment: Default::default(),
             healthcheck: vec!["true".into()],
+            command: None,
             connection: "postgres://unused".into(),
         },
     );
@@ -623,6 +628,7 @@ esac
             container_port: 1234,
             environment: Default::default(),
             healthcheck: vec!["true".into()],
+            command: None,
             connection: "opaque:{host_port}".into(),
         },
     );
@@ -1076,6 +1082,136 @@ esac
                 "run\ncontainer\n"
             },
             "{mode}: no cleanup/readiness calls"
+        );
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn podman_lifecycle_fixture(
+    product: &str,
+    version: &str,
+    engine: &str,
+) -> (tempfile::TempDir, String) {
+    use sha2::{Digest, Sha256};
+    use std::os::unix::fs::PermissionsExt;
+    let root = std::env::var_os("HOME").expect("HOME required");
+    let dir = tempfile::Builder::new()
+        .prefix("lifecycle-podman-fixture-")
+        .tempdir_in(root)
+        .unwrap();
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+    let executable = dir.path().join("adapter");
+    std::fs::write(&executable, b"fixture never executed").unwrap();
+    std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o700)).unwrap();
+    let uid = unsafe { libc::geteuid() };
+    let config = serde_json::json!({
+        "schema":"gate-runtime/lifecycle-config-v1",
+        "engine_binding":{
+            "engine":engine,
+            "transport":"unix-http",
+            "socket_path":format!("/run/user/{uid}/podman/podman.sock"),
+            "socket_uid":uid,
+            "principal_uid":uid,
+            "rootless":true,
+            "api_version":"5.7.0",
+            "server_version":"5.7.0",
+            "daemon_id":"fixture-host",
+            "scope":"/fixture/storage"
+        }
+    });
+    let config_bytes = serde_json::to_vec(&config).unwrap();
+    let config_path = dir.path().join("config.json");
+    std::fs::write(&config_path, &config_bytes).unwrap();
+    std::fs::set_permissions(&config_path, std::fs::Permissions::from_mode(0o600)).unwrap();
+    let installation = serde_json::json!({
+        "schema":"gate-runtime/lifecycle-installation-v1",
+        "product":product,
+        "version":version,
+        "protocol":"gate-runtime/lifecycle-v1",
+        "executable_path":executable,
+        "executable_sha256":format!("{:x}",Sha256::digest(b"fixture never executed")),
+        "config_schema":"gate-runtime/lifecycle-config-v1"
+    });
+    let installation_bytes = serde_json::to_vec(&installation).unwrap();
+    let installation_path = dir.path().join("installation.json");
+    std::fs::write(&installation_path, &installation_bytes).unwrap();
+    std::fs::set_permissions(&installation_path, std::fs::Permissions::from_mode(0o600)).unwrap();
+    let host = serde_json::json!({
+        "schema":"gate-runtime/lifecycle-host-v1",
+        "installation_path":installation_path,
+        "installation_sha256":format!("{:x}",Sha256::digest(&installation_bytes)),
+        "config_path":config_path,
+        "config_sha256":format!("{:x}",Sha256::digest(&config_bytes))
+    });
+    let host_bytes = serde_json::to_vec(&host).unwrap();
+    let host_path = dir.path().join("host.json");
+    std::fs::write(&host_path, &host_bytes).unwrap();
+    std::fs::set_permissions(&host_path, std::fs::Permissions::from_mode(0o600)).unwrap();
+    (dir, host_path.to_str().unwrap().into())
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn podman_lifecycle_configuration_loads_and_requires_matching_explicit_runtime() {
+    let (_workspace, mut project) = project();
+    let (_fixture, host) = podman_lifecycle_fixture("podman-lifecycle", "0.3.0", "podman");
+    project.config.services.insert(
+        "fixture".into(),
+        serde_json::from_value(serde_json::json!({
+            "kind":"docker","runtime":"podman","image":"fixture","lifecycle_host":host,
+            "inject_env":"FIXTURE","startup_timeout_secs":1,"container_port":1234,
+            "environment":{},"healthcheck":["true"],"command":["sleep","30"],"connection":"{host_port}"
+        }))
+        .unwrap(),
+    );
+    let available = super::check_available(&project, "fixture", std::time::Duration::from_secs(1))
+        .expect("podman lifecycle installation preflight");
+    assert!(
+        available.contains("podman lifecycle installation"),
+        "{available}"
+    );
+
+    let error = super::lifecycle_public::ManagedLifecycle::start(
+        &project,
+        "fixture",
+        super::lifecycle_public::Config {
+            host: host.clone(),
+            image: "fixture".into(),
+            container_port: 1234,
+            environment: Default::default(),
+            healthcheck: vec!["true".into()],
+            command: Some(vec!["sleep".into(), "30".into()]),
+        },
+        crate::config::ContainerRuntimeKind::Docker,
+        std::time::Instant::now() + std::time::Duration::from_secs(1),
+    )
+    .err()
+    .expect("runtime mismatch must fail closed");
+    assert!(format!("{error:#}").contains("does not match configured runtime"));
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn capture_only_or_stale_installation_cannot_select_lifecycle_mutation() {
+    let (_workspace, mut project) = project();
+    for (product, version) in [("podman-lifecycle", "0.2.0"), ("docker-lifecycle", "0.1.0")] {
+        let (_fixture, host) = podman_lifecycle_fixture(product, version, "podman");
+        project.config.services.insert(
+            "fixture".into(),
+            serde_json::from_value(serde_json::json!({
+                "kind":"docker","runtime":"podman","image":"fixture","lifecycle_host":host,
+                "inject_env":"FIXTURE","startup_timeout_secs":1,"container_port":1234,
+                "environment":{},"healthcheck":["true"],"connection":"{host_port}"
+            }))
+            .unwrap(),
+        );
+        let error = super::check_available(&project, "fixture", std::time::Duration::from_secs(1))
+            .unwrap_err();
+        let detail = format!("{error:#}");
+        assert!(
+            detail.contains("unsupported lifecycle installation")
+                || detail.contains("product/engine mismatch"),
+            "{product}/{version}: {detail}"
         );
     }
 }

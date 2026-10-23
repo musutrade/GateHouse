@@ -19,6 +19,7 @@ pub(super) fn fixture() -> (tempfile::TempDir, Request, CreatePlan) {
         labels: target.labels,
         environment: vec![],
         container_port: target.container_port,
+        command: None,
     };
     request.operation = Operation::ResolveImage {
         image: "example:latest".into(),

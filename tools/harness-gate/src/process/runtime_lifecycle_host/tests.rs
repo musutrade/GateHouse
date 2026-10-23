@@ -93,6 +93,7 @@ fn fixture_inputs(
             key: "HOST_TEST_MODE".into(),
             value: mode.into(),
         }],
+        command: None,
     };
     request.binding.engine_binding.principal_uid = unsafe { libc::geteuid() };
     if let Some(socket) = socket {

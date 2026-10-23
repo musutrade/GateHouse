@@ -44,6 +44,17 @@ impl Fixture {
         f.flush();
         f
     }
+    fn podman() -> Self {
+        let mut f = Self::new();
+        f.installation["product"] = "podman-lifecycle".into();
+        f.installation["version"] = "0.3.0".into();
+        f.config["engine_binding"]["engine"] = "podman".into();
+        f.config["engine_binding"]["api_version"] = "5.7.0".into();
+        f.config["engine_binding"]["server_version"] = "5.7.0".into();
+        f.config["engine_binding"]["rootless"] = true.into();
+        f.flush();
+        f
+    }
     fn path(&self) -> PathBuf {
         self.dir.path().join("host.json")
     }
@@ -179,5 +190,37 @@ fn held_config_snapshot_and_every_descriptor_reject_same_byte_replacement() {
         assert!(loaded.engine_binding().is_err());
         assert!(loaded.executable().is_err());
         assert!(loaded.snapshot().is_err());
+    }
+}
+
+#[test]
+fn podman_5_7_mutation_profile_loads_and_capture_only_or_mixed_versions_do_not() {
+    let f = Fixture::podman();
+    let loaded = VerifiedInstallation::load(&f.path()).unwrap();
+    let r = f.request();
+    loaded.validate_request(&r).unwrap();
+    assert_eq!(loaded.engine_binding().unwrap().engine, "podman");
+
+    for (product, version, engine, api) in [
+        ("podman-lifecycle", "0.2.0", "podman", "5.7.0"),
+        ("podman-lifecycle", "0.3.0", "podman", "6.1.4"),
+        ("podman-lifecycle", "0.3.0", "docker", "5.7.0"),
+        ("docker-lifecycle", "0.3.0", "podman", "5.7.0"),
+        ("docker-lifecycle", "0.1.0", "podman", "5.7.0"),
+    ] {
+        let mut f = Fixture::new();
+        f.installation["product"] = product.into();
+        f.installation["version"] = version.into();
+        f.config["engine_binding"]["engine"] = engine.into();
+        f.config["engine_binding"]["api_version"] = api.into();
+        f.config["engine_binding"]["server_version"] = api.into();
+        if engine == "podman" {
+            f.config["engine_binding"]["rootless"] = true.into();
+        }
+        f.flush();
+        assert!(
+            VerifiedInstallation::load(&f.path()).is_err(),
+            "{product}/{version}/{engine}/{api}"
+        );
     }
 }

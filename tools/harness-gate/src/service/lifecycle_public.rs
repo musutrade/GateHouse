@@ -6,6 +6,7 @@ pub(crate) struct Config {
     pub container_port: u16,
     pub environment: BTreeMap<String, String>,
     pub healthcheck: Vec<String>,
+    pub command: Option<Vec<String>>,
 }
 #[cfg(target_os = "linux")]
 mod linux;

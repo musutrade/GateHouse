@@ -721,9 +721,12 @@ Core mints the invocation and ownership labels before acquiring the resource slo
 Failed startup keeps the durable slot. ServiceManager teardown uses the lifecycle
 host and exact-ID absence proof; neither startup nor cleanup falls back to CLI.
 
-`external_env` cannot accompany `lifecycle_host`. Availability remains a separate
-read-only `readiness_host` operation; without that explicit host, availability
-returns an error rather than interpreting lifecycle installation as readiness.
+`external_env` cannot accompany `lifecycle_host`. Availability for Docker remains
+a separate read-only `readiness_host` operation; without that explicit host,
+availability returns an error rather than interpreting lifecycle installation as
+readiness. For the native Podman 5.7 profile, availability verifies the explicit
+protected lifecycle installation and matching engine without executing a
+container. See `docs/podman-native-lifecycle.md`.
 Other operating systems reject lifecycle service startup. Docker services without the new
 field now fail closed under the retirement policy below; Podman retains its legacy route. The public
 operator command, versioned protocol publication and real Docker acceptance remain

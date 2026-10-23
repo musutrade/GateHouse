@@ -79,11 +79,12 @@ fn object(state: ContainerState) -> Object {
         image_id: format!("sha256:{}", "e".repeat(64)),
     }
 }
-fn observations() -> Observations {
+fn observations(r: &Request) -> Observations {
+    let e = &r.binding.engine_binding;
     let o = Observation {
-        api_version: "1.47".into(),
-        server_version: "27".into(),
-        daemon_id: "test-daemon".into(),
+        api_version: e.api_version.clone(),
+        server_version: e.server_version.clone(),
+        daemon_id: e.daemon_id.clone(),
     };
     Observations {
         observed_before: o.clone(),
@@ -96,8 +97,25 @@ fn response(r: &Request, outcome: Outcome) -> Response {
         binding: r.binding.clone(),
         operation: r.operation.clone(),
         outcome,
-        observations: Some(observations()),
+        observations: Some(observations(r)),
     }
+}
+fn podman_request(operation: Operation) -> Request {
+    let mut r = request(operation);
+    r.binding.engine_binding = EngineBinding {
+        engine: "podman".into(),
+        transport: "unix-http".into(),
+        socket_path: "/run/user/1000/podman/podman.sock".into(),
+        socket_uid: 1000,
+        principal_uid: 1000,
+        rootless: true,
+        api_version: "5.7.0".into(),
+        server_version: "5.7.0".into(),
+        daemon_id: "podman-host".into(),
+        scope: "/home/test/.local/share/containers/storage".into(),
+    };
+    r.binding.operation_key = r.operation_key().unwrap();
+    r
 }
 fn bytes<T: Serialize>(t: &T) -> Vec<u8> {
     canonical::encode(&serde_json::to_value(t).unwrap()).unwrap()
@@ -129,6 +147,7 @@ fn all_operations_have_schema_valid_roundtrip() {
             labels: labels(),
             environment: vec![],
             container_port: 1234,
+            command: None,
         },
         Operation::Status { target: target() },
         Operation::Start { target: target() },
@@ -214,6 +233,7 @@ fn valid_outcomes_and_only_exact_operation_pairs() {
                 labels: labels(),
                 environment: vec![],
                 container_port: 1234,
+                command: None,
             },
             Outcome::Created {
                 object: object(ContainerState::Created),
@@ -505,4 +525,115 @@ fn zero_target_port_is_not_authority_and_port_changes_change_digest() {
     assert!(request(Operation::Status { target: zero })
         .validate()
         .is_err());
+}
+
+#[test]
+fn podman_5_7_is_the_only_native_mutation_profile_and_keeps_docker_unchanged() {
+    for (engine, api, server, rootless, principal) in [
+        ("podman", "5.7.0", "5.7.0", true, 1000),
+        ("podman", "5.7.0", "5.7.0", false, 1000),
+        ("podman", "5.7.0", "5.7.0", true, 0),
+        ("podman", "6.1.4", "6.1.4", true, 1000),
+        ("podman", "5.7.1", "5.7.1", true, 1000),
+        ("docker", "1.47", "27", true, 1000),
+        ("unknown", "5.7.0", "5.7.0", true, 1000),
+    ] {
+        let mut r = podman_request(Operation::Status { target: target() });
+        r.binding.engine_binding.engine = engine.into();
+        r.binding.engine_binding.api_version = api.into();
+        r.binding.engine_binding.server_version = server.into();
+        r.binding.engine_binding.rootless = rootless;
+        r.binding.engine_binding.principal_uid = principal;
+        r.binding.operation_key = r.operation_key().unwrap();
+        let expected = if engine == "podman" {
+            api == "5.7.0" && server == "5.7.0" && rootless && principal != 0
+        } else {
+            engine == "docker"
+        };
+        assert_eq!(
+            r.validate().is_ok(),
+            expected,
+            "{engine}/{api}/{server}/{rootless}/{principal}"
+        );
+    }
+}
+
+#[test]
+fn podman_absence_uses_exact_libpod_route_and_message_while_docker_does_not() {
+    let r = podman_request(Operation::Status { target: target() });
+    let evidence = exact_absence(&r.binding.engine_binding, &target()).unwrap();
+    assert_eq!(
+        evidence.route,
+        format!("/v5.7.0/libpod/containers/{}/json", target().object_id)
+    );
+    assert_eq!(
+        evidence.error_message_sha256,
+        format!(
+            "{:x}",
+            Sha256::digest(
+                format!(
+                    "no container with name or ID \"{}\" found: no such container",
+                    target().object_id
+                )
+                .as_bytes()
+            )
+        )
+    );
+    let mut response = response(
+        &r,
+        Outcome::Absent {
+            evidence: evidence.clone(),
+        },
+    );
+    assert!(parse_response(&bytes(&response), &r).is_ok());
+    let mut wrong = evidence;
+    wrong.route = format!("/v5.7.0/containers/{}/json", target().object_id);
+    response.outcome = Outcome::Absent { evidence: wrong };
+    assert!(response.validate(&r).is_err());
+    let docker = request(Operation::Status { target: target() });
+    assert!(response.clone().validate(&docker).is_err());
+    let docker_evidence = exact_absence(&docker.binding.engine_binding, &target()).unwrap();
+    assert_eq!(
+        docker_evidence.route,
+        format!("/v1.47/containers/{}/json", target().object_id)
+    );
+}
+
+#[test]
+fn podman_create_command_is_bounded_and_absent_from_old_docker_bytes() {
+    let docker = request(Operation::Create {
+        name: target().name,
+        image_id: format!("sha256:{}", "e".repeat(64)),
+        labels: labels(),
+        environment: vec![],
+        container_port: 1234,
+        command: None,
+    });
+    let value = serde_json::to_value(&docker).unwrap();
+    assert!(value["operation"].get("command").is_none());
+
+    let good = vec!["/bin/sh".into(), "-c".into(), "sleep 30".into()];
+    let podman = podman_request(Operation::Create {
+        name: target().name,
+        image_id: format!("sha256:{}", "e".repeat(64)),
+        labels: labels(),
+        environment: vec![],
+        container_port: 1234,
+        command: Some(good.clone()),
+    });
+    assert!(podman.validate().is_ok());
+    for bad in [
+        vec![],
+        vec!["".into()],
+        vec!["a\0b".into()],
+        vec!["x".into(); 65],
+    ] {
+        let mut r = podman.clone();
+        let Operation::Create { command, .. } = &mut r.operation else {
+            panic!()
+        };
+        *command = Some(bad);
+        r.binding.operation_key = r.operation_key().unwrap();
+        assert!(r.validate().is_err());
+    }
 }

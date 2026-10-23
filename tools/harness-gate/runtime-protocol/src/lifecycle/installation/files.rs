@@ -149,9 +149,12 @@ impl VerifiedInstallation {
             return Err(Invalid("lifecycle installation digest mismatch"));
         }
         let i: Installation = parse(&installation.bytes)?;
+        let profile = match (i.product.as_str(), i.version.as_str()) {
+            ("docker-lifecycle", "0.1.0") => "docker",
+            ("podman-lifecycle", "0.3.0") => "podman",
+            _ => return Err(Invalid("unsupported lifecycle installation")),
+        };
         if i.schema != "gate-runtime/lifecycle-installation-v1"
-            || i.product != "docker-lifecycle"
-            || i.version != "0.1.0"
             || i.protocol != PROTOCOL
             || i.config_schema != "gate-runtime/lifecycle-config-v1"
         {
@@ -167,6 +170,9 @@ impl VerifiedInstallation {
             return Err(Invalid("unsupported lifecycle config"));
         }
         c.engine_binding.validate()?;
+        if c.engine_binding.engine != profile {
+            return Err(Invalid("lifecycle product/engine mismatch"));
+        }
         if c.engine_binding.principal_uid != unsafe { libc::geteuid() } {
             return Err(Invalid("lifecycle principal mismatch"));
         }

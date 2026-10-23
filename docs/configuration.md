@@ -461,6 +461,13 @@ Managed services use an existing local OCI image and never pull implicitly:
 runtime is docker by default or compatible podman. image, inject_env,
 startup_timeout_secs, container_port, healthcheck, and connection are
 required. image_env, external_env, timeout_env, and environment are optional.
+`lifecycle_host = "/protected/host.json"` selects the explicit lifecycle
+installation. Docker lifecycle requires a separate `readiness_host` for
+availability; Podman 5.7 native lifecycle uses `runtime = "podman"` and the
+protected `podman-lifecycle/0.3.0` host. An optional bounded `command = ["sleep",
+"30"]` is accepted only for that Podman lifecycle profile. `external_env` cannot
+be combined with `lifecycle_host`. See
+[native Podman lifecycle](podman-native-lifecycle.md).
 Postgres URL isolation and health checks belong to the GateProbes
 [Postgres service plugin](https://github.com/musutrade/GateProbes/tree/main/plugins/postgres-service).
 Declare the installed artifact as a required check (replace the path and digest
