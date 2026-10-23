@@ -39,6 +39,20 @@ class ProtocolReleaseWorkflowTests(unittest.TestCase):
         self.assertNotIn("--allow-dirty", protocol)
         self.assertIn("python3 tools/release/publish_runtime_protocol.py", protocol)
 
+    def test_standalone_protocol_release_is_policy_gated(self):
+        source = WORKFLOW.with_name("protocol-release.yml").read_text()
+        self.assertIn("- 'protocol-v*'", source)
+        self.assertNotIn("workflow_dispatch", source)
+        self.assertIn('--tag "$TAG" --tag-prefix protocol-v', source)
+        self.assertIn("--manifest tools/harness-gate/runtime-protocol/Cargo.toml", source)
+        self.assertIn("git fetch --no-tags origin main:refs/remotes/origin/main", source)
+        self.assertIn('test "$COMMIT" = "$(git rev-parse refs/remotes/origin/main)"', source)
+        self.assertIn("needs: policy", source)
+        self.assertIn("environment: release", source)
+        self.assertIn("publish_runtime_protocol.py", source)
+        self.assertNotIn("cargo publish --manifest-path tools/harness-gate/Cargo.toml", source)
+        self.assertNotIn("--allow-dirty", source)
+
 
 if __name__ == "__main__":
     unittest.main()

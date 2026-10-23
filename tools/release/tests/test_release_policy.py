@@ -50,6 +50,13 @@ class ReleasePolicyTests(unittest.TestCase):
             encoding="utf-8",
         )
 
+    def test_protocol_prefix_is_explicit_and_semver_bound(self):
+        self.assertEqual(policy.version_from_tag("protocol-v0.4.1", "protocol-v"), "0.4.1")
+        for tag, prefix in (("v0.4.1", "protocol-v"), ("protocol-v0.4.1", "v"),
+                            ("protocol-v01.4.1", "protocol-v"), ("protocol-v0.4", "protocol-v")):
+            with self.assertRaises(policy.PolicyError):
+                policy.version_from_tag(tag, prefix)
+
     def test_exact_semver_tag_and_main_ancestry_pass(self) -> None:
         self.assertEqual(policy.version_from_tag("v0.3.3"), "0.3.3")
         self.assertEqual(

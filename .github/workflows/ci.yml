@@ -150,6 +150,15 @@ jobs:
           cargo test --manifest-path tools/harness-gate/Cargo.toml --locked
           -p gatehouse-runtime-protocol --target-dir "$RUNNER_TEMP/runtime-protocol-target"
 
+      - name: Run musl protected Podman context regressions
+        if: matrix.shard == 1
+        run: |
+          rustup target add x86_64-unknown-linux-musl
+          cargo test --manifest-path tools/harness-gate/Cargo.toml --locked \
+            -p gatehouse-runtime-protocol --target x86_64-unknown-linux-musl \
+            --target-dir "$RUNNER_TEMP/runtime-protocol-musl-target" \
+            lifecycle_v2::protected_context::tests -- --test-threads=2
+
       - name: Run CI acceptance and HTML example tests
         if: matrix.shard == 1
         env:

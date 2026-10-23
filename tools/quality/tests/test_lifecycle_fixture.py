@@ -103,12 +103,28 @@ class LifecycleFixtureTests(unittest.TestCase):
         self.assertEqual((self.root / 'journal').stat().st_mode & 0o777, 0o700)
         self.assertEqual((self.root / 'bundle/core').stat().st_mode & 0o777, 0o500)
 
+    def test_podman_fixture_tracks_crate_protocol_version(self):
+        protocol = self.crate / 'runtime-protocol'
+        protocol.mkdir()
+        manifest = protocol / 'Cargo.toml'
+        for version in ('0.4.0', '0.4.1'):
+            with self.subTest(version=version):
+                manifest.write_text(f'[package]\nname = "protocol"\nversion = "{version}"\n')
+                self.assertIs(fixture.podman_fixture(self.crate), fixture.PODMAN_FIXTURES[version])
+        manifest.write_text('[package]\nname = "protocol"\nversion = "0.4.2"\n')
+        with self.assertRaisesRegex(ValueError, 'unsupported Podman fixture'):
+            fixture.podman_fixture(self.crate)
+
     def test_podman_feature_receipt_and_all_three_binary_bindings(self):
         (self.crate / 'Cargo.toml').write_text('[features]\nlifecycle-joint-tests = []\npodman-capture-joint-tests = []\n')
+        protocol = self.crate / 'runtime-protocol'
+        protocol.mkdir()
+        (protocol / 'Cargo.toml').write_text('[package]\nname = "protocol"\nversion = "0.4.1"\n')
         self.assertEqual(fixture.features(self.crate), fixture.FEATURE + ',' + fixture.PODMAN_FEATURE)
         bundle = self.bundle()
         receipt = json.loads((bundle / 'receipt.json').read_text())
-        receipt['podman'] = {'commit': fixture.PODMAN_COMMIT, 'archive_sha256': fixture.PODMAN_SHA256}
+        podman = fixture.PODMAN_FIXTURES['0.4.1']
+        receipt['podman'] = {'commit': podman['commit'], 'archive_sha256': podman['archive_sha256']}
         for name in ('podman', 'fault'):
             (bundle / name).write_bytes(b'\x7fELF' + name.encode())
             receipt['binaries'][name] = fixture.digest(bundle / name)
@@ -121,7 +137,7 @@ class LifecycleFixtureTests(unittest.TestCase):
         (bundle / 'receipt.json').write_text(json.dumps(receipt))
         with self.assertRaisesRegex(ValueError, 'Podman fixture receipt'):
             fixture.environment(self.crate, bundle, self.root / 'journal2')
-        receipt['podman']['commit'] = fixture.PODMAN_COMMIT
+        receipt['podman']['commit'] = podman['commit']
         (bundle / 'receipt.json').write_text(json.dumps(receipt))
         (bundle / 'podman').chmod(0o700)
         (bundle / 'podman').write_bytes(b'wrong')

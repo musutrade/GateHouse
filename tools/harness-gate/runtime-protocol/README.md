@@ -1,4 +1,4 @@
-# Runtime protocol 0.4.0 candidate
+# Runtime protocol 0.4.1 candidate
 
 The published 0.3.0 contract added the independent `gate-runtime/lifecycle-v1` contract for
 explicit Docker lifecycle authority. Its lifecycle module defines protected
@@ -198,8 +198,18 @@ capabilities, container absence and mutation are not readiness authority. See
 [the staged contract](../../../docs/runtime-readiness-v3.md).
 
 
-Unreleased 0.4.0 adds the separately versioned Podman context, installation and
+Published 0.4.0 added the separately versioned Podman context, installation and
 read-only capture wire/evidence contracts. The lifecycle_v2 namespace and product
 name do not grant mutation/lease authority. Docker v1 and existing v2/v3 contracts
 remain separate. This crate now includes its MIT license text in the package.
 No real Podman or published 0.4 artifact is claimed by this source checkpoint.
+
+## 0.4.1 patch candidate
+
+The Podman protected socket loader opens O_PATH handles directly through libc.
+On musl, O_ACCMODE includes O_PATH and std OpenOptions removes that bit from
+custom flags, causing ordinary socket opens to fail with ENXIO. The configuration
+file loader is unchanged; socket ownership, mode, path identity and replacement
+checks still apply. The regression asserts O_PATH, CLOEXEC, unreadability and
+exact socket inode on both GNU and musl. No wire, record, schema or authority
+changes are introduced. Published 0.4.0 and Core 0.11.0 remain immutable.
