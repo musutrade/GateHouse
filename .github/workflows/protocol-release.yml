@@ -38,6 +38,7 @@ jobs:
           TAG: ${{ github.ref_name }}
           COMMIT: ${{ github.sha }}
         run: |
+          test "$COMMIT" = "$(git rev-parse refs/remotes/origin/main)"
           python tools/release/release_policy.py verify \
             --tag "$TAG" --tag-prefix protocol-v \
             --commit "$COMMIT" \
