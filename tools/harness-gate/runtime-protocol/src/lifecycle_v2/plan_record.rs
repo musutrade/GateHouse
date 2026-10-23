@@ -1,6 +1,6 @@
 //! Canonical same-context evidence codec. No storage or dispatch authority.
 use super::{
-    native_image::{decode_image, image_route},
+    native_image::{decode_image_for, image_route_for},
     ownership::FixedPort,
     profile::{Profile, SlotIdentity},
     protected_context::ProtectedContext,
@@ -179,10 +179,12 @@ impl PlanRecord {
         {
             return Err("record digest mismatch");
         }
-        let facts = decode_image(
+        expected.validate_read_only()?;
+        let facts = decode_image_for(
+            &expected.observation.selected_api,
             &w.image_id,
             "GET",
-            &image_route(&w.image_id)?,
+            &image_route_for(&expected.observation.selected_api, &w.image_id)?,
             200,
             w.image_json.as_bytes(),
         )?;

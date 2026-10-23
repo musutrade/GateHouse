@@ -1,4 +1,8 @@
-# Runtime protocol 0.4.1 candidate
+# Runtime protocol 0.5.0 candidate
+
+This candidate adds an explicit read-only Podman 5.7.0 profile alongside the
+mutation-capable 6.1.4 profile. API routes are selected from the protected
+context; 5.7.0 is never accepted by the existing mutation/lease validation.
 
 The published 0.3.0 contract added the independent `gate-runtime/lifecycle-v1` contract for
 explicit Docker lifecycle authority. Its lifecycle module defines protected

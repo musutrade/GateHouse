@@ -3,7 +3,42 @@
 use serde::{Deserialize, Serialize};
 
 pub const API: &str = "6.1.4";
+pub const READ_ONLY_API_5_7: &str = "5.7.0";
 pub const INFO_ROUTE: &str = "/v6.1.4/libpod/info";
+
+pub fn read_only_api(value: &str) -> bool {
+    value == API || value == READ_ONLY_API_5_7
+}
+
+pub fn info_route(api: &str) -> Result<String, &'static str> {
+    if read_only_api(api) {
+        Ok(format!("/v{api}/libpod/info"))
+    } else {
+        Err("unsupported native Podman API")
+    }
+}
+
+/// Only an unambiguous local unix:///absolute path may be normalized.
+/// No authority, query, fragment, percent/escape, backslash or traversal.
+pub fn normalize_local_socket_path(value: &str) -> Result<String, &'static str> {
+    let path = value.strip_prefix("unix://").unwrap_or(value);
+    if !path.starts_with('/')
+        || path == "/"
+        || path.len() > 4096
+        || path.ends_with('/')
+        || path.contains("//")
+        || path
+            .chars()
+            .any(|c| c.is_control() || matches!(c, '?' | '#' | '%' | '\\') || c == '\0')
+        || path
+            .split('/')
+            .skip(1)
+            .any(|part| part.is_empty() || part == "." || part == "..")
+    {
+        return Err("local Podman socket path rejected");
+    }
+    Ok(path.to_string())
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -60,12 +95,8 @@ fn absolute_path(value: &str) -> bool {
 }
 
 impl Observation {
-    pub fn validate(&self) -> Result<(), &'static str> {
-        if self.engine != "podman"
-            || self.api_surface != "libpod"
-            || self.selected_api != API
-            || self.server_version != API
-        {
+    fn validate_shape(&self) -> Result<(), &'static str> {
+        if self.engine != "podman" || self.api_surface != "libpod" {
             return Err("unsupported native Podman observation profile");
         }
         if self.hostname.is_empty()
@@ -92,10 +123,38 @@ impl Observation {
         }
         Ok(())
     }
+
+    /// Mutation/lease-compatible profile. This remains 6.1.4-only.
+    pub fn validate(&self) -> Result<(), &'static str> {
+        self.validate_shape()?;
+        if self.selected_api != API || self.server_version != API {
+            return Err("unsupported native Podman observation profile");
+        }
+        Ok(())
+    }
+
+    /// Read-only capture profile. 5.7.0 is deliberately not mutation-capable.
+    pub fn validate_read_only(&self) -> Result<(), &'static str> {
+        self.validate_shape()?;
+        if !read_only_api(&self.selected_api) || self.server_version != self.selected_api {
+            return Err("unsupported read-only Podman observation profile");
+        }
+        Ok(())
+    }
 }
 
 impl ExpectedContext {
     pub fn validate(&self) -> Result<(), &'static str> {
+        self.validate_epoch_shape()?;
+        self.observation.validate()
+    }
+
+    pub fn validate_read_only(&self) -> Result<(), &'static str> {
+        self.validate_epoch_shape()?;
+        self.observation.validate_read_only()
+    }
+
+    fn validate_epoch_shape(&self) -> Result<(), &'static str> {
         if self.operator_epoch.len() != 32
             || !self
                 .operator_epoch
@@ -104,7 +163,7 @@ impl ExpectedContext {
         {
             return Err("explicit operator epoch required");
         }
-        self.observation.validate()
+        Ok(())
     }
 
     /// Supported local deployment policy, not an authentication claim.
@@ -112,6 +171,15 @@ impl ExpectedContext {
     /// configured principal. Other deployments require an explicit future profile.
     pub fn validate_local_socket_policy(&self) -> Result<(), &'static str> {
         self.validate()?;
+        self.validate_socket_owner()
+    }
+
+    pub fn validate_local_socket_policy_read_only(&self) -> Result<(), &'static str> {
+        self.validate_read_only()?;
+        self.validate_socket_owner()
+    }
+
+    fn validate_socket_owner(&self) -> Result<(), &'static str> {
         let uid = self.observation.socket.uid;
         if self.observation.rootless {
             if self.principal_uid == 0 || uid != self.principal_uid {
@@ -139,6 +207,19 @@ impl ExpectedContext {
         self.match_operation(bound, before, after)
     }
 
+    #[cfg(unix)]
+    pub fn match_current_operation_read_only(
+        &self,
+        bound: &Self,
+        before: &Observation,
+        after: &Observation,
+    ) -> Result<(), &'static str> {
+        if self.principal_uid != unsafe { libc::geteuid() } {
+            return Err("Podman configured principal differs from process euid");
+        }
+        self.match_operation_read_only(bound, before, after)
+    }
+
     /// Compare the exact protected caller context and both observations.
     /// Equal observations can occur across socket activation or service restart.
     /// Success therefore says nothing about daemon lifetime or authentication.
@@ -154,6 +235,22 @@ impl ExpectedContext {
         after.validate()?;
         if self != bound || &self.observation != before || before != after {
             return Err("Podman operation context or observations changed");
+        }
+        Ok(())
+    }
+
+    pub fn match_operation_read_only(
+        &self,
+        bound: &Self,
+        before: &Observation,
+        after: &Observation,
+    ) -> Result<(), &'static str> {
+        self.validate_read_only()?;
+        bound.validate_read_only()?;
+        before.validate_read_only()?;
+        after.validate_read_only()?;
+        if self != bound || &self.observation != before || before != after {
+            return Err("Podman read-only operation context or observations changed");
         }
         Ok(())
     }
@@ -330,6 +427,44 @@ mod tests {
             assert!(c.validate().is_err());
         }
     }
+    #[test]
+    fn five_seven_is_read_only_only() {
+        let mut c = context();
+        c.observation.selected_api = READ_ONLY_API_5_7.into();
+        c.observation.server_version = READ_ONLY_API_5_7.into();
+        assert!(c.validate().is_err());
+        assert!(c
+            .match_operation(&c, &c.observation, &c.observation)
+            .is_err());
+        c.validate_read_only().unwrap();
+        c.match_operation_read_only(&c, &c.observation, &c.observation)
+            .unwrap();
+    }
+
+    #[test]
+    fn local_socket_uri_normalization_is_unambiguous() {
+        assert_eq!(
+            normalize_local_socket_path("unix:///run/user/1000/podman/podman.sock").unwrap(),
+            "/run/user/1000/podman/podman.sock"
+        );
+        assert_eq!(
+            normalize_local_socket_path("/run/user/1000/podman/podman.sock").unwrap(),
+            "/run/user/1000/podman/podman.sock"
+        );
+        for value in [
+            "unix://host/run/podman.sock",
+            "unix:///run/../podman.sock",
+            "unix:///run/%2e%2e/podman.sock",
+            "unix:///run/podman.sock?x=1",
+            "unix:///run/podman.sock#frag",
+            "unix:///run//podman.sock",
+            "unix:///run/podman.sock/",
+            "relative.sock",
+        ] {
+            assert!(normalize_local_socket_path(value).is_err(), "{value}");
+        }
+    }
+
     #[test]
     fn local_socket_owner_policy_is_explicit() {
         let mut c = context();

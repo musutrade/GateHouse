@@ -214,8 +214,8 @@ impl ProtectedContext {
         } else {
             serde_json::from_value(value).map_err(|_| "protected context schema rejected")?
         };
-        context.validate()?;
-        context.validate_local_socket_policy()?;
+        context.validate_read_only()?;
+        context.validate_local_socket_policy_read_only()?;
         if context.principal_uid != unsafe { libc::geteuid() } {
             return Err("configured principal differs from euid");
         }
@@ -264,6 +264,12 @@ impl ProtectedContext {
     pub fn snapshot(&self) -> Result<(&ExpectedContext, &[u8])> {
         self.revalidate()?;
         Ok((&self.context, &self.bytes))
+    }
+    /// API selected by the protected context; routes must use exactly this value.
+    pub fn read_only_api(&self) -> Result<String> {
+        let (context, _) = self.snapshot()?;
+        context.observation.validate_read_only()?;
+        Ok(context.observation.selected_api.clone())
     }
     pub fn config_sha256(&self) -> Result<String> {
         self.revalidate()?;
@@ -1161,7 +1167,7 @@ mod tests {
             }),
         )
         .unwrap();
-        let descriptor=format!("{{\"schema\":\"gate-runtime/podman-installation-v1\",\"product\":\"podman-lifecycle\",\"version\":\"0.1.0\",\"protocol\":\"gate-runtime/lifecycle-v2\",\"executable_path\":{},\"executable_sha256\":\"{:x}\",\"config_schema\":\"{}\"}}",serde_json::to_string(&exe).unwrap(),Sha256::digest(fs::read(&exe).unwrap()),CONTEXT_SCHEMA);
+        let descriptor=format!("{{\"schema\":\"gate-runtime/podman-installation-v1\",\"product\":\"podman-lifecycle\",\"version\":\"0.2.0\",\"protocol\":\"gate-runtime/lifecycle-v2\",\"executable_path\":{},\"executable_sha256\":\"{:x}\",\"config_schema\":\"{}\"}}",serde_json::to_string(&exe).unwrap(),Sha256::digest(fs::read(&exe).unwrap()),CONTEXT_SCHEMA);
         let install = f.dir.path().join("installation.json");
         fs::write(&install, &descriptor).unwrap();
         fs::set_permissions(&install, fs::Permissions::from_mode(0o600)).unwrap();

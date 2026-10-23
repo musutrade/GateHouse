@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 pub const PROTOCOL: &str = "gate-runtime/lifecycle-v2";
 pub const PRODUCT: &str = "podman-lifecycle";
-pub const VERSION: &str = "0.1.0";
+pub const VERSION: &str = "0.2.0";
 
 /// Exact operator-selected product tuple. No inference from executable names,
 /// environment, endpoint responses, or another protocol's engine field.
@@ -104,7 +104,7 @@ mod tests {
             value["profile"][field] = serde_json::json!(match field {
                 "protocol" => "gate-runtime/lifecycle-v1",
                 "product" => "docker-lifecycle",
-                "version" => "0.2.0",
+                "version" => "0.1.0",
                 _ => "docker",
             });
             let changed: SlotIdentity = serde_json::from_value(value).unwrap();

@@ -2,10 +2,10 @@
 //! The exchange must supply bounded, deadline-controlled HTTP transport. This
 //! module does not prove a connection's identity, authentication or lifetime.
 use super::{
-    native_image::{decode_image, image_route, ImageFacts},
-    native_info::decode_info,
+    native_image::{decode_image_for, image_route_for, ImageFacts},
+    native_info::decode_info_read_only,
     native_status::{decode_inspect, inspect_route, InspectOutcome, State},
-    observation::INFO_ROUTE,
+    observation::{info_route, read_only_api, API},
     ownership::ExpectedContainer,
     protected_context::ProtectedContext,
 };
@@ -58,10 +58,12 @@ impl ProtectedContext {
         let (expected, bytes) = self.snapshot()?;
         let config_bytes = bytes.to_vec();
         let epoch = expected.operator_epoch.clone();
+        let api = self.selected_read_only_api()?;
+        let route = image_route_for(&api, id)?;
         let (facts, image_bytes) =
-            self.inspect_checked_with(&image_route(id)?, get, |route, status, bytes| {
+            self.inspect_checked_with_api(&api, &route, get, |route, status, bytes| {
                 Ok((
-                    decode_image(id, "GET", route, status, bytes)?,
+                    decode_image_for(&api, id, "GET", route, status, bytes)?,
                     bytes.to_vec(),
                 ))
             })?;
@@ -81,7 +83,11 @@ impl ProtectedContext {
     where
         F: FnMut(&str) -> Result<(u16, Vec<u8>), &'static str>,
     {
-        self.inspect_checked_with(&inspect_route(id)?, get, |route, status, bytes| {
+        let api = self.selected_read_only_api()?;
+        if api != API {
+            return Err("5.7 container inspect is not supported");
+        }
+        self.inspect_checked_with_api(&api, &inspect_route(id)?, get, |route, status, bytes| {
             decode_inspect(id, "GET", route, status, bytes)
         })
     }
@@ -96,21 +102,40 @@ impl ProtectedContext {
         F: FnMut(&str) -> Result<(u16, Vec<u8>), &'static str>,
     {
         owner.validate()?;
-        self.inspect_checked_with(&inspect_route(&owner.id)?, get, |route, status, bytes| {
-            owner.match_inspect("GET", route, status, bytes)
-        })
+        let api = self.selected_read_only_api()?;
+        if api != API {
+            return Err("5.7 ownership inspect is not supported");
+        }
+        self.inspect_checked_with_api(
+            &api,
+            &inspect_route(&owner.id)?,
+            get,
+            |route, status, bytes| owner.match_inspect("GET", route, status, bytes),
+        )
     }
     /// Image facts are returned only after matching both protected observations.
     pub fn inspect_image_with<F>(&self, id: &str, get: F) -> Result<ImageFacts, &'static str>
     where
         F: FnMut(&str) -> Result<(u16, Vec<u8>), &'static str>,
     {
-        self.inspect_checked_with(&image_route(id)?, get, |route, status, bytes| {
-            decode_image(id, "GET", route, status, bytes)
+        let api = self.selected_read_only_api()?;
+        let route = image_route_for(&api, id)?;
+        self.inspect_checked_with_api(&api, &route, get, |route, status, bytes| {
+            decode_image_for(&api, id, "GET", route, status, bytes)
         })
     }
-    fn inspect_checked_with<F, T, D>(
+    fn selected_read_only_api(&self) -> Result<String, &'static str> {
+        let (expected, _) = self.snapshot()?;
+        let api = expected.observation.selected_api.clone();
+        if !read_only_api(&api) || expected.observation.server_version != api {
+            return Err("unsupported read-only Podman API");
+        }
+        Ok(api)
+    }
+
+    fn inspect_checked_with_api<F, T, D>(
         &self,
+        api: &str,
         route: &str,
         mut get: F,
         decode: D,
@@ -120,27 +145,31 @@ impl ProtectedContext {
         D: FnOnce(&str, u16, &[u8]) -> Result<T, &'static str>,
     {
         let (expected, _) = self.snapshot()?;
-        expected.validate_local_socket_policy()?;
+        if expected.observation.selected_api != api {
+            return Err("native route API differs from protected context");
+        }
+        expected.validate_local_socket_policy_read_only()?;
+        let info = info_route(api)?;
         let exchange = |get: &mut F, path: &str| {
             self.revalidate()?;
             let response = get(path)?;
             self.revalidate()?;
             Ok::<_, &'static str>(response)
         };
-        let (status, bytes) = exchange(&mut get, INFO_ROUTE)?;
+        let (status, bytes) = exchange(&mut get, &info)?;
         if status != 200 {
             return Err("initial native info unavailable");
         }
-        let before = decode_info(&bytes, expected.observation.socket.clone())?;
-        expected.match_current_operation(expected, &before, &before)?;
+        let before = decode_info_read_only(&bytes, expected.observation.socket.clone(), api)?;
+        expected.match_current_operation_read_only(expected, &before, &before)?;
         let (status, bytes) = exchange(&mut get, route)?;
         let result = decode(route, status, &bytes)?;
-        let (status, bytes) = exchange(&mut get, INFO_ROUTE)?;
+        let (status, bytes) = exchange(&mut get, &info)?;
         if status != 200 {
             return Err("final native info unavailable");
         }
-        let after = decode_info(&bytes, expected.observation.socket.clone())?;
-        expected.match_current_operation(expected, &before, &after)?;
+        let after = decode_info_read_only(&bytes, expected.observation.socket.clone(), api)?;
+        expected.match_current_operation_read_only(expected, &before, &after)?;
         self.revalidate()?;
         Ok(result)
     }
