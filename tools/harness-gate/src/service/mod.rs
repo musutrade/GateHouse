@@ -765,16 +765,7 @@ fn check_available_with_runtime<R: ContainerRuntime>(
                 if *runtime == crate::config::ContainerRuntimeKind::Docker {
                     bail!("lifecycle service availability requires an explicit readiness_host; no CLI fallback");
                 }
-                use gatehouse_runtime_protocol::lifecycle::installation::VerifiedInstallation;
-                let installation = VerifiedInstallation::load(std::path::Path::new(host.as_ref()))?;
-                let engine = installation.engine_binding()?.engine.clone();
-                if engine != runtime.executable() {
-                    bail!("lifecycle installation engine does not match configured runtime");
-                }
-                remaining(deadline)?;
-                return Ok(format!(
-                    "podman lifecycle installation configured; {image} resolution is checked during start"
-                ));
+                return podman_lifecycle_availability(host.as_ref(), image, *runtime, deadline);
             }
             let runtime = select_runtime(*runtime);
             runtime
@@ -791,6 +782,35 @@ fn check_available_with_runtime<R: ContainerRuntime>(
             Ok(format!("{} and {image} ready", runtime.executable()))
         }
     }
+}
+
+#[cfg(target_os = "linux")]
+fn podman_lifecycle_availability(
+    host: &str,
+    image: &str,
+    runtime: crate::config::ContainerRuntimeKind,
+    deadline: Instant,
+) -> Result<String> {
+    use gatehouse_runtime_protocol::lifecycle::installation::VerifiedInstallation;
+    let installation = VerifiedInstallation::load(std::path::Path::new(host))?;
+    let engine = installation.engine_binding()?.engine.clone();
+    if engine != runtime.executable() {
+        bail!("lifecycle installation engine does not match configured runtime");
+    }
+    remaining(deadline)?;
+    Ok(format!(
+        "podman lifecycle installation configured; {image} resolution is checked during start"
+    ))
+}
+
+#[cfg(not(target_os = "linux"))]
+fn podman_lifecycle_availability(
+    _: &str,
+    _: &str,
+    _: crate::config::ContainerRuntimeKind,
+    _: Instant,
+) -> Result<String> {
+    bail!("Podman lifecycle availability requires Linux; no CLI fallback")
 }
 
 fn remaining(deadline: Instant) -> Result<Duration> {

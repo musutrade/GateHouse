@@ -1215,3 +1215,208 @@ fn capture_only_or_stale_installation_cannot_select_lifecycle_mutation() {
         );
     }
 }
+
+#[cfg(target_os = "linux")]
+fn podman_response(
+    request: &gatehouse_runtime_protocol::lifecycle::wire::Request,
+    outcome: gatehouse_runtime_protocol::lifecycle::wire::Outcome,
+) -> gatehouse_runtime_protocol::lifecycle::wire::Response {
+    use gatehouse_runtime_protocol::lifecycle::wire::{Observation, Observations, Response};
+    let binding = &request.binding.engine_binding;
+    let observation = Observation {
+        api_version: binding.api_version.clone(),
+        server_version: binding.server_version.clone(),
+        daemon_id: binding.daemon_id.clone(),
+    };
+    Response {
+        protocol: request.protocol.clone(),
+        binding: request.binding.clone(),
+        operation: request.operation.clone(),
+        outcome,
+        observations: Some(Observations {
+            observed_before: observation.clone(),
+            observed_after: observation,
+        }),
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn podman_response_bytes(
+    response: &gatehouse_runtime_protocol::lifecycle::wire::Response,
+) -> Vec<u8> {
+    serde_json::to_vec(&serde_json::to_value(response).unwrap()).unwrap()
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn podman_slot_fences_concurrency_old_fence_and_explicit_absence_recovery() {
+    use gatehouse_runtime_protocol::lifecycle::{
+        installation::VerifiedInstallation,
+        journal::{CreatePlan, OperatorRecovery, ServiceSlot},
+        wire::{
+            exact_absence, Binding, ContainerState, Entry, Object, Operation, Outcome, Port,
+            Request, PROTOCOL,
+        },
+    };
+    use std::os::unix::fs::PermissionsExt;
+
+    let (_installation_dir, host) = podman_lifecycle_fixture("podman-lifecycle", "0.3.0", "podman");
+    let installation = VerifiedInstallation::load(std::path::Path::new(&host)).unwrap();
+    let snapshot = installation.snapshot().unwrap();
+    let project = "podman-project";
+    let resource = "service:fixture";
+    let invocation = "1".repeat(32);
+    let labels = vec![
+        Entry {
+            key: "gatehouse.lifecycle.authority".into(),
+            value: "container-lifecycle/mutate".into(),
+        },
+        Entry {
+            key: "gatehouse.lifecycle.invocation".into(),
+            value: invocation.clone(),
+        },
+        Entry {
+            key: "gatehouse.lifecycle.project".into(),
+            value: project.into(),
+        },
+        Entry {
+            key: "gatehouse.lifecycle.resource".into(),
+            value: resource.into(),
+        },
+    ];
+    let plan = CreatePlan {
+        name: "podman-fixture".into(),
+        labels: labels.clone(),
+        environment: vec![],
+        container_port: 8080,
+        command: Some(vec!["sleep".into(), "60".into()]),
+    };
+    let mut resolve = Request {
+        protocol: PROTOCOL.into(),
+        binding: Binding {
+            installation_sha256: snapshot.installation_sha256,
+            executable_sha256: snapshot.executable_sha256,
+            config_sha256: snapshot.config_sha256,
+            engine_binding: snapshot.engine_binding,
+            project_id: project.into(),
+            resource_id: resource.into(),
+            lease_invocation: invocation.clone(),
+            invocation: "2".repeat(32),
+            generation: 1,
+            operation_key: String::new(),
+        },
+        operation: Operation::ResolveImage {
+            image: "fixture:latest".into(),
+        },
+    };
+    resolve.binding.operation_key = resolve.operation_key().unwrap();
+    let base = tempfile::Builder::new()
+        .prefix("podman-slot-")
+        .tempdir_in(std::env::var_os("HOME").unwrap())
+        .unwrap();
+    std::fs::set_permissions(base.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+
+    let mut slot = ServiceSlot::acquire_mapped(
+        base.path(),
+        resolve.clone(),
+        plan.clone(),
+        vec!["true".into()],
+    )
+    .unwrap();
+    let fence = slot.fence();
+    assert!(
+        ServiceSlot::acquire_mapped(base.path(), resolve.clone(), plan.clone(), vec![]).is_err()
+    );
+
+    let mut reservation = slot.reserve().unwrap();
+    let image_id = format!("sha256:{}", "e".repeat(64));
+    let image = podman_response(
+        &resolve,
+        Outcome::Image {
+            image_id: image_id.clone(),
+            repo_digests: vec![],
+        },
+    );
+    reservation
+        .dispatch()
+        .unwrap()
+        .observe(Some(&podman_response_bytes(&image)))
+        .unwrap();
+    let mut journal = reservation.into_journal(&"3".repeat(32)).unwrap();
+    let token = journal.dispatch().unwrap();
+    let create = token.request().clone();
+    let object = Object {
+        image_id: image_id.clone(),
+        object_id: "a".repeat(64),
+        name: plan.name.clone(),
+        labels: labels.clone(),
+        state: ContainerState::Created,
+        ports: vec![Port {
+            container_port: plan.container_port,
+            protocol: "tcp".into(),
+            host_ip: "127.0.0.1".into(),
+            host_port: 49152,
+        }],
+    };
+    let created = podman_response(&create, Outcome::Created { object });
+    token
+        .observe(Some(&podman_response_bytes(&created)))
+        .unwrap();
+    drop(journal);
+    drop(slot);
+
+    let wrong = OperatorRecovery::open_mapped(
+        base.path(),
+        project,
+        resource,
+        fence + 1,
+        &invocation,
+        &"9".repeat(32),
+    )
+    .err()
+    .expect("stale fence must not authorize recovery");
+    assert!(wrong.to_string().contains("fence"), "{wrong}");
+
+    let mut recovery = OperatorRecovery::open_mapped(
+        base.path(),
+        project,
+        resource,
+        fence,
+        &invocation,
+        &"8".repeat(32),
+    )
+    .unwrap();
+    let target = recovery.target().unwrap();
+    let token = recovery
+        .begin(
+            Operation::Status {
+                target: target.clone(),
+            },
+            &"4".repeat(32),
+        )
+        .unwrap();
+    let status = token.request().clone();
+    let absence = exact_absence(&status.binding.engine_binding, &target).unwrap();
+    let absent = podman_response(&status, Outcome::Absent { evidence: absence });
+    token
+        .observe(Some(&podman_response_bytes(&absent)))
+        .unwrap();
+    recovery.finish().unwrap();
+
+    let mut fresh = resolve;
+    fresh.binding.lease_invocation = "5".repeat(32);
+    fresh.binding.invocation = "6".repeat(32);
+    fresh.binding.operation_key = fresh.operation_key().unwrap();
+    let mut fresh_plan = plan;
+    for entry in &mut fresh_plan.labels {
+        if entry.key == "gatehouse.lifecycle.invocation" {
+            entry.value = "5".repeat(32);
+        }
+    }
+    let released = ServiceSlot::acquire_mapped(base.path(), fresh, fresh_plan, vec![]);
+    assert!(
+        released.is_ok(),
+        "verified absence must release the Podman fence: {:?}",
+        released.err()
+    );
+}

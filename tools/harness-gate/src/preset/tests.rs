@@ -52,6 +52,49 @@ fn init_writes_required_security_configs() {
 
 #[cfg(unix)]
 #[test]
+fn init_protects_only_the_harness_gate_state_directory() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let root = TestWorkspace::new("preset-private-state");
+    fs::set_permissions(&root.root, fs::Permissions::from_mode(0o755)).unwrap();
+    let state = root.join(".harness-gate");
+    fs::create_dir(&state).unwrap();
+    fs::set_permissions(&state, fs::Permissions::from_mode(0o755)).unwrap();
+    let nested = state.join("keep");
+    fs::create_dir(&nested).unwrap();
+    fs::set_permissions(&nested, fs::Permissions::from_mode(0o755)).unwrap();
+    let other = root.join("other");
+    fs::create_dir(&other).unwrap();
+    fs::set_permissions(&other, fs::Permissions::from_mode(0o755)).unwrap();
+
+    init(&root, "generic", false).expect("initialize existing project");
+    assert_eq!(
+        fs::metadata(&state).unwrap().permissions().mode() & 0o777,
+        0o700
+    );
+    for path in [&root.root, &other, &nested] {
+        assert_eq!(
+            fs::metadata(path).unwrap().permissions().mode() & 0o777,
+            0o755,
+            "{} must not be modified",
+            path.display()
+        );
+    }
+
+    let fresh = TestWorkspace::new("preset-private-fresh");
+    init(&fresh, "generic", false).expect("initialize fresh project");
+    assert_eq!(
+        fs::metadata(fresh.join(".harness-gate"))
+            .unwrap()
+            .permissions()
+            .mode()
+            & 0o777,
+        0o700
+    );
+}
+
+#[cfg(unix)]
+#[test]
 fn existing_symlink_cannot_escape_project() {
     use std::os::unix::fs::symlink;
 
