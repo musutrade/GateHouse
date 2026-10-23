@@ -103,6 +103,31 @@ class LifecycleFixtureTests(unittest.TestCase):
         self.assertEqual((self.root / 'journal').stat().st_mode & 0o777, 0o700)
         self.assertEqual((self.root / 'bundle/core').stat().st_mode & 0o777, 0o500)
 
+    def test_podman_feature_receipt_and_all_three_binary_bindings(self):
+        (self.crate / 'Cargo.toml').write_text('[features]\nlifecycle-joint-tests = []\npodman-capture-joint-tests = []\n')
+        self.assertEqual(fixture.features(self.crate), fixture.FEATURE + ',' + fixture.PODMAN_FEATURE)
+        bundle = self.bundle()
+        receipt = json.loads((bundle / 'receipt.json').read_text())
+        receipt['podman'] = {'commit': fixture.PODMAN_COMMIT, 'archive_sha256': fixture.PODMAN_SHA256}
+        for name in ('podman', 'fault'):
+            (bundle / name).write_bytes(b'\x7fELF' + name.encode())
+            receipt['binaries'][name] = fixture.digest(bundle / name)
+        (bundle / 'receipt.json').write_text(json.dumps(receipt))
+        values = fixture.environment(self.crate, bundle, self.root / 'journal')
+        self.assertEqual(values['HG_PODMAN_CORE_BINARY'], values['GATEHOUSE_LIFECYCLE_CORE'])
+        self.assertEqual(values['HG_PODMAN_NATIVE_SHA256'], fixture.digest(bundle / 'podman'))
+        self.assertEqual(values['HG_PODMAN_FAULT_SHA256'], fixture.digest(bundle / 'fault'))
+        receipt['podman']['commit'] = '0' * 40
+        (bundle / 'receipt.json').write_text(json.dumps(receipt))
+        with self.assertRaisesRegex(ValueError, 'Podman fixture receipt'):
+            fixture.environment(self.crate, bundle, self.root / 'journal2')
+        receipt['podman']['commit'] = fixture.PODMAN_COMMIT
+        (bundle / 'receipt.json').write_text(json.dumps(receipt))
+        (bundle / 'podman').chmod(0o700)
+        (bundle / 'podman').write_bytes(b'wrong')
+        with self.assertRaisesRegex(ValueError, 'binary digest'):
+            fixture.environment(self.crate, bundle, self.root / 'journal3')
+
     def test_modified_binary_and_symlink_refused(self):
         bundle = self.bundle()
         (bundle / 'core').write_bytes(b'wrong')
@@ -161,7 +186,7 @@ class LifecycleFixtureTests(unittest.TestCase):
         build = workflow.split('  quality-fast-build:', 1)[1].split('  quality-fast-shard:', 1)[0]
         shard = workflow.split('  quality-fast-shard:', 1)[1].split('  quality-fast:', 1)[0]
         self.assertIn('lifecycle_fixture.py build', build)
-        self.assertIn('--features harness-gate/lifecycle-joint-tests', build)
+        self.assertIn('--features harness-gate/lifecycle-joint-tests,harness-gate/podman-capture-joint-tests', build)
         self.assertIn('target/quality/fast-archive/lifecycle/', build)
         self.assertLess(shard.index('lifecycle_fixture.py activate'), shard.index('cargo llvm-cov nextest'))
         self.assertIn('--env-file "$GITHUB_ENV"', shard)

@@ -1304,7 +1304,7 @@ class Collector:
 
     def _lifecycle_coverage_inputs(self, label, crate, target, env):
         # The base snapshot predates lifecycle; do not change its features or protocol.
-        from lifecycle_fixture import supported, environment, FEATURE
+        from lifecycle_fixture import supported, environment, features
         if not target.endswith('linux-gnu') or not supported(crate):
             return [], env
         bundle = self.directory / f'{label}-lifecycle-bundle'
@@ -1316,7 +1316,7 @@ class Collector:
         parent = Path(os.environ.get('GATEHOUSE_JOURNAL_TEST_ROOT', Path.home()))
         journal_parent = Path(tempfile.mkdtemp(prefix='.gh-lifecycle-', dir=parent))
         values = environment(crate, bundle, journal_parent / 'journal')
-        return ['--features', FEATURE], {**(os.environ if env is None else env), **values}
+        return ['--features', features(crate)], {**(os.environ if env is None else env), **values}
 
     def _collect_commit_coverage(self, label: str, commit: str, snapshot: Path, binary: Path, target: str, *, env=None):
         """Shared per-commit coverage collection for both modes."""

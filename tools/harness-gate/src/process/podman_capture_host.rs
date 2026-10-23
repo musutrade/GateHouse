@@ -78,6 +78,41 @@ fn capture_observed(
     let descriptors =
         SealedInputs::with_held_config(installation.config_file()?, &expected.encode(&request)?)
             .map_err(|_| "Podman capture descriptor setup")?;
+    let (output, policy) = dispatch_capture(
+        installation,
+        descriptors,
+        request_bytes,
+        timeout_ms,
+        started,
+        &cancelled,
+    )?;
+    validate_capture_output(&output, &policy)?;
+    let record = decode_response(
+        &output.stdout.bytes,
+        &request,
+        &expected,
+        installation.context()?,
+    )?;
+    installation.match_record(&record)?.revalidate()?;
+    if cancelled() || started.elapsed() >= Duration::from_millis(timeout_ms as u64) {
+        return Err("Podman capture final boundary expired or cancelled");
+    }
+    installation.match_record(&record)?.revalidate()?;
+    after_revalidation();
+    installation.match_record(&record)?.revalidate()?;
+    if cancelled() || started.elapsed() >= Duration::from_millis(timeout_ms as u64) {
+        return Err("Podman capture post-revalidation expired or cancelled");
+    }
+    Ok(record)
+}
+fn dispatch_capture(
+    installation: &VerifiedPodmanInstallation,
+    descriptors: SealedInputs,
+    request_bytes: Vec<u8>,
+    timeout_ms: u32,
+    started: Instant,
+    cancelled: &impl Fn() -> bool,
+) -> Result<(raw_adapter::ProcessOutput, HostPolicy)> {
     let fd = unsafe {
         libc::fcntl(
             installation.executable_file()?.as_raw_fd(),
@@ -106,10 +141,14 @@ fn capture_observed(
         timeout_ms as u64,
         request_bytes,
         started,
-        &cancelled,
+        cancelled,
     )
     .map_err(|_| "Podman capture transport failure")?;
-    raw_adapter::validate_process_output(&output, &policy)
+    Ok((output, policy))
+}
+
+fn validate_capture_output(output: &raw_adapter::ProcessOutput, policy: &HostPolicy) -> Result<()> {
+    raw_adapter::validate_process_output(output, policy)
         .map_err(|_| "Podman capture output rejected")?;
     if !output.status.success()
         || output.timed_out
@@ -119,24 +158,9 @@ fn capture_observed(
     {
         return Err("Podman capture unsuccessful; output discarded");
     }
-    let record = decode_response(
-        &output.stdout.bytes,
-        &request,
-        &expected,
-        installation.context()?,
-    )?;
-    installation.match_record(&record)?.revalidate()?;
-    if cancelled() || started.elapsed() >= Duration::from_millis(timeout_ms as u64) {
-        return Err("Podman capture final boundary expired or cancelled");
-    }
-    installation.match_record(&record)?.revalidate()?;
-    after_revalidation();
-    installation.match_record(&record)?.revalidate()?;
-    if cancelled() || started.elapsed() >= Duration::from_millis(timeout_ms as u64) {
-        return Err("Podman capture post-revalidation expired or cancelled");
-    }
-    Ok(record)
+    Ok(())
 }
+
 fn nonce() -> Result<String> {
     let mut bytes = [0u8; 16];
     let mut offset = 0;

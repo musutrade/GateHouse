@@ -594,21 +594,30 @@ fn run_podman_capture(cli: &Cli, args: &crate::cli::PodmanCaptureArgs) -> Result
 
 #[cfg(target_os = "linux")]
 fn write_podman_evidence(bytes: &[u8], deadline: std::time::Instant) -> anyhow::Result<()> {
-    struct Restore(i32);
+    write_podman_evidence_to(1, bytes, deadline)
+}
+
+#[cfg(target_os = "linux")]
+fn write_podman_evidence_to(
+    fd: i32,
+    bytes: &[u8],
+    deadline: std::time::Instant,
+) -> anyhow::Result<()> {
+    struct Restore(i32, i32);
     impl Drop for Restore {
         fn drop(&mut self) {
             unsafe {
-                libc::fcntl(1, libc::F_SETFL, self.0);
+                libc::fcntl(self.0, libc::F_SETFL, self.1);
             }
         }
     }
-    let flags = unsafe { libc::fcntl(1, libc::F_GETFL) };
+    let flags = unsafe { libc::fcntl(fd, libc::F_GETFL) };
     anyhow::ensure!(flags >= 0, "read Podman stdout flags");
     anyhow::ensure!(
-        unsafe { libc::fcntl(1, libc::F_SETFL, flags | libc::O_NONBLOCK) } == 0,
+        unsafe { libc::fcntl(fd, libc::F_SETFL, flags | libc::O_NONBLOCK) } == 0,
         "set Podman stdout nonblocking"
     );
-    let _restore = Restore(flags);
+    let _restore = Restore(fd, flags);
     let mut offset = 0;
     loop {
         anyhow::ensure!(
@@ -618,7 +627,7 @@ fn write_podman_evidence(bytes: &[u8], deadline: std::time::Instant) -> anyhow::
         if offset == bytes.len() {
             return Ok(());
         }
-        let n = unsafe { libc::write(1, bytes[offset..].as_ptr().cast(), bytes.len() - offset) };
+        let n = unsafe { libc::write(fd, bytes[offset..].as_ptr().cast(), bytes.len() - offset) };
         if n > 0 {
             offset += n as usize;
             continue;
@@ -634,7 +643,7 @@ fn write_podman_evidence(bytes: &[u8], deadline: std::time::Instant) -> anyhow::
             return Err(error).context("write Podman evidence");
         }
         let mut poll = libc::pollfd {
-            fd: 1,
+            fd,
             events: libc::POLLOUT,
             revents: 0,
         };
@@ -710,4 +719,49 @@ pub(crate) fn podman_capture_bytes(
     )
     .map_err(anyhow::Error::msg)?;
     record.encode().map_err(anyhow::Error::msg)
+}
+
+#[cfg(test)]
+#[cfg(target_os = "linux")]
+mod podman_output_tests {
+    use super::write_podman_evidence_to;
+    use std::{
+        fs::File,
+        io::Read,
+        os::fd::{AsRawFd, FromRawFd},
+        time::{Duration, Instant},
+    };
+
+    #[test]
+    fn pipe_output_success_deadline_and_failure_restore_flags() {
+        let mut fds = [-1; 2];
+        assert_eq!(unsafe { libc::pipe2(fds.as_mut_ptr(), libc::O_CLOEXEC) }, 0);
+        let mut reader = unsafe { File::from_raw_fd(fds[0]) };
+        let writer = unsafe { File::from_raw_fd(fds[1]) };
+        let fd = writer.as_raw_fd();
+        let flags = unsafe { libc::fcntl(fd, libc::F_GETFL) };
+        write_podman_evidence_to(fd, b"evidence", Instant::now() + Duration::from_secs(1)).unwrap();
+        let mut bytes = [0; 8];
+        reader.read_exact(&mut bytes).unwrap();
+        assert_eq!(&bytes, b"evidence");
+        assert_eq!(unsafe { libc::fcntl(fd, libc::F_GETFL) }, flags);
+        assert!(write_podman_evidence_to(fd, b"x", Instant::now()).is_err());
+        let start = Instant::now();
+        assert!(write_podman_evidence_to(
+            fd,
+            &vec![b'x'; 1024 * 1024],
+            start + Duration::from_millis(30)
+        )
+        .is_err());
+        assert!(start.elapsed() < Duration::from_secs(2));
+        assert_eq!(unsafe { libc::fcntl(fd, libc::F_GETFL) }, flags);
+        drop(reader);
+        assert!(
+            write_podman_evidence_to(fd, b"x", Instant::now() + Duration::from_secs(1)).is_err()
+        );
+        assert_eq!(unsafe { libc::fcntl(fd, libc::F_GETFL) }, flags);
+        assert!(
+            write_podman_evidence_to(-1, b"x", Instant::now() + Duration::from_secs(1)).is_err()
+        );
+    }
 }
