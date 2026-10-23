@@ -156,5 +156,4 @@ fn nonce() -> Result<String> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "podman-capture-joint-tests")]
 mod tests;

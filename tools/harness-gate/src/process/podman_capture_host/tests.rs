@@ -1,3 +1,4 @@
+#![cfg(feature = "podman-capture-joint-tests")]
 use super::*;
 use gatehouse_runtime_protocol::lifecycle_v2::observation::ExpectedContext;
 use serde_json::json;
