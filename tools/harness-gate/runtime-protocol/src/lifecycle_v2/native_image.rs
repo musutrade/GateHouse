@@ -3,7 +3,7 @@ use super::{
     native_create::CreatePlan,
     native_json,
     native_status::inspect_route,
-    observation::API,
+    observation::{read_only_api, API},
     ownership::{validate_exposed, FixedPort},
 };
 use serde::Deserialize;
@@ -32,8 +32,14 @@ struct Config {
     exposed_ports: BTreeMap<String, serde_json::Value>,
 }
 pub fn image_route(id: &str) -> Result<String> {
+    image_route_for(API, id)
+}
+pub fn image_route_for(api: &str, id: &str) -> Result<String> {
+    if !read_only_api(api) {
+        return Err("unsupported native Podman API");
+    }
     inspect_route(id)?;
-    Ok(format!("/v{API}/libpod/images/{id}/json"))
+    Ok(format!("/v{api}/libpod/images/{id}/json"))
 }
 pub fn decode_image(
     id: &str,
@@ -42,7 +48,17 @@ pub fn decode_image(
     status: u16,
     body: &[u8],
 ) -> Result<ImageFacts> {
-    if method != "GET" || route != image_route(id)? || status != 200 {
+    decode_image_for(API, id, method, route, status, body)
+}
+pub fn decode_image_for(
+    api: &str,
+    id: &str,
+    method: &str,
+    route: &str,
+    status: u16,
+    body: &[u8],
+) -> Result<ImageFacts> {
+    if method != "GET" || route != image_route_for(api, id)? || status != 200 {
         return Err("native image inspect unavailable");
     }
     let value = native_json::decode(body)?;

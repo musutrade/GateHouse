@@ -60,7 +60,7 @@ fn fixture_binary(
         fs::Permissions::from_mode(if uid == 0 { 0o755 } else { 0o700 }),
     )
     .unwrap();
-    let install=format!("{{\"schema\":\"gate-runtime/podman-installation-v1\",\"product\":\"podman-lifecycle\",\"version\":\"0.1.0\",\"protocol\":\"gate-runtime/lifecycle-v2\",\"executable_path\":{},\"executable_sha256\":\"{}\",\"config_schema\":\"gate-runtime/podman-context-v1\"}}",serde_json::to_string(&ep).unwrap(),hash(&executable));
+    let install=format!("{{\"schema\":\"gate-runtime/podman-installation-v1\",\"product\":\"podman-lifecycle\",\"version\":\"0.2.0\",\"protocol\":\"gate-runtime/lifecycle-v2\",\"executable_path\":{},\"executable_sha256\":\"{}\",\"config_schema\":\"gate-runtime/podman-context-v1\"}}",serde_json::to_string(&ep).unwrap(),hash(&executable));
     let ip = dir.path().join("installation.json");
     fs::write(&ip, &install).unwrap();
     fs::set_permissions(&ip, fs::Permissions::from_mode(0o600)).unwrap();

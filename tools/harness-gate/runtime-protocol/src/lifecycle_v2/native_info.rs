@@ -1,7 +1,10 @@
-//! Bounded native Libpod info body decoder, pinned to v6.1.4 Go JSON fields.
+//! Bounded native Libpod info body decoder with explicit API profiles.
 //! HTTP route/status/framing and held socket verification are caller obligations.
 use super::native_json::{decode, LIMIT};
-use super::observation::{Observation, RemoteSocketObservation, SocketObservation, API};
+use super::observation::{
+    normalize_local_socket_path, read_only_api, Observation, RemoteSocketObservation,
+    SocketObservation, API,
+};
 use serde::Deserialize;
 #[cfg(test)]
 use serde_json::Value;
@@ -48,6 +51,28 @@ struct Remote {
 /// Socket metadata is a separate locally observed input, never read from JSON.
 /// A successful parse does not match protected expected context or authorize I/O.
 pub fn decode_info(bytes: &[u8], socket: SocketObservation) -> Result<Observation, &'static str> {
+    decode_info_for(bytes, socket, API, false)
+}
+
+/// Explicit read-only profile decoder. The expected API comes from the protected
+/// context; there is no fallback to another route or server version.
+pub fn decode_info_read_only(
+    bytes: &[u8],
+    socket: SocketObservation,
+    expected_api: &str,
+) -> Result<Observation, &'static str> {
+    if !read_only_api(expected_api) {
+        return Err("unsupported read-only Podman API");
+    }
+    decode_info_for(bytes, socket, expected_api, true)
+}
+
+fn decode_info_for(
+    bytes: &[u8],
+    socket: SocketObservation,
+    expected_api: &str,
+    normalize_remote: bool,
+) -> Result<Observation, &'static str> {
     if bytes.is_empty() || bytes.len() > LIMIT {
         return Err("native info size rejected");
     }
@@ -59,25 +84,37 @@ pub fn decode_info(bytes: &[u8], socket: SocketObservation) -> Result<Observatio
         return Err("native info cannot supply identity authority");
     }
     let info: Info = serde_json::from_value(value).map_err(|_| "native info fields rejected")?;
-    if info.version.api_version != API {
+    if info.version.api_version != expected_api {
         return Err("native API version rejected");
     }
+    let remote_socket = match info.host.remote_socket {
+        Some(remote) => Some(RemoteSocketObservation {
+            path: if normalize_remote {
+                normalize_local_socket_path(&remote.path)?
+            } else {
+                remote.path
+            },
+            exists: remote.exists,
+        }),
+        None => None,
+    };
     let observation = Observation {
         engine: "podman".into(),
         api_surface: "libpod".into(),
-        selected_api: API.into(),
+        selected_api: expected_api.into(),
         server_version: info.version.version,
         hostname: info.host.hostname,
         rootless: info.host.security.rootless,
         graph_root: info.store.graph_root,
         run_root: info.store.run_root,
-        remote_socket: info.host.remote_socket.map(|r| RemoteSocketObservation {
-            path: r.path,
-            exists: r.exists,
-        }),
+        remote_socket,
         socket,
     };
-    observation.validate()?;
+    if normalize_remote {
+        observation.validate_read_only()?;
+    } else {
+        observation.validate()?;
+    }
     Ok(observation)
 }
 
@@ -161,6 +198,33 @@ mod tests {
         v["host"]["remoteSocket"]["path"] = "/run/other.sock".into();
         assert!(decode_info(&serde_json::to_vec(&v).unwrap(), socket()).is_err());
     }
+    #[test]
+    fn read_only_five_seven_and_unix_remote_path_are_explicit() {
+        let mut v = fixture();
+        v["version"] = serde_json::json!({"APIVersion":"5.7.0","Version":"5.7.0"});
+        v["host"]["remoteSocket"] = serde_json::json!({
+            "path":"unix:///run/podman/podman.sock","exists":true
+        });
+        let o = decode_info_read_only(&serde_json::to_vec(&v).unwrap(), socket(), "5.7.0").unwrap();
+        assert_eq!(o.selected_api, "5.7.0");
+        assert_eq!(o.remote_socket.unwrap().path, "/run/podman/podman.sock");
+        assert!(decode_info(&serde_json::to_vec(&v).unwrap(), socket()).is_err());
+        assert!(
+            decode_info_read_only(&serde_json::to_vec(&v).unwrap(), socket(), "6.1.4",).is_err()
+        );
+        for remote in [
+            "unix://host/run/podman/podman.sock",
+            "unix:///run/../podman/podman.sock",
+            "unix:///run/podman/podman.sock?x=1",
+        ] {
+            v["host"]["remoteSocket"]["path"] = remote.into();
+            assert!(
+                decode_info_read_only(&serde_json::to_vec(&v).unwrap(), socket(), "5.7.0",)
+                    .is_err()
+            );
+        }
+    }
+
     #[test]
     fn bounds_trailing_data_utf8_and_nonfinite_rejected() {
         for raw in [

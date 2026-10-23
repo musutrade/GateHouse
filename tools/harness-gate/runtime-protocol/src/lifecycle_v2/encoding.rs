@@ -209,7 +209,7 @@ mod tests {
     fn full_canonical_bytes_are_feature_independent() {
         let id = identity();
         let expected = format!(
-            "{{\"identity\":{{\"config_sha256\":\"{}\",\"executable_sha256\":\"{}\",\"installation_sha256\":\"{}\",\"profile\":{{\"engine\":\"podman\",\"product\":\"podman-lifecycle\",\"protocol\":\"gate-runtime/lifecycle-v2\",\"version\":\"0.1.0\"}}}},\"schema\":\"gate-runtime/podman-slot-identity-v1\"}}",
+            "{{\"identity\":{{\"config_sha256\":\"{}\",\"executable_sha256\":\"{}\",\"installation_sha256\":\"{}\",\"profile\":{{\"engine\":\"podman\",\"product\":\"podman-lifecycle\",\"protocol\":\"gate-runtime/lifecycle-v2\",\"version\":\"0.2.0\"}}}},\"schema\":\"gate-runtime/podman-slot-identity-v1\"}}",
             id.config_sha256, id.executable_sha256, id.installation_sha256
         );
         assert_eq!(encode(&id).unwrap(), expected.as_bytes());

@@ -214,8 +214,8 @@ impl ProtectedContext {
         } else {
             serde_json::from_value(value).map_err(|_| "protected context schema rejected")?
         };
-        context.validate()?;
-        context.validate_local_socket_policy()?;
+        context.validate_read_only()?;
+        context.validate_local_socket_policy_read_only()?;
         if context.principal_uid != unsafe { libc::geteuid() } {
             return Err("configured principal differs from euid");
         }
@@ -265,6 +265,12 @@ impl ProtectedContext {
         self.revalidate()?;
         Ok((&self.context, &self.bytes))
     }
+    /// API selected by the protected context; routes must use exactly this value.
+    pub fn read_only_api(&self) -> Result<String> {
+        let (context, _) = self.snapshot()?;
+        context.observation.validate_read_only()?;
+        Ok(context.observation.selected_api.clone())
+    }
     pub fn config_sha256(&self) -> Result<String> {
         self.revalidate()?;
         Ok(format!("{:x}", Sha256::digest(&self.bytes)))
@@ -286,6 +292,9 @@ mod tests {
     }
     impl Fixture {
         fn new() -> Self {
+            Self::new_api("6.1.4")
+        }
+        fn new_api(api: &str) -> Self {
             // HOME is only a test scratch location, never production identity.
             // A protected short parent is required; assertions do not bypass checks.
             let dir = tempfile::tempdir_in(
@@ -297,7 +306,7 @@ mod tests {
             let listener = UnixListener::bind(&socket).unwrap();
             fs::set_permissions(&socket, fs::Permissions::from_mode(0o600)).unwrap();
             let m = fs::metadata(&socket).unwrap();
-            let value = serde_json::json!({"operator_epoch":"a".repeat(32),"principal_uid":unsafe{libc::geteuid()},"observation":{"engine":"podman","api_surface":"libpod","selected_api":"6.1.4","server_version":"6.1.4","hostname":"fixture","rootless":unsafe{libc::geteuid()}!=0,"graph_root":"/var/lib/containers/storage","run_root":"/run/containers/storage","remote_socket":null,"socket":{"path":socket,"device":m.dev(),"inode":m.ino(),"uid":m.uid(),"mode":m.mode()}}});
+            let value = serde_json::json!({"operator_epoch":"a".repeat(32),"principal_uid":unsafe{libc::geteuid()},"observation":{"engine":"podman","api_surface":"libpod","selected_api":api,"server_version":api,"hostname":"fixture","rootless":unsafe{libc::geteuid()}!=0,"graph_root":"/var/lib/containers/storage","run_root":"/run/containers/storage","remote_socket":null,"socket":{"path":socket,"device":m.dev(),"inode":m.ino(),"uid":m.uid(),"mode":m.mode()}}});
             let config = dir.path().join("context.json");
             fs::write(&config, serde_json::to_vec(&value).unwrap()).unwrap();
             fs::set_permissions(&config, fs::Permissions::from_mode(0o600)).unwrap();
@@ -437,7 +446,7 @@ mod tests {
     fn info(held: &ProtectedContext) -> Vec<u8> {
         let (c, _) = held.snapshot().unwrap();
         let o = &c.observation;
-        serde_json::to_vec(&serde_json::json!({"host":{"hostname":o.hostname,"security":{"rootless":o.rootless}},"store":{"graphRoot":o.graph_root,"runRoot":o.run_root},"version":{"APIVersion":"6.1.4","Version":"6.1.4"}})).unwrap()
+        serde_json::to_vec(&serde_json::json!({"host":{"hostname":o.hostname,"security":{"rootless":o.rootless}},"store":{"graphRoot":o.graph_root,"runRoot":o.run_root},"version":{"APIVersion":o.selected_api,"Version":o.server_version}})).unwrap()
     }
     fn absence(id: &str) -> Vec<u8> {
         serde_json::to_vec(&serde_json::json!({"cause":"no such container","message":format!("no container with name or ID \"{id}\" found: no such container"),"response":404})).unwrap()
@@ -660,6 +669,92 @@ mod tests {
             }
         }
     }
+    #[test]
+    fn five_seven_readonly_capture_routes_and_rejects_mutation_adjacent_reads() {
+        use super::super::{
+            ownership::ExpectedContainer,
+            plan_record::{PlanInputs, PlanRecord},
+            profile::{Profile, SlotIdentity, PRODUCT, PROTOCOL, VERSION},
+        };
+        use std::collections::{BTreeMap, BTreeSet};
+        let f = Fixture::new_api("5.7.0");
+        let held = ProtectedContext::load(&f.config).unwrap();
+        let info_body = info(&held);
+        let id = "b".repeat(64);
+        let raw = serde_json::to_vec(&serde_json::json!({"Id":id,"Config":{}})).unwrap();
+        let mut routes = vec![];
+        let captured = held
+            .capture_image_for_plan(&id, |route| {
+                routes.push(route.to_owned());
+                Ok((
+                    200,
+                    if routes.len() == 2 {
+                        raw.clone()
+                    } else {
+                        info_body.clone()
+                    },
+                ))
+            })
+            .unwrap();
+        assert_eq!(
+            routes,
+            vec![
+                "/v5.7.0/libpod/info".to_string(),
+                format!("/v5.7.0/libpod/images/{id}/json"),
+                "/v5.7.0/libpod/info".to_string(),
+            ]
+        );
+        let identity = SlotIdentity {
+            profile: Profile {
+                protocol: PROTOCOL.into(),
+                product: PRODUCT.into(),
+                version: VERSION.into(),
+                engine: "podman".into(),
+            },
+            installation_sha256: "a".repeat(64),
+            executable_sha256: "c".repeat(64),
+            config_sha256: held.config_sha256().unwrap(),
+        };
+        let record = PlanRecord::capture(
+            &held,
+            &captured,
+            &identity,
+            PlanInputs {
+                name: "fixture".into(),
+                labels: [("owner".into(), "fixture".into())].into(),
+                port: None,
+            },
+        )
+        .unwrap();
+        let bytes = record.encode().unwrap();
+        PlanRecord::decode(&bytes, &held).unwrap();
+        let other = ProtectedContext::load(&Fixture::new().config).unwrap();
+        assert!(PlanRecord::decode(&bytes, &other).is_err());
+        let owner = ExpectedContainer {
+            id: "a".repeat(64),
+            name: "fixture".into(),
+            image_id: id.clone(),
+            labels: BTreeMap::from([("owner".into(), "fixture".into())]),
+            port: None,
+            image_exposed_ports: BTreeSet::new(),
+        };
+        let mut calls = 0;
+        assert!(held
+            .inspect_with(&"a".repeat(64), |_| {
+                calls += 1;
+                Ok((200, vec![]))
+            })
+            .is_err());
+        assert_eq!(calls, 0);
+        assert!(held
+            .inspect_owned_with(&owner, |_| {
+                calls += 1;
+                Ok((200, vec![]))
+            })
+            .is_err());
+        assert_eq!(calls, 0);
+    }
+
     #[test]
     fn image_metadata_is_withheld_until_final_protected_observation() {
         for failure in 0..3 {
@@ -1161,7 +1256,7 @@ mod tests {
             }),
         )
         .unwrap();
-        let descriptor=format!("{{\"schema\":\"gate-runtime/podman-installation-v1\",\"product\":\"podman-lifecycle\",\"version\":\"0.1.0\",\"protocol\":\"gate-runtime/lifecycle-v2\",\"executable_path\":{},\"executable_sha256\":\"{:x}\",\"config_schema\":\"{}\"}}",serde_json::to_string(&exe).unwrap(),Sha256::digest(fs::read(&exe).unwrap()),CONTEXT_SCHEMA);
+        let descriptor=format!("{{\"schema\":\"gate-runtime/podman-installation-v1\",\"product\":\"podman-lifecycle\",\"version\":\"0.2.0\",\"protocol\":\"gate-runtime/lifecycle-v2\",\"executable_path\":{},\"executable_sha256\":\"{:x}\",\"config_schema\":\"{}\"}}",serde_json::to_string(&exe).unwrap(),Sha256::digest(fs::read(&exe).unwrap()),CONTEXT_SCHEMA);
         let install = f.dir.path().join("installation.json");
         fs::write(&install, &descriptor).unwrap();
         fs::set_permissions(&install, fs::Permissions::from_mode(0o600)).unwrap();
