@@ -14,9 +14,18 @@ COMMIT = '76d0e0c188d0ac79f497ad50b7ff7464d47cbf2d'
 ARCHIVE_SHA256 = 'fc651690f3e8c3ce3968eb9dc3d9828ba89e562ed4537b1922e4a371d92872bf'
 PREFIX = 'musutrade-GateProbes-76d0e0c/plugins/docker-lifecycle/native/'
 FEATURE = 'harness-gate/lifecycle-joint-tests'
-PODMAN_COMMIT = '7afb658c9239c4e47d55012a8392c152f76bbf35'
-PODMAN_SHA256 = '99a573fe8cc5e9402415a01c7ef5231119bdd54941e388914e90fd43ac5b3d6c'
-PODMAN_PREFIX = 'musutrade-GateProbes-7afb658/plugins/podman-lifecycle/native/'
+PODMAN_FIXTURES = {
+    '0.4.0': {
+        'commit': '56f99ac0930018e73c693d38ddc9901cb5158053',
+        'archive_sha256': '00fda426c6446e54969d6a9b6f70de25b8e884fd708b7bb203c59fd046d1db4d',
+        'prefix': 'musutrade-GateProbes-56f99ac/plugins/podman-lifecycle/native/',
+    },
+    '0.4.1': {
+        'commit': '7afb658c9239c4e47d55012a8392c152f76bbf35',
+        'archive_sha256': '99a573fe8cc5e9402415a01c7ef5231119bdd54941e388914e90fd43ac5b3d6c',
+        'prefix': 'musutrade-GateProbes-7afb658/plugins/podman-lifecycle/native/',
+    },
+}
 PODMAN_FEATURE = 'harness-gate/podman-capture-joint-tests'
 LIMIT = 64 * 1024 * 1024
 
@@ -34,6 +43,17 @@ def supported(crate):
 def podman_supported(crate):
     return 'podman-capture-joint-tests' in tomllib.loads(
         (Path(crate) / 'Cargo.toml').read_text()).get('features', {})
+
+
+def podman_fixture(crate):
+    manifest = Path(crate) / 'runtime-protocol/Cargo.toml'
+    try:
+        version = tomllib.loads(manifest.read_text())['package']['version']
+    except (OSError, tomllib.TOMLDecodeError, KeyError, TypeError) as exc:
+        raise ValueError(f'cannot read Podman fixture protocol version: {exc}') from exc
+    if version not in PODMAN_FIXTURES:
+        raise ValueError(f'unsupported Podman fixture protocol version: {version}')
+    return PODMAN_FIXTURES[version]
 
 
 def features(crate):
@@ -132,15 +152,18 @@ def build(crate, output, work, archive=None, podman_archive=None):
         ('adapter', native / 'Cargo.toml', [], 'gateprobes-docker-lifecycle'),
         ('core', crate / 'Cargo.toml', ['--package', 'harness-gate', '--bin', 'harness-gate'], 'harness-gate'),
     ]
+    podman_pin = None
     if podman_supported(crate):
+        podman_pin = podman_fixture(crate)
         if podman_archive is None:
             podman_archive = work / 'podman-source.tar.gz'
             subprocess.run(['curl', '--fail', '--location', '--proto', '=https',
                             '--proto-redir', '=https', '--max-time', '120', '--max-filesize', str(LIMIT),
                             '--output', str(podman_archive),
-                            f'https://api.github.com/repos/musutrade/GateProbes/tarball/{PODMAN_COMMIT}'], check=True)
+                            f"https://api.github.com/repos/musutrade/GateProbes/tarball/{podman_pin['commit']}"], check=True)
         podman = work / 'podman-native'
-        extract(podman_archive, podman, expected_sha=PODMAN_SHA256, prefix=PODMAN_PREFIX)
+        extract(podman_archive, podman, expected_sha=podman_pin['archive_sha256'],
+                prefix=podman_pin['prefix'])
         builds.append(('podman', podman / 'Cargo.toml', ['--config',
                        'patch.crates-io.gatehouse-runtime-protocol.path=' + json.dumps(str(crate / 'runtime-protocol'))],
                        'gateprobes-podman-lifecycle'))
@@ -161,8 +184,9 @@ def build(crate, output, work, archive=None, podman_archive=None):
     output.mkdir(mode=0o700, parents=True)
     receipt = {'schema': 1, 'source_only': True, 'gp_commit': COMMIT,
                'archive_sha256': ARCHIVE_SHA256, 'core_source_sha256': before, 'binaries': {}}
-    if podman_supported(crate):
-        receipt['podman'] = {'commit': PODMAN_COMMIT, 'archive_sha256': PODMAN_SHA256}
+    if podman_pin is not None:
+        receipt['podman'] = {'commit': podman_pin['commit'],
+                             'archive_sha256': podman_pin['archive_sha256']}
     for name, binary in binaries.items():
         shutil.copyfile(binary, output / name)
         (output / name).chmod(0o500)
@@ -181,7 +205,9 @@ def environment(crate, bundle, journal):
         raise ValueError('lifecycle fixture receipt identity mismatch')
     expected_binaries = {'adapter', 'core'}
     if podman_supported(crate):
-        if receipt.get('podman') != {'commit': PODMAN_COMMIT, 'archive_sha256': PODMAN_SHA256}:
+        podman_pin = podman_fixture(crate)
+        if receipt.get('podman') != {'commit': podman_pin['commit'],
+                                     'archive_sha256': podman_pin['archive_sha256']}:
             raise ValueError('Podman fixture receipt identity mismatch')
         expected_binaries |= {'podman', 'fault'}
     elif 'podman' in receipt:
