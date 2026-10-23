@@ -6,8 +6,11 @@ use super::{
 };
 use sha2::{Digest, Sha256};
 use std::os::{
-    fd::AsRawFd,
-    unix::fs::{FileExt, MetadataExt, OpenOptionsExt},
+    fd::{AsRawFd, FromRawFd},
+    unix::{
+        ffi::OsStrExt,
+        fs::{FileExt, MetadataExt, OpenOptionsExt},
+    },
 };
 use std::{
     fs::{self, File, OpenOptions},
@@ -85,7 +88,20 @@ impl Held {
             | libc::O_CLOEXEC
             | libc::O_NONBLOCK
             | if socket { libc::O_PATH } else { 0 };
-        let file = io(OpenOptions::new().read(true).custom_flags(flags).open(path))?;
+        let file = if socket {
+            // musl O_ACCMODE includes O_PATH; std OpenOptions masks it out.
+            // Open the path-only handle directly, retaining atomic CLOEXEC/no-follow.
+            let path = std::ffi::CString::new(path.as_os_str().as_bytes())
+                .map_err(|_| "invalid Podman socket path")?;
+            let fd = unsafe { libc::open(path.as_ptr(), flags) };
+            if fd < 0 {
+                return Err("protected Podman filesystem rejected");
+            }
+            // SAFETY: open returned a fresh owned descriptor.
+            unsafe { File::from_raw_fd(fd) }
+        } else {
+            io(OpenOptions::new().read(true).custom_flags(flags).open(path))?
+        };
         Self::from_file(path, file, socket)
     }
     fn from_file(path: &Path, file: File, socket: bool) -> Result<Self> {
@@ -292,6 +308,30 @@ mod tests {
                 socket,
             }
         }
+    }
+    #[test]
+    fn socket_handle_preserves_path_only_and_cloexec() {
+        let f = Fixture::new();
+        let held = Held::open(&f.socket, true).unwrap();
+        let fd = held.file.as_raw_fd();
+        assert_ne!(unsafe { libc::fcntl(fd, libc::F_GETFL) } & libc::O_PATH, 0);
+        assert_ne!(
+            unsafe { libc::fcntl(fd, libc::F_GETFD) } & libc::FD_CLOEXEC,
+            0
+        );
+        let mut byte = 0u8;
+        assert_eq!(
+            unsafe { libc::read(fd, (&mut byte as *mut u8).cast(), 1) },
+            -1
+        );
+        assert_eq!(
+            std::io::Error::last_os_error().raw_os_error(),
+            Some(libc::EBADF)
+        );
+        assert_eq!(
+            held.file.metadata().unwrap().ino(),
+            fs::metadata(&f.socket).unwrap().ino()
+        );
     }
     #[test]
     fn exact_bytes_and_socket_snapshot() {
@@ -1234,11 +1274,11 @@ mod tests {
         for case in 0..4 {
             let (f, _) = installed_fixture();
             let file = if case == 0 {
-                OpenOptions::new()
-                    .read(true)
-                    .custom_flags(libc::O_PATH)
-                    .open(&f.config)
-                    .unwrap()
+                let path = std::ffi::CString::new(f.config.as_os_str().as_bytes()).unwrap();
+                let fd = unsafe { libc::open(path.as_ptr(), libc::O_PATH | libc::O_CLOEXEC) };
+                assert!(fd >= 0);
+                assert_ne!(unsafe { libc::fcntl(fd, libc::F_GETFL) } & libc::O_PATH, 0);
+                unsafe { File::from_raw_fd(fd) }
             } else {
                 File::open(&f.config).unwrap()
             };
