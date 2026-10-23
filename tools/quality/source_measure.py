@@ -101,6 +101,8 @@ SOURCE_FILES = sorted({"report_history/dashboard.rs", "report_history/dashboard/
     # Operator lifecycle extraction: the compatibility module loses the canary
     # state writer while run/compare remain. Include it in the measured risk
     # inventory and recollect both commits; series and thresholds are unchanged.
+    # Podman read-only protocol: include all production sources; thresholds unchanged.
+    {'../runtime-protocol/src/lifecycle_v2/capture_binding.rs', '../runtime-protocol/src/lifecycle_v2/capture_inputs.rs', '../runtime-protocol/src/lifecycle_v2/capture_wire.rs', '../runtime-protocol/src/lifecycle_v2/encoding.rs', '../runtime-protocol/src/lifecycle_v2/installation.rs', '../runtime-protocol/src/lifecycle_v2/mod.rs', '../runtime-protocol/src/lifecycle_v2/native_create.rs', '../runtime-protocol/src/lifecycle_v2/native_exec.rs', '../runtime-protocol/src/lifecycle_v2/native_image.rs', '../runtime-protocol/src/lifecycle_v2/native_info.rs', '../runtime-protocol/src/lifecycle_v2/native_json.rs', '../runtime-protocol/src/lifecycle_v2/native_status.rs', '../runtime-protocol/src/lifecycle_v2/observation.rs', '../runtime-protocol/src/lifecycle_v2/ownership.rs', '../runtime-protocol/src/lifecycle_v2/plan_record.rs', '../runtime-protocol/src/lifecycle_v2/plan_storage.rs', '../runtime-protocol/src/lifecycle_v2/profile.rs', '../runtime-protocol/src/lifecycle_v2/protected_context.rs', '../runtime-protocol/src/lifecycle_v2/readonly.rs'} |
     {"compat.rs"})
 
 def digest(data: bytes) -> str:

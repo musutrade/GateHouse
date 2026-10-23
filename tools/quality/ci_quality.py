@@ -1279,6 +1279,8 @@ class Collector:
                     'tools/harness-gate/src/scope/tests.rs',
                     'tools/harness-gate/src/process/tests.rs',
                     'tools/harness-gate/src/process/runtime_lifecycle_host/tests.rs',
+                    'tools/harness-gate/src/process/podman_capture_host/tests.rs',
+                    'tools/harness-gate/src/process/podman_capture_host/fault_fixture.rs',
                     'tools/harness-gate/src/process/runtime_lifecycle_host/tests/joint.rs',
                     'tools/harness-gate/src/doctor/tests.rs',
                     'tools/harness-gate/src/service/tests.rs',

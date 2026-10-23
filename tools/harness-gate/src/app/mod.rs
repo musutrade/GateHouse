@@ -587,7 +587,7 @@ fn run_podman_capture(cli: &Cli, args: &crate::cli::PodmanCaptureArgs) -> Result
     #[cfg(target_os = "linux")]
     write_podman_evidence(&bytes, deadline)?;
     // On other platforms podman_capture_bytes has already returned an error.
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(not(any(target_os = "linux")))]
     let _ = (bytes, deadline);
     Ok(true)
 }
@@ -647,7 +647,7 @@ fn write_podman_evidence(bytes: &[u8], deadline: std::time::Instant) -> anyhow::
     }
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux")))]
 fn podman_capture_bytes(
     _cli: &Cli,
     _args: &crate::cli::PodmanCaptureArgs,

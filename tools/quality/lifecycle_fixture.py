@@ -74,6 +74,22 @@ def extract(archive, destination):
             path.chmod(0o600)
 
 
+def pin_registry_protocol(native):
+    """Keep the Docker v1 fixture on published 0.3, independent of Core's version."""
+    manifest = tomllib.loads((native / 'Cargo.toml').read_text())
+    if manifest['dependencies']['gatehouse-runtime-protocol'] != '=0.3.0':
+        raise ValueError('unexpected fixture protocol requirement')
+    path = native / 'Cargo.lock'
+    lock = path.read_text()
+    old = 'name = "gatehouse-runtime-protocol"\nversion = "0.3.0"\ndependencies = ['
+    if lock.count(old) != 1:
+        raise ValueError('unexpected fixture protocol lock')
+    new = ('name = "gatehouse-runtime-protocol"\nversion = "0.3.0"\n'
+           'source = "registry+https://github.com/rust-lang/crates.io-index"\n'
+           'checksum = "357cf18eb55a7a83d9b8840280e77c6f7efe263a74bdeafc7e132cad7a607e54"\ndependencies = [')
+    path.write_text(lock.replace(old, new))
+
+
 def build(crate, output, work, archive=None):
     crate, output, work = Path(crate).resolve(), Path(output).resolve(), Path(work).resolve()
     if not supported(crate):
@@ -89,6 +105,7 @@ def build(crate, output, work, archive=None):
                         f'https://api.github.com/repos/musutrade/GateProbes/tarball/{COMMIT}'], check=True)
     native = work / 'native'
     extract(archive, native)
+    pin_registry_protocol(native)
     env = os.environ.copy()
     for key in list(env):
         if key.startswith('CARGO_LLVM_COV') or key in (
@@ -97,8 +114,7 @@ def build(crate, output, work, archive=None):
             env.pop(key, None)
     binaries = {}
     for name, manifest, extra in (
-        ('adapter', native / 'Cargo.toml', ['--config',
-         'patch.crates-io.gatehouse-runtime-protocol.path=' + json.dumps(str(crate / 'runtime-protocol'))]),
+        ('adapter', native / 'Cargo.toml', []),
         ('core', crate / 'Cargo.toml', ['--package', 'harness-gate', '--bin', 'harness-gate']),
     ):
         env['CARGO_TARGET_DIR'] = str(work / (name + '-target'))

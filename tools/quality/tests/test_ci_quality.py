@@ -98,6 +98,9 @@ class RiskScopeTests(unittest.TestCase):
             for path, supported in (
                 ('tools/harness-gate/src/process/tests.rs', True),
                 ('tools/harness-gate/src/process/runtime_lifecycle_host/tests.rs', True),
+                ('tools/harness-gate/src/process/podman_capture_host/tests.rs', True),
+                ('tools/harness-gate/src/process/podman_capture_host/fault_fixture.rs', True),
+                ('tools/harness-gate/src/process/podman_capture_host/unknown.rs', False),
                 ('tools/harness-gate/src/process/runtime_lifecycle_host/tests/joint.rs', True),
                 ('tools/harness-gate/src/service/docker.rs', True),
                 ('tools/harness-gate/src/process/replay.rs', True),

@@ -36,6 +36,27 @@ class LifecycleFixtureTests(unittest.TestCase):
                 stream.addfile(member, io.BytesIO(b'x') if member.size else None)
         return path
 
+    def test_registry_protocol_pin_preserves_exact_version_and_rejects_drift(self):
+        native = self.root / 'native'
+        native.mkdir()
+        manifest = native / 'Cargo.toml'
+        manifest.write_text('[dependencies]\ngatehouse-runtime-protocol = "=0.3.0"\n')
+        lock = native / 'Cargo.lock'
+        original = ('[[package]]\nname = "gatehouse-runtime-protocol"\n'
+                    'version = "0.3.0"\ndependencies = ["serde"]\n')
+        lock.write_text(original)
+        fixture.pin_registry_protocol(native)
+        self.assertIn('version = "0.3.0"', lock.read_text())
+        self.assertIn('checksum = "357cf18eb55a7a83d9b8840280e77c6f7efe263a74bdeafc7e132cad7a607e54"', lock.read_text())
+        self.assertIn('dependencies = ["serde"]', lock.read_text())
+        with self.assertRaisesRegex(ValueError, 'protocol lock'):
+            fixture.pin_registry_protocol(native)
+        lock.write_text(original)
+        manifest.write_text('[dependencies]\ngatehouse-runtime-protocol = "=0.4.0"\n')
+        with self.assertRaisesRegex(ValueError, 'protocol requirement'):
+            fixture.pin_registry_protocol(native)
+        self.assertEqual(lock.read_text(), original)
+
     def test_archive_digest_checked_before_any_extraction(self):
         archive = self.archive()
         with self.assertRaisesRegex(ValueError, 'digest/size'):

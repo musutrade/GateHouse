@@ -155,5 +155,6 @@ fn nonce() -> Result<String> {
     Ok(bytes.iter().map(|b| format!("{b:02x}")).collect())
 }
 
-#[cfg(all(test, feature = "podman-capture-joint-tests"))]
+#[cfg(test)]
+#[cfg(feature = "podman-capture-joint-tests")]
 mod tests;
