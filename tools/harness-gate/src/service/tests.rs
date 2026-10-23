@@ -1423,3 +1423,145 @@ fn podman_slot_fences_concurrency_old_fence_and_explicit_absence_recovery() {
         released.err()
     );
 }
+
+#[cfg(target_os = "linux")]
+#[test]
+fn podman_public_operator_cleanup_exercises_protected_guard_and_retains_failed_dispatch() {
+    use gatehouse_runtime_protocol::lifecycle::{
+        installation::VerifiedInstallation,
+        journal::{CreatePlan, ServiceSlot},
+        wire::{
+            Binding, ContainerState, Entry, Object, Operation, Outcome, Port, Request, PROTOCOL,
+        },
+    };
+    use std::os::unix::fs::PermissionsExt;
+
+    let (_installation_dir, host) = podman_lifecycle_fixture("podman-lifecycle", "0.3.0", "podman");
+    let installation = VerifiedInstallation::load(std::path::Path::new(&host)).unwrap();
+    let snapshot = installation.snapshot().unwrap();
+    let base = tempfile::Builder::new()
+        .prefix("podman-operator-")
+        .tempdir_in(std::env::var_os("HOME").unwrap())
+        .unwrap();
+    std::fs::set_permissions(base.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+    crate::preset::init(base.path(), "generic", false).unwrap();
+    assert!(std::process::Command::new("git")
+        .args(["init", "--quiet"])
+        .current_dir(base.path())
+        .status()
+        .unwrap()
+        .success());
+    let mut project =
+        crate::project::Project::discover(Some(base.path().to_path_buf()), None).unwrap();
+    project.config.services.insert(
+        "fixture".into(),
+        serde_json::from_value(serde_json::json!({
+            "kind":"docker", "runtime":"podman", "image":"fixture:latest",
+            "lifecycle_host":host, "inject_env":"FIXTURE_URL",
+            "startup_timeout_secs":1, "container_port":8080,
+            "environment":{}, "healthcheck":["true"], "command":["sleep","60"],
+            "connection":"tcp://127.0.0.1:{host_port}"
+        }))
+        .unwrap(),
+    );
+    let project_id = project.input().project_identity.clone();
+    let resource = "service:fixture";
+    let invocation = "1".repeat(32);
+    let labels = vec![
+        Entry {
+            key: "gatehouse.lifecycle.authority".into(),
+            value: "container-lifecycle/mutate".into(),
+        },
+        Entry {
+            key: "gatehouse.lifecycle.invocation".into(),
+            value: invocation.clone(),
+        },
+        Entry {
+            key: "gatehouse.lifecycle.project".into(),
+            value: project_id.clone(),
+        },
+        Entry {
+            key: "gatehouse.lifecycle.resource".into(),
+            value: resource.into(),
+        },
+    ];
+    let plan = CreatePlan {
+        name: "podman-fixture".into(),
+        labels: labels.clone(),
+        environment: vec![],
+        container_port: 8080,
+        command: Some(vec!["sleep".into(), "60".into()]),
+    };
+    let mut resolve = Request {
+        protocol: PROTOCOL.into(),
+        binding: Binding {
+            installation_sha256: snapshot.installation_sha256,
+            executable_sha256: snapshot.executable_sha256,
+            config_sha256: snapshot.config_sha256,
+            engine_binding: snapshot.engine_binding,
+            project_id: project_id.clone(),
+            resource_id: resource.into(),
+            lease_invocation: invocation.clone(),
+            invocation: "2".repeat(32),
+            generation: 1,
+            operation_key: String::new(),
+        },
+        operation: Operation::ResolveImage {
+            image: "fixture:latest".into(),
+        },
+    };
+    resolve.binding.operation_key = resolve.operation_key().unwrap();
+    let slot_base = ServiceSlot::project_state_base(&project.root).unwrap();
+    let mut slot = ServiceSlot::acquire_mapped(
+        &slot_base,
+        resolve.clone(),
+        plan.clone(),
+        vec!["true".into()],
+    )
+    .unwrap();
+    let fence = slot.fence();
+    let mut reservation = slot.reserve().unwrap();
+    let image_id = format!("sha256:{}", "e".repeat(64));
+    let image = podman_response(
+        &resolve,
+        Outcome::Image {
+            image_id: image_id.clone(),
+            repo_digests: vec![],
+        },
+    );
+    reservation
+        .dispatch()
+        .unwrap()
+        .observe(Some(&podman_response_bytes(&image)))
+        .unwrap();
+    let mut journal = reservation.into_journal(&"3".repeat(32)).unwrap();
+    let token = journal.dispatch().unwrap();
+    let create = token.request().clone();
+    let object = Object {
+        image_id,
+        object_id: "a".repeat(64),
+        name: plan.name.clone(),
+        labels,
+        state: ContainerState::Created,
+        ports: vec![Port {
+            container_port: plan.container_port,
+            protocol: "tcp".into(),
+            host_ip: "127.0.0.1".into(),
+            host_port: 49152,
+        }],
+    };
+    let created = podman_response(&create, Outcome::Created { object });
+    token
+        .observe(Some(&podman_response_bytes(&created)))
+        .unwrap();
+    drop(journal);
+    drop(slot);
+
+    let error = crate::service::cleanup_lifecycle(&project, "fixture", fence, &invocation)
+        .expect_err("the dummy executable cannot dispatch");
+    assert!(format!("{error:#}").contains("retained"), "{error:#}");
+    assert!(base
+        .path()
+        .join(".harness-gate/lifecycle-services")
+        .exists());
+}
