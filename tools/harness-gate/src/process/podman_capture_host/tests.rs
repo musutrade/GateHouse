@@ -621,6 +621,8 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
         "blocked-output",
         "cancel-output",
         "interrupt-output",
+        "flags-success",
+        "flags-nonblocking",
     ] {
         let (dir, _installed, listener, info) = fixture();
         let root = dir.path();
@@ -674,6 +676,8 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
         let connects = matches!(
             mode,
             "success"
+                | "flags-success"
+                | "flags-nonblocking"
                 | "config"
                 | "full-output"
                 | "partial-output"
@@ -698,7 +702,43 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
             );
         }
         let mut partial = Vec::new();
-        let output = if matches!(
+        let output = if matches!(mode, "flags-success" | "flags-nonblocking") {
+            let mut fds = [-1; 2];
+            assert_eq!(unsafe { libc::pipe2(fds.as_mut_ptr(), libc::O_CLOEXEC) }, 0);
+            let mut reader = unsafe { File::from_raw_fd(fds[0]) };
+            let writer = unsafe { File::from_raw_fd(fds[1]) };
+            let retained = writer.try_clone().unwrap();
+            if mode == "flags-nonblocking" {
+                let flags = unsafe { libc::fcntl(retained.as_raw_fd(), libc::F_GETFL) };
+                assert_eq!(
+                    unsafe {
+                        libc::fcntl(
+                            retained.as_raw_fd(),
+                            libc::F_SETFL,
+                            flags | libc::O_NONBLOCK,
+                        )
+                    },
+                    0
+                );
+            }
+            let original = unsafe { libc::fcntl(retained.as_raw_fd(), libc::F_GETFL) };
+            command.stdout(writer).stderr(std::process::Stdio::piped());
+            let child = command.spawn().unwrap();
+            drop(command);
+            let drain = thread::spawn(move || {
+                let mut bytes = Vec::new();
+                reader.read_to_end(&mut bytes).unwrap();
+                bytes
+            });
+            let mut output = child.wait_with_output().unwrap();
+            assert_eq!(
+                unsafe { libc::fcntl(retained.as_raw_fd(), libc::F_GETFL) },
+                original
+            );
+            drop(retained);
+            output.stdout = drain.join().unwrap();
+            output
+        } else if matches!(
             mode,
             "partial-output" | "blocked-output" | "cancel-output" | "interrupt-output"
         ) {
@@ -710,6 +750,8 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
                 unsafe { libc::fcntl(reader.as_raw_fd(), libc::F_SETPIPE_SZ, 4096) },
                 4096
             );
+            let retained = writer.try_clone().unwrap();
+            let original = unsafe { libc::fcntl(retained.as_raw_fd(), libc::F_GETFL) };
             command.stdout(writer).stderr(std::process::Stdio::piped());
             let mut child = command.spawn().unwrap();
             drop(command);
@@ -717,7 +759,13 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
             reader.read_exact(&mut partial).unwrap();
             if mode == "partial-output" {
                 drop(reader); // Actual EPIPE after a nonempty evidence prefix.
-                child.wait_with_output().unwrap()
+                let output = child.wait_with_output().unwrap();
+                assert_eq!(
+                    unsafe { libc::fcntl(retained.as_raw_fd(), libc::F_GETFL) },
+                    original
+                );
+                drop(retained);
+                output
             } else {
                 let bound = Instant::now() + Duration::from_secs(6);
                 loop {
@@ -759,6 +807,11 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
                     }
                     thread::sleep(Duration::from_millis(2));
                 }
+                assert_eq!(
+                    unsafe { libc::fcntl(retained.as_raw_fd(), libc::F_GETFL) },
+                    original
+                );
+                drop(retained);
                 reader.read_to_end(&mut partial).unwrap();
                 child.wait_with_output().unwrap()
             }
@@ -768,7 +821,10 @@ fn normal_core_cli_exact_output_config_and_failure_contract() {
         if let Some(server) = server {
             server.join().unwrap();
         }
-        if matches!(mode, "success" | "config") {
+        if matches!(
+            mode,
+            "success" | "config" | "flags-success" | "flags-nonblocking"
+        ) {
             assert_eq!(
                 output.status.code(),
                 Some(0),

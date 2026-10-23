@@ -287,3 +287,13 @@ is a standalone CLI output policy, not a safe library writer for arbitrary share
 stdout use. Filesystem metadata/regular-file kernel I/O and diagnostic stderr are
 not forcibly preempted, and scope-guard flag restoration is best effort. No OS
 containment or real-engine proof is added.
+
+## Shared stdout flag regression checkpoint 134
+
+The parent now retains a duplicate of the exact pipe writer passed as child fd1,
+so F_GETFL observes the same open-file description. Success is checked with both
+initially blocking and initially nonblocking stdout. After child exit, all flags
+must equal the original value. The existing EPIPE, full-pipe timeout, SIGTERM and
+SIGINT cases make the same assertion before dropping the retained writer and
+draining EOF. This verifies normal/error unwinding restoration; abrupt SIGKILL,
+concurrent flag changes, and restoration-system-call faults are not covered.
