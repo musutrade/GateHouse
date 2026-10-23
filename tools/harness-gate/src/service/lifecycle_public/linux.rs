@@ -20,6 +20,15 @@ impl ManagedLifecycle {
         deadline: Instant,
     ) -> Result<Self> {
         reject_legacy_marker(project, id)?;
+        let installation = VerifiedInstallation::load(Path::new(&config.host))?;
+        let binding = installation.engine_binding()?;
+        if binding.engine != runtime.executable() {
+            anyhow::bail!(
+                "lifecycle installation engine {:?} does not match configured runtime {:?}",
+                binding.engine,
+                runtime.executable()
+            );
+        }
         let base = ServiceSlot::project_state_base(&project.root)?;
         let project_id = project.input().project_identity.clone();
         let resource_id = format!("service:{id}");
@@ -50,15 +59,6 @@ impl ManagedLifecycle {
             container_port: config.container_port,
             command: config.command,
         };
-        let installation = VerifiedInstallation::load(Path::new(&config.host))?;
-        let binding = installation.engine_binding()?;
-        if binding.engine != runtime.executable() {
-            anyhow::bail!(
-                "lifecycle installation engine {:?} does not match configured runtime {:?}",
-                binding.engine,
-                runtime.executable()
-            );
-        }
         let prepared = LifecycleService::prepare(
             &base,
             installation,

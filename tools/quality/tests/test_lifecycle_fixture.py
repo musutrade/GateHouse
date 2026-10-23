@@ -1,6 +1,7 @@
 import hashlib
 import io
 import json
+import tomllib
 from pathlib import Path
 import sys
 import tarfile
@@ -259,5 +260,9 @@ class LocalPodmanFixtureLockTests(unittest.TestCase):
         self.assertIn('path = ' + json.dumps(str(protocol)), manifest)
         lock = (native / 'Cargo.lock').read_text()
         self.assertIn('version = "0.6.0"', lock)
-        self.assertNotIn('checksum =', lock)
+        record = tomllib.loads(lock)
+        entries = [row for row in record["package"] if row["name"] == "gatehouse-runtime-protocol"]
+        self.assertEqual(len(entries), 1)
+        self.assertNotIn("source", entries[0])
+        self.assertNotIn("checksum", entries[0])
         self.assertEqual(checksum, fixture.digest(native / 'Cargo.lock'))

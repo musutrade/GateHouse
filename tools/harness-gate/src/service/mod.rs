@@ -803,7 +803,17 @@ fn podman_lifecycle_availability(
     ))
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "macos")]
+fn podman_lifecycle_availability(
+    _: &str,
+    _: &str,
+    _: crate::config::ContainerRuntimeKind,
+    _: Instant,
+) -> Result<String> {
+    bail!("Podman lifecycle availability requires Linux; no CLI fallback")
+}
+
+#[cfg(target_os = "windows")]
 fn podman_lifecycle_availability(
     _: &str,
     _: &str,

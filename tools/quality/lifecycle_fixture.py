@@ -101,8 +101,13 @@ def pin_podman_protocol(native, source_protocol, protocol):
     lock.write_text(lock_text.replace(old, f'name = "gatehouse-runtime-protocol"\nversion = "{protocol}"\n'))
 
 
+PODMAN_06_LOCK = Path(__file__).with_name('fixtures') / 'podman06' / 'Cargo.lock'
+PODMAN_06_LOCK_SHA256 = 'e6e5ce69fc63e7a7767a02d204a6a959c8969167e94873153aa05261eb37356c'
+
+
 def pin_podman_local_protocol(native, crate, env):
-    """Prepare one reviewed path override, then let the build run --locked."""
+    """Apply the reviewed path override and its prepared lock, then build --locked."""
+    del env
     native, crate = Path(native), Path(crate)
     manifest = native / 'Cargo.toml'
     lock = native / 'Cargo.lock'
@@ -114,25 +119,22 @@ def pin_podman_local_protocol(native, crate, env):
     replacement = ('gatehouse-runtime-protocol = { path = '
                    + json.dumps(str(protocol)) + ', version = "=0.6.0" }')
     manifest.write_text(text.replace(expected, replacement))
-    before = tomllib.loads(lock.read_text())
-    subprocess.run(['cargo', 'update', '--offline', '--manifest-path', str(manifest),
-                    '-p', 'gatehouse-runtime-protocol'], env=env, cwd=crate,
-                   check=True, capture_output=True)
-    after = tomllib.loads(lock.read_text())
-    intended = {'gatehouse-runtime-protocol', 'gateprobes-podman-lifecycle'}
-    before_rows = [row for row in before.get('package', [])
-                   if row.get('name') not in intended]
-    after_rows = [row for row in after.get('package', [])
-                  if row.get('name') not in intended]
-    if before_rows != after_rows:
-        raise ValueError('local Podman fixture lock updated unrelated dependencies')
-    entries = [row for row in after.get('package', [])
+    prepared = PODMAN_06_LOCK.read_bytes()
+    if hashlib.sha256(prepared).hexdigest() != PODMAN_06_LOCK_SHA256:
+        raise ValueError('prepared Podman fixture lock changed')
+    record = tomllib.loads(prepared.decode())
+    entries = [row for row in record.get('package', [])
                if row.get('name') == 'gatehouse-runtime-protocol']
+    roots = [row for row in record.get('package', [])
+             if row.get('name') == 'gateprobes-podman-lifecycle']
     if len(entries) != 1 or entries[0].get('version') != '0.6.0':
-        raise ValueError('local Podman fixture protocol lock mismatch')
+        raise ValueError('prepared Podman fixture protocol lock mismatch')
     if 'source' in entries[0] or 'checksum' in entries[0]:
-        raise ValueError('local Podman fixture protocol must not claim a registry pin')
-    return digest(lock)
+        raise ValueError('prepared Podman fixture protocol must not claim a registry pin')
+    if len(roots) != 1 or roots[0].get('version') != '0.3.0':
+        raise ValueError('prepared Podman fixture root package mismatch')
+    lock.write_bytes(prepared)
+    return PODMAN_06_LOCK_SHA256
 
 
 def features(crate):

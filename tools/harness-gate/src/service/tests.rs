@@ -1187,7 +1187,10 @@ fn podman_lifecycle_configuration_loads_and_requires_matching_explicit_runtime()
     )
     .err()
     .expect("runtime mismatch must fail closed");
-    assert!(format!("{error:#}").contains("does not match configured runtime"));
+    assert!(
+        format!("{error:#}").contains("does not match configured runtime"),
+        "{error:#}"
+    );
 }
 
 #[cfg(target_os = "linux")]

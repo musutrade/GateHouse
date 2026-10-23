@@ -567,7 +567,7 @@
     {
       "path": "src/service/lifecycle_public.rs",
       "reason": "Module/type declarations and cfg re-exports only; no handwritten executable mappings. Linux and unsupported implementations remain in production inventory.",
-      "sha256": "eda84d8326aafbfcb3859a8bbd95c116c168beff4e5672736459f99c47b90395"
+      "sha256": "045c818e35fd066f5ccd962577939a4d537c1d721fcddf25f9117d3db74e1ab2"
     },
     {
       "path": "src/service/lifecycle_public/unsupported.rs",

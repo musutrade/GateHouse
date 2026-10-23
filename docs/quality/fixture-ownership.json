@@ -18,7 +18,8 @@
       "tools/quality/fixtures/project-model",
       "tools/quality/fixtures/risk",
       "tools/quality/fixtures/rust-reference",
-      "tools/quality/fixtures/core-typescript-policy.json"
+      "tools/quality/fixtures/core-typescript-policy.json",
+      "tools/quality/fixtures/podman06"
     ],
     "plugin": [
       "tools/quality/fixtures/rust-macro-observation",
