@@ -252,29 +252,193 @@ def executable_checks() -> dict:
             "quality_checked": quality_checked}
 
 
-def diagnostic_code_failures() -> list[str]:
-    """Bind every ConfigCode variant to its explanation and documentation.
+def _skip_space_and_comments(text: str, index: int) -> int:
+    while index < len(text):
+        if text[index].isspace():
+            index += 1
+        elif text.startswith("//", index):
+            newline = text.find("\n", index)
+            index = len(text) if newline < 0 else newline + 1
+        elif text.startswith("/*", index):
+            close = text.find("*/", index + 2)
+            if close < 0:
+                raise ValueError("unterminated block comment in CONFIG_CODES")
+            index = close + 2
+        else:
+            break
+    return index
 
-    Runs in the required documentation job, so a missing registry, missing docs
-    file or unreadable source fails the job instead of being skipped.
+
+def _parse_rust_string(text: str, index: int) -> tuple[str, int]:
+    if index >= len(text) or text[index] != '"':
+        raise ValueError(f"expected a string literal in CONFIG_CODES near {text[index:index + 40]!r}")
+    index += 1
+    value = []
+    while index < len(text):
+        character = text[index]
+        if character == "\\":
+            if index + 1 >= len(text):
+                raise ValueError("unterminated escape in CONFIG_CODES string")
+            value.append(text[index:index + 2])
+            index += 2
+        elif character == '"':
+            return "".join(value), index + 1
+        elif character == "\n":
+            raise ValueError("newline inside a CONFIG_CODES string literal")
+        else:
+            value.append(character)
+            index += 1
+    raise ValueError("unterminated string literal in CONFIG_CODES")
+
+
+def parse_config_code_enum(source: str) -> tuple[list[str], list[str]]:
+    """Parse the simple unit-variant syntax accepted for ConfigCode.
+
+    The parser is deliberately fail-closed: attributes, field variants, inline
+    values other than a decimal discriminant, trailing comments and any other
+    unaccepted syntax are reported instead of being skipped.
     """
-    source = (CRATE / "src" / "config" / "diagnostic.rs").read_text()
-    documentation = (ROOT / "docs" / "failure-codes.md").read_text()
-    enum_match = re.search(r"pub\(crate\) enum ConfigCode \{(.*?)\n\}", source, re.S)
-    table_match = re.search(r"const CONFIG_CODES: &\[ConfigCodeEntry\] = &\[(.*?)\n\];", source, re.S)
+    lines = source.splitlines()
+    start = next((index for index, line in enumerate(lines)
+                  if re.search(r"\bpub\(crate\)\s+enum\s+ConfigCode\s*\{", line)), None)
+    if start is None:
+        return [], ["cannot find the ConfigCode enum"]
+    variants: list[str] = []
     failures: list[str] = []
-    if enum_match is None:
-        failures.append("cannot find the ConfigCode enum")
-        variants: list[str] = []
-    else:
-        variants = re.findall(r"^    ([A-Z]\w+),$", enum_match.group(1), re.MULTILINE)
-    if table_match is None:
-        failures.append("cannot find the CONFIG_CODES registry")
-        entries: list[tuple[str, str]] = []
-    else:
-        entries = re.findall(r'code: ConfigCode::(\w+),\s*id: "([A-Z0-9-]+)"', table_match.group(1))
-    codes = [code for code, _ in entries]
-    ids = [code_id for _, code_id in entries]
+    closed = False
+    for index in range(start + 1, len(lines)):
+        line = lines[index].strip()
+        if not line or line.startswith("//"):
+            continue
+        if line == "}":
+            closed = True
+            break
+        if line.startswith("#"):
+            failures.append(f"unsupported attribute or inline configuration on ConfigCode line {index + 1}: {line!r}")
+            continue
+        match = re.fullmatch(r"([A-Z]\w*)\s*(?:=\s*([0-9]+))?\s*,?", line)
+        if match is None:
+            failures.append(f"unsupported ConfigCode variant syntax on line {index + 1}: {line!r}")
+            continue
+        name = match.group(1)
+        if name in variants:
+            failures.append(f"duplicate ConfigCode variant {name}")
+        variants.append(name)
+    if not closed:
+        failures.append("ConfigCode enum has no closing brace")
+    if not variants:
+        failures.append("ConfigCode enum has no variants")
+    return variants, failures
+
+
+def parse_config_codes_table(source: str) -> tuple[list[dict[str, str]], list[str]]:
+    """Parse CONFIG_CODES entries and consume every non-comment character."""
+    lines = source.splitlines()
+    start = next((index for index, line in enumerate(lines)
+                  if re.search(r"\bconst\s+CONFIG_CODES\s*:", line)), None)
+    if start is None:
+        return [], ["cannot find the CONFIG_CODES registry"]
+    end = next((index for index in range(start + 1, len(lines)) if lines[index].strip() == "];"), None)
+    if end is None:
+        return [], ["CONFIG_CODES registry has no closing ];"]
+    body = "\n".join(lines[start + 1:end])
+    entries: list[dict[str, str]] = []
+    failures: list[str] = []
+    index = 0
+    try:
+        while True:
+            index = _skip_space_and_comments(body, index)
+            if index >= len(body):
+                break
+            if not body.startswith("ConfigCodeEntry", index):
+                failures.append(f"unsupported CONFIG_CODES content near {body[index:index + 60]!r}")
+                break
+            index = _skip_space_and_comments(body, index + len("ConfigCodeEntry"))
+            if index >= len(body) or body[index] != "{":
+                failures.append("CONFIG_CODES entry has no opening brace")
+                break
+            index += 1
+            fields: dict[str, str] = {}
+            while True:
+                index = _skip_space_and_comments(body, index)
+                if index >= len(body):
+                    failures.append("unterminated CONFIG_CODES entry")
+                    break
+                if body[index] == "}":
+                    index += 1
+                    break
+                key_start = index
+                while index < len(body) and (body[index].isalnum() or body[index] == "_"):
+                    index += 1
+                key = body[key_start:index]
+                if not key:
+                    failures.append(f"unsupported CONFIG_CODES field syntax near {body[index:index + 40]!r}")
+                    break
+                index = _skip_space_and_comments(body, index)
+                if index >= len(body) or body[index] != ":":
+                    failures.append(f"CONFIG_CODES field {key!r} has no colon")
+                    break
+                index = _skip_space_and_comments(body, index + 1)
+                if key == "code":
+                    prefix = "ConfigCode::"
+                    if not body.startswith(prefix, index):
+                        failures.append("CONFIG_CODES code must be ConfigCode::<variant>")
+                        break
+                    index += len(prefix)
+                    name_start = index
+                    while index < len(body) and (body[index].isalnum() or body[index] == "_"):
+                        index += 1
+                    value = body[name_start:index]
+                    if not re.fullmatch(r"[A-Z]\w*", value):
+                        failures.append(f"unsupported ConfigCode reference {value!r} in CONFIG_CODES")
+                        break
+                elif key in ("id", "title", "help"):
+                    value, index = _parse_rust_string(body, index)
+                    if key == "id" and not re.fullmatch(r"[A-Z0-9-]+", value):
+                        failures.append(f"invalid configuration diagnostic ID {value!r}")
+                else:
+                    failures.append(f"unsupported CONFIG_CODES field {key!r}")
+                    break
+                if key in fields:
+                    failures.append(f"duplicate CONFIG_CODES field {key!r}")
+                    break
+                fields[key] = value
+                index = _skip_space_and_comments(body, index)
+                if index < len(body) and body[index] == ",":
+                    index += 1
+                elif index < len(body) and body[index] == "}":
+                    index += 1
+                    break
+                else:
+                    failures.append(f"CONFIG_CODES field {key!r} must end with a comma")
+                    break
+            if failures:
+                break
+            missing = [key for key in ("code", "id", "title", "help") if key not in fields]
+            if missing:
+                failures.append(f"CONFIG_CODES entry is missing fields {missing}")
+                break
+            entries.append(fields)
+            index = _skip_space_and_comments(body, index)
+            if index < len(body):
+                if body[index] != ",":
+                    failures.append(f"CONFIG_CODES entries must be comma separated near {body[index:index + 40]!r}")
+                    break
+                index += 1
+        if not failures and not entries:
+            failures.append("CONFIG_CODES registry has no entries")
+    except ValueError as error:
+        failures.append(str(error))
+    return entries, failures
+
+
+def diagnostic_registry_failures(source: str, documentation: str, crate: Path) -> list[str]:
+    """Bind ConfigCode variants to the registry, explanations and documentation."""
+    variants, failures = parse_config_code_enum(source)
+    entries, table_failures = parse_config_codes_table(source)
+    failures.extend(table_failures)
+    codes = [entry["code"] for entry in entries]
+    ids = [entry["id"] for entry in entries]
     if set(variants) != set(codes):
         failures.append(f"registry variants differ: enum={sorted(set(variants) - set(codes))}, table={sorted(set(codes) - set(variants))}")
     if len(codes) != len(set(codes)):
@@ -282,15 +446,25 @@ def diagnostic_code_failures() -> list[str]:
     if len(ids) != len(set(ids)):
         failures.append("duplicate configuration diagnostic IDs")
     lines = set(documentation.splitlines())
-    for code, code_id in entries:
+    for entry in entries:
+        code, code_id = entry["code"], entry["id"]
         heading = f"## {code_id.lower()}"
         if heading not in lines:
             failures.append(f"{code}: missing independent documentation heading {heading!r}")
         if f"**{code_id} — " not in documentation:
             failures.append(f"{code}: missing documentation entry body for {code_id}")
-        if not (CRATE / "docs" / "errors" / f"{code_id}.md").is_file():
+        if not (crate / "docs" / "errors" / f"{code_id}.md").is_file():
             failures.append(f"{code}: missing detailed guide docs/errors/{code_id}.md")
     return failures
+
+
+def diagnostic_code_failures() -> list[str]:
+    """Check the checked-in registry and documentation; read errors propagate."""
+    return diagnostic_registry_failures(
+        (CRATE / "src" / "config" / "diagnostic.rs").read_text(),
+        (ROOT / "docs" / "failure-codes.md").read_text(),
+        CRATE,
+    )
 
 
 def run(output: Path, pure: bool = False) -> int:
