@@ -40,107 +40,339 @@ log = "git_diff_check.log"
 timeout_secs = 60
 "#;
 
-/// Closed registry of configuration and plugin diagnostic codes. One macro entry
-/// defines the enum variant, wire string, explanation and discovery entry, so a
-/// new production code cannot exist without an explanation.
-macro_rules! config_codes {
-    ($( $variant:ident => $id:literal : $title:literal : $help:literal ; )+) => {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-        pub(crate) enum ConfigCode {
-            $( $variant ),+
-        }
-
-        impl ConfigCode {
-            pub(crate) const ALL: &'static [ConfigCode] = &[ $( ConfigCode::$variant ),+ ];
-
-            pub(crate) const fn id(self) -> &'static str {
-                match self {
-                    $( Self::$variant => $id ),+
-                }
-            }
-
-            pub(crate) const fn explain(self) -> (&'static str, &'static str) {
-                match self {
-                    $( Self::$variant => ($title, $help) ),+
-                }
-            }
-
-            #[cfg(test)]
-            pub(crate) fn from_id(id: &str) -> Option<Self> {
-                match id {
-                    $( $id => Some(Self::$variant), )+
-                    _ => None,
-                }
-            }
-        }
-    };
+/// Closed registry of configuration and plugin diagnostic codes. Each variant
+/// carries its wire string and explanation in exhaustive matches, so a new
+/// production code cannot exist without an explanation. `ALL` also feeds
+/// discovery and the documentation test.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ConfigCode {
+    HgcfgVersion,
+    HgcfgRunnerVersion,
+    HgcfgDependencyCycle,
+    HgcfgDependency,
+    HgcfgServiceInjectCollision,
+    HgcfgUnknownReference,
+    HgcfgInvalidPath,
+    HgcfgInvalidEnvironment,
+    HgcfgDuplicateField,
+    HgcfgInvalidLog,
+    HgcfgInvalidField,
+    HgcfgRead,
+    HgcfgExternalServiceMigration,
+    HgcfgEnvironmentOverride,
+    HgcfgDiagnosticsTruncated,
+    HgcfgCheck,
+    HgcfgTomlParse,
+    HgcfgInterpolation,
+    HgcfgProjectScopedConfig,
+    HgcfgQuality,
+    HgcfgRequiredFile,
+    HgcfgImpact,
+    HgcfgDuplicateLog,
+    HgcfgSharedService,
+    HgcfgTemplatePath,
+    HgpluginCatalog,
+    HgpluginCore,
+    HgpluginDependency,
+    HgpluginDigest,
+    HgpluginLimit,
+    HgpluginLock,
+    HgpluginManifest,
+    HgpluginMissing,
+    HgpluginPath,
+    HgpluginPlatform,
+    HgpluginProtocol,
+    HgpluginSignature,
+    HgpluginStore,
+    HgpluginVersion,
 }
 
-config_codes! {
-    HgcfgVersion => "HGCFG-VERSION" : "workflow configuration version is unsupported" : "migrate a v1 file with `harness-gate config migrate` or use version 2";
-    HgcfgRunnerVersion => "HGCFG-RUNNER-VERSION" : "runner contract version is unsupported" : "use the supported runner contract version";
-    HgcfgDependencyCycle => "HGCFG-DEPENDENCY-CYCLE" : "dependencies contain a cycle" : "remove the invalid dependency or add an explicit acyclic prerequisite";
-    HgcfgDependency => "HGCFG-DEPENDENCY" : "dependency declaration is invalid" : "remove the invalid dependency or add an explicit acyclic prerequisite";
-    HgcfgServiceInjectCollision => "HGCFG-SERVICE-INJECT-COLLISION" : "service injection variable conflicts with another service or runner setting" : "Use distinct service injection and runner thread variable names. For conflicts across unordered steps, add the intended dependency, use distinct names or split the workflow.";
-    HgcfgUnknownReference => "HGCFG-UNKNOWN-REFERENCE" : "reference does not name a declared configuration entry" : "use an identifier declared in the configuration";
-    HgcfgInvalidPath => "HGCFG-INVALID-PATH" : "path is not a safe repository-relative path" : "use a non-empty path below the repository without a prefix or parent traversal";
-    HgcfgInvalidEnvironment => "HGCFG-INVALID-ENVIRONMENT" : "environment variable name is invalid" : "use an uppercase environment-variable name containing only letters, digits, and underscores";
-    HgcfgDuplicateField => "HGCFG-DUPLICATE-FIELD" : "configuration declares the same identifier more than once" : "keep one declaration or give each declaration a unique identifier";
-    HgcfgInvalidLog => "HGCFG-INVALID-LOG" : "log path is not a valid single .log filename" : "choose a unique single .log filename";
-    HgcfgInvalidField => "HGCFG-INVALID-FIELD" : "field violates a documented configuration constraint" : "update the field to satisfy the documented configuration constraints";
-    HgcfgRead => "HGCFG-READ" : "Workflow configuration could not be read" : "Check that the configured file exists, is readable UTF-8 and is below the 4 MiB size limit.";
-    HgcfgExternalServiceMigration => "HGCFG-EXTERNAL-SERVICE-MIGRATION" : "Legacy external service policies require migration" : "Use the GateProbes recipe migration to create a new configuration, retain the original for rollback, and run config check before verification.";
-    HgcfgEnvironmentOverride => "HGCFG-ENVIRONMENT-OVERRIDE" : "Environment override has an invalid value" : "Set the override named by the diagnostic path to the required type, or unset it. Do not print secret environment values.";
-    HgcfgDiagnosticsTruncated => "HGCFG-DIAGNOSTICS-TRUNCATED" : "Configuration diagnostic limit reached" : "Fix the reported errors and run harness-gate config check again to reveal remaining diagnostics.";
-    HgcfgCheck => "HGCFG-CHECK" : "Configuration could not be checked" : "Verify the project root, configuration path and required security configuration files; inspect the original command error.";
-    HgcfgTomlParse => "HGCFG-TOML-PARSE" : "Configuration is not valid TOML" : "Inspect the reported line and column for malformed TOML or unsupported fields. Correct the source and run config check again.";
-    HgcfgInterpolation => "HGCFG-INTERPOLATION" : "Configuration environment interpolation failed" : "Inspect the reported location and inline help. Supply required environment inputs or correct the placeholder syntax without exposing secret values.";
-    HgcfgProjectScopedConfig => "HGCFG-PROJECT-SCOPED-CONFIG" : "Security configuration path must remain project-scoped" : "Use a literal repository-relative audit configuration path. Do not redirect the security policy through environment interpolation.";
-    HgcfgQuality => "HGCFG-QUALITY" : "Quality configuration is invalid" : "Correct quality.toml references, profile participation and policy/collector authority. Preserve required checks and thresholds.";
-    HgcfgRequiredFile => "HGCFG-REQUIRED-FILE" : "Required security configuration file is missing" : "Create the audit or secret-scan configuration file named by the diagnostic path, or correct its configured path; do not bypass the required check.";
-    HgcfgImpact => "HGCFG-IMPACT" : "Component impact graph is invalid" : "Review the complete version-1 component graph. Declare an empty dependency list for components without dependencies.";
-    HgcfgDuplicateLog => "HGCFG-DUPLICATE-LOG" : "Verification steps share a log filename" : "Choose a unique .log filename for each verification step; use the related location to find the other owner.";
-    HgcfgSharedService => "HGCFG-SHARED-SERVICE" : "Shared service users have no execution ordering" : "Add an explicit dependency between the affected steps or define separate service resources.";
-    HgcfgTemplatePath => "HGCFG-TEMPLATE-PATH" : "Report template path cannot be safely resolved" : "Inspect the diagnostic path and related locations. Keep readable templates within their configured root and separate from report output; correct missing files or escaping symlinks.";
-    HgpluginCatalog => "HGPLUGIN-CATALOG" : "Signed preset catalog is invalid or incomplete" : "Include the catalog and all referenced flow, recipe and pack files in the signed inventory and repair its flow configuration.";
-    HgpluginCore => "HGPLUGIN-CORE" : "Plugin does not declare this exact Core version in its preset manifest" : "Select a reviewed plugin release whose signed preset manifest core_versions lists this exact Core version, or explicitly upgrade Core. This checks only the preset manifest declaration; it does not validate adapter requests.";
-    HgpluginDependency => "HGPLUGIN-DEPENDENCY" : "Plugin dependency is missing, incompatible or invalid" : "Explicitly lock and prepare the exact dependency versions and required programs. Offline preflight never installs or runs them.";
-    HgpluginDigest => "HGPLUGIN-DIGEST" : "Plugin manifest or signed artifact digest does not match its pinned value" : "Restore the exact pinned manifest when the lock manifest_sha256 does not match, and restore each artifact exactly as declared in the signed manifest file inventory. Do not change the lock or the signed inventory to hide corruption; review and explicitly lock any upgrade.";
-    HgpluginLimit => "HGPLUGIN-LIMIT" : "Plugin input exceeds a size or inventory limit" : "The signed file inventory is checked for 1..128 entries before copying starts, and each input is checked against the 1 MiB read limit as it is copied. A later failure can leave earlier files only in the private temporary snapshot; there is no all-files precheck or cross-file atomicity.";
-    HgpluginLock => "HGPLUGIN-LOCK" : "Plugin lock is invalid or the selection is ambiguous" : "Use harness-plugin-lock/v1 with 1..64 unique exact pins; review migration before replacing the lock. Absence of a lock preserves legacy workflows.";
-    HgpluginManifest => "HGPLUGIN-MANIFEST" : "Signed plugin manifest is invalid" : "Prepare a harness-plugin/v1 data-only preset manifest and review compatibility before locking it.";
-    HgpluginMissing => "HGPLUGIN-MISSING" : "Prepared plugin input is missing" : "Explicitly prepare or install the exact locked package in the selected offline store; preflight never downloads.";
-    HgpluginPath => "HGPLUGIN-PATH" : "Plugin input or signed artifact path is unsafe" : "Use confined relative paths without parent traversal and prepare regular files, not symlinks.";
-    HgpluginPlatform => "HGPLUGIN-PLATFORM" : "Plugin does not support this exact host platform" : "Prepare a reviewed package supporting this exact operating system and architecture.";
-    HgpluginProtocol => "HGPLUGIN-PROTOCOL" : "Plugin protocol is unsupported" : "Select a data-only harness-preset-catalog/v1 package. Adapter execution still requires its separately signed v2 requests.";
-    HgpluginSignature => "HGPLUGIN-SIGNATURE" : "Plugin signature or host-approved key input is invalid" : "Supply an operator-approved --plugin-trusted-key and a detached Ed25519 signature over the exact manifest. Project pins never authorize a key; nothing is downloaded or approved automatically.";
-    HgpluginStore => "HGPLUGIN-STORE" : "Plugin store is missing or was not supplied" : "Pass --plugin-store PATH pointing to explicitly prepared offline packages.";
-    HgpluginVersion => "HGPLUGIN-VERSION" : "Locked plugin identity or exact version is invalid" : "Use a safe name and an exact numeric major.minor.patch version; install the exact locked product and never silently upgrade.";
+impl ConfigCode {
+    pub(crate) const ALL: &'static [ConfigCode] = &[
+        ConfigCode::HgcfgVersion,
+        ConfigCode::HgcfgRunnerVersion,
+        ConfigCode::HgcfgDependencyCycle,
+        ConfigCode::HgcfgDependency,
+        ConfigCode::HgcfgServiceInjectCollision,
+        ConfigCode::HgcfgUnknownReference,
+        ConfigCode::HgcfgInvalidPath,
+        ConfigCode::HgcfgInvalidEnvironment,
+        ConfigCode::HgcfgDuplicateField,
+        ConfigCode::HgcfgInvalidLog,
+        ConfigCode::HgcfgInvalidField,
+        ConfigCode::HgcfgRead,
+        ConfigCode::HgcfgExternalServiceMigration,
+        ConfigCode::HgcfgEnvironmentOverride,
+        ConfigCode::HgcfgDiagnosticsTruncated,
+        ConfigCode::HgcfgCheck,
+        ConfigCode::HgcfgTomlParse,
+        ConfigCode::HgcfgInterpolation,
+        ConfigCode::HgcfgProjectScopedConfig,
+        ConfigCode::HgcfgQuality,
+        ConfigCode::HgcfgRequiredFile,
+        ConfigCode::HgcfgImpact,
+        ConfigCode::HgcfgDuplicateLog,
+        ConfigCode::HgcfgSharedService,
+        ConfigCode::HgcfgTemplatePath,
+        ConfigCode::HgpluginCatalog,
+        ConfigCode::HgpluginCore,
+        ConfigCode::HgpluginDependency,
+        ConfigCode::HgpluginDigest,
+        ConfigCode::HgpluginLimit,
+        ConfigCode::HgpluginLock,
+        ConfigCode::HgpluginManifest,
+        ConfigCode::HgpluginMissing,
+        ConfigCode::HgpluginPath,
+        ConfigCode::HgpluginPlatform,
+        ConfigCode::HgpluginProtocol,
+        ConfigCode::HgpluginSignature,
+        ConfigCode::HgpluginStore,
+        ConfigCode::HgpluginVersion,
+    ];
+
+    pub(crate) const fn id(self) -> &'static str {
+        match self {
+            Self::HgcfgVersion => "HGCFG-VERSION",
+            Self::HgcfgRunnerVersion => "HGCFG-RUNNER-VERSION",
+            Self::HgcfgDependencyCycle => "HGCFG-DEPENDENCY-CYCLE",
+            Self::HgcfgDependency => "HGCFG-DEPENDENCY",
+            Self::HgcfgServiceInjectCollision => "HGCFG-SERVICE-INJECT-COLLISION",
+            Self::HgcfgUnknownReference => "HGCFG-UNKNOWN-REFERENCE",
+            Self::HgcfgInvalidPath => "HGCFG-INVALID-PATH",
+            Self::HgcfgInvalidEnvironment => "HGCFG-INVALID-ENVIRONMENT",
+            Self::HgcfgDuplicateField => "HGCFG-DUPLICATE-FIELD",
+            Self::HgcfgInvalidLog => "HGCFG-INVALID-LOG",
+            Self::HgcfgInvalidField => "HGCFG-INVALID-FIELD",
+            Self::HgcfgRead => "HGCFG-READ",
+            Self::HgcfgExternalServiceMigration => "HGCFG-EXTERNAL-SERVICE-MIGRATION",
+            Self::HgcfgEnvironmentOverride => "HGCFG-ENVIRONMENT-OVERRIDE",
+            Self::HgcfgDiagnosticsTruncated => "HGCFG-DIAGNOSTICS-TRUNCATED",
+            Self::HgcfgCheck => "HGCFG-CHECK",
+            Self::HgcfgTomlParse => "HGCFG-TOML-PARSE",
+            Self::HgcfgInterpolation => "HGCFG-INTERPOLATION",
+            Self::HgcfgProjectScopedConfig => "HGCFG-PROJECT-SCOPED-CONFIG",
+            Self::HgcfgQuality => "HGCFG-QUALITY",
+            Self::HgcfgRequiredFile => "HGCFG-REQUIRED-FILE",
+            Self::HgcfgImpact => "HGCFG-IMPACT",
+            Self::HgcfgDuplicateLog => "HGCFG-DUPLICATE-LOG",
+            Self::HgcfgSharedService => "HGCFG-SHARED-SERVICE",
+            Self::HgcfgTemplatePath => "HGCFG-TEMPLATE-PATH",
+            Self::HgpluginCatalog => "HGPLUGIN-CATALOG",
+            Self::HgpluginCore => "HGPLUGIN-CORE",
+            Self::HgpluginDependency => "HGPLUGIN-DEPENDENCY",
+            Self::HgpluginDigest => "HGPLUGIN-DIGEST",
+            Self::HgpluginLimit => "HGPLUGIN-LIMIT",
+            Self::HgpluginLock => "HGPLUGIN-LOCK",
+            Self::HgpluginManifest => "HGPLUGIN-MANIFEST",
+            Self::HgpluginMissing => "HGPLUGIN-MISSING",
+            Self::HgpluginPath => "HGPLUGIN-PATH",
+            Self::HgpluginPlatform => "HGPLUGIN-PLATFORM",
+            Self::HgpluginProtocol => "HGPLUGIN-PROTOCOL",
+            Self::HgpluginSignature => "HGPLUGIN-SIGNATURE",
+            Self::HgpluginStore => "HGPLUGIN-STORE",
+            Self::HgpluginVersion => "HGPLUGIN-VERSION",
+        }
+    }
+
+    pub(crate) const fn explain(self) -> (&'static str, &'static str) {
+        match self {
+            Self::HgcfgVersion => (
+                "workflow configuration version is unsupported",
+                "migrate a v1 file with `harness-gate config migrate` or use version 2",
+            ),
+            Self::HgcfgRunnerVersion => (
+                "runner contract version is unsupported",
+                "use the supported runner contract version",
+            ),
+            Self::HgcfgDependencyCycle => (
+                "dependencies contain a cycle",
+                "remove the invalid dependency or add an explicit acyclic prerequisite",
+            ),
+            Self::HgcfgDependency => (
+                "dependency declaration is invalid",
+                "remove the invalid dependency or add an explicit acyclic prerequisite",
+            ),
+            Self::HgcfgServiceInjectCollision => (
+                "service injection variable conflicts with another service or runner setting",
+                "Use distinct service injection and runner thread variable names. For conflicts across unordered steps, add the intended dependency, use distinct names or split the workflow.",
+            ),
+            Self::HgcfgUnknownReference => (
+                "reference does not name a declared configuration entry",
+                "use an identifier declared in the configuration",
+            ),
+            Self::HgcfgInvalidPath => (
+                "path is not a safe repository-relative path",
+                "use a non-empty path below the repository without a prefix or parent traversal",
+            ),
+            Self::HgcfgInvalidEnvironment => (
+                "environment variable name is invalid",
+                "use an uppercase environment-variable name containing only letters, digits, and underscores",
+            ),
+            Self::HgcfgDuplicateField => (
+                "configuration declares the same identifier more than once",
+                "keep one declaration or give each declaration a unique identifier",
+            ),
+            Self::HgcfgInvalidLog => (
+                "log path is not a valid single .log filename",
+                "choose a unique single .log filename",
+            ),
+            Self::HgcfgInvalidField => (
+                "field violates a documented configuration constraint",
+                "update the field to satisfy the documented configuration constraints",
+            ),
+            Self::HgcfgRead => (
+                "Workflow configuration could not be read",
+                "Check that the configured file exists, is readable UTF-8 and is below the 4 MiB size limit.",
+            ),
+            Self::HgcfgExternalServiceMigration => (
+                "Legacy external service policies require migration",
+                "Use the GateProbes recipe migration to create a new configuration, retain the original for rollback, and run config check before verification.",
+            ),
+            Self::HgcfgEnvironmentOverride => (
+                "Environment override has an invalid value",
+                "Set the override named by the diagnostic path to the required type, or unset it. Do not print secret environment values.",
+            ),
+            Self::HgcfgDiagnosticsTruncated => (
+                "Configuration diagnostic limit reached",
+                "Fix the reported errors and run harness-gate config check again to reveal remaining diagnostics.",
+            ),
+            Self::HgcfgCheck => (
+                "Configuration could not be checked",
+                "Verify the project root, configuration path and required security configuration files; inspect the original command error.",
+            ),
+            Self::HgcfgTomlParse => (
+                "Configuration is not valid TOML",
+                "Inspect the reported line and column for malformed TOML or unsupported fields. Correct the source and run config check again.",
+            ),
+            Self::HgcfgInterpolation => (
+                "Configuration environment interpolation failed",
+                "Inspect the reported location and inline help. Supply required environment inputs or correct the placeholder syntax without exposing secret values.",
+            ),
+            Self::HgcfgProjectScopedConfig => (
+                "Security configuration path must remain project-scoped",
+                "Use a literal repository-relative audit configuration path. Do not redirect the security policy through environment interpolation.",
+            ),
+            Self::HgcfgQuality => (
+                "Quality configuration is invalid",
+                "Correct quality.toml references, profile participation and policy/collector authority. Preserve required checks and thresholds.",
+            ),
+            Self::HgcfgRequiredFile => (
+                "Required security configuration file is missing",
+                "Create the audit or secret-scan configuration file named by the diagnostic path, or correct its configured path; do not bypass the required check.",
+            ),
+            Self::HgcfgImpact => (
+                "Component impact graph is invalid",
+                "Review the complete version-1 component graph. Declare an empty dependency list for components without dependencies.",
+            ),
+            Self::HgcfgDuplicateLog => (
+                "Verification steps share a log filename",
+                "Choose a unique .log filename for each verification step; use the related location to find the other owner.",
+            ),
+            Self::HgcfgSharedService => (
+                "Shared service users have no execution ordering",
+                "Add an explicit dependency between the affected steps or define separate service resources.",
+            ),
+            Self::HgcfgTemplatePath => (
+                "Report template path cannot be safely resolved",
+                "Inspect the diagnostic path and related locations. Keep readable templates within their configured root and separate from report output; correct missing files or escaping symlinks.",
+            ),
+            Self::HgpluginCatalog => (
+                "Signed preset catalog is invalid or incomplete",
+                "Include the catalog and all referenced flow, recipe and pack files in the signed inventory and repair its flow configuration.",
+            ),
+            Self::HgpluginCore => (
+                "Plugin does not declare this exact Core version in its preset manifest",
+                "Select a reviewed plugin release whose signed preset manifest core_versions lists this exact Core version, or explicitly upgrade Core. This checks only the preset manifest declaration; it does not validate adapter requests.",
+            ),
+            Self::HgpluginDependency => (
+                "Plugin dependency is missing, incompatible or invalid",
+                "Explicitly lock and prepare the exact dependency versions and required programs. Offline preflight never installs or runs them.",
+            ),
+            Self::HgpluginDigest => (
+                "Plugin manifest or signed artifact digest does not match its pinned value",
+                "Restore the exact pinned manifest when the lock manifest_sha256 does not match, and restore each artifact exactly as declared in the signed manifest file inventory. Do not change the lock or the signed inventory to hide corruption; review and explicitly lock any upgrade.",
+            ),
+            Self::HgpluginLimit => (
+                "Plugin input exceeds a size or inventory limit",
+                "The signed file inventory is checked for 1..128 entries before copying starts, and each input is checked against the 1 MiB read limit as it is copied. A later failure can leave earlier files only in the private temporary snapshot; there is no all-files precheck or cross-file atomicity.",
+            ),
+            Self::HgpluginLock => (
+                "Plugin lock is invalid or the selection is ambiguous",
+                "Use harness-plugin-lock/v1 with 1..64 unique exact pins; review migration before replacing the lock. Absence of a lock preserves legacy workflows.",
+            ),
+            Self::HgpluginManifest => (
+                "Signed plugin manifest is invalid",
+                "Prepare a harness-plugin/v1 data-only preset manifest and review compatibility before locking it.",
+            ),
+            Self::HgpluginMissing => (
+                "Prepared plugin input is missing",
+                "Explicitly prepare or install the exact locked package in the selected offline store; preflight never downloads.",
+            ),
+            Self::HgpluginPath => (
+                "Plugin input or signed artifact path is unsafe",
+                "Use confined relative paths without parent traversal and prepare regular files, not symlinks.",
+            ),
+            Self::HgpluginPlatform => (
+                "Plugin does not support this exact host platform",
+                "Prepare a reviewed package supporting this exact operating system and architecture.",
+            ),
+            Self::HgpluginProtocol => (
+                "Plugin protocol is unsupported",
+                "Select a data-only harness-preset-catalog/v1 package. Adapter execution still requires its separately signed v2 requests.",
+            ),
+            Self::HgpluginSignature => (
+                "Plugin signature or host-approved key input is invalid",
+                "Supply an operator-approved --plugin-trusted-key and a detached Ed25519 signature over the exact manifest. Project pins never authorize a key; nothing is downloaded or approved automatically.",
+            ),
+            Self::HgpluginStore => (
+                "Plugin store is missing or was not supplied",
+                "Pass --plugin-store PATH pointing to explicitly prepared offline packages.",
+            ),
+            Self::HgpluginVersion => (
+                "Locked plugin identity or exact version is invalid",
+                "Use a safe name and an exact numeric major.minor.patch version; install the exact locked product and never silently upgrade.",
+            ),
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn from_id(id: &str) -> Option<Self> {
+        Self::ALL.iter().copied().find(|code| code.id() == id)
+    }
 }
 
 /// Wire identity of one configuration diagnostic. Production code can only hold
 /// a registered [`ConfigCode`]; tests may additionally use an explicit synthetic
 /// value. Serialization is always the plain code string.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum DiagnosticId {
+pub(crate) struct DiagnosticId(DiagnosticKind);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum DiagnosticKind {
     Registered(ConfigCode),
-    #[cfg(test)]
+    // Constructed only by the cfg(test) synthetic constructor; production code
+    // cannot name this private kind or its value.
+    #[allow(dead_code)]
     Synthetic(String),
 }
 
 impl DiagnosticId {
     pub(crate) fn as_str(&self) -> &str {
-        match self {
-            Self::Registered(code) => code.id(),
-            #[cfg(test)]
-            Self::Synthetic(value) => value,
+        match &self.0 {
+            DiagnosticKind::Registered(code) => code.id(),
+            DiagnosticKind::Synthetic(value) => value,
         }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn synthetic(value: impl Into<String>) -> Self {
+        Self(DiagnosticKind::Synthetic(value.into()))
     }
 }
 
 impl From<ConfigCode> for DiagnosticId {
     fn from(code: ConfigCode) -> Self {
-        Self::Registered(code)
+        Self(DiagnosticKind::Registered(code))
     }
 }
 
@@ -233,7 +465,7 @@ impl ConfigDiagnostic {
         help: impl Into<String>,
     ) -> Self {
         Self {
-            id: DiagnosticId::Synthetic(id.into()),
+            id: DiagnosticId::synthetic(id),
             severity: DiagnosticSeverity::Error,
             path: path.into(),
             message: message.into(),
