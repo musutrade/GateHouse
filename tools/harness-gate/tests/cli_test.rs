@@ -332,6 +332,121 @@ fn test_cleanup_dry_run_writes_machine_readable_evidence() {
     assert!(ctx.file_exists(".harness-gate/reports/cleanup.json"));
 }
 
+#[cfg(target_os = "linux")]
+#[test]
+fn test_cleanup_retains_legacy_podman_lease_with_migration_diagnostic() {
+    use sha2::{Digest, Sha256};
+    use std::os::unix::fs::PermissionsExt;
+    use std::path::Path;
+
+    let ctx = TestContext::new();
+    assert_success(&ctx.run_harness_gate(&["init", "--preset", "generic"]));
+    let root = ctx.project_root.canonicalize().unwrap();
+    let identity = root.to_string_lossy().into_owned();
+    let resource = "service:legacy-fixture";
+    let invocation = "1".repeat(32);
+    let marker_rel = format!(".harness-gate/reports/leases/{}.json", {
+        let mut digest = Sha256::new();
+        digest.update(resource.as_bytes());
+        let hex = format!("{:x}", digest.finalize());
+        hex[..16].to_string()
+    });
+    let labels = serde_json::json!({
+        "harness-gate.owner": "harness-gate",
+        "harness-gate.schema": "2",
+        "harness-gate.project": identity,
+        "harness-gate.resource": resource,
+        "harness-gate.kind": "container",
+        "harness-gate.invocation": invocation,
+    });
+    let marker = serde_json::json!({
+        "owner_marker": "harness-gate",
+        "schema_version": 2,
+        "project_identity": identity,
+        "resource_id": resource,
+        "resource_kind": "container",
+        "invocation_id": invocation,
+        "pid": 0,
+        "process_start_identity": "linux:1",
+        "created_at": 0,
+        "heartbeat_at": 0,
+        "expires_at": 0,
+        "resource_name": "harness-gate-legacy-fixture",
+        "runtime": "podman",
+        "runtime_labels": labels,
+        "runtime_object_id": "a".repeat(64),
+    });
+    ctx.write_file(&marker_rel, &serde_json::to_string_pretty(&marker).unwrap());
+    let original = ctx.read_file(&marker_rel);
+
+    let trap = root.join(".engine-trap");
+    std::fs::create_dir(&trap).unwrap();
+    let trap_log = root.join("engine-was-called");
+    for engine in ["podman", "docker"] {
+        let path = trap.join(engine);
+        std::fs::write(&path, "#!/bin/sh\ntouch \"$HG_ENGINE_TRAP\"\nexit 97\n").unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let path = format!(
+        "{}:{}",
+        trap.display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+    let run = |args: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_harness-gate"))
+            .env(
+                "HARNESS_GATE_PRESETS_DIR",
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/preset-compat"),
+            )
+            .env("PATH", &path)
+            .env("HG_ENGINE_TRAP", &trap_log)
+            .args(args)
+            .arg("--project-root")
+            .arg(&ctx.project_root)
+            .output()
+            .unwrap()
+    };
+
+    let dry_run = run(&["cleanup", "--dry-run"]);
+    assert_failure(&dry_run);
+    let stdout = stdout_str(&dry_run);
+    assert!(stdout.contains("Cleanup (dry-run):"), "{stdout}");
+    assert!(stdout.contains("retained"), "{stdout}");
+    assert!(stdout.contains(resource), "{stdout}");
+    assert!(
+        stderr_str(&dry_run).contains("cleanup failure:"),
+        "{}",
+        stderr_str(&dry_run)
+    );
+    assert_eq!(ctx.read_file(&marker_rel), original);
+    assert!(!trap_log.exists(), "dry-run must not execute an engine");
+
+    let apply = run(&["cleanup"]);
+    assert_failure(&apply);
+    let stdout = stdout_str(&apply);
+    assert!(stdout.contains("Cleanup complete:"), "{stdout}");
+    assert!(stdout.contains("failed"), "{stdout}");
+    assert!(stdout.contains(resource), "{stdout}");
+    assert_eq!(ctx.read_file(&marker_rel), original);
+    assert!(!trap_log.exists(), "apply must not execute an engine");
+
+    let json = run(&["cleanup", "--dry-run", "--json"]);
+    assert_failure(&json);
+    let report: serde_json::Value =
+        serde_json::from_slice(&json.stdout).expect("cleanup JSON output");
+    assert_eq!(report["dry_run"], true);
+    assert_eq!(report["resources"][0]["action"], "retained");
+    assert_eq!(report["resources"][0]["resource_id"], resource);
+    assert!(report["failures"]
+        .as_array()
+        .is_some_and(|failures| !failures.is_empty()));
+    assert_eq!(ctx.read_file(&marker_rel), original);
+    assert!(
+        !trap_log.exists(),
+        "JSON dry-run must not execute an engine"
+    );
+}
+
 #[test]
 fn test_color_always_styles_human_readable_output() {
     let ctx = TestContext::new();

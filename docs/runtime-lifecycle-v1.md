@@ -728,7 +728,7 @@ readiness. For the native Podman 5.7 profile, availability verifies the explicit
 protected lifecycle installation and matching engine without executing a
 container. See `docs/podman-native-lifecycle.md`.
 Other operating systems reject lifecycle service startup. Docker services without the new
-field now fail closed under the retirement policy below; Podman retains its legacy route. The public
+field now fail closed under the retirement policy below, as do Podman services. The public
 operator command, versioned protocol publication and real Docker acceptance remain
 gates; this checkpoint does not claim that all service engine calls are extracted.
 
@@ -772,29 +772,51 @@ both host fields are set, it does not validate lifecycle installation or prove t
 lifecycle startup will succeed.
 
 
-## Retiring the Core Docker CLI route
+## Legacy CLI retirement
 
-Docker managed services now require an explicit `lifecycle_host` for startup and
-cleanup, and an explicit `readiness_host` for read-only availability. With no host,
-Core rejects the operation before engine execution; startup rejects before creating
-a legacy resource lease. A configured external service value still follows its
-existing external recipe contract and performs no engine operation.
+Core no longer executes Docker or Podman CLI service operations. The old CLI
+backend, command construction, port/inspect output parsers and startup/readiness
+loop have been removed. Managed startup and teardown require an explicit installed
+`lifecycle_host`; missing configuration fails before any new resource lease is
+allocated. Read-only availability uses `readiness_host` for Docker and the explicit
+protected `lifecycle_host` for Podman. A configured external service value still
+follows its recipe checks and performs no engine operation. An unset, empty or
+whitespace-only external value does not enable a CLI fallback.
 
-Existing lease-v2 Docker markers remain readable evidence, but automatic cleanup
-and teardown retain them and report the retired engine route. They are never
-converted into lifecycle authority, adopted by name or deleted because a new host
-exists. Resolve existing legacy containers through the previously approved version
-and its exact ownership checks before upgrading; keep the original evidence. The
-new lifecycle-cleanup command only accepts its own reservation-derived journals.
+Core retains leases, heartbeats, concurrency isolation, durable journals, recovery
+coordination and final gate decisions. The installed plugin owns engine operations.
+A failed host invocation never selects a legacy backend.
 
-Podman retains its existing CLI implementation until the separately authorized
-Podman extraction. Generic CLI cancellation/cleanup precedence regressions continue
-against a fake Podman executable with the same failure and retained-lease assertions.
-Docker-specific regressions assert all seven old engine operations are refused,
-no sentinel CLI runs, no new lease is allocated, and old Docker markers survive.
-This removes Core Docker CLI execution, but does not yet constitute a released,
-installed or real-engine-validated lifecycle product.
+Existing lease-v2 Docker and Podman markers remain readable evidence. Cleanup
+retains stale container markers and reports that the CLI route is retired;
+repeated cleanup does not erase the record or implicitly grant a new installation
+ownership. Live or uncertain owners retain their existing protections. Workspace
+and report-directory lease reclamation is unchanged. The `lifecycle-cleanup`
+command accepts only its reservation-derived journals, not legacy lease-v2 records.
 
+Migration procedure:
+
+1. Quiesce old Core processes. Keep the original project/report/lease paths and
+   retain copies of the records and diagnostic output; do not hide or delete a
+   marker to bypass a conflict.
+2. Resolve legacy resources using the previously approved Core version with its
+   exact ownership checks, or an explicit operator procedure which verifies the
+   recorded engine, immutable object ID and ownership labels. A missing name,
+   unavailable engine or ambiguous response is not proof of absence. Preserve
+   evidence and the marker until resolution is established. This version does
+   not provide automatic adoption or a legacy lease deletion command.
+3. After old resources and reservations are safely resolved, configure the
+   protected installed lifecycle host for the matching engine. For Docker also
+   configure the separate readiness host. For an externally managed service use
+   a valid external value and its recipe checks instead.
+4. Check availability and run the managed service through the installed host.
+   New lifecycle recovery continues to require the existing explicit fence and
+   invocation authorization.
+
+Regression coverage places trap Docker/Podman executables on PATH and verifies
+startup and availability rejection, zero engine calls, no new legacy leases,
+byte-preserving legacy cleanup, and refusal to adopt old markers into a new host.
+This retirement change itself does not publish a new Core release.
 
 Before lifecycle startup, Core also refuses an existing legacy marker for the same
 service in the project's validated legacy lease directory, including malformed or

@@ -1,5 +1,11 @@
 # Podman extraction boundary — working contract
 
+Current-source update: the historical CLI and migration checkpoints below describe
+the extraction sequence. The Core CLI implementation has now been removed; see
+[Legacy CLI retirement](runtime-lifecycle-v1.md#legacy-cli-retirement) for current
+configuration and legacy lease recovery requirements. Historical checkpoints are
+not claims that the old executable path still exists.
+
 Status: development draft, pending independent engine-contract review. Docker's
 published lifecycle profile remains unchanged. No Podman implementation or real
 Podman compatibility is claimed by this document.

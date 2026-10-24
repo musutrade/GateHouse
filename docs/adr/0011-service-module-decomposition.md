@@ -1,5 +1,11 @@
 # ADR 0011: Decompose the Service Module by Responsibility
 
+Current-source note: the former `service/docker`, `service/commands`,
+`service/runtime`, `service/inspection` and `service/legacy_cli` modules have been
+retired. Engine operations now go through installed lifecycle hosts; Core retains
+lease ownership, diagnostics and recovery coordination. The decomposition below
+records the earlier architecture. See [migration guidance](../runtime-lifecycle-v1.md#legacy-cli-retirement).
+
 ## Status
 
 **Accepted** - 2026-08-27

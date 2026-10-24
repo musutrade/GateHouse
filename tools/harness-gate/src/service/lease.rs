@@ -1,8 +1,8 @@
 mod container;
+mod retired;
 
-use container::{
-    validate_runtime_ownership, verify_runtime_record, CliRuntimeOperations, RuntimeOperations,
-};
+use container::{verify_runtime_record, RuntimeOperations};
+use retired::RetiredRuntimeOperations;
 
 use super::report_directory::ReportDirectoryGuard;
 use crate::config::ContainerRuntimeKind;
@@ -63,7 +63,6 @@ pub(crate) struct LeaseRecord {
 pub(crate) struct ResourceLease {
     path: PathBuf,
     record: Arc<Mutex<LeaseRecord>>,
-    last_renewed: Arc<Mutex<Instant>>,
     heartbeat_error: Arc<Mutex<Option<String>>>,
     stop_heartbeat: Option<mpsc::Sender<()>>,
     heartbeat: Option<JoinHandle<()>>,
@@ -166,7 +165,6 @@ impl ResourceLease {
                     return Ok(Self {
                         path,
                         record,
-                        last_renewed,
                         heartbeat_error,
                         stop_heartbeat: Some(stop_heartbeat),
                         heartbeat: Some(heartbeat),
@@ -213,13 +211,10 @@ impl ResourceLease {
         }
     }
 
-    pub(crate) fn renew(&self) -> Result<()> {
-        renew_parts(&self.path, &self.record, &self.last_renewed, false)
-    }
-
     /// Stop renewal while retaining the marker for operator cleanup. This is
     /// used when an external resource may have been created but its ownership
     /// or identity could not be proved.
+    #[cfg(test)]
     pub(crate) fn retain(mut self) {
         self.stop_heartbeat();
         self.release_on_drop = false;
@@ -228,6 +223,7 @@ impl ResourceLease {
     /// Stop the heartbeat before attempting an explicit release. If release
     /// cannot prove current ownership, dropping this value keeps the marker so
     /// an operator can inspect it instead of silently deleting it.
+    #[cfg(test)]
     pub(crate) fn release_checked(mut self) -> Result<()> {
         self.finish_release()
     }
@@ -244,42 +240,6 @@ impl ResourceLease {
         // Exercise the real checked-release transition while a child process
         // pauses before dropping the same guard that production Drop closes.
         self.finish_release()
-    }
-
-    /// Bind a newly created runtime object to this lease. The object ID is
-    /// immutable for the lifetime of the object and is never accepted from
-    /// repository-controlled configuration.
-    pub(crate) fn bind_runtime_identity(
-        &self,
-        project: &Project,
-        inspection: &super::inspection::RuntimeInspection,
-    ) -> Result<()> {
-        let mut record = self
-            .record
-            .lock()
-            .map_err(|_| anyhow::anyhow!("lease record lock was poisoned"))?;
-        let current = read_record(&self.path)
-            .with_context(|| format!("read lease {}", self.path.display()))?;
-        ensure_owner(&current, &record)?;
-        validate_runtime_ownership(project, &self.path, &current, inspection)?;
-        if inspection.object_id.trim().is_empty() {
-            bail!("runtime inspection returned an empty immutable object ID");
-        }
-        record.runtime_object_id = Some(inspection.object_id.clone());
-        record.runtime_labels = inspection.labels.clone();
-        write_record(&self.path, &record)?;
-        Ok(())
-    }
-
-    /// Return the verified immutable target; callers must not remove by reusable name.
-    pub(crate) fn verify_runtime_ownership(&self, project: &Project) -> Result<String> {
-        self.ensure_heartbeat_healthy()?;
-        let record = self
-            .record
-            .lock()
-            .map_err(|_| anyhow::anyhow!("lease record lock was poisoned"))?
-            .clone();
-        verify_runtime_record(&CliRuntimeOperations, project, &self.path, &record)
     }
 
     pub(crate) fn release(&self) -> Result<()> {
@@ -344,9 +304,10 @@ impl ResourceLease {
 
 impl Drop for ResourceLease {
     fn drop(&mut self) {
-        self.stop_heartbeat();
         if self.release_on_drop {
-            let _ = self.release();
+            let _ = self.finish_release();
+        } else {
+            self.stop_heartbeat();
         }
     }
 }
@@ -411,7 +372,7 @@ pub(crate) struct CleanupResource {
 }
 
 pub(crate) fn cleanup(project: &Project, dry_run: bool) -> Result<CleanupReport> {
-    cleanup_with_runtime(project, dry_run, &CliRuntimeOperations)
+    cleanup_with_runtime(project, dry_run, &RetiredRuntimeOperations)
 }
 
 fn cleanup_with_runtime<O: RuntimeOperations + ?Sized>(
@@ -572,7 +533,13 @@ fn cleanup_with_runtime<O: RuntimeOperations + ?Sized>(
         } else {
             "reclaimed"
         };
-        if !dry_run {
+        if dry_run && record.resource_kind == "container" {
+            action = "retained";
+            report.failures.push(format!(
+                "legacy container {}: CLI service operations are retired; lease retained without migration; resolve through the prior approved version or explicit operator procedure",
+                record.resource_id
+            ));
+        } else if !dry_run {
             if let Err(error) = reclaim_resource_with_runtime(project, &path, &record, runtime) {
                 action = "failed";
                 report.failures.push(format!(
@@ -596,7 +563,7 @@ fn cleanup_with_runtime<O: RuntimeOperations + ?Sized>(
 }
 
 fn reclaim_resource(project: &Project, path: &Path, record: &LeaseRecord) -> Result<()> {
-    reclaim_resource_with_runtime(project, path, record, &CliRuntimeOperations)
+    reclaim_resource_with_runtime(project, path, record, &RetiredRuntimeOperations)
 }
 
 fn reclaim_resource_with_runtime<O: RuntimeOperations + ?Sized>(
@@ -1087,13 +1054,13 @@ mod tests {
             .filter(|(owner, _)| *owner == thread)
             .map(|(_, observe)| *observe)
     }
+    use super::container::RuntimeInspection;
     use super::{
         cleanup_with_runtime, is_stale, ownership_labels, read_record, resource_key, write_record,
         LeaseRecord, RuntimeOperations, LEASE_SCHEMA_VERSION, OWNER_MARKER,
     };
     use crate::config::ContainerRuntimeKind;
     use crate::project::Project;
-    use crate::service::inspection::RuntimeInspection;
     use crate::test_support::TestWorkspace;
     use std::collections::BTreeMap;
     use std::path::{Path, PathBuf};
@@ -1830,17 +1797,30 @@ mod tests {
     }
 
     #[test]
-    fn legacy_docker_cleanup_retains_marker_without_implicit_migration() {
-        let (_workspace, project) = runtime_project("retired-docker-lease");
-        let (path, _, _) = container_lease(&project, ContainerRuntimeKind::Docker, true);
-        let bytes = std::fs::read(&path).unwrap();
-        let report = super::cleanup(&project, false).unwrap();
-        assert_eq!(report.reclaimed, 0);
-        assert!(report
-            .failures
-            .iter()
-            .any(|f| f.contains("Docker CLI service operations are retired")));
-        assert_eq!(std::fs::read(path).unwrap(), bytes);
+    fn legacy_engine_cleanup_retains_marker_without_implicit_migration() {
+        for runtime in [ContainerRuntimeKind::Docker, ContainerRuntimeKind::Podman] {
+            let (_workspace, project) = runtime_project("retired-engine-lease");
+            let (path, _, _) = container_lease(&project, runtime, true);
+            let bytes = std::fs::read(&path).unwrap();
+            let report = super::cleanup(&project, false).unwrap();
+            assert_eq!(report.reclaimed, 0);
+            assert!(report
+                .failures
+                .iter()
+                .any(|f| f.contains("CLI service operations are retired")));
+            let error = super::RetiredRuntimeOperations
+                .stop(
+                    runtime,
+                    &project.root,
+                    "recorded-id",
+                    Duration::from_secs(1),
+                )
+                .unwrap_err();
+            assert!(error
+                .to_string()
+                .contains("lease retained without migration"));
+            assert_eq!(std::fs::read(path).unwrap(), bytes);
+        }
     }
 
     #[test]
@@ -2895,22 +2875,5 @@ mod tests {
     #[cfg(target_os = "linux")]
     fn checked_release_ends_guard_lifetime_before_fork_child_exec() {
         consumed_report_guard_releases_while_fork_child_is_blocked(true);
-    }
-    #[cfg(unix)]
-    impl super::ResourceLease {
-        pub(in crate::service) fn make_renewal_due_for_test(&mut self) {
-            self.stop_heartbeat();
-            let due = super::Instant::now()
-                .checked_sub(super::RENEW_AFTER)
-                .unwrap_or_else(|| {
-                    // Very young monotonic clocks may not represent an earlier instant.
-                    // Let the real renewal interval elapse rather than skip the error path.
-                    std::thread::sleep(super::RENEW_AFTER);
-                    super::Instant::now()
-                        .checked_sub(super::RENEW_AFTER)
-                        .expect("a complete renewal interval has elapsed")
-                });
-            *self.last_renewed.lock().unwrap() = due;
-        }
     }
 }

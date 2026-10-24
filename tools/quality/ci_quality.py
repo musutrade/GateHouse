@@ -85,6 +85,13 @@ REVIEWED_REMOVED_SOURCES = (
     'tools/harness-gate/src/hooks/filesystem.rs',
     'tools/harness-gate/src/hooks/mod.rs',
     'tools/harness-gate/src/hooks/paths.rs',
+    # Core CLI retirement: all engine execution and output parsing now belong
+    # to installed plugins. Keep only ownership/diagnostic boundaries in Core.
+    'tools/harness-gate/src/service/commands.rs',
+    'tools/harness-gate/src/service/docker.rs',
+    'tools/harness-gate/src/service/inspection.rs',
+    'tools/harness-gate/src/service/legacy_cli.rs',
+    'tools/harness-gate/src/service/runtime.rs',
 )
 
 
@@ -1285,6 +1292,7 @@ class Collector:
                     'tools/harness-gate/src/doctor/tests.rs',
                     'tools/harness-gate/src/service/tests.rs',
                     'tools/harness-gate/src/service/tests/availability.rs',
+                    'tools/harness-gate/src/service/tests/retirement.rs',
                     'tools/harness-gate/src/test_support.rs',
                     'tools/harness-gate/src/recipes/tests.rs',
                     'tools/harness-gate/src/config/quality/collectors/tests.rs',

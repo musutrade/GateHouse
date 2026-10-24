@@ -45,15 +45,6 @@ pub fn capture(
     capture_command(program, args, cwd, timeout, true, CaptureLimits::default())
 }
 
-pub fn capture_cleanup(
-    program: &str,
-    args: &[String],
-    cwd: &Path,
-    timeout: Duration,
-) -> Result<CapturedOutput> {
-    capture_command(program, args, cwd, timeout, false, CaptureLimits::default())
-}
-
 pub(crate) fn capture_with_limits(
     program: &str,
     args: &[String],
