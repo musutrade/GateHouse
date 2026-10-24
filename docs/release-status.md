@@ -9,6 +9,8 @@ which the raw archive checksum comparison incorrectly rejected. The tag and fail
 remain immutable. The repair authenticates the registry download and compares crate
 contents, permitting only the clean packaging commit SHA to differ.
 See [repair scope and release gates](releases/0.14.1.zh-CN.md).
+Published onboarding-presets 1.0.10 is pinned for exact Core 0.14.1 compatibility;
+see the [downloaded compatibility receipt](releases/onboarding-presets-1.0.10-acceptance.md).
 
 ## Core 0.14.0 historical candidate (publication failed)
 
