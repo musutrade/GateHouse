@@ -601,7 +601,20 @@
       "notes": "",
       "purpose": "Version 2 AST inventory, distinguishing closure instrumentation and LLVM join.",
       "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
-      "sha256": "ae9adec849d35fede7b056f74a2389a7986b3671cd9948d660f9d632d731486d"
+      "sha256": "fbf82e6a3b311b175c85f9195e666b74257bdd0d11ed55c3a47dca69859a540d"
+    },
+    {
+      "module": "tools/quality/source_measure_candidate.py",
+      "category": "D",
+      "purpose": "Explicit reviewed 0.4.0 measurer consumer identity/series candidate; production source_measure remains pinned to 0.3.1.",
+      "callers": [
+        "tools/quality/tests/rust_measure_candidate_acceptance.py"
+      ],
+      "ci_role": "Explicit candidate acceptance only; not selected by default CI, production pin or release authority.",
+      "release_impact": "Not packaged in the release binary. Cannot measure metrics, adopt a baseline, approve a generic release or replace required Rust checks.",
+      "authoritative_status": "Non-authoritative candidate consumer; production default remains the exact 0.3.1 pin. No environment/CLI bypass is provided.",
+      "final_disposition": "Retain as a reviewed candidate source for the GP dual-expectation chain until GH#108 makes a separate production pin decision.",
+      "sha256": "16b5a951541b21b20ff1eb1a56926ff9685cd63986ada1f347befb49bba1c41e"
     },
     {
       "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
