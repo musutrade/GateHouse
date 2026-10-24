@@ -65,7 +65,7 @@
 
 ### R-02：lease cleanup 可删除未证明归属的容器
 
-**证据：**[`service/lease.rs`](../tools/harness-gate/src/service/lease.rs) 只校验 JSON marker/schema/resource_id；`validate_record` 不检查文件名、项目 identity 或容器 label；[`runtime.rs`](../tools/harness-gate/src/service/runtime.rs) 最终直接执行 `rm --force <name>`。
+**证据：**[`service/lease.rs`](../tools/harness-gate/src/service/lease.rs) 只校验 JSON marker/schema/resource_id；`validate_record` 不检查文件名、项目 identity 或容器 label；当时的 `runtime.rs`（现已[退役](runtime-lifecycle-v1.md#legacy-cli-retirement)）最终直接执行 `rm --force <name>`。
 
 **影响：**伪造过期 lease 可诱导具有 Docker/Podman 权限的 cleanup 删除其他 `harness-gate-*` 容器。
 

@@ -231,9 +231,6 @@
       "blocking": true,
       "files": [
         "src/recipes/mod.rs",
-        "src/service/commands.rs",
-        "src/service/docker.rs",
-        "src/service/inspection.rs",
         "src/service/lease.rs",
         "src/service/lease/container.rs",
         "src/service/mod.rs",
@@ -243,13 +240,6 @@
         "src/service/lifecycle_public.rs",
         "src/service/lifecycle_public/linux.rs",
         "src/service/lifecycle_public/unsupported.rs"
-      ]
-    },
-    "service-adapters": {
-      "blocking": false,
-      "files": [
-        "src/service/legacy_cli.rs",
-        "src/service/runtime.rs"
       ]
     },
     "ui": {
@@ -480,6 +470,11 @@
       "path": "src/process/podman_capture_host/fault_fixture.rs",
       "kind": "test",
       "reason": "Standalone rustc-built native fault fixture; never linked into production."
+    },
+    {
+      "path": "src/service/tests/retirement.rs",
+      "kind": "test",
+      "reason": "Public service CLI-retirement and legacy lease retention regression tests."
     }
   ],
   "external_exclusions": [
@@ -537,7 +532,7 @@
     {
       "path": "src/process/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "4efa4a745bd063177f3e77dc71773f691087908742016a80c10d2ebb6f991331"
+      "sha256": "a0bb5eac4d473e48d4db86077a7f5a4ee066488d71ed7316fdc04759047a8457"
     },
     {
       "path": "src/scope/mod.rs",

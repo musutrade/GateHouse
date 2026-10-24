@@ -9,6 +9,14 @@ use anyhow::{bail, Result};
 use std::path::Path;
 use std::time::Duration;
 
+/// Engine-neutral identity retained for checking legacy ownership evidence.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(super) struct RuntimeInspection {
+    pub(super) object_id: String,
+    pub(super) name: String,
+    pub(super) labels: std::collections::BTreeMap<String, String>,
+}
+
 pub(super) trait RuntimeOperations {
     fn inspect(
         &self,
@@ -16,7 +24,7 @@ pub(super) trait RuntimeOperations {
         project: &Project,
         name: &str,
         timeout: Duration,
-    ) -> Result<crate::service::inspection::RuntimeInspection>;
+    ) -> Result<RuntimeInspection>;
 
     fn stop(
         &self,
@@ -27,35 +35,44 @@ pub(super) trait RuntimeOperations {
     ) -> Result<()>;
 }
 
-pub(super) struct CliRuntimeOperations;
+pub(super) struct RetiredRuntimeOperations;
 
-impl RuntimeOperations for CliRuntimeOperations {
+impl RuntimeOperations for RetiredRuntimeOperations {
     fn inspect(
         &self,
         runtime: ContainerRuntimeKind,
-        project: &Project,
-        name: &str,
-        timeout: Duration,
-    ) -> Result<crate::service::inspection::RuntimeInspection> {
-        crate::service::runtime::inspect_owned_container(runtime, project, name, timeout)
+        _project: &Project,
+        _name: &str,
+        _timeout: Duration,
+    ) -> Result<RuntimeInspection> {
+        retired_lease(runtime)
     }
 
     fn stop(
         &self,
         runtime: ContainerRuntimeKind,
-        cwd: &Path,
-        name: &str,
-        timeout: Duration,
+        _cwd: &Path,
+        _name: &str,
+        _timeout: Duration,
     ) -> Result<()> {
-        crate::service::runtime::stop_owned_container(runtime, cwd, name, timeout)
+        retired_lease(runtime)
     }
+}
+
+// Legacy records remain readable, but an engine name is not an installed host
+// binding. Never infer mutation authority from current service configuration.
+fn retired_lease<T>(runtime: ContainerRuntimeKind) -> Result<T> {
+    bail!(
+        "legacy {} CLI service operations are retired; lease retained without migration; quiesce old Core processes and resolve the recorded resource with the previously approved version or an explicit operator procedure before configuring lifecycle_host; see docs/runtime-lifecycle-v1.md#legacy-cli-retirement",
+        runtime.executable()
+    )
 }
 
 pub(super) fn validate_runtime_ownership(
     project: &Project,
     path: &Path,
     record: &LeaseRecord,
-    inspection: &crate::service::inspection::RuntimeInspection,
+    inspection: &RuntimeInspection,
 ) -> Result<()> {
     let expected_name = record.resource_name.as_deref().unwrap_or_default();
     if expected_name.trim().is_empty() {

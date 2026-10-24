@@ -429,7 +429,7 @@ fn both() {
                 self.assertEqual(len(self.inventory(transformed)['symbols']), len(symbols))
 
     def test_report_retention_sources_inventory_and_instrumentation(self):
-        paths = {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs', 'service/docker.rs',
+        paths = {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs',
                  'service/lifecycle.rs', 'service/lifecycle/recovery.rs',
                  'service/lifecycle_public.rs', 'service/lifecycle_public/linux.rs',
                  'service/lifecycle_public/unsupported.rs'}

@@ -87,7 +87,7 @@ class RiskScopeTests(unittest.TestCase):
         self.assertIn('config/suggestions.rs', SOURCE_FILES)
         self.assertIn('app/commands.rs', SOURCE_FILES)
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')},
-                         {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs', 'service/legacy_cli.rs', 'service/runtime.rs', 'service/docker.rs',
+                         {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs',
                           'service/lifecycle.rs', 'service/lifecycle/recovery.rs',
                           'service/lifecycle_public.rs', 'service/lifecycle_public/linux.rs',
                           'service/lifecycle_public/unsupported.rs'})
@@ -102,7 +102,6 @@ class RiskScopeTests(unittest.TestCase):
                 ('tools/harness-gate/src/process/podman_capture_host/fault_fixture.rs', True),
                 ('tools/harness-gate/src/process/podman_capture_host/unknown.rs', False),
                 ('tools/harness-gate/src/process/runtime_lifecycle_host/tests/joint.rs', True),
-                ('tools/harness-gate/src/service/docker.rs', True),
                 ('tools/harness-gate/src/process/replay.rs', True),
                 ('tools/harness-gate/src/process/command.rs', True),
                 ('tools/harness-gate/src/process/capture.rs', True),
@@ -142,9 +141,13 @@ class RiskScopeTests(unittest.TestCase):
                 ('tools/harness-gate/src/service/lease.rs', True),
                 ('tools/harness-gate/src/service/mod.rs', True),
                 ('tools/harness-gate/src/service/report_directory.rs', True),
-                ('tools/harness-gate/src/service/legacy_cli.rs', True),
-                ('tools/harness-gate/src/service/runtime.rs', True),
                 ('tools/harness-gate/src/service/tests/availability.rs', True),
+                ('tools/harness-gate/src/service/tests/retirement.rs', True),
+                ('tools/harness-gate/src/service/legacy_cli.rs', False),
+                ('tools/harness-gate/src/service/docker.rs', False),
+                ('tools/harness-gate/src/service/runtime.rs', False),
+                ('tools/harness-gate/src/service/inspection.rs', False),
+                ('tools/harness-gate/src/service/commands.rs', False),
                 ('tools/harness-gate/src/service/tests/unknown.rs', False),
                 ('tools/harness-gate/src/service/unknown.rs', False),
             ):
@@ -1204,6 +1207,26 @@ class ReviewedRemovalTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'outside supported risk series'):
                 collector.risk()
         command.assert_not_called()
+
+
+class RetiredCliRemovalTests(ReviewedRemovalTests):
+    PATH = 'tools/harness-gate/src/service/legacy_cli.rs'
+
+
+class RetiredServiceLoopRemovalTests(ReviewedRemovalTests):
+    PATH = 'tools/harness-gate/src/service/docker.rs'
+
+
+class RetiredInspectionRemovalTests(ReviewedRemovalTests):
+    PATH = 'tools/harness-gate/src/service/inspection.rs'
+
+
+class RetiredCommandsRemovalTests(ReviewedRemovalTests):
+    PATH = 'tools/harness-gate/src/service/commands.rs'
+
+
+class RetiredRuntimeRemovalTests(ReviewedRemovalTests):
+    PATH = 'tools/harness-gate/src/service/runtime.rs'
 
 
 if __name__ == '__main__':

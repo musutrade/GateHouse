@@ -56,7 +56,10 @@ create or start and never discovers an unknown ID by name.
 `services.<id>` with `kind = "docker"`, `runtime = "podman"`,
 `lifecycle_host = "/protected/host.json"` and an optional bounded `command` uses
 the native lifecycle host for startup and teardown. `command` is rejected for
-Docker and for the legacy Podman CLI route. Normal cleanup uses the lifecycle
+Docker and for configurations without an explicit Podman lifecycle host. The old
+Core Podman CLI route is retired; migration and retained legacy lease handling are
+documented in [Legacy CLI retirement](runtime-lifecycle-v1.md#legacy-cli-retirement).
+Normal cleanup uses the lifecycle
 journal and requires exact post-remove absence. The 15-second historical cleanup
 budget was raised to 30 seconds because five real Libpod exchanges (status, stop,
 status, remove, absence status) do not fit reliably in 15 seconds on a loaded

@@ -154,7 +154,11 @@ GateProbes 工作包括独立 adapter、引擎身份绑定及 inspect/remove/sta
 
 ## 显式旧引擎实现边界
 
-`service/runtime.rs` 的 `ContainerRuntime` 只声明操作，不再提供隐式执行
+以下为历史迁移检查点。当前源码已删除 `ContainerRuntime`、旧 CLI 实现及其
+参数/输出适配，受管服务必须使用显式安装的 host。旧租约保留可诊断边界；
+迁移与恢复要求见 [Legacy CLI retirement](runtime-lifecycle-v1.md#legacy-cli-retirement)。
+
+当时 `service/runtime.rs` 的 `ContainerRuntime` 只声明操作，不再提供隐式执行
 Docker/Podman CLI 的默认方法。原 CLI 实现在 `service/legacy_cli.rs`；
 包括 doctor 镜像检查在内的引擎调用通过该接口进入显式实现。
 新后端必须逐项实现操作，不能因遗漏实现而继承环境中的 Docker 命令。

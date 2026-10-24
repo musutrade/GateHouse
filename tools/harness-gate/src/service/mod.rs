@@ -1,14 +1,9 @@
-mod commands;
-mod docker;
-mod inspection;
 mod lease;
-mod legacy_cli;
 #[cfg(target_os = "linux")]
 #[allow(dead_code)]
 pub(crate) mod lifecycle;
 mod lifecycle_public;
 mod report_directory;
-mod runtime;
 
 #[cfg(test)]
 mod tests;
@@ -17,8 +12,6 @@ use crate::config::ServiceConfig;
 use crate::project::Project;
 use crate::recipes::run_checks;
 use anyhow::{bail, Context, Result};
-use docker::{start_docker, DockerStartOptions};
-use runtime::ContainerRuntime;
 use std::collections::BTreeMap;
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::{Duration, Instant};
@@ -506,13 +499,9 @@ impl Drop for ServiceLease {
 
 struct RunningService {
     lifecycle: Option<lifecycle_public::ManagedLifecycle>,
-    runtime: crate::config::ContainerRuntimeKind,
     inject_env: String,
     value: String,
-    container: Option<String>,
-    project: Project,
     cleanup_errors: Arc<Mutex<Vec<String>>>,
-    lease: Option<ResourceLease>,
 }
 
 impl Drop for RunningService {
@@ -522,44 +511,6 @@ impl Drop for RunningService {
                 let detail = format!("lifecycle cleanup retained the resource: {error:#}");
                 self.report_cleanup_error(detail);
             }
-            return;
-        }
-        let mut cleanup_succeeded = true;
-        if let Some(container) = &self.container {
-            let ownership = self
-                .lease
-                .as_ref()
-                .ok_or_else(|| anyhow::anyhow!("managed container has no ownership lease"))
-                .and_then(|lease| lease.verify_runtime_ownership(&self.project));
-            if let Err(error) = ownership.and_then(|object_id| {
-                self.runtime
-                    .stop_container(&self.project.root, &object_id, Duration::from_secs(5))
-            }) {
-                cleanup_succeeded = false;
-                let detail = format!(
-                    "failed to clean up {} container {container:?}: {error:#}",
-                    self.runtime.executable()
-                );
-                self.report_cleanup_error(detail);
-            }
-        }
-        if cleanup_succeeded {
-            // Stop the heartbeat before release so an ownership uncertainty
-            // is surfaced to the verification report and the marker remains.
-            if let Some(lease) = self.lease.take() {
-                if let Err(error) = lease.release_checked() {
-                    let container = self.container.as_deref().unwrap_or("<unknown>");
-                    let detail = format!(
-                        "failed to release {} lease for container {container:?}: {error:#}",
-                        self.runtime.executable()
-                    );
-                    self.report_cleanup_error(detail);
-                }
-            }
-        } else if let Some(lease) = self.lease.take() {
-            // Keep the marker available to `harness-gate cleanup` when the
-            // adapter could not stop the resource during normal teardown.
-            lease.retain();
         }
     }
 }
@@ -590,13 +541,9 @@ impl RunningService {
                 run_checks(project, id, Some(&value), Duration::from_secs(300))?;
                 Ok(Self {
                     lifecycle: None,
-                    runtime: crate::config::ContainerRuntimeKind::Docker,
                     inject_env,
                     value,
-                    container: None,
-                    project: project.clone(),
                     cleanup_errors,
-                    lease: None,
                 })
             }
             ServiceConfig::Docker {
@@ -636,13 +583,9 @@ impl RunningService {
                     let value = connection.replace("{host_port}", &lifecycle.port().to_string());
                     return Ok(Self {
                         lifecycle: Some(lifecycle),
-                        runtime,
                         inject_env,
                         value,
-                        container: None,
-                        project: project.clone(),
                         cleanup_errors,
-                        lease: None,
                     });
                 }
                 if let Some((_, value)) = external_env
@@ -658,53 +601,20 @@ impl RunningService {
                     )?;
                     return Ok(Self {
                         lifecycle: None,
-                        runtime,
                         inject_env,
                         value,
-                        container: None,
-                        project: project.clone(),
                         cleanup_errors,
-                        lease: None,
                     });
                 }
-                run_checks(project, id, None, Duration::from_secs(startup_timeout_secs))?;
-                let deadline = Instant::now() + Duration::from_secs(startup_timeout_secs);
-                runtime
-                    .check_available(project, remaining(deadline)?)
-                    .with_context(|| format!("container runtime unavailable for service {id:?}"))?;
-                start_docker(
-                    project,
-                    id,
-                    DockerStartOptions {
-                        image,
-                        runtime,
-                        inject_env,
-                        startup_timeout_secs,
-                        container_port,
-                        environment,
-                        healthcheck,
-                        connection,
-                        deadline,
-                        cleanup_errors,
-                        invocation_id: project.invocation_id(),
-                    },
+                bail!(
+                    "managed {} service {id:?} requires an explicit lifecycle_host; legacy CLI service operations are retired; configure an installed lifecycle host or a valid external service value",
+                    runtime.executable()
                 )
             }
         }
     }
 }
 pub fn check_available(project: &Project, id: &str, timeout: Duration) -> Result<String> {
-    check_available_with_runtime(project, id, timeout, |runtime| runtime)
-}
-
-/// Resolve a backend only after external values and recipe checks have passed.
-/// This seam is read-only: it does not select a startup or cleanup backend.
-fn check_available_with_runtime<R: ContainerRuntime>(
-    project: &Project,
-    id: &str,
-    timeout: Duration,
-    select_runtime: impl FnOnce(crate::config::ContainerRuntimeKind) -> R,
-) -> Result<String> {
     let service = project
         .config
         .service(id)
@@ -767,19 +677,10 @@ fn check_available_with_runtime<R: ContainerRuntime>(
                 }
                 return podman_lifecycle_availability(host.as_ref(), image, *runtime, deadline);
             }
-            let runtime = select_runtime(*runtime);
-            runtime
-                .check_available(project, remaining(deadline)?)
-                .with_context(|| format!("container runtime unavailable for service {id:?}"))?;
-            let image_ready = runtime.image_available(project, image, remaining(deadline)?)?;
-            if !image_ready {
-                bail!(
-                    "{} image {image} is not available; run `{} pull {image}`",
-                    runtime.executable(),
-                    runtime.executable()
-                );
-            }
-            Ok(format!("{} and {image} ready", runtime.executable()))
+            bail!(
+                "{} service {id:?} has no installed availability host; legacy CLI service operations are retired; configure lifecycle_host for Podman or readiness_host for Docker, or a valid external service value",
+                runtime.executable()
+            )
         }
     }
 }

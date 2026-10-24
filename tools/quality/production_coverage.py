@@ -102,7 +102,7 @@ def load_inventory(path: Path, crate: Path) -> tuple[dict, dict, dict]:
     boundaries = inventory["boundaries"]
     require({name for name, row in boundaries.items() if row["blocking"]} == REQUIRED,
             "missing or changed blocking boundaries")
-    require("service-adapters" in boundaries and not boundaries["service-adapters"]["blocking"],
+    require("service-adapters" not in boundaries or not boundaries["service-adapters"]["blocking"],
             "service adapters must remain informational")
     owners = {}
     excluded = {}
