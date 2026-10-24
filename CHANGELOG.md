@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.14.0 (unreleased)
+## 0.14.1 (unreleased)
+
+- Repair reuse of an already published runtime protocol: verify registry bytes against the registry checksum, then compare packaged inputs allowing only the clean packaging commit SHA to differ. Source, manifests, lockfiles, member paths and other VCS metadata still fail closed on changes.
+- Retain failed v0.14.0 and its release run; use a new immutable version instead of changing tag protection.
+- Require a new onboarding preset release declaring exact Core 0.14.1 compatibility.
+
+## 0.14.0 (tagged; publication failed)
 
 - Remove the remaining Core Docker/Podman CLI service backend, command construction and inspect/port parsers. Managed services require an explicit installed lifecycle host; missing configuration fails without allocating a legacy lease.
 - Preserve legacy lease evidence and actionable migration errors. Cleanup cannot silently reclaim or adopt old container records. Leases, heartbeats, isolation, journals, recovery coordination and final gate decisions remain in Core.

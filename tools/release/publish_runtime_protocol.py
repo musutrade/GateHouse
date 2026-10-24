@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Publish the exact packaged protocol once; reject conflicting registry bytes."""
+"""Publish protocol once; authenticate registry bytes and compare packaged inputs."""
 import hashlib
+import io
 import json
 from pathlib import Path
+import re
 import subprocess
+import tarfile
 import time
 import tomllib
 import urllib.error
@@ -28,17 +31,50 @@ def fetch(url):
     return data
 
 
+def package_contents(package, name, version):
+    """Compare regular crate members; only a clean packaging commit may differ."""
+    prefix = f"{name}-{version}/"
+    files = {}
+    total = 0
+    with tarfile.open(fileobj=io.BytesIO(package), mode="r:gz") as archive:
+        for member in archive:
+            relative = member.name.removeprefix(prefix)
+            if (not member.name.startswith(prefix) or not member.isfile()
+                    or any(part in ("", ".", "..") for part in relative.split("/"))
+                    or relative in files or len(files) >= 4096):
+                raise RuntimeError("invalid or duplicate protocol package member")
+            total += member.size
+            if member.size < 0 or total > MAX_BYTES:
+                raise RuntimeError("protocol package contents exceed limit")
+            data = archive.extractfile(member).read()
+            if relative == ".cargo_vcs_info.json":
+                stamp = json.loads(data)
+                git = stamp["git"]
+                if (not re.fullmatch(r"[0-9a-f]{40}", git["sha1"])
+                        or ("dirty" in git and git["dirty"] is not False)):
+                    raise RuntimeError("invalid or dirty protocol packaging commit")
+                # path_in_vcs, dirty and all other fields remain comparison inputs.
+                del git["sha1"]
+                data = json.dumps(stamp, sort_keys=True, separators=(",", ":")).encode()
+            files[relative] = (member.mode, data)
+    if ".cargo_vcs_info.json" not in files or "Cargo.toml" not in files:
+        raise RuntimeError("protocol package lacks manifest or VCS identity")
+    return files
+
+
 def verify_existing(name, version, package):
     metadata = fetch(f"https://crates.io/api/v1/crates/{name}/{version}")
     if metadata is None:
         return False
     entry = json.loads(metadata)["version"]
-    digest = hashlib.sha256(package).hexdigest()
-    if entry["num"] != version or entry["checksum"] != digest:
-        raise RuntimeError("existing protocol version differs from exact local package")
+    if entry["num"] != version:
+        raise RuntimeError("existing protocol version differs from requested version")
     downloaded = fetch(f"https://static.crates.io/crates/{name}/{name}-{version}.crate")
-    if downloaded is None or hashlib.sha256(downloaded).hexdigest() != digest:
-        raise RuntimeError("registry package download does not match local package")
+    if downloaded is None or hashlib.sha256(downloaded).hexdigest() != entry["checksum"]:
+        raise RuntimeError("registry package download does not match registry checksum")
+    if downloaded != package:
+        if package_contents(downloaded, name, version) != package_contents(package, name, version):
+            raise RuntimeError("existing protocol package contents differ from local package")
     return True
 
 
