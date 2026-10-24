@@ -23,6 +23,8 @@ from production_coverage import counts, require
 SERIES = {"analyzer": "harness-gate-rust-measure/0.3.1", "rule": "mccabe-rust-3/1",
           "instrumentation": "closure-black-box/1", "mapping": "insertions-utf8/1",
           "selection": "gh33-findings/1", "configuration": "compiler-target-production/4"}
+MEASURER_IDENTITY = {"analyzer": "harness-gate-rust-measure", "version": "0.3.1",
+                     "rule": "mccabe-rust-3"}
 PREFIX = "{ ::std::hint::black_box(()); "
 SUFFIX = " }"
 HOTSPOTS = {
@@ -119,14 +121,19 @@ def compiler_configuration(target=None) -> dict:
     return {"target": target, "cfg": sorted(values)}
 
 
-def ast(source: Path, binary: Path, configuration=None) -> dict:
+def ast_with_identity(source: Path, binary: Path, identity: dict, configuration=None) -> dict:
+    """Run the analyzer and require one explicit consumer identity."""
     configuration = compiler_configuration() if configuration is None else configuration
     result = json.loads(subprocess.check_output([str(binary.resolve()), str(source), "--target-cfg"],
                                                input=json.dumps(configuration), encoding="utf-8"))
     require((result.get("analyzer"), result.get("version"), result.get("rule")) ==
-            ("harness-gate-rust-measure", "0.3.1", "mccabe-rust-3"), "incompatible AST analyzer")
+            (identity["analyzer"], identity["version"], identity["rule"]), "incompatible AST analyzer")
     require(result.get("configuration") == configuration, "AST target configuration mismatch")
     return result
+
+
+def ast(source: Path, binary: Path, configuration=None) -> dict:
+    return ast_with_identity(source, binary, MEASURER_IDENTITY, configuration)
 
 
 def provenance(binary: Path) -> dict:
