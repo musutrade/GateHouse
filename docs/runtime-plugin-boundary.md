@@ -1,6 +1,19 @@
 # 容器运行时插件边界提案
 
-状态：#62 的设计草案，已完成隔离实验，修复后的隔离实验已通过独立复审；不代表插件已交付。
+当前状态（2026-10-24）：#62 的职责和迁移设计已落实到发布实现。
+Core 0.14.1 已交付旧 Docker/Podman CLI 路径退役；Core 保留租约、心跳、
+并发隔离、持久日志、恢复协调和最终判定，GateProbes 执行具体引擎操作。
+参见 [设计验收对照](runtime-extraction-closeout.md)、
+[公开交付回执](releases/0.14.1-public-verification.md) 和
+[旧租约显式迁移](runtime-lifecycle-v1.md#legacy-cli-retirement)。
+
+以下保留设计时的契约、实验边界和实施检查点；其中“候选”“尚未交付”及
+“后续”描述属于各检查点当时的状态，不是当前发布状态。
+插件历史包的兼容声明与后续验证应分别读取，不能把下载验收说成改写了历史 manifest。
+
+## 历史设计基线
+
+原状态：设计草案完成隔离实验及独立复审，尚未交付插件。
 源代码核对基线：Core `d755db0879b03950fa58d8662f4dfb979d6a17bf`，
 GateProbes `53c01505bed2ff61dfad1d106abbec2dcd961d05`。
 本提案不修改 [Engineering Policy](engineering-policy.md) 第 7 节，也不改变

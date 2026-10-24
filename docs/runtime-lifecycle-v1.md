@@ -1,6 +1,17 @@
 # Docker lifecycle contract (implementation specification)
 
-Status: selected design, not an implemented or released capability.
+Current status (2026-10-24): lifecycle execution is implemented, and Core
+0.14.1 ships the legacy Docker/Podman CLI retirement. See the
+[public delivery receipt](releases/0.14.1-public-verification.md),
+[design acceptance map](runtime-extraction-closeout.md), and
+[legacy migration procedure](#legacy-cli-retirement).
+
+This document retains the successive design revisions and implementation
+checkpoints. Statements about pending implementation/publication below describe
+those historical checkpoints; later revisions and the current release receipt
+supersede them. In particular, old CLI/v2 records are retained for diagnosis and
+explicit migration: the retired Core does not execute their former CLI cleanup.
+The published acceptance scope does not certify daemon restart or OS containment.
 
 ## Authority and installation
 
