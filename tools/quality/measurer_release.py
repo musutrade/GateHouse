@@ -14,7 +14,7 @@ from production_coverage import require
 from quality_common import ROOT, sha256
 
 MEASURER_PIN = ROOT / 'tools/quality/rust-measure-release.json'
-IDENTITY = {'analyzer': 'harness-gate-rust-measure', 'version': '0.3.1',
+IDENTITY = {'analyzer': 'harness-gate-rust-measure', 'version': '0.4.0',
             'rule': 'mccabe-rust-3', 'executable': 'harness-gate-rust-measure'}
 
 

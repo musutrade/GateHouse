@@ -599,22 +599,9 @@
       "final_disposition": "Retain Python ecosystem adapter; generic decisions must remain outside collector normalization.",
       "module": "tools/quality/source_measure.py",
       "notes": "",
-      "purpose": "Version 2 AST inventory, distinguishing closure instrumentation and LLVM join.",
+      "purpose": "Production AST inventory, closure instrumentation and LLVM join; pinned 0.4.0 measurer consumer identity.",
       "release_impact": "Not packaged in release binary. Existing required CI can block release eligibility; preserve behavior.",
-      "sha256": "fbf82e6a3b311b175c85f9195e666b74257bdd0d11ed55c3a47dca69859a540d"
-    },
-    {
-      "module": "tools/quality/source_measure_candidate.py",
-      "category": "D",
-      "purpose": "Explicit reviewed 0.4.0 measurer consumer identity/series candidate; production source_measure remains pinned to 0.3.1.",
-      "callers": [
-        "tools/quality/tests/rust_measure_candidate_acceptance.py"
-      ],
-      "ci_role": "Explicit candidate acceptance only; not selected by default CI, production pin or release authority.",
-      "release_impact": "Not packaged in the release binary. Cannot measure metrics, adopt a baseline, approve a generic release or replace required Rust checks.",
-      "authoritative_status": "Non-authoritative candidate consumer; production default remains the exact 0.3.1 pin. No environment/CLI bypass is provided.",
-      "final_disposition": "Retain as a reviewed candidate source for the GP dual-expectation chain until GH#108 makes a separate production pin decision.",
-      "sha256": "16b5a951541b21b20ff1eb1a56926ff9685cd63986ada1f347befb49bba1c41e"
+      "sha256": "e9021ad820daf04749f84e321eb0f0466925d097702ca85e43e1e712046720d7"
     },
     {
       "authoritative_status": "Non-authoritative for release; generic shadow/reference or development tooling",
@@ -896,7 +883,7 @@
       "release_impact": "Repository-only consumer; not packaged in the Core binary or collector. Cannot grant release approval or change thresholds/baseline/debt/ratchet.",
       "authoritative_status": "Artifact preflight/trust verification only; measurements and all final generic decisions retain their existing owners.",
       "final_disposition": "Retain Python CI/dev tooling for fixed artifact consumption under the existing Core required-path boundary.",
-      "sha256": "b5a860f9187f30ffe2f81840dc35d83096482f44d5a850aa304ebe6d83ec9725"
+      "sha256": "d3422d981bbb78b87f033a01fb2942441c5522ad428f2b07d292022f2185aa23"
     },
     {
       "module": "tools/quality/step_cache_benchmark.py",
