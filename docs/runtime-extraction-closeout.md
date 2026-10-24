@@ -35,11 +35,17 @@
 
 ## 历史制品与兼容声明
 
-podman-lifecycle 0.3.0 和 runtime-importer 0.6.0 的历史归档仍只声明
-Core 0.13.0；Podman 归档中的开发候选状态和“尚未发布”文字也是打包时的旧值。
-Core 0.14.1 的公开回执证明固定已发布制品的实际互操作，不会改变这些归档字段。
-后续兼容声明必须绑定原始制品身份，并明确自己的验收范围；不得替换旧 tag、
-签名或归档，也不得把补充声明伪装成 Core 安装校验的替代品。
+`runtime-importer-v0.7.0` 已发布，并正式声明 Core `0.13.0` 与 `0.14.1` 兼容；
+下载归档对两个已发布 Core 二进制都通过了安装与真实引擎验收。当前目录状态为
+已发布，见 [importer 0.7.0 回执](https://github.com/musutrade/GateProbes/blob/7fb3cf289dba4db1ce1ce8e790e61c170ad1ba48/docs/releases/runtime-importer-0.7.0-acceptance.md)。
+
+podman-lifecycle 0.3.0 的不可变归档仍只声明 Core 0.13.0，Podman 归档中的
+开发候选状态和“尚未发布”文字也是打包时的旧值；这是不可变的打包历史，
+不是当前“未发布”的事实。当前发布状态与已验证互操作见
+[adapter 状态回执](https://github.com/musutrade/GateProbes/blob/7fb3cf289dba4db1ce1ce8e790e61c170ad1ba48/docs/releases/podman-lifecycle-0.3.0-status.md)，
+该回执不会改变归档字段。历史 importer 0.1–0.6 制品、pin 与 tag 保持不变。
+后续兼容声明必须绑定原始制品身份并明确验收范围；不得替换旧 tag、签名或归档，
+也不得把补充声明伪装成 Core 安装校验的替代品。真实验收范围不因本文扩大。
 
 旧 CLI/v2 租约继续保留诊断与显式迁移边界。部署环境应按迁移步骤逐一检查，
 不能从某台机器的零记录审计推断其他环境无需迁移。业务仓库的外部数据库配置
