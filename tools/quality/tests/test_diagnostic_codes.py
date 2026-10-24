@@ -48,6 +48,44 @@ class DiagnosticRegistryParserTests(unittest.TestCase):
         self.assertEqual(failures, [])
         self.assertIn("HgpluginVersion", [entry["code"] for entry in entries])
 
+    def test_comment_pseudo_declarations_are_not_registry_starts(self):
+        commented = (
+            "// pub(crate) enum ConfigCode {\n"
+            "/*\n"
+            "pub(crate) enum ConfigCode {\n"
+            "*/\n"
+            "// const CONFIG_CODES: &[ConfigCodeEntry] = &[\n"
+            + self.source
+        )
+        self.assertEqual(self.failures(commented), [])
+
+    def test_inline_enum_and_table_headers_are_rejected(self):
+        inline_enum = self.source.replace(
+            "pub(crate) enum ConfigCode {", "pub(crate) enum ConfigCode { HgcfgProbeGap,", 1
+        )
+        self.assertIn("cannot find the ConfigCode enum", self.failures(inline_enum))
+
+        header = "const CONFIG_CODES: &[ConfigCodeEntry] = &["
+        inline_table = self.source.replace(
+            header,
+            header + " ConfigCodeEntry { code: ConfigCode::HgcfgVersion, id: \"X\", title: \"t\", help: \"h\" },",
+            1,
+        )
+        self.assertIn("cannot find the CONFIG_CODES registry", self.failures(inline_table))
+
+    def test_table_header_requires_the_exact_type_and_initializer(self):
+        header = "const CONFIG_CODES: &[ConfigCodeEntry] = &["
+        cases = {
+            "wrong type": "const CONFIG_CODES: &[OtherEntry] = &[",
+            "missing initializer": "const CONFIG_CODES: &[ConfigCodeEntry]",
+            "trailing content": header + " // entries",
+            "array length": "const CONFIG_CODES: &[ConfigCodeEntry; 39] = &[",
+        }
+        for label, replacement in cases.items():
+            with self.subTest(label=label):
+                source = self.source.replace(header, replacement, 1)
+                self.assertIn("cannot find the CONFIG_CODES registry", self.failures(source))
+
     def test_unsupported_enum_syntax_is_rejected(self):
         cases = {
             "attribute": "    #[cfg(test)]\n    HgcfgProbeGap,",

@@ -291,6 +291,37 @@ def _parse_rust_string(text: str, index: int) -> tuple[str, int]:
     raise ValueError("unterminated string literal in CONFIG_CODES")
 
 
+def _declaration_line(source: str, pattern: str) -> int | None:
+    """Return the first code line that exactly matches a declaration header.
+
+    Comment-only declarations are not accepted as the registry start.
+    """
+    in_block_comment = False
+    for index, raw in enumerate(source.splitlines()):
+        line = raw.strip()
+        if in_block_comment:
+            close = line.find("*/")
+            if close < 0:
+                continue
+            line = line[close + 2:].strip()
+            in_block_comment = False
+        if not line or line.startswith("//"):
+            continue
+        block = line.find("/*")
+        if block >= 0:
+            close = line.find("*/", block + 2)
+            if close < 0:
+                in_block_comment = True
+                line = line[:block].strip()
+            else:
+                line = (line[:block] + line[close + 2:]).strip()
+            if not line:
+                continue
+        if re.fullmatch(pattern, line):
+            return index
+    return None
+
+
 def parse_config_code_enum(source: str) -> tuple[list[str], list[str]]:
     """Parse the simple unit-variant syntax accepted for ConfigCode.
 
@@ -299,8 +330,7 @@ def parse_config_code_enum(source: str) -> tuple[list[str], list[str]]:
     unaccepted syntax are reported instead of being skipped.
     """
     lines = source.splitlines()
-    start = next((index for index, line in enumerate(lines)
-                  if re.search(r"\bpub\(crate\)\s+enum\s+ConfigCode\s*\{", line)), None)
+    start = _declaration_line(source, r"pub\(crate\)\s+enum\s+ConfigCode\s*\{")
     if start is None:
         return [], ["cannot find the ConfigCode enum"]
     variants: list[str] = []
@@ -334,8 +364,7 @@ def parse_config_code_enum(source: str) -> tuple[list[str], list[str]]:
 def parse_config_codes_table(source: str) -> tuple[list[dict[str, str]], list[str]]:
     """Parse CONFIG_CODES entries and consume every non-comment character."""
     lines = source.splitlines()
-    start = next((index for index, line in enumerate(lines)
-                  if re.search(r"\bconst\s+CONFIG_CODES\s*:", line)), None)
+    start = _declaration_line(source, r"const\s+CONFIG_CODES\s*:\s*&\[ConfigCodeEntry\]\s*=\s*&\[")
     if start is None:
         return [], ["cannot find the CONFIG_CODES registry"]
     end = next((index for index in range(start + 1, len(lines)) if lines[index].strip() == "];"), None)
