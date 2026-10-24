@@ -125,7 +125,7 @@ const CLI_EXPLANATIONS: &[(&str, &str, &str)] = &[
 ];
 
 fn config_explanations() -> impl Iterator<Item = (&'static str, &'static str, &'static str)> {
-    crate::config::ConfigCode::ALL.iter().map(|code| {
+    crate::config::ConfigCode::all().map(|code| {
         let (title, help) = code.explain();
         (code.id(), title, help)
     })
