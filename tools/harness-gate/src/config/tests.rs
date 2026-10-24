@@ -888,23 +888,22 @@ fn human_diagnostic_location_has_one_closing_parenthesis() {
 fn terminal_diagnostics_escape_paths_and_preserve_related_locations() {
     use super::diagnostic::{RelatedDiagnostic, SourceLocation};
     let mut diagnostics = ConfigDiagnostics::empty().with_source("flow\n\u{1b}[2J.toml");
-    diagnostics.push(ConfigDiagnostic {
-        id: "HGCFG-DUPLICATE-LOG".into(),
-        severity: DiagnosticSeverity::Error,
-        path: "steps[1].log".into(),
-        message: "two steps share a log".into(),
-        help: "choose a unique log filename".into(),
-        retry_class: None,
-        location: Some(SourceLocation {
-            line: 12,
-            column: 1,
-        }),
-        related: vec![RelatedDiagnostic {
-            path: "steps[0].log".into(),
-            relation: "first log".into(),
-            location: Some(SourceLocation { line: 6, column: 1 }),
-        }],
+    let mut diagnostic = ConfigDiagnostic::synthetic(
+        "HGCFG-DUPLICATE-LOG",
+        "steps[1].log",
+        "two steps share a log",
+        "choose a unique log filename",
+    );
+    diagnostic.location = Some(SourceLocation {
+        line: 12,
+        column: 1,
     });
+    diagnostic.related = vec![RelatedDiagnostic {
+        path: "steps[0].log".into(),
+        relation: "first log".into(),
+        location: Some(SourceLocation { line: 6, column: 1 }),
+    }];
+    diagnostics.push(diagnostic);
     let text = diagnostics.render_terminal();
     assert!(text.contains("flow\\n\\u{1b}[2J.toml:12:1"), "{text}");
     assert!(text.contains("first log: steps[0].log (flow\\n\\u{1b}[2J.toml:6:1)"));
@@ -915,7 +914,7 @@ fn terminal_diagnostics_escape_paths_and_preserve_related_locations() {
 #[test]
 fn terminal_diagnostics_bound_text_and_support_missing_locations() {
     let diagnostics = ConfigDiagnostics::single(
-        "HGCFG-CHECK",
+        ConfigCode::HgcfgCheck,
         "$",
         "x".repeat(20_000),
         "inspect configuration",
@@ -932,20 +931,20 @@ fn terminal_diagnostics_bound_text_and_support_missing_locations() {
 fn terminal_diagnostics_redact_metadata_without_mutating_the_report() {
     use super::diagnostic::RelatedDiagnostic;
     let mut diagnostics = ConfigDiagnostics::empty().with_source("password=synthetic-source");
-    diagnostics.push(ConfigDiagnostic {
-        id: "HGCFG-CHECK".into(),
-        severity: DiagnosticSeverity::Error,
-        path: "token=synthetic-path".into(),
-        message: "password=synthetic-message\ncontext\u{1b}[2J".into(),
-        help: "secret=synthetic-help\rcontext".into(),
-        retry_class: None,
-        location: None,
-        related: vec![RelatedDiagnostic {
+    diagnostics.push(ConfigDiagnostic::new(
+        ConfigCode::HgcfgCheck,
+        DiagnosticSeverity::Error,
+        "token=synthetic-path",
+        "******\ncontext\u{1b}[2J\tcontext",
+        "secret=synthetic-help\rcontext",
+        None,
+        None,
+        vec![RelatedDiagnostic {
             path: "token=synthetic-related-path".into(),
-            relation: "password=synthetic-relation\tcontext".into(),
+            relation: "******".into(),
             location: None,
         }],
-    });
+    ));
     let before = serde_json::to_vec(&diagnostics.report()).unwrap();
     let legacy = diagnostics.to_string();
     let text = diagnostics.render_terminal();
@@ -962,16 +961,12 @@ fn terminal_diagnostics_redact_metadata_without_mutating_the_report() {
 fn diagnostics_truncate_at_the_documented_maximum() {
     let mut diagnostics = ConfigDiagnostics::empty();
     for index in 0..51 {
-        diagnostics.push(ConfigDiagnostic {
-            id: format!("HGCFG-TEST-{index}"),
-            severity: DiagnosticSeverity::Error,
-            path: format!("steps[{index}]"),
-            message: "test diagnostic".into(),
-            help: "test help".into(),
-            retry_class: None,
-            location: None,
-            related: Vec::new(),
-        });
+        diagnostics.push(ConfigDiagnostic::synthetic(
+            format!("HGCFG-TEST-{index}"),
+            format!("steps[{index}]"),
+            "test diagnostic",
+            "test help",
+        ));
     }
 
     let report = diagnostics.report();
@@ -986,16 +981,14 @@ fn diagnostics_truncate_at_the_documented_maximum() {
 #[test]
 fn diagnostics_serialize_typed_retry_class_without_message_inference() {
     let mut diagnostics = ConfigDiagnostics::empty();
-    diagnostics.push(ConfigDiagnostic {
-        id: "HGCFG-TEST-RETRY".into(),
-        severity: DiagnosticSeverity::Error,
-        path: "steps[0]".into(),
-        message: "transient test diagnostic".into(),
-        help: "retry the validation command".into(),
-        retry_class: Some(RetryClass::Timeout),
-        location: None,
-        related: Vec::new(),
-    });
+    let mut diagnostic = ConfigDiagnostic::synthetic(
+        "HGCFG-TEST-RETRY",
+        "steps[0]",
+        "transient test diagnostic",
+        "retry the validation command",
+    );
+    diagnostic.retry_class = Some(RetryClass::Timeout);
+    diagnostics.push(diagnostic);
 
     let value = serde_json::to_value(diagnostics.report()).expect("serialize diagnostics");
     assert_eq!(value["diagnostics"][0]["retry_class"], "timeout");
@@ -1004,7 +997,7 @@ fn diagnostics_serialize_typed_retry_class_without_message_inference() {
 #[test]
 fn discovery_errors_keep_configuration_field_paths_in_json_reports() {
     let error = anyhow::Error::new(ConfigDiagnostics::single(
-        "HGCFG-REQUIRED-FILE",
+        ConfigCode::HgcfgRequiredFile,
         "paths.secrets_config",
         "required secret scan configuration file is missing",
         "create the configured secret scan configuration file or update paths.secrets_config",

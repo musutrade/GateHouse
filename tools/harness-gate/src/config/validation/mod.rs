@@ -1,5 +1,6 @@
 use super::diagnostic::{
-    ConfigDiagnostic, ConfigDiagnostics, DiagnosticSeverity, RelatedDiagnostic, SourceMap,
+    ConfigCode, ConfigDiagnostic, ConfigDiagnostics, DiagnosticSeverity, RelatedDiagnostic,
+    SourceMap,
 };
 use super::model::{
     DoctorCheck, DoctorCheckKind, FlowConfig, ParserConfig, PathScope, ScopeRule, ServiceConfig,
@@ -29,19 +30,19 @@ pub(super) enum ConfigIssueKind {
 }
 
 impl ConfigIssueKind {
-    const fn id(self) -> &'static str {
+    const fn code(self) -> ConfigCode {
         match self {
-            Self::Version => "HGCFG-VERSION",
-            Self::RunnerVersion => "HGCFG-RUNNER-VERSION",
-            Self::DependencyCycle => "HGCFG-DEPENDENCY-CYCLE",
-            Self::Dependency => "HGCFG-DEPENDENCY",
-            Self::ServiceInjectCollision => "HGCFG-SERVICE-INJECT-COLLISION",
-            Self::UnknownReference => "HGCFG-UNKNOWN-REFERENCE",
-            Self::InvalidPath => "HGCFG-INVALID-PATH",
-            Self::InvalidEnvironment => "HGCFG-INVALID-ENVIRONMENT",
-            Self::DuplicateField => "HGCFG-DUPLICATE-FIELD",
-            Self::InvalidLog => "HGCFG-INVALID-LOG",
-            Self::InvalidField => "HGCFG-INVALID-FIELD",
+            Self::Version => ConfigCode::HgcfgVersion,
+            Self::RunnerVersion => ConfigCode::HgcfgRunnerVersion,
+            Self::DependencyCycle => ConfigCode::HgcfgDependencyCycle,
+            Self::Dependency => ConfigCode::HgcfgDependency,
+            Self::ServiceInjectCollision => ConfigCode::HgcfgServiceInjectCollision,
+            Self::UnknownReference => ConfigCode::HgcfgUnknownReference,
+            Self::InvalidPath => ConfigCode::HgcfgInvalidPath,
+            Self::InvalidEnvironment => ConfigCode::HgcfgInvalidEnvironment,
+            Self::DuplicateField => ConfigCode::HgcfgDuplicateField,
+            Self::InvalidLog => ConfigCode::HgcfgInvalidLog,
+            Self::InvalidField => ConfigCode::HgcfgInvalidField,
         }
     }
 
@@ -258,16 +259,16 @@ impl FlowConfig {
         }
         self.collect_step_diagnostics(source_map, diagnostics);
         if let Err(error) = self.validate_impact() {
-            diagnostics.push(ConfigDiagnostic {
-                id: "HGCFG-IMPACT".into(),
-                severity: DiagnosticSeverity::Error,
-                path: "scope.impact".into(),
-                message: crate::utils::redaction::redact_text(&error.to_string()),
-                help: "review the complete version-1 component graph; use [] for components without dependencies".into(),
-                retry_class: None,
-                location: source_map.location("scope.impact"),
-                related: Vec::new(),
-            });
+            diagnostics.push(ConfigDiagnostic::new(
+                ConfigCode::HgcfgImpact,
+                DiagnosticSeverity::Error,
+                "scope.impact",
+                crate::utils::redaction::redact_text(&error.to_string()),
+                "review the complete version-1 component graph; use [] for components without dependencies",
+                None,
+                source_map.location("scope.impact"),
+                Vec::new(),
+            ));
         }
         collect_report_template_diagnostics(self, source_map, diagnostics);
         collect_execution_diagnostics(self, source_map, diagnostics);
@@ -1009,20 +1010,20 @@ fn validate_log_conflicts(
         if let Some(previous) = logs.insert(identity, index) {
             let path = format!("steps[{index}].log");
             let related_path = format!("steps[{previous}].log");
-            diagnostics.push(ConfigDiagnostic {
-                id: "HGCFG-DUPLICATE-LOG".into(),
-                severity: DiagnosticSeverity::Error,
-                path: path.clone(),
-                message: format!("log filename is also used by step {previous}"),
-                help: "choose a unique .log filename for each verification step".into(),
-                retry_class: None,
-                location: source_map.location(&path),
-                related: vec![RelatedDiagnostic {
+            diagnostics.push(ConfigDiagnostic::new(
+                ConfigCode::HgcfgDuplicateLog,
+                DiagnosticSeverity::Error,
+                path.clone(),
+                format!("log filename is also used by step {previous}"),
+                "choose a unique .log filename for each verification step",
+                None,
+                source_map.location(&path),
+                vec![RelatedDiagnostic {
                     path: related_path.clone(),
                     relation: "conflicts-with".into(),
                     location: source_map.location(&related_path),
                 }],
-            });
+            ));
         }
     }
 }
@@ -1117,15 +1118,15 @@ fn validate_shared_services(
             .expect("service appears in right step");
         let path = format!("steps[{right}].services[{right_service_index}]");
         let related_path = format!("steps[{left}].services[{left_service_index}]");
-        diagnostics.push(ConfigDiagnostic {
-            id: "HGCFG-SHARED-SERVICE".into(),
-            severity: DiagnosticSeverity::Error,
-            path: path.clone(),
-            message: format!("steps use shared service {service_id:?} without ordering"),
-            help: "add a dependency or define separate service resources".into(),
-            retry_class: None,
-            location: source_map.location(&path),
-            related: vec![
+        diagnostics.push(ConfigDiagnostic::new(
+            ConfigCode::HgcfgSharedService,
+            DiagnosticSeverity::Error,
+            path.clone(),
+            format!("steps use shared service {service_id:?} without ordering"),
+            "add a dependency or define separate service resources",
+            None,
+            source_map.location(&path),
+            vec![
                 RelatedDiagnostic {
                     path: related_path.clone(),
                     relation: "conflicts-with".into(),
@@ -1137,7 +1138,7 @@ fn validate_shared_services(
                     location: source_map.location(&format!("services[\"{service_id}\"]")),
                 },
             ],
-        });
+        ));
     }
 }
 
@@ -1167,16 +1168,15 @@ fn validate_service_injections(
             }
             let path = format!("steps[{right}].services[{right_service_index}]");
             let related_path = format!("steps[{left}].services[{left_service_index}]");
-            diagnostics.push(ConfigDiagnostic {
-                id: "HGCFG-SERVICE-INJECT-COLLISION".into(),
-                severity: DiagnosticSeverity::Error,
-                path: path.clone(),
-                message: "independent services inject the same environment variable".into(),
-                help: "add a dependency, use distinct inject_env names, or split the workflow"
-                    .into(),
-                retry_class: None,
-                location: source_map.location(&path),
-                related: vec![
+            diagnostics.push(ConfigDiagnostic::new(
+                ConfigCode::HgcfgServiceInjectCollision,
+                DiagnosticSeverity::Error,
+                path.clone(),
+                "independent services inject the same environment variable",
+                "add a dependency, use distinct inject_env names, or split the workflow",
+                None,
+                source_map.location(&path),
+                vec![
                     RelatedDiagnostic {
                         path: related_path.clone(),
                         relation: "conflicts-with".into(),
@@ -1195,7 +1195,7 @@ fn validate_service_injections(
                             .location(&format!("services[\"{right_service}\"].inject_env")),
                     },
                 ],
-            });
+            ));
         }
     }
 }
@@ -1228,16 +1228,16 @@ fn validate_report_template_paths(
                    message: String,
                    help: &str,
                    related: Vec<RelatedDiagnostic>| {
-        diagnostics.push(ConfigDiagnostic {
-            id: "HGCFG-TEMPLATE-PATH".into(),
-            severity: DiagnosticSeverity::Error,
-            path: path.into(),
+        diagnostics.push(ConfigDiagnostic::new(
+            ConfigCode::HgcfgTemplatePath,
+            DiagnosticSeverity::Error,
+            path,
             message,
-            help: help.into(),
-            retry_class: None,
-            location: source_map.location(path),
+            help,
+            None,
+            source_map.location(path),
             related,
-        });
+        ));
     };
 
     let Ok(resolved_root) = resolved_root else {
@@ -1376,20 +1376,20 @@ fn push_diagnostic(
     kind: ConfigIssueKind,
     message: &str,
 ) {
-    diagnostics.push(ConfigDiagnostic {
-        id: kind.id().into(),
-        severity: DiagnosticSeverity::Error,
-        path: path.into(),
-        message: if message.is_empty() {
-            kind.message().into()
+    diagnostics.push(ConfigDiagnostic::new(
+        kind.code(),
+        DiagnosticSeverity::Error,
+        path,
+        if message.is_empty() {
+            kind.message()
         } else {
-            message.into()
+            message
         },
-        help: kind.help().into(),
-        retry_class: None,
-        location: source_map.location(path),
-        related: Vec::new(),
-    });
+        kind.help(),
+        None,
+        source_map.location(path),
+        Vec::new(),
+    ));
 }
 
 fn collect_result<E: fmt::Display>(
@@ -1400,16 +1400,16 @@ fn collect_result<E: fmt::Display>(
     result: std::result::Result<(), E>,
 ) {
     if result.is_err() {
-        diagnostics.push(ConfigDiagnostic {
-            id: kind.id().into(),
-            severity: DiagnosticSeverity::Error,
-            path: path.into(),
-            message: kind.message().into(),
-            help: kind.help().into(),
-            retry_class: None,
-            location: source_map.location(path),
-            related: Vec::new(),
-        });
+        diagnostics.push(ConfigDiagnostic::new(
+            kind.code(),
+            DiagnosticSeverity::Error,
+            path,
+            kind.message(),
+            kind.help(),
+            None,
+            source_map.location(path),
+            Vec::new(),
+        ));
     }
 }
 
@@ -1419,16 +1419,16 @@ fn collect_report_template_diagnostics(
     diagnostics: &mut ConfigDiagnostics,
 ) {
     let add = |diagnostics: &mut ConfigDiagnostics, path: &str, kind: ConfigIssueKind| {
-        diagnostics.push(ConfigDiagnostic {
-            id: kind.id().into(),
-            severity: DiagnosticSeverity::Error,
-            path: path.into(),
-            message: kind.message().into(),
-            help: kind.help().into(),
-            retry_class: None,
-            location: source_map.location(path),
-            related: Vec::new(),
-        });
+        diagnostics.push(ConfigDiagnostic::new(
+            kind.code(),
+            DiagnosticSeverity::Error,
+            path,
+            kind.message(),
+            kind.help(),
+            None,
+            source_map.location(path),
+            Vec::new(),
+        ));
     };
     if config.validate_history_archive().is_err() {
         add(
@@ -1497,32 +1497,32 @@ fn collect_execution_diagnostics(
     if let Some(max_parallel) = config.execution.max_parallel {
         if max_parallel == 0 || max_parallel > 64 {
             has_field_error = true;
-            diagnostics.push(ConfigDiagnostic {
-                id: ConfigIssueKind::InvalidField.id().into(),
-                severity: DiagnosticSeverity::Error,
-                path: "execution.max_parallel".into(),
-                message: ConfigIssueKind::InvalidField.message().into(),
-                help: ConfigIssueKind::InvalidField.help().into(),
-                retry_class: None,
-                location: source_map.location("execution.max_parallel"),
-                related: Vec::new(),
-            });
+            diagnostics.push(ConfigDiagnostic::new(
+                ConfigIssueKind::InvalidField.code(),
+                DiagnosticSeverity::Error,
+                "execution.max_parallel",
+                ConfigIssueKind::InvalidField.message(),
+                ConfigIssueKind::InvalidField.help(),
+                None,
+                source_map.location("execution.max_parallel"),
+                Vec::new(),
+            ));
         }
     }
     for (step_id, retry) in &config.execution.retries {
         let base = format!("execution.retries[\"{step_id}\"]");
         if retry.max_attempts == 0 || retry.max_attempts > 5 {
             has_field_error = true;
-            diagnostics.push(ConfigDiagnostic {
-                id: ConfigIssueKind::InvalidField.id().into(),
-                severity: DiagnosticSeverity::Error,
-                path: format!("{base}.max_attempts"),
-                message: ConfigIssueKind::InvalidField.message().into(),
-                help: ConfigIssueKind::InvalidField.help().into(),
-                retry_class: None,
-                location: source_map.location(&format!("{base}.max_attempts")),
-                related: Vec::new(),
-            });
+            diagnostics.push(ConfigDiagnostic::new(
+                ConfigIssueKind::InvalidField.code(),
+                DiagnosticSeverity::Error,
+                format!("{base}.max_attempts"),
+                ConfigIssueKind::InvalidField.message(),
+                ConfigIssueKind::InvalidField.help(),
+                None,
+                source_map.location(&format!("{base}.max_attempts")),
+                Vec::new(),
+            ));
         }
     }
     // Preserve field-specific diagnostics above while applying the same
@@ -1566,16 +1566,16 @@ fn collect_step_field_diagnostics(
     diagnostics: &mut ConfigDiagnostics,
 ) {
     if let Err(issue) = steps::validate_step_with_cache_diagnostic(config, step, index) {
-        diagnostics.push(ConfigDiagnostic {
-            id: issue.kind.id().into(),
-            severity: DiagnosticSeverity::Error,
-            path: issue.path.clone(),
-            message: issue.kind.message().into(),
-            help: issue.kind.help().into(),
-            retry_class: None,
-            location: source_map.location(&issue.path),
-            related: Vec::new(),
-        });
+        diagnostics.push(ConfigDiagnostic::new(
+            issue.kind.code(),
+            DiagnosticSeverity::Error,
+            issue.path.clone(),
+            issue.kind.message(),
+            issue.kind.help(),
+            None,
+            source_map.location(&issue.path),
+            Vec::new(),
+        ));
     }
 }
 

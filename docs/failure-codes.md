@@ -121,6 +121,20 @@ lookup prints the details; JSON includes the `details` Markdown string.
 - [HGCFG-SHARED-SERVICE](../tools/harness-gate/docs/errors/HGCFG-SHARED-SERVICE.md)
 - [HGCFG-TEMPLATE-PATH](../tools/harness-gate/docs/errors/HGCFG-TEMPLATE-PATH.md)
 - [HGCFG-VERSION](../tools/harness-gate/docs/errors/HGCFG-VERSION.md)
+- [HGPLUGIN-CATALOG](../tools/harness-gate/docs/errors/HGPLUGIN-CATALOG.md)
+- [HGPLUGIN-CORE](../tools/harness-gate/docs/errors/HGPLUGIN-CORE.md)
+- [HGPLUGIN-DEPENDENCY](../tools/harness-gate/docs/errors/HGPLUGIN-DEPENDENCY.md)
+- [HGPLUGIN-DIGEST](../tools/harness-gate/docs/errors/HGPLUGIN-DIGEST.md)
+- [HGPLUGIN-LIMIT](../tools/harness-gate/docs/errors/HGPLUGIN-LIMIT.md)
+- [HGPLUGIN-LOCK](../tools/harness-gate/docs/errors/HGPLUGIN-LOCK.md)
+- [HGPLUGIN-MANIFEST](../tools/harness-gate/docs/errors/HGPLUGIN-MANIFEST.md)
+- [HGPLUGIN-MISSING](../tools/harness-gate/docs/errors/HGPLUGIN-MISSING.md)
+- [HGPLUGIN-PATH](../tools/harness-gate/docs/errors/HGPLUGIN-PATH.md)
+- [HGPLUGIN-PLATFORM](../tools/harness-gate/docs/errors/HGPLUGIN-PLATFORM.md)
+- [HGPLUGIN-PROTOCOL](../tools/harness-gate/docs/errors/HGPLUGIN-PROTOCOL.md)
+- [HGPLUGIN-SIGNATURE](../tools/harness-gate/docs/errors/HGPLUGIN-SIGNATURE.md)
+- [HGPLUGIN-STORE](../tools/harness-gate/docs/errors/HGPLUGIN-STORE.md)
+- [HGPLUGIN-VERSION](../tools/harness-gate/docs/errors/HGPLUGIN-VERSION.md)
 
 - [E1000](../tools/harness-gate/docs/errors/E1000.md)
 - [E1101](../tools/harness-gate/docs/errors/E1101.md)
@@ -602,6 +616,90 @@ Add an explicit dependency between the affected steps or define separate service
 **HGCFG-TEMPLATE-PATH — Report template path cannot be safely resolved.**
 
 Inspect the diagnostic path and related locations. Keep readable templates within their configured root and separate from report output; correct missing files or escaping symlinks.
+
+## hgplugin-catalog
+
+**HGPLUGIN-CATALOG — Signed preset catalog is invalid or incomplete.**
+
+Include the catalog and all referenced flow, recipe and pack files in the signed inventory and repair its flow configuration.
+
+## hgplugin-core
+
+**HGPLUGIN-CORE — Plugin does not declare this exact Core version in its preset manifest.**
+
+Select a reviewed plugin release whose signed preset manifest core_versions lists this exact Core version, or explicitly upgrade Core. This checks only the preset manifest declaration; it does not validate adapter requests.
+
+## hgplugin-dependency
+
+**HGPLUGIN-DEPENDENCY — Plugin dependency is missing, incompatible or invalid.**
+
+Explicitly lock and prepare the exact dependency versions and required programs. Offline preflight never installs or runs them.
+
+## hgplugin-digest
+
+**HGPLUGIN-DIGEST — Prepared plugin manifest or artifact digest differs from the lock.**
+
+Restore the exact pinned file; do not change the lock to hide corruption. Review and explicitly lock any upgrade.
+
+## hgplugin-limit
+
+**HGPLUGIN-LIMIT — Plugin input exceeds a size or inventory limit.**
+
+Prepare a bounded data-only package: each input at most 1 MiB and a signed file inventory of 1..128 entries.
+
+## hgplugin-lock
+
+**HGPLUGIN-LOCK — Plugin lock is invalid or the selection is ambiguous.**
+
+Use harness-plugin-lock/v1 with 1..64 unique exact pins; review migration before replacing the lock. Absence of a lock preserves legacy workflows.
+
+## hgplugin-manifest
+
+**HGPLUGIN-MANIFEST — Signed plugin manifest is invalid.**
+
+Prepare a harness-plugin/v1 data-only preset manifest and review compatibility before locking it.
+
+## hgplugin-missing
+
+**HGPLUGIN-MISSING — Prepared plugin input is missing.**
+
+Explicitly prepare or install the exact locked package in the selected offline store; preflight never downloads.
+
+## hgplugin-path
+
+**HGPLUGIN-PATH — Plugin input or signed artifact path is unsafe.**
+
+Use confined relative paths without parent traversal and prepare regular files, not symlinks.
+
+## hgplugin-platform
+
+**HGPLUGIN-PLATFORM — Plugin does not support this exact host platform.**
+
+Prepare a reviewed package supporting this exact operating system and architecture.
+
+## hgplugin-protocol
+
+**HGPLUGIN-PROTOCOL — Plugin protocol is unsupported.**
+
+Select a data-only harness-preset-catalog/v1 package. Adapter execution still requires its separately signed v2 requests.
+
+## hgplugin-signature
+
+**HGPLUGIN-SIGNATURE — Plugin signature or host-approved key input is invalid.**
+
+Supply an operator-approved --plugin-trusted-key and a detached Ed25519 signature over the exact manifest. Project pins never authorize a key; nothing is downloaded or approved automatically.
+
+## hgplugin-store
+
+**HGPLUGIN-STORE — Plugin store is missing or was not supplied.**
+
+Pass --plugin-store PATH pointing to explicitly prepared offline packages.
+
+## hgplugin-version
+
+**HGPLUGIN-VERSION — Locked plugin identity or exact version is invalid.**
+
+Use a safe name and an exact numeric major.minor.patch version; install the exact locked product and never silently upgrade.
 
 Standalone `secrets` and `audit` commands also print the corresponding failure code
 and an `explain` command when their human-readable gate result fails. Their

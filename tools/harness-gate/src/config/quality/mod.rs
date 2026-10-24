@@ -9,7 +9,7 @@ mod tests;
 mod validation;
 pub(crate) use validation::identifier as validate_project_identifier;
 
-use super::{ConfigDiagnostics, FlowConfig};
+use super::{ConfigCode, ConfigDiagnostics, FlowConfig};
 use anyhow::{Context, Result};
 pub(crate) use model::{Assurance, QualityConfig, ReportFormat};
 use std::{fs, io::ErrorKind, path::Path};
@@ -48,7 +48,7 @@ impl QualityConfig {
         };
         Self::load(root, flow).map(Some).map_err(|error| {
             ConfigDiagnostics::single(
-                "HGCFG-QUALITY",
+                ConfigCode::HgcfgQuality,
                 "quality",
                 format!("{error:#}"),
                 "correct quality.toml references, profile participation, and policy/collector authority",

@@ -14,7 +14,7 @@ fn discovery_is_project_independent_and_selectors_are_exclusive() {
     assert!(listed.status.success());
     assert!(listed.stderr.is_empty());
     let entries: Vec<serde_json::Value> = serde_json::from_slice(&listed.stdout).unwrap();
-    assert_eq!(entries.len(), 71);
+    assert_eq!(entries.len(), 85);
     assert!(entries
         .windows(2)
         .all(|pair| pair[0]["code"].as_str() < pair[1]["code"].as_str()));

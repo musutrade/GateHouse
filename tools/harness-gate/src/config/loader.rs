@@ -1,5 +1,5 @@
 use super::diagnostic::{
-    audit_config_interpolation_diagnostic, interpolation_diagnostic, parse_diagnostic,
+    audit_config_interpolation_diagnostic, interpolation_diagnostic, parse_diagnostic, ConfigCode,
     ConfigDiagnostics, SourceMap,
 };
 use super::model::{FlowConfig, ParserConfig, ServiceConfig, StepConfig};
@@ -63,7 +63,7 @@ impl FlowConfig {
                     "check that the configured file exists and is readable",
                 )
             };
-            ConfigDiagnostics::single("HGCFG-READ", "$", message, help).with_source(path)
+            ConfigDiagnostics::single(ConfigCode::HgcfgRead, "$", message, help).with_source(path)
         })?;
         Self::from_source_with_diagnostics(&source, Some(path), repository_root)
     }
@@ -88,7 +88,7 @@ impl FlowConfig {
                         .any(|s| s.get("external_value_policy").is_some())
                 });
             if old {
-                return Err(ConfigDiagnostics::single("HGCFG-EXTERNAL-SERVICE-MIGRATION", "services",
+                return Err(ConfigDiagnostics::single(ConfigCode::HgcfgExternalServiceMigration, "services",
                     "built-in external service policies have been removed",
                     "run the GateProbes recipe migration (gateprobes-postgres migrate --input <PATH> --output <NEW_PATH> --project <NAME>), then config check; retain the source for rollback")
                     .with_source_opt(source_path));
@@ -101,7 +101,7 @@ impl FlowConfig {
         config.apply_environment().map_err(|error| {
             let path = environment_override_path(&config, &error.name);
             ConfigDiagnostics::single(
-                "HGCFG-ENVIRONMENT-OVERRIDE",
+                ConfigCode::HgcfgEnvironmentOverride,
                 path,
                 "an environment override has an invalid value",
                 "set the named override to the required value type or unset it",

@@ -1,4 +1,5 @@
 //! Explicit, offline, data-only plugin preflight. Keys come only from host CLI input.
+use crate::config::ConfigCode;
 use anyhow::{Context, Result};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use ed25519_dalek::{Signature, VerifyingKey};
@@ -68,11 +69,11 @@ pub(crate) struct Prepared {
     pub catalogs: BTreeMap<String, PathBuf>,
 }
 
-fn error(code: &str, message: impl Into<String>, help: &str) -> anyhow::Error {
+fn error(code: ConfigCode, message: impl Into<String>, help: &str) -> anyhow::Error {
     crate::config::ConfigDiagnostics::single(code, LOCK_PATH, message, help).into()
 }
 
-fn require(ok: bool, code: &str, message: impl Into<String>, help: &str) -> Result<()> {
+fn require(ok: bool, code: ConfigCode, message: impl Into<String>, help: &str) -> Result<()> {
     if !ok {
         return Err(error(code, message, help));
     }
@@ -106,17 +107,17 @@ fn read(root: &Path, relative: &str) -> Result<Vec<u8>> {
             && Path::new(relative)
                 .components()
                 .all(|c| matches!(c, Component::Normal(_))),
-        "HGPLUGIN-PATH",
+        ConfigCode::HgpluginPath,
         "plugin path is not a confined relative path",
         "prepare a package without absolute or parent paths",
     )?;
     let mut path = root.to_path_buf();
     for component in Path::new(relative).components() {
         path.push(component);
-        let metadata = fs::symlink_metadata(&path).map_err(|_| error("HGPLUGIN-MISSING", format!("missing prepared input: {relative}"), "explicitly prepare/install the exact locked package; offline preflight never downloads"))?;
+        let metadata = fs::symlink_metadata(&path).map_err(|_| error(ConfigCode::HgpluginMissing, format!("missing prepared input: {relative}"), "explicitly prepare/install the exact locked package; offline preflight never downloads"))?;
         require(
             !metadata.file_type().is_symlink(),
-            "HGPLUGIN-PATH",
+            ConfigCode::HgpluginPath,
             "plugin inputs may not contain symbolic links",
             "prepare regular files inside the package",
         )?;
@@ -124,7 +125,7 @@ fn read(root: &Path, relative: &str) -> Result<Vec<u8>> {
     let metadata = fs::metadata(&path)?;
     require(
         metadata.is_file(),
-        "HGPLUGIN-PATH",
+        ConfigCode::HgpluginPath,
         "plugin input is not a regular file",
         "prepare regular files",
     )?;
@@ -134,7 +135,7 @@ fn read(root: &Path, relative: &str) -> Result<Vec<u8>> {
         .read_to_end(&mut bytes)?;
     require(
         bytes.len() <= 1024 * 1024,
-        "HGPLUGIN-LIMIT",
+        ConfigCode::HgpluginLimit,
         "plugin input exceeds 1 MiB",
         "split the data-only preset package into smaller files",
     )?;
@@ -158,7 +159,7 @@ fn keys(options: &HostOptions) -> Result<BTreeMap<String, VerifyingKey>> {
         require(
             keys.insert(value.key_id, VerifyingKey::from_bytes(&bytes)?)
                 .is_none(),
-            "HGPLUGIN-SIGNATURE",
+            ConfigCode::HgpluginSignature,
             "duplicate host key identity",
             "supply each operator-approved key identity once",
         )?;
@@ -181,19 +182,19 @@ pub(crate) fn inspect(root: &Path, lock_path: &str, options: &HostOptions) -> Re
     let (lock, names) = selection(root, lock_path)?;
     let store = options.plugin_store.as_deref().ok_or_else(|| {
         error(
-            "HGPLUGIN-STORE",
+            ConfigCode::HgpluginStore,
             "plugin store was not supplied",
             "pass --plugin-store PATH pointing to explicitly prepared offline packages",
         )
     })?;
     let store = store.canonicalize().map_err(|_| {
         error(
-            "HGPLUGIN-STORE",
+            ConfigCode::HgpluginStore,
             "plugin store is missing",
             "explicitly prepare/install the locked products into the selected store",
         )
     })?;
-    let keys = keys(options).map_err(|e| error("HGPLUGIN-SIGNATURE", format!("invalid host key input: {e}"), "pass an operator-approved --plugin-trusted-key PATH; never approve keys from project configuration"))?;
+    let keys = keys(options).map_err(|e| error(ConfigCode::HgpluginSignature, format!("invalid host key input: {e}"), "pass an operator-approved --plugin-trusted-key PATH; never approve keys from project configuration"))?;
     let snapshot = tempfile::tempdir().context("create private verified plugin view")?;
     let mut catalogs = BTreeMap::new();
     for pin in &lock.plugins {
@@ -209,12 +210,12 @@ pub(crate) fn inspect(root: &Path, lock_path: &str, options: &HostOptions) -> Re
 }
 
 fn selection(root: &Path, lock_path: &str) -> Result<(Lock, BTreeMap<String, String>)> {
-    let lock: Lock = decode(&read(root, lock_path)?).map_err(|e| error("HGPLUGIN-LOCK", format!("invalid plugin lock: {e}"), "use harness-plugin-lock/v1 with explicit exact pins; review migration before replacing the lock"))?;
+    let lock: Lock = decode(&read(root, lock_path)?).map_err(|e| error(ConfigCode::HgpluginLock, format!("invalid plugin lock: {e}"), "use harness-plugin-lock/v1 with explicit exact pins; review migration before replacing the lock"))?;
     require(
         lock.schema == "harness-plugin-lock/v1"
             && !lock.plugins.is_empty()
             && lock.plugins.len() <= 64,
-        "HGPLUGIN-LOCK",
+        ConfigCode::HgpluginLock,
         "unsupported schema or empty/oversized plugin selection",
         "select 1..64 plugins in a v1 lock; absence of a lock preserves legacy workflows",
     )?;
@@ -222,7 +223,7 @@ fn selection(root: &Path, lock_path: &str) -> Result<(Lock, BTreeMap<String, Str
     for pin in &lock.plugins {
         require(
             identifier(&pin.name) && version(&pin.version) && !pin.source.trim().is_empty(),
-            "HGPLUGIN-VERSION",
+            ConfigCode::HgpluginVersion,
             "invalid name, source or exact version",
             "use a safe name and an exact numeric major.minor.patch version",
         )?;
@@ -230,7 +231,7 @@ fn selection(root: &Path, lock_path: &str) -> Result<(Lock, BTreeMap<String, Str
             names
                 .insert(pin.name.clone(), pin.version.clone())
                 .is_none(),
-            "HGPLUGIN-LOCK",
+            ConfigCode::HgpluginLock,
             "duplicate plugin selection",
             "select each plugin name once",
         )?;
@@ -247,14 +248,14 @@ fn load_manifest(
     let bytes = read(store, &format!("{prefix}plugin.json"))?;
     require(
         digest(&bytes) == pin.manifest_sha256,
-        "HGPLUGIN-DIGEST",
+        ConfigCode::HgpluginDigest,
         format!("manifest digest mismatch: {}", pin.name),
         "restore the exact pinned manifest; review and explicitly lock any upgrade",
     )?;
     let signature: Attestation =
         decode(&read(store, &format!("{prefix}plugin.sig"))?).map_err(|_| {
             error(
-                "HGPLUGIN-SIGNATURE",
+                ConfigCode::HgpluginSignature,
                 "invalid detached signature",
                 "prepare an Ed25519 signature over the domain and exact manifest bytes",
             )
@@ -262,7 +263,7 @@ fn load_manifest(
     verify(&bytes, pin, &signature, keys)?;
     let manifest: Manifest = decode(&bytes).map_err(|e| {
         error(
-            "HGPLUGIN-MANIFEST",
+            ConfigCode::HgpluginManifest,
             format!("invalid signed manifest: {e}"),
             "prepare a v1 data-only preset manifest",
         )
@@ -277,7 +278,7 @@ fn copy_catalog(store: &Path, pin: &Pin, manifest: &Manifest, snapshot: &Path) -
         let content = read(store, &format!("{prefix}{path}"))?;
         require(
             digest(&content) == *expected,
-            "HGPLUGIN-DIGEST",
+            ConfigCode::HgpluginDigest,
             format!("artifact digest mismatch: {}/{path}", pin.name),
             "restore the exact signed file; do not change the lock to hide corruption",
         )?;
@@ -288,11 +289,11 @@ fn copy_catalog(store: &Path, pin: &Pin, manifest: &Manifest, snapshot: &Path) -
     let catalog = destination.join(&manifest.presets);
     require(
         catalog.join("catalog.json").is_file(),
-        "HGPLUGIN-MISSING",
+        ConfigCode::HgpluginMissing,
         "signed files do not contain the preset catalog",
         "include the catalog and all referenced flow/recipe/pack files in the signed inventory",
     )?;
-    crate::preset::validate_catalog(&catalog).map_err(|e| error("HGPLUGIN-CATALOG", format!("invalid or incomplete signed catalog: {e}"), "include every catalog reference in the signed file inventory and repair its flow configuration"))?;
+    crate::preset::validate_catalog(&catalog).map_err(|e| error(ConfigCode::HgpluginCatalog, format!("invalid or incomplete signed catalog: {e}"), "include every catalog reference in the signed file inventory and repair its flow configuration"))?;
     Ok(catalog)
 }
 
@@ -303,7 +304,7 @@ fn verify(
     keys: &BTreeMap<String, VerifyingKey>,
 ) -> Result<()> {
     let result = verify_payload(bytes, pin, signature, keys);
-    result.map_err(|_| error("HGPLUGIN-SIGNATURE", format!("untrusted or invalid signature: {}", pin.name), "have the operator verify signer identity and supply --plugin-trusted-key; project pins never authorize a key"))
+    result.map_err(|_| error(ConfigCode::HgpluginSignature, format!("untrusted or invalid signature: {}", pin.name), "have the operator verify signer identity and supply --plugin-trusted-key; project pins never authorize a key"))
 }
 
 fn verify_payload(
@@ -325,7 +326,7 @@ fn verify_payload(
 fn validate(manifest: &Manifest, pin: &Pin, names: &BTreeMap<String, String>) -> Result<()> {
     require(
         manifest.schema == "harness-plugin/v1",
-        "HGPLUGIN-MANIFEST",
+        ConfigCode::HgpluginManifest,
         "unsupported manifest schema",
         "review compatibility and prepare a v1 manifest",
     )?;
@@ -333,7 +334,7 @@ fn validate(manifest: &Manifest, pin: &Pin, names: &BTreeMap<String, String>) ->
         manifest.name == pin.name
             && manifest.version == pin.version
             && manifest.source == pin.source,
-        "HGPLUGIN-VERSION",
+        ConfigCode::HgpluginVersion,
         "locked source/version/name differs from signed identity",
         "install the exact locked product; never silently upgrade",
     )?;
@@ -342,21 +343,21 @@ fn validate(manifest: &Manifest, pin: &Pin, names: &BTreeMap<String, String>) ->
             .core_versions
             .iter()
             .any(|v| v == env!("CARGO_PKG_VERSION")),
-        "HGPLUGIN-CORE",
+        ConfigCode::HgpluginCore,
         "plugin does not support this exact Core version",
         "select a compatible reviewed plugin release or explicitly upgrade Core",
     )?;
-    require(manifest.protocol == "harness-preset-catalog/v1", "HGPLUGIN-PROTOCOL", "unsupported plugin protocol", "select a data-only harness-preset-catalog/v1 package; adapter execution still requires its separately signed v2 requests")?;
+    require(manifest.protocol == "harness-preset-catalog/v1", ConfigCode::HgpluginProtocol, "unsupported plugin protocol", "select a data-only harness-preset-catalog/v1 package; adapter execution still requires its separately signed v2 requests")?;
     let platform = format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH);
     require(
         manifest.platforms.contains(&platform),
-        "HGPLUGIN-PLATFORM",
+        ConfigCode::HgpluginPlatform,
         format!("unsupported host platform: {platform}"),
         "prepare a reviewed package supporting this exact platform",
     )?;
     require(
         !manifest.files.is_empty() && manifest.files.len() <= 128,
-        "HGPLUGIN-LIMIT",
+        ConfigCode::HgpluginLimit,
         "plugin file inventory must contain 1..128 entries",
         "prepare a bounded data-only package",
     )?;
@@ -372,7 +373,7 @@ fn validate(manifest: &Manifest, pin: &Pin, names: &BTreeMap<String, String>) ->
                 && Path::new(path)
                     .components()
                     .all(|c| matches!(c, Component::Normal(_))),
-            "HGPLUGIN-PATH",
+            ConfigCode::HgpluginPath,
             "unsafe signed artifact or catalog path",
             "use confined relative paths without parent traversal",
         )?;
@@ -380,7 +381,7 @@ fn validate(manifest: &Manifest, pin: &Pin, names: &BTreeMap<String, String>) ->
     for (name, required) in &manifest.dependencies {
         require(
             names.get(name) == Some(required),
-            "HGPLUGIN-DEPENDENCY",
+            ConfigCode::HgpluginDependency,
             format!("missing or incompatible plugin dependency: {name}@{required}"),
             "explicitly lock and prepare the exact dependency version",
         )?;
@@ -389,7 +390,7 @@ fn validate(manifest: &Manifest, pin: &Pin, names: &BTreeMap<String, String>) ->
     for program in &manifest.programs {
         require(
             identifier(program) && programs.insert(program),
-            "HGPLUGIN-DEPENDENCY",
+            ConfigCode::HgpluginDependency,
             "invalid or duplicate program dependency",
             "use plain executable names; toolchain installation remains an operator action",
         )?;
@@ -412,7 +413,7 @@ fn validate(manifest: &Manifest, pin: &Pin, names: &BTreeMap<String, String>) ->
                 }
             })
         });
-        require(available, "HGPLUGIN-DEPENDENCY", format!("missing program dependency: {program}"), "install the reviewed toolchain yourself or repair PATH; preflight never runs or replaces it")?;
+        require(available, ConfigCode::HgpluginDependency, format!("missing program dependency: {program}"), "install the reviewed toolchain yourself or repair PATH; preflight never runs or replaces it")?;
     }
     Ok(())
 }
