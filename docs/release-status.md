@@ -10,6 +10,22 @@ Podman 5.7.0 normal lifecycle acceptance passed. See the
 [public verification receipt](releases/0.14.1-public-verification.md) for identities
 and limits. This delivers the Core legacy CLI retirement through published artifacts.
 
+## Published runtime importer and Podman lifecycle
+
+`runtime-importer-v0.7.0` and `podman-lifecycle-v0.3.0` are published in GateProbes.
+The importer formally declares Core `0.13.0` and `0.14.1`; downloaded-archive
+acceptance passed against both published Core binaries. The adapter's immutable
+packaged manifest still records Core `0.13.0` and its packaging-time candidate
+wording; that is packaging history, not a current unpublished fact, and it was not
+edited. The current catalog entry is published, and Core's exact installation
+descriptor gate is unchanged.
+
+- [runtime-importer 0.7.0 acceptance](https://github.com/musutrade/GateProbes/blob/7fb3cf289dba4db1ce1ce8e790e61c170ad1ba48/docs/releases/runtime-importer-0.7.0-acceptance.md)
+- [podman-lifecycle 0.3.0 published status](https://github.com/musutrade/GateProbes/blob/7fb3cf289dba4db1ce1ce8e790e61c170ad1ba48/docs/releases/podman-lifecycle-0.3.0-status.md)
+
+Real-engine acceptance stays Linux x86_64 rootless Podman 5.7.0 normal lifecycle;
+it is not expanded by this status note.
+
 Core v0.14.0 was tagged at `c3a79e6b9449c2b9a69ac4480a7ec350c33c1a89`,
 but release run `40072636598` attempt 1 failed before GitHub/Core registry publication.
 Protocol 0.6.0 already existed; repackaging changed only Cargo's VCS commit stamp,

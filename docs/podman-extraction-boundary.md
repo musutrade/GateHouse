@@ -6,9 +6,14 @@ the extraction sequence. The Core CLI implementation has now been removed; see
 configuration and legacy lease recovery requirements. Historical checkpoints are
 not claims that the old executable path still exists.
 
-Status: development draft, pending independent engine-contract review. Docker's
-published lifecycle profile remains unchanged. No Podman implementation or real
-Podman compatibility is claimed by this document.
+Current status (2026-10-24): the extraction described here is implemented and
+shipped in Core 0.14.1. The published runtime importer and Podman lifecycle adapter
+are recorded in the [current release status](release-status.md); the adapter's
+immutable manifest keeps its historical Core 0.13.0 declaration.
+
+Historical status: development draft, pending independent engine-contract review.
+Docker's published lifecycle profile remains unchanged. No Podman implementation
+or real Podman compatibility is claimed by this document's historical sections.
 
 ## Current boundary
 

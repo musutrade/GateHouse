@@ -1,10 +1,14 @@
 # Native Podman 5.7 lifecycle
 
 Status: the Core 0.13.0 / Podman lifecycle 0.3.0 / importer 0.6.0 predecessor
-chain is published. Core CLI retirement from PR #183 is shipped in
-Core 0.14.1; its downloaded Linux binary passed real rootless Podman acceptance.
-See the [public verification receipt](releases/0.14.1-public-verification.md). See [current release status](release-status.md)
-and [candidate migration/acceptance](releases/0.14.0.zh-CN.md). The implementation
+chain is published, and `runtime-importer-v0.7.0` now declares Core 0.13.0 and
+0.14.1 compatibility. Core CLI retirement from PR #183 is shipped in Core 0.14.1;
+its downloaded Linux binary passed real rootless Podman acceptance. See the
+[public verification receipt](releases/0.14.1-public-verification.md), the
+[importer 0.7.0 acceptance](https://github.com/musutrade/GateProbes/blob/7fb3cf289dba4db1ce1ce8e790e61c170ad1ba48/docs/releases/runtime-importer-0.7.0-acceptance.md),
+[current release status](release-status.md) and
+[candidate migration/acceptance](releases/0.14.0.zh-CN.md). The published adapter
+0.3.0 manifest keeps its historical Core 0.13.0 declaration. The implementation
 notes and original publication checklist below retain their historical context.
 
 ## Selected profile
