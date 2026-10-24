@@ -38,10 +38,10 @@ module = "process"
 test = "verification_cleanup_cancel_and_report_precedence_retains_resource_evidence"
 platforms = ["linux", "macos"]
 platform_note = "Unix fixture uses POSIX commands/signals; Windows is excluded by the reviewed policy, not by tool availability."
-observable = "Cancelled CLI exits 1, report passed=false, child PID is gone, and sealed invocation evidence is retained; fake cleanup runtime failure remains visible."
+observable = "Cancelled CLI exits 1, report passed=false, child PID is gone, and sealed invocation evidence is retained; installed Podman lifecycle cleanup uncertainty remains visible on Linux; other Unix hosts use an external service because lifecycle mutation is unsupported."
 rule = "critical-path-source-v2"
 owner = "Harness-Gate maintainers"
-review_date = "2026-09-07"
+review_date = "2026-10-24"
 binary = "failure_paths_test"
 assertions = ["\"cancelled child still alive\"", "assert_eq!(json[\"passed\"], false);", "assert_sealed_evidence(&json);"]
 [paths.source]
@@ -54,9 +54,9 @@ sha256 = "49e41fe0beaf7bec6dd7044012341284def1feba683e6db8da9998ff7c80a189"
 [paths.test_source]
 path = "tests/failure_paths_test.rs"
 symbol = "verification_cleanup_cancel_and_report_precedence_retains_resource_evidence"
-start = 580
-end = 818
-sha256 = "0d2a7d3ae6eea1ee2900eeb74c694926fa1853acee71342c5ded332832048e6a"
+start = 631
+end = 857
+sha256 = "9f345972e717987df121dbb27ea995a236aa503b7d653f6dca73dca2512a1f66"
 
 [[paths.probes]]
 line = 373
@@ -349,7 +349,7 @@ observable = "Fake Docker/Podman ownership uncertainty retains the lease marker 
 platforms = ["linux", "macos", "windows"]
 rule = "critical-path-source-v2"
 owner = "Harness-Gate maintainers"
-review_date = "2026-09-07"
+review_date = "2026-10-24"
 platform_note = "Runs on all supported host platforms; no external daemon required."
 binary = "harness-gate"
 test = "service::lease::tests::fake_docker_and_podman_cleanup_requires_fresh_complete_ownership"
@@ -357,19 +357,19 @@ assertions = ["assert_failed_without_remove(&project, &path, &fake, \"runtime ob
 [paths.source]
 path = "src/service/lease/container.rs"
 symbol = "verify_runtime_record"
-start = 89
-end = 121
-sha256 = "936f430219d0a35922b9bfd0c631e491a59dc3be37b96107c37cac33e5346289"
+start = 73
+end = 105
+sha256 = "5c8b1d17906bfd13a960419a6d5c9ffe5609a7007de9f8a9e0cb7130864e7002"
 
 [paths.test_source]
 path = "src/service/lease.rs"
 symbol = "fake_docker_and_podman_cleanup_requires_fresh_complete_ownership"
-start = 1847
-end = 1934
-sha256 = "7e150f7635cd5523abc53247569af670785336f539fb22a13f52d99b47ca71a6"
+start = 1827
+end = 1914
+sha256 = "18ed12a031a4f436267642477d848963fcd796d1d5f48d25cdf615f6caf6167e"
 
 [[paths.probes]]
-line = 113
+line = 97
 column = 9
 text = "bail!(\"runtime object identity changed since the lease was recorded\");"
 

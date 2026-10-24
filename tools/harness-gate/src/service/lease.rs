@@ -1,6 +1,8 @@
 mod container;
+mod retired;
 
-use container::{verify_runtime_record, RetiredRuntimeOperations, RuntimeOperations};
+use container::{verify_runtime_record, RuntimeOperations};
+use retired::RetiredRuntimeOperations;
 
 use super::report_directory::ReportDirectoryGuard;
 use crate::config::ContainerRuntimeKind;

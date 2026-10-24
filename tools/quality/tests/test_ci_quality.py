@@ -87,7 +87,7 @@ class RiskScopeTests(unittest.TestCase):
         self.assertIn('config/suggestions.rs', SOURCE_FILES)
         self.assertIn('app/commands.rs', SOURCE_FILES)
         self.assertEqual({path for path in SOURCE_FILES if path.startswith('service/')},
-                         {'service/lease.rs', 'service/lease/container.rs', 'service/mod.rs', 'service/report_directory.rs',
+                         {'service/lease.rs', 'service/lease/container.rs', 'service/lease/retired.rs', 'service/mod.rs', 'service/report_directory.rs',
                           'service/lifecycle.rs', 'service/lifecycle/recovery.rs',
                           'service/lifecycle_public.rs', 'service/lifecycle_public/linux.rs',
                           'service/lifecycle_public/unsupported.rs'})

@@ -543,70 +543,123 @@ PY
     }
 }
 
-fn failing_cleanup_runtime(root: &Path) -> std::ffi::OsString {
-    use std::os::unix::fs::PermissionsExt;
-    let bin = root.join("bin");
-    fs::create_dir(&bin).unwrap();
-    // Only the external runtime is replaced. Service startup, fresh ownership
-    // inspection, task execution, teardown and report publication are real.
-    let script = r#"#!/usr/bin/env python3
+// The installed test adapter is an ELF launcher around a fixed Python fixture.
+// It never invokes a container engine. Core still validates installation bytes,
+// response bindings, journal transitions and ownership through its real host path.
+#[cfg(target_os = "linux")]
+fn failing_cleanup_lifecycle(root: &Path) -> std::path::PathBuf {
+    use std::{os::unix::fs::PermissionsExt, sync::OnceLock};
+    static BINARY: OnceLock<Vec<u8>> = OnceLock::new();
+    let binary = BINARY.get_or_init(|| {
+        let script = r#"
 import json, sys
 from pathlib import Path
-args = sys.argv[1:]
-state = Path('runtime-object.json')
-if args[0] == 'run':
-    labels = dict(args[i+1].split('=', 1) for i, arg in enumerate(args) if arg == '--label')
-    state.write_text(json.dumps({'Id': 'fixture-immutable-id', 'Name': '/' + args[args.index('--name')+1], 'Config': {'Labels': labels}}))
-elif args[:2] == ['container', 'inspect']:
-    print(state.read_text())
-elif args[0] == 'port':
-    print('127.0.0.1:15432')
-elif args[0] == 'rm':
-    with Path('remove-calls').open('a') as calls:
-        calls.write('remove\n')
-    print('injected cleanup failure', file=sys.stderr)
-    sys.exit(8)
-elif args[0] not in ('info', 'exec', 'image'):
-    sys.exit(99)
+r = json.load(sys.stdin)
+op = r['operation']
+p = Path(r['binding']['engine_binding']['socket_path'])
+k = op['kind']
+observation = {'api_version':'5.7.0','server_version':'5.7.0','daemon_id':'fixture-host'}
+r['observations'] = {'observed_before':observation,'observed_after':observation}
+if k == 'resolve-image':
+    outcome = {'kind':'image','image_id':'sha256:'+'e'*64,'repo_digests':[]}
+elif k == 'create':
+    obj = {'object_id':'a'*64,'image_id':op['image_id'],'name':op['name'],'labels':op['labels'],'state':'created','ports':[]}
+    p.write_text(json.dumps(obj))
+    outcome = {'kind':'created','object':obj}
+elif k == 'start':
+    obj = json.loads(p.read_text())
+    obj['state'] = 'running'
+    obj['ports'] = [{'container_port':5432,'protocol':'tcp','host_ip':'127.0.0.1','host_port':15432}]
+    p.write_text(json.dumps(obj))
+    outcome = {'kind':'started','object':obj}
+elif k == 'health-exec':
+    p.with_suffix('.healthy').write_text('ready')
+    outcome = {'kind':'health','exec_id':'b'*64,'exit_code':0,'object':json.loads(p.read_text())}
+elif k == 'status' and not p.with_suffix('.healthy').exists():
+    outcome = {'kind':'status','object':json.loads(p.read_text())}
+else:
+    # Cleanup observes uncertainty, never a fabricated absence or successful stop.
+    outcome = {'kind':'unknown','reason':'transport'}
+    r['observations'] = None
+r['outcome'] = outcome
+print(json.dumps(r,sort_keys=True,separators=(',',':')),end='')
 "#;
-    fs::write(bin.join("podman"), script).unwrap();
-    fs::set_permissions(bin.join("podman"), fs::Permissions::from_mode(0o755)).unwrap();
-    let mut paths = vec![bin];
-    paths.extend(std::env::split_paths(&std::env::var_os("PATH").unwrap()));
-    std::env::join_paths(paths).unwrap()
+        let python = success(Command::new("python3").args(["-c", "import sys; print(sys.executable)"]).output().unwrap());
+        let python = String::from_utf8(python.stdout).unwrap();
+        let source = format!("fn main() {{ let s = std::process::Command::new({:?}).args([\"-c\", {:?}]).status().unwrap(); std::process::exit(s.code().unwrap_or(1)); }}", python.trim(), script);
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join("fixture.rs"), source).unwrap();
+        success(Command::new("rustc").arg(dir.path().join("fixture.rs")).arg("-o").arg(dir.path().join("fixture")).output().unwrap());
+        fs::read(dir.path().join("fixture")).unwrap()
+    });
+    let dir = root.join("installed-lifecycle");
+    fs::create_dir(&dir).unwrap();
+    fs::set_permissions(&dir, fs::Permissions::from_mode(0o700)).unwrap();
+    let executable = dir.join("adapter");
+    fs::write(&executable, binary).unwrap();
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o500)).unwrap();
+    let save = |name: &str, value: Value| {
+        let path = dir.join(name);
+        let bytes = serde_json::to_vec(&value).unwrap();
+        fs::write(&path, &bytes).unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+        (path, format!("{:x}", Sha256::digest(&bytes)))
+    };
+    let (config, config_sha) = save(
+        "config.json",
+        serde_json::json!({
+            "schema":"gate-runtime/lifecycle-config-v1", "engine_binding":{
+                "engine":"podman", "transport":"unix-http", "api_version":"5.7.0", "server_version":"5.7.0",
+                "socket_path":root.join("runtime-object.json"), "socket_uid":unsafe { libc::geteuid() },
+                "principal_uid":unsafe { libc::geteuid() }, "rootless":true, "daemon_id":"fixture-host", "scope":"/fixture/storage"
+            }
+        }),
+    );
+    let (installation, installation_sha) = save(
+        "installation.json",
+        serde_json::json!({
+            "schema":"gate-runtime/lifecycle-installation-v1", "product":"podman-lifecycle", "version":"0.3.0",
+            "protocol":"gate-runtime/lifecycle-v1", "executable_path":executable,
+            "executable_sha256":format!("{:x}",Sha256::digest(binary)), "config_schema":"gate-runtime/lifecycle-config-v1"
+        }),
+    );
+    save("host.json", serde_json::json!({"schema":"gate-runtime/lifecycle-host-v1",
+        "installation_path":installation,"installation_sha256":installation_sha,"config_path":config,"config_sha256":config_sha})).0
 }
 
 #[test]
 fn verification_cleanup_cancel_and_report_precedence_retains_resource_evidence() {
+    use std::os::unix::fs::PermissionsExt;
     use std::process::Stdio;
     use std::time::{Duration, Instant};
-    for (cancel, block_report, expected_code) in [
-        (false, false, "E1403"),
-        (true, false, "E1402"),
-        (true, true, "E1404"),
-    ] {
-        let root = fixture();
-        let path = failing_cleanup_runtime(root.path());
+    for (cancel, block_report) in [(false, false), (true, false), (true, true)] {
+        // Linux exercises installed Podman lifecycle cleanup failure. Other Unix
+        // hosts have no mutation host and exercise cancellation/report precedence
+        // with an external service, never the retired CLI implementation.
+        let root = tempfile::Builder::new()
+            .prefix("failure-lifecycle-")
+            .permissions(fs::Permissions::from_mode(0o700))
+            .tempdir_in(std::env::var_os("HOME").unwrap())
+            .unwrap();
+        success(
+            command(root.path())
+                .args(["init", "--preset", "generic"])
+                .output()
+                .unwrap(),
+        );
+        git(root.path(), &["init"]);
         let flow = FLOW.replace(
             "timeout_secs = 20",
             "timeout_secs = 20\nservices = ['fixture']",
-        ) + r#"
-[services.fixture]
-kind = 'docker'
-runtime = 'podman'
-image = 'fixture:local'
-inject_env = 'PROBE_SERVICE'
-startup_timeout_secs = 10
-container_port = 5432
-healthcheck = ['ready']
-connection = 'fixture:{host_port}'
-"#;
+        );
+        #[cfg(target_os = "linux")]
+        let flow = format!("{flow}\n[services.fixture]\nkind='docker'\nruntime='podman'\nimage='fixture:local'\ninject_env='PROBE_SERVICE'\nstartup_timeout_secs=20\ncontainer_port=5432\nhealthcheck=['ready']\nconnection='fixture:{{host_port}}'\nlifecycle_host={}\n", toml::Value::String(failing_cleanup_lifecycle(root.path()).to_string_lossy().into_owned()));
+        #[cfg(not(target_os = "linux"))]
+        let flow = format!("{flow}\n[services.fixture]\nkind='environment'\nsource_env='HG_FAILURE_EXTERNAL'\ninject_env='PROBE_SERVICE'\n");
         fs::write(root.path().join(".harness-gate/flow.toml"), flow).unwrap();
         fs::write(
             root.path().join("probe.sh"),
             if cancel {
-                // Publish readiness only after the PID is fully written. Shell
-                // redirection creates an empty file before echo writes to it.
                 "echo $$ > started.tmp\nmv started.tmp started\nexec sleep 30\n"
             } else {
                 "echo completed\n"
@@ -617,7 +670,7 @@ connection = 'fixture:{host_port}'
             fs::create_dir_all(root.path().join(".harness-gate/reports/test_result.json")).unwrap();
         }
         let mut child = command(root.path())
-            .env("PATH", &path)
+            .env("HG_FAILURE_EXTERNAL", "fixture://external")
             .args(["verify", "--all"])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -625,13 +678,16 @@ connection = 'fixture:{host_port}'
             .unwrap();
         let mut task_pid = None;
         if cancel {
-            let deadline = Instant::now() + Duration::from_secs(15);
+            let deadline = Instant::now() + Duration::from_secs(25);
             while !root.path().join("started").exists() {
                 if Instant::now() >= deadline || child.try_wait().unwrap().is_some() {
                     let _ = child.kill();
                     let output = child.wait_with_output().unwrap();
+                    let retained = root.keep();
                     panic!(
-                        "task did not start: {}",
+                        "task did not start; fixture retained at {}: stdout={} stderr={}",
+                        retained.display(),
+                        String::from_utf8_lossy(&output.stdout),
                         String::from_utf8_lossy(&output.stderr)
                     );
                 }
@@ -650,20 +706,26 @@ connection = 'fixture:{host_port}'
             );
         }
         let output = child.wait_with_output().unwrap();
-        assert_eq!(output.status.code(), Some(1));
+        let failed = cancel || cfg!(target_os = "linux");
         let stderr = String::from_utf8_lossy(&output.stderr);
+        assert_eq!(output.status.code(), Some(i32::from(failed)), "{stderr}");
+        if failed {
+            let expected_code = if block_report {
+                "E1404"
+            } else if cancel {
+                "E1402"
+            } else {
+                "E1403"
+            };
+            assert!(
+                stderr.contains(&format!("ERROR [{expected_code}]")),
+                "{stderr}"
+            );
+        }
+        #[cfg(target_os = "linux")]
         assert!(
-            stderr.contains(&format!("ERROR [{expected_code}]")),
+            stderr.contains("lifecycle cleanup retained the resource"),
             "{stderr}"
-        );
-        let cleanup_cause = if cancel {
-            "internal command podman was cancelled"
-        } else {
-            "injected cleanup failure"
-        };
-        assert!(
-            stderr.contains(cleanup_cause),
-            "cancel={cancel} blocked={block_report}: {stderr}"
         );
         if let Some(pid) = task_pid {
             assert_eq!(
@@ -672,105 +734,89 @@ connection = 'fixture:{host_port}'
                 "cancelled child still alive"
             );
         }
-        let invocations = root.path().join(".harness-gate/reports/invocations");
-        let paths = fs::read_dir(invocations)
+        let paths = fs::read_dir(root.path().join(".harness-gate/reports/invocations"))
             .unwrap()
             .map(|entry| entry.unwrap().path())
             .collect::<Vec<_>>();
         assert_eq!(paths.len(), 1);
         let json: Value =
             serde_json::from_slice(&fs::read(paths[0].join("test_result.json")).unwrap()).unwrap();
-        assert_eq!(json["passed"], false);
-        assert_eq!(json["services"][0]["status"], "LEAKED");
-        let steps = json["steps"].as_array().unwrap();
-        let task = steps
+        if failed {
+            assert_eq!(json["passed"], false);
+        } else {
+            assert_eq!(json["passed"], true);
+        }
+        let task = json["steps"]
+            .as_array()
+            .unwrap()
             .iter()
             .find(|step| step["step_id"] == "probe")
             .unwrap();
         assert_eq!(task["cancelled"], cancel);
         assert_eq!(task["passed"], !cancel);
-        let cleanup = steps.last().unwrap();
-        assert_eq!(cleanup["label"], "service cleanup");
-        assert_eq!(cleanup["passed"], false);
-        assert_eq!(cleanup["cancelled"], false);
         assert_sealed_evidence(&json);
         if !block_report {
             assert_eq!(report(root.path()), json);
         }
-        if cancel {
+        #[cfg(target_os = "linux")]
+        {
+            assert_eq!(json["services"][0]["status"], "LEAKED");
+            let cleanup = json["steps"].as_array().unwrap().last().unwrap();
+            assert_eq!(cleanup["label"], "service cleanup");
+            assert_eq!(cleanup["passed"], false);
+            let object: Value =
+                serde_json::from_slice(&fs::read(root.path().join("runtime-object.json")).unwrap())
+                    .unwrap();
+            assert_eq!(object["state"], "running");
+            assert_eq!(object["object_id"], "a".repeat(64));
+            use gatehouse_runtime_protocol::lifecycle::journal::ServiceSlot;
+            let project_identity = root.path().canonicalize().unwrap();
+            let base = ServiceSlot::project_state_base(&project_identity).unwrap();
+            let slot = ServiceSlot::mapped_root(
+                &base,
+                project_identity.to_str().unwrap(),
+                "service:fixture",
+            )
+            .unwrap();
             assert!(
-                !root.path().join("remove-calls").exists(),
-                "uncertain ownership must prevent removal"
+                slot.is_dir(),
+                "failed cleanup retains the fixed lifecycle reservation"
             );
-        } else {
+            let reservation: Value =
+                serde_json::from_slice(&fs::read(slot.join("service.json")).unwrap()).unwrap();
+            assert_eq!(reservation["released"], false);
             assert_eq!(
-                fs::read_to_string(root.path().join("remove-calls")).unwrap(),
-                "remove\n"
+                reservation["resolve"]["binding"]["resource_id"],
+                "service:fixture"
+            );
+            assert_eq!(reservation["plan"]["name"], object["name"]);
+            assert_eq!(reservation["plan"]["labels"], object["labels"]);
+            let journal = slot.join(format!(
+                "journal-{}",
+                reservation["resolve"]["binding"]["lease_invocation"]
+                    .as_str()
+                    .unwrap()
+            ));
+            assert!(
+                journal.join("lease.json").is_file(),
+                "failed cleanup retains the bound journal"
             );
         }
-        assert!(root.path().join("runtime-object.json").is_file());
         let leases = root.path().join(".harness-gate/reports/leases");
-        let entries = fs::read_dir(&leases)
+        let legacy = fs::read_dir(&leases)
             .unwrap()
-            .map(|entry| entry.unwrap())
-            .collect::<Vec<_>>();
-        let lease_files = entries
-            .iter()
-            .filter(|entry| {
-                entry.file_type().unwrap().is_file()
-                    && entry.path().extension() == Some(std::ffi::OsStr::new("json"))
-            })
-            .collect::<Vec<_>>();
+            .filter_map(Result::ok)
+            .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "json"))
+            .count();
         assert_eq!(
-            lease_files.len(),
-            1,
-            "failed cleanup must retain exactly one container lease"
+            legacy, 0,
+            "installed or external service must not allocate a legacy container lease"
         );
-        let lease: Value =
-            serde_json::from_slice(&fs::read(lease_files[0].path()).unwrap()).unwrap();
         let project_identity = root.path().canonicalize().unwrap();
         let project_identity = project_identity.to_str().unwrap();
         let invocation_id = json["invocation_id"].as_str().unwrap();
-        assert_eq!(lease["owner_marker"], "harness-gate");
-        assert_eq!(lease["schema_version"], 2);
-        assert_eq!(lease["resource_kind"], "container");
-        assert_eq!(lease["resource_id"], "service:fixture");
-        assert_eq!(lease["invocation_id"], invocation_id);
-        assert_eq!(lease["project_identity"], project_identity);
-        assert_eq!(lease["runtime"], "podman");
-        assert_eq!(lease["runtime_object_id"], "fixture-immutable-id");
-        let runtime: Value =
-            serde_json::from_slice(&fs::read(root.path().join("runtime-object.json")).unwrap())
-                .unwrap();
-        assert_eq!(lease["runtime_object_id"], runtime["Id"]);
-        assert_eq!(
-            runtime["Name"],
-            format!("/{}", lease["resource_name"].as_str().unwrap())
-        );
-        let labels = serde_json::json!({
-            "harness-gate.owner": "harness-gate",
-            "harness-gate.schema": "2",
-            "harness-gate.project": project_identity,
-            "harness-gate.resource": "service:fixture",
-            "harness-gate.kind": "container",
-            "harness-gate.invocation": invocation_id,
-        });
-        assert_eq!(lease["runtime_labels"], labels);
-        assert_eq!(runtime["Config"]["Labels"], labels);
-        let container_key = format!("{:x}", Sha256::digest(b"service:fixture"));
-        assert_eq!(
-            lease_files[0].file_name(),
-            std::ffi::OsStr::new(&format!("{}.json", &container_key[..16]))
-        );
         let locks = leases.join("report-directory-locks");
         assert!(fs::symlink_metadata(&locks).unwrap().file_type().is_dir());
-        for entry in &entries {
-            assert!(
-                entry.path() == lease_files[0].path() || entry.path() == locks,
-                "unexpected lease-directory entry: {:?}",
-                entry.path()
-            );
-        }
         let sidecars = fs::read_dir(&locks)
             .unwrap()
             .map(|entry| entry.unwrap())
@@ -789,9 +835,9 @@ connection = 'fixture:{host_port}'
             sidecars[0].file_name(),
             std::ffi::OsStr::new(&format!("{}.lock", &invocation_key[..16]))
         );
-        // Invocation Drop releases its report lease even when service cleanup
-        // or current-report publication fails. Its certificate is a sidecar,
-        // while the failed container's ownership marker remains a JSON lease.
+        // Invocation Drop releases the report lease even when lifecycle cleanup
+        // or current-report publication fails. The unresolved service has its
+        // own fixed lifecycle journal, not a legacy JSON marker.
         let released: Value =
             serde_json::from_slice(&fs::read(sidecars[0].path()).unwrap()).unwrap();
         assert_eq!(
@@ -803,16 +849,9 @@ connection = 'fixture:{host_port}'
                 "root": paths[0].canonicalize().unwrap(),
             })
         );
-        let cleanup = command(root.path())
-            .args(["cleanup", "--dry-run"])
-            .output()
-            .unwrap();
-        let cleanup = success(cleanup);
-        assert!(String::from_utf8_lossy(&cleanup.stdout).contains("Cleanup (dry-run): scanned 1"));
         fs::write(leases.join("invalid.json"), "not JSON").unwrap();
         let cleanup = command(root.path()).args(["cleanup"]).output().unwrap();
         assert!(!cleanup.status.success());
-        assert!(String::from_utf8_lossy(&cleanup.stderr).contains("cleanup failure:"));
         assert!(leases.join("invalid.json").is_file());
     }
 }

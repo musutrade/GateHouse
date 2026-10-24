@@ -298,6 +298,12 @@
         "quality-core/replay.rs",
         "quality-core/schema.rs"
       ]
+    },
+    "service-adapters": {
+      "blocking": false,
+      "files": [
+        "src/service/lease/retired.rs"
+      ]
     }
   },
   "exclusions": [

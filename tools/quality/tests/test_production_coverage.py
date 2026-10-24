@@ -70,7 +70,7 @@ class ProductionCoverageTests(unittest.TestCase):
         inventory, owners, excluded = load_inventory(INVENTORY, CRATE)
         self.assertEqual(owners["src/service/lease.rs"], "service-core")
         self.assertEqual(owners["src/service/lease/container.rs"], "service-core")
-        self.assertNotIn("service-adapters", inventory["boundaries"])
+        self.assertEqual(owners["src/service/lease/retired.rs"], "service-adapters")
         self.assertIn("src/service/tests/retirement.rs", excluded)
         self.assertIn("src/scope/benchmark.rs", excluded)
         self.assertTrue(inventory["unmapped_sources"])
