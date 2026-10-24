@@ -935,13 +935,13 @@ fn terminal_diagnostics_redact_metadata_without_mutating_the_report() {
         ConfigCode::HgcfgCheck,
         DiagnosticSeverity::Error,
         "token=synthetic-path",
-        "******\ncontext\u{1b}[2J\tcontext",
+        "password=synthetic-message\ncontext\u{1b}[2J",
         "secret=synthetic-help\rcontext",
         None,
         None,
         vec![RelatedDiagnostic {
             path: "token=synthetic-related-path".into(),
-            relation: "******".into(),
+            relation: "password=synthetic-relation\tcontext".into(),
             location: None,
         }],
     ));
@@ -955,6 +955,20 @@ fn terminal_diagnostics_redact_metadata_without_mutating_the_report() {
     assert!(!text.contains("\u{1b}[2J") && !text.contains('\r') && !text.contains('\t'));
     assert_eq!(serde_json::to_vec(&diagnostics.report()).unwrap(), before);
     assert_eq!(diagnostics.to_string(), legacy);
+}
+
+#[test]
+fn terminal_diagnostics_escape_control_characters_independently() {
+    let diagnostics = ConfigDiagnostics::single(
+        ConfigCode::HgcfgCheck,
+        "plain-path",
+        "plain\nline\ttab\u{1b}[2J",
+        "plain\rcarriage",
+    );
+    let text = diagnostics.render_terminal();
+    assert!(text.contains("plain\\nline\\ttab\\u{1b}[2J"), "{text}");
+    assert!(text.contains("plain\\rcarriage"), "{text}");
+    assert!(!text.contains('\u{1b}') && !text.contains('\r') && !text.contains('\t'));
 }
 
 #[test]

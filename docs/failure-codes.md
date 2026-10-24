@@ -637,15 +637,15 @@ Explicitly lock and prepare the exact dependency versions and required programs.
 
 ## hgplugin-digest
 
-**HGPLUGIN-DIGEST — Prepared plugin manifest or artifact digest differs from the lock.**
+**HGPLUGIN-DIGEST — Plugin manifest or signed artifact digest does not match its pinned value.**
 
-Restore the exact pinned file; do not change the lock to hide corruption. Review and explicitly lock any upgrade.
+Restore the exact pinned manifest when the lock `manifest_sha256` does not match, and restore each artifact exactly as declared in the signed manifest file inventory. Do not change the lock or the signed inventory to hide corruption; review and explicitly lock any upgrade.
 
 ## hgplugin-limit
 
 **HGPLUGIN-LIMIT — Plugin input exceeds a size or inventory limit.**
 
-Prepare a bounded data-only package: each input at most 1 MiB and a signed file inventory of 1..128 entries.
+The signed file inventory is checked for 1..128 entries before copying starts, and each input is checked against the 1 MiB read limit as it is copied. A later failure can leave earlier files only in the private temporary snapshot; there is no all-files precheck or cross-file atomicity.
 
 ## hgplugin-lock
 
