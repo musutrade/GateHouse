@@ -204,7 +204,7 @@ path = "src/config/loader.rs"
 symbol = "from_source_with_diagnostics"
 start = 75
 end = 113
-sha256 = "3932ac93408a8492cd1c97ae116fd5b4b9440029713f5a8624b2191900c8febf"
+sha256 = "c394ed8758d9ad8c6bc636dcbdf4cf3daf4ec779f89e1ed11afdeb4df3b4b875"
 
 [paths.test_source]
 path = "tests/integration_test.rs"
@@ -481,9 +481,9 @@ assertions = ["assert!(!output.status.success());", "HGPLUGIN-SIGNATURE", "repor
 [paths.source]
 path = "src/plugins.rs"
 symbol = "verify_payload"
-start = 309
-end = 323
-sha256 = "90267bd908b1ad9dcda86913ee858351c1a9f54b4e620d7773a981d6ec968cdb"
+start = 310
+end = 324
+sha256 = "ee274fd1e4570012f898488d14160ce2bfc018df96998f84af5bec677d34abe9"
 
 [paths.test_source]
 path = "tests/plugin_lock_test.rs"
@@ -493,7 +493,7 @@ end = 374
 sha256 = "28e33e552b20df2e79bde074090d86a8d840ffa1663b576ef83ccc48ccfe3ce5"
 
 [[paths.probes]]
-line = 321
+line = 322
 column = 5
 text = "key.verify_strict(&payload, &signature)?;"
 

@@ -518,7 +518,7 @@
     {
       "path": "src/config/mod.rs",
       "reason": "Module/type declarations and re-exports have no executable LLVM mapping on this target.",
-      "sha256": "6647c5f3219e640447ef0e52e29fdf9dc9c9495b6e5add62202ea741f7da40a3"
+      "sha256": "7205386b638ff4de854de0b7ec7d57d438ad3b94bdb3edadfddbdedc9404eeab"
     },
     {
       "path": "src/doctor/mod.rs",
