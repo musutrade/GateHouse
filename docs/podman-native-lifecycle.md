@@ -1,8 +1,9 @@
 # Native Podman 5.7 lifecycle
 
 Status: the Core 0.13.0 / Podman lifecycle 0.3.0 / importer 0.6.0 predecessor
-chain is published. Core CLI retirement is merged in PR #183 and is included in
-the unreleased Core 0.14.0 candidate. See [current release status](release-status.md)
+chain is published. Core CLI retirement from PR #183 is shipped in
+Core 0.14.1; its downloaded Linux binary passed real rootless Podman acceptance.
+See the [public verification receipt](releases/0.14.1-public-verification.md). See [current release status](release-status.md)
 and [candidate migration/acceptance](releases/0.14.0.zh-CN.md). The implementation
 notes and original publication checklist below retain their historical context.
 

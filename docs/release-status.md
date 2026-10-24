@@ -1,8 +1,16 @@
 # Published releases and acceptance
 
-## Core 0.14.1 protocol publication repair candidate
+## Core 0.14.1 published and accepted
 
-Unreleased. Core v0.14.0 was tagged at `c3a79e6b9449c2b9a69ac4480a7ec350c33c1a89`,
+[Core v0.14.1](https://github.com/musutrade/GateHouse/releases/tag/v0.14.1) and
+crates.io are published from `c22a12e25a5ea6f617d4afb9dd4e2410dc14f267` (PR #185).
+Exact-main CI `40075426671` and release `40075741279` passed on attempt 1.
+Downloaded Linux installation, onboarding 1.0.10 (29 steps) and real rootless
+Podman 5.7.0 normal lifecycle acceptance passed. See the
+[public verification receipt](releases/0.14.1-public-verification.md) for identities
+and limits. This delivers the Core legacy CLI retirement through published artifacts.
+
+Core v0.14.0 was tagged at `c3a79e6b9449c2b9a69ac4480a7ec350c33c1a89`,
 but release run `40072636598` attempt 1 failed before GitHub/Core registry publication.
 Protocol 0.6.0 already existed; repackaging changed only Cargo's VCS commit stamp,
 which the raw archive checksum comparison incorrectly rejected. The tag and failure
@@ -19,7 +27,7 @@ Core Docker/Podman CLI service backend on main `47d8d86b97fb436d4c34e6e2ce5bfffc
 Its exact-head PR CI and merged-main CI passed. This candidate prepares the Core
 version and migration notes; it does not claim a published 0.14.0 binary.
 See [release and acceptance scope](releases/0.14.0.zh-CN.md).
-The published onboarding-presets 1.0.9 prerequisite is now pinned for exact Core
+The published onboarding-presets 1.0.9 prerequisite was pinned for exact Core
 0.14.0 compatibility; its downloaded 29-step acceptance passed. See the
 [compatibility receipt](releases/onboarding-presets-1.0.9-acceptance.md).
 

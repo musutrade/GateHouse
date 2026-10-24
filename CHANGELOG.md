@@ -1,10 +1,11 @@
 # Changelog
 
-## 0.14.1 (unreleased)
+## 0.14.1 (published 2026-10-24)
 
 - Repair reuse of an already published runtime protocol: verify registry bytes against the registry checksum, then compare packaged inputs allowing only the clean packaging commit SHA to differ. Source, manifests, lockfiles, member paths and other VCS metadata still fail closed on changes.
 - Retain failed v0.14.0 and its release run; use a new immutable version instead of changing tag protection.
-- Require a new onboarding preset release declaring exact Core 0.14.1 compatibility.
+- Pin published onboarding-presets 1.0.10 for exact Core 0.14.1 compatibility.
+- Published signed platform assets and crates.io package; downloaded Linux installation, 29-step onboarding and real rootless Podman lifecycle acceptance passed. See [public verification](docs/releases/0.14.1-public-verification.md).
 
 ## 0.14.0 (tagged; publication failed)
 
