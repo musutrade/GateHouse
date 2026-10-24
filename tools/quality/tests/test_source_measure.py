@@ -208,15 +208,26 @@ fn both() {
         self.assertTrue(unix['excluded'])
         self.assertTrue(windows['excluded'])
 
+    def test_supported_cfg_attr_test_derive_is_removed_from_production_view(self):
+        source = '''#[cfg_attr(test, derive(Debug))]
+struct Config { value: u8 }
+pub fn plain() {}
+'''
+        inventory = self.inventory(source)
+        self.assertEqual([row['name'] for row in inventory['symbols']], ['plain'])
+        self.assertEqual(inventory['excluded'], [])
+
     def test_unsupported_configuration_fails_without_partial_inventory(self):
         inactive = "unix" if "windows" in compiler_configuration()["cfg"] else "windows"
         for source in (
             '#[cfg(feature="extra")] fn f() {}',
-            '#[cfg(any(unix, any(windows, test)))] fn f() {}',
             '#[cfg(target_os="android")] fn f() {}',
-            '#[cfg(not(not(test)))] fn f() {}',
+            '#[cfg(target_arch="aarch64")] fn f() {}',
             '#[cfg(all(test, feature="extra"))] mod unsupported;',
             '#[cfg_attr(unix, inline)] fn f() {}',
+            '#[cfg_attr(test, derive(Debug = "bad"))] struct A;',
+            '#[cfg_attr(test, derive())] struct A;',
+            '#[cfg_attr(test, derive("Debug"))] struct A;',
             '#[cfg(windows)] #[cfg(feature="extra")] fn f() {}',
             'fn f() { let x = #[cfg(' + inactive + ')] { 1 }; }',
             'fn f() { println!("{}", #[cfg(unix)] { 1 }); }',
@@ -561,7 +572,7 @@ fn both() {
 
     def test_actual_redaction_source_inventory_and_instrumentation(self):
         self.assertEqual(SERIES, {
-            'analyzer': 'harness-gate-rust-measure/0.3.1', 'rule': 'mccabe-rust-3/1',
+            'analyzer': 'harness-gate-rust-measure/0.4.0', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
             'selection': 'gh33-findings/1', 'configuration': 'compiler-target-production/4',
         })
@@ -808,7 +819,7 @@ fn main() {
         evidence = Path(tempfile.mkdtemp(prefix='process-command-ast-', dir=retained))
         self.assertIn('process/command.rs', SOURCE_FILES)
         self.assertEqual(SERIES, {
-            'analyzer': 'harness-gate-rust-measure/0.3.1', 'rule': 'mccabe-rust-3/1',
+            'analyzer': 'harness-gate-rust-measure/0.4.0', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
             'selection': 'gh33-findings/1', 'configuration': 'compiler-target-production/4',
         })
@@ -907,10 +918,21 @@ fn common() -> u8 {
             transformed, edits = instrument(source, inventory)
             self.assertEqual(edits, [])
             self.assertEqual(self.inventory(transformed, target), inventory)
+            positives = {
+                'not(target_os="macos")': not darwin,
+                'all(unix, target_os="macos")': darwin,
+            }
+            for predicate, active in positives.items():
+                candidate = '#[cfg(' + predicate + ')] fn f() {}\n'
+                inventory = self.inventory(candidate, target)
+                self.assertEqual([row['name'] for row in inventory['symbols']],
+                                 ['f'] if active else [])
+                self.assertEqual([self.cfg_source_slice(candidate, span)
+                                  for span in inventory['excluded']],
+                                 [] if active else [candidate.rstrip()])
             refusals = {}
             for predicate in ('target_os="ios"',
-                              'target_os=7', 'target_arch="aarch64"',
-                              'not(target_os="macos")', 'all(unix, target_os="macos")'):
+                              'target_os=7', 'target_arch="aarch64"'):
                 file = evidence / (target + '-' + str(len(refusals)) + '.rs')
                 file.write_bytes(('#[cfg(' + predicate + ')] fn f() {}\n').encode('utf-8'))
                 result = subprocess.run([str(self.binary), str(file), '--target-cfg'],
@@ -949,9 +971,7 @@ fn common() -> u8 {
         evidence = Path(tempfile.mkdtemp(prefix='bounded-os-any-', dir=retained))
         rejected = ('target_os="ios"', 'target_os=7', 'target_arch="x86_64"',
                     'any(unix, feature="extra")', 'any(windows, feature="extra")',
-                    'not(any(test, feature="extra"))', 'all(test, feature="extra")',
-                    'any(unix, any(windows, test))', 'not(any(unix, not(test)))',
-                    'not(not(test))', 'not(target_os="macos")', 'all(unix, target_os="macos")')
+                    'not(any(test, feature="extra"))', 'all(test, feature="extra")')
         results = {}
         for target, os_name in (('x86_64-unknown-linux-gnu', 'linux'),
                                 ('aarch64-apple-darwin', 'macos'),
@@ -961,7 +981,12 @@ fn common() -> u8 {
             cases += [('any(unix, windows)', True), ('any(test, target_os="linux")', os_name == 'linux'),
                       ('not(any(target_os="linux", target_os="macos", target_os="windows"))', False),
                       ('not(any(unix, windows))', False), ('all(test, unix)', False),
-                      ('not(test)', True), ('not(unix)', os_name == 'windows')]
+                      ('not(test)', True), ('not(unix)', os_name == 'windows'),
+                      ('any(unix, any(windows, test))', True),
+                      ('not(any(unix, not(test)))', False),
+                      ('not(not(test))', False),
+                      ('not(target_os="macos")', os_name != 'macos'),
+                      ('all(unix, target_os="macos")', os_name == 'macos')]
             for predicate, active in cases:
                 source = '#[cfg(' + predicate + ')] fn f() {}\n'
                 inventory = self.inventory(source, target)

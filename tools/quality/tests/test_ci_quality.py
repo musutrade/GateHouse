@@ -75,7 +75,7 @@ class RiskScopeTests(unittest.TestCase):
     def test_report_retention_scope_preserves_compiler_configuration_identity(self):
         from source_measure import SERIES, SOURCE_FILES
         self.assertEqual(SERIES, {
-            'analyzer': 'harness-gate-rust-measure/0.3.1', 'rule': 'mccabe-rust-3/1',
+            'analyzer': 'harness-gate-rust-measure/0.4.0', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
             'selection': 'gh33-findings/1', 'configuration': 'compiler-target-production/4',
         })
