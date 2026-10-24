@@ -7,6 +7,9 @@ Core Docker/Podman CLI service backend on main `47d8d86b97fb436d4c34e6e2ce5bfffc
 Its exact-head PR CI and merged-main CI passed. This candidate prepares the Core
 version and migration notes; it does not claim a published 0.14.0 binary.
 See [release and acceptance scope](releases/0.14.0.zh-CN.md).
+The published onboarding-presets 1.0.9 prerequisite is now pinned for exact Core
+0.14.0 compatibility; its downloaded 29-step acceptance passed. See the
+[compatibility receipt](releases/onboarding-presets-1.0.9-acceptance.md).
 
 ## Published predecessor chain (verified 2026-10-24)
 
