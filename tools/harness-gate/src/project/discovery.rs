@@ -1,5 +1,7 @@
 use super::{resolve_repo_path, InvocationInput, Project};
-use crate::config::{resolve_config_path, ConfigDiagnostics, FlowConfig, DEFAULT_CONFIG_PATH};
+use crate::config::{
+    resolve_config_path, ConfigCode, ConfigDiagnostics, FlowConfig, DEFAULT_CONFIG_PATH,
+};
 use anyhow::{bail, Context, Result};
 use std::collections::BTreeMap;
 use std::env;
@@ -148,7 +150,7 @@ impl Project {
         .map_err(|_| {
             anyhow::Error::new(
                 ConfigDiagnostics::single(
-                    "HGCFG-INVALID-PATH",
+                    ConfigCode::HgcfgInvalidPath,
                     "paths.reports",
                     "report directory path could not be resolved safely",
                     "use a repository-relative report directory without symlink escape",
@@ -165,7 +167,7 @@ impl Project {
         .map_err(|_| {
             anyhow::Error::new(
                 ConfigDiagnostics::single(
-                    "HGCFG-INVALID-PATH",
+                    ConfigCode::HgcfgInvalidPath,
                     "paths.audit_config",
                     "audit configuration path could not be resolved safely",
                     "use a repository-relative audit configuration path inside the repository",
@@ -182,7 +184,7 @@ impl Project {
         .map_err(|_| {
             anyhow::Error::new(
                 ConfigDiagnostics::single(
-                    "HGCFG-INVALID-PATH",
+                    ConfigCode::HgcfgInvalidPath,
                     "paths.secrets_config",
                     "secret scan configuration path could not be resolved safely",
                     "use a repository-relative secret configuration path inside the repository",
@@ -205,7 +207,7 @@ impl Project {
                 .map_err(|_| {
                     anyhow::Error::new(
                         ConfigDiagnostics::single(
-                            "HGCFG-INVALID-PATH",
+                            ConfigCode::HgcfgInvalidPath,
                             format!("paths.aliases[\"{name}\"]"),
                             "path alias could not be resolved safely",
                             "use a repository-relative alias path without symlink escape",
@@ -241,7 +243,7 @@ impl Project {
         if !self.audit_config.is_file() {
             return Err(anyhow::Error::new(
                 ConfigDiagnostics::single(
-                    "HGCFG-REQUIRED-FILE",
+                    ConfigCode::HgcfgRequiredFile,
                     "paths.audit_config",
                     "required audit configuration file is missing",
                     "create the configured audit configuration file or update paths.audit_config",
@@ -252,7 +254,7 @@ impl Project {
         if !self.secrets_config.is_file() {
             return Err(anyhow::Error::new(
                 ConfigDiagnostics::single(
-                    "HGCFG-REQUIRED-FILE",
+                    ConfigCode::HgcfgRequiredFile,
                     "paths.secrets_config",
                     "required secret scan configuration file is missing",
                     "create the configured secret scan configuration file or update paths.secrets_config",

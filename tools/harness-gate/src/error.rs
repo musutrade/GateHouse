@@ -77,7 +77,7 @@ mod tests {
     #[test]
     fn contextual_configuration_keeps_display_and_typed_source() {
         let error = anyhow::Error::new(crate::config::ConfigDiagnostics::single(
-            "HGCFG-CHECK",
+            crate::config::ConfigCode::HgcfgCheck,
             "project",
             "invalid configuration",
             "repair project configuration",

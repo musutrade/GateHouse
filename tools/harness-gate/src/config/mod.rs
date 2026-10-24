@@ -15,7 +15,9 @@ mod tests;
 #[cfg(test)]
 mod toml_fuzz;
 
-pub(crate) use diagnostic::{report_for_error, ConfigDiagnostics, MINIMAL_CONFIG_SNIPPET};
+pub(crate) use diagnostic::{
+    report_for_error, ConfigCode, ConfigDiagnostics, MINIMAL_CONFIG_SNIPPET,
+};
 #[cfg(test)]
 pub(crate) use diagnostic::{ConfigDiagnostic, DiagnosticSeverity};
 pub use loader::schema_json;

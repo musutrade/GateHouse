@@ -121,13 +121,13 @@ fn safe_text(value: &str) -> String {
 
 fn suggest(diagnostic: &ConfigDiagnostic, view: &SourceView, source: &str) -> Suggestion {
     let mut suggestion = Suggestion {
-        diagnostic_id: diagnostic.id.clone(),
+        diagnostic_id: diagnostic.id().to_owned(),
         field: diagnostic.path.clone(),
         message: diagnostic.help.clone(),
         applicability: Applicability::Manual,
         edit: None,
     };
-    match diagnostic.id.as_str() {
+    match diagnostic.id() {
         "HGCFG-DUPLICATE-LOG" | "HGCFG-INVALID-LOG" => {
             suggest_log(&mut suggestion, view, source);
         }
@@ -222,7 +222,7 @@ mod tests {
     use super::*;
 
     fn diagnostic(id: &str, field: &str) -> ConfigDiagnostic {
-        ConfigDiagnostics::single(id, field, "invalid field", "repair intended declaration")
+        ConfigDiagnostics::synthetic(id, field, "invalid field", "repair intended declaration")
             .report()
             .diagnostics
             .remove(0)
