@@ -1060,6 +1060,48 @@ fn template_paths_must_stay_inside_a_disjoint_repository_root() {
 }
 
 #[test]
+fn missing_template_root_and_file_report_template_path_diagnostics() {
+    let workspace = TestWorkspace::new("template-missing");
+    let path = workspace.root.join("flow.toml");
+    let base = include_str!("../../fixtures/preset-compat/rust-api.flow.toml");
+
+    fs::write(
+        &path,
+        format!("{base}\n[report_templates]\nroot = \"missing-root\"\ntemplate = \"missing-root/report.tera\"\n"),
+    )
+    .expect("write missing-root config");
+    let error = FlowConfig::load_with_diagnostics(&path, Some(&workspace.root))
+        .expect_err("missing template root must fail");
+    assert!(error.report().diagnostics.iter().any(|diagnostic| {
+        diagnostic.id == "HGCFG-TEMPLATE-PATH" && diagnostic.path == "report_templates.root"
+    }));
+
+    fs::write(workspace.root.join("not-a-dir"), "x").expect("write root file");
+    fs::write(
+        &path,
+        format!("{base}\n[report_templates]\nroot = \"not-a-dir\"\ntemplate = \"not-a-dir/report.tera\"\n"),
+    )
+    .expect("write non-directory root config");
+    let error = FlowConfig::load_with_diagnostics(&path, Some(&workspace.root))
+        .expect_err("template root file must fail");
+    assert!(error.report().diagnostics.iter().any(|diagnostic| {
+        diagnostic.id == "HGCFG-TEMPLATE-PATH" && diagnostic.path == "report_templates.root"
+    }));
+
+    fs::create_dir_all(workspace.root.join("templates")).expect("create template root");
+    fs::write(
+        &path,
+        format!("{base}\n[report_templates]\nroot = \"templates\"\ntemplate = \"templates/missing.tera\"\n"),
+    )
+    .expect("write missing-template config");
+    let error = FlowConfig::load_with_diagnostics(&path, Some(&workspace.root))
+        .expect_err("missing template file must fail");
+    assert!(error.report().diagnostics.iter().any(|diagnostic| {
+        diagnostic.id == "HGCFG-TEMPLATE-PATH" && diagnostic.path == "report_templates.template"
+    }));
+}
+
+#[test]
 fn windows_prefixed_paths_are_rejected_on_every_platform() {
     let source = include_str!("../../fixtures/preset-compat/rust-api.flow.toml").replace(
         "reports = \".harness-gate/reports\"",
