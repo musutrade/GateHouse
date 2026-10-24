@@ -1,7 +1,10 @@
 # Native Podman 5.7 lifecycle
 
-Status: local development candidate. This document records the implementation and
-the pending coordinated publication matrix; it is not a delivery receipt.
+Status: the Core 0.13.0 / Podman lifecycle 0.3.0 / importer 0.6.0 predecessor
+chain is published. Core CLI retirement is merged in PR #183 and is included in
+the unreleased Core 0.14.0 candidate. See [current release status](release-status.md)
+and [candidate migration/acceptance](releases/0.14.0.zh-CN.md). The implementation
+notes and original publication checklist below retain their historical context.
 
 ## Selected profile
 
@@ -79,9 +82,9 @@ The verification result was PASS and no container remained. This is local
 development evidence, not downloaded-release, signature, daemon-restart or OS
 containment acceptance.
 
-## Pending coordinated publication
+## Historical coordinated publication checklist (Core 0.13.0)
 
-Candidate matrix, in dependency order:
+Original candidate matrix, in dependency order (superseded by the release-status entry above):
 
 1. onboarding-presets 1.0.8: published and verified; Core CI now fetches the
    exact archive `87cd7c8107a1082d3ff3113d14d4402abd241e651d168262038f569abfd89dc1`

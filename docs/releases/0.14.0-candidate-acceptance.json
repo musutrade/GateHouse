@@ -1,0 +1,64 @@
+{
+  "schema": "gatehouse-core-candidate-acceptance/v1",
+  "date": "2026-10-24",
+  "status": "pass",
+  "scope": "source-built Core 0.14.0 on Linux x86_64 with real rootless Podman 5.7.0; not release acceptance",
+  "source": {
+    "base_commit": "47d8d86b97fb436d4c34e6e2ce5bfffcb7c196e5",
+    "changes_from_base": "Core version and replay dependency only; production Rust sources unchanged",
+    "changed_build_inputs_sha256": {
+      "tools/harness-gate/Cargo.toml": "b917b2c4037e07408b896df70121c1ac3fe52d7d4eda98a0f90aa1978512d747",
+      "tools/harness-gate/Cargo.lock": "81c7c81a6d2921945a25b6eb412c700c1430d8ee0db84c23b8f09b38e2b84cc1",
+      "tools/harness-gate/quality-replay/Cargo.toml": "8327571a7234354d22b144236e02fd649a955cfa650833c7bac0779d21c02e80"
+    }
+  },
+  "core": {
+    "version": "0.14.0",
+    "sha256": "3bd78fc9656a8022962f2301440dfcfb8dd0c99dfcca6f43f9e4cd6934a6344c",
+    "build": "cargo build --locked --bin harness-gate (dev profile)"
+  },
+  "published_inputs": {
+    "importer_version": "0.6.0",
+    "importer_archive_sha256": "6e5bac105cfeeb9d2178fa0c23053df7d2e291275879865d9222a46af9a58c15",
+    "importer_sbom_sha256": "ae43878cbe1e4abf9ee0c2f676f0dc5d347c8bf783589a6ec6a70610347b7df5",
+    "runtime_tag": "podman-lifecycle-v0.3.0",
+    "runtime_version": "0.3.0",
+    "executable_sha256": "efca5ba3b8e8bbbf0d7cce0efdce12b3f58fba190e01ba790bac81650c972d9d",
+    "image_id": "b92841763c5c2140a20eeb2a44e94ebb0e80fd51d9d6b5895ea72fa999525d68"
+  },
+  "verification": {
+    "service_result": "PASS",
+    "service_released": true,
+    "container_absent": true,
+    "absence_reason": "post-remove-absence",
+    "absence_http_status": 404,
+    "tombstone_sha256": "ed209072087b6591a9df62a9e2113e222145cb271a8af1508dd0d07a411e80ba",
+    "imported_descriptor_mode": "0400",
+    "imported_executable_mode": "0500",
+    "descriptor_rewritten": false
+  },
+  "harness": {
+    "repository": "https://github.com/musutrade/GateProbes",
+    "source_commit": "a0e4499e47fa9c2e66c04a3a6097aa331183124f",
+    "path": "tools/release/accept_importer_podman06_real.py",
+    "source_sha256": "df401d94772b44028688866fc82c3867099a8f436fb1ff084a457a6df2ee5985",
+    "derived_sha256": "67963654a8589b9569651c22721370e60157ef54f7634a3ec106d5b89b165f40",
+    "adaptation": "Pin candidate Core digest/version and candidate report schema; preserve published manifest and archive pin assertions; require podman container exists exit exactly 1 instead of any nonzero."
+  },
+  "checks": {
+    "cli_integration": 22,
+    "release_governance": 61,
+    "cli_contracts": "pass; only version fields changed",
+    "cargo_package": "pass --locked --no-verify; package compilation not claimed",
+    "docs_consistency": "pass --pure after offline test-data restoration"
+  },
+  "retained_initial_failures": [
+    "First real run rejected unprotected parent directory before service execution; rerun used private protected directory.",
+    "First docs run lacked archived fixture data in new worktree; offline restoration and rerun passed."
+  ],
+  "not_proven": [
+    "published Core 0.14.0 artifacts, signatures, provenance, crates.io or fresh download",
+    "importer 0.6.0 declared compatibility beyond its immutable Core 0.13.0 manifest",
+    "daemon restart, additional platforms, fleet migration or old-resource deletion"
+  ]
+}

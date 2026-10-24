@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.0 (unreleased)
+
+- Remove the remaining Core Docker/Podman CLI service backend, command construction and inspect/port parsers. Managed services require an explicit installed lifecycle host; missing configuration fails without allocating a legacy lease.
+- Preserve legacy lease evidence and actionable migration errors. Cleanup cannot silently reclaim or adopt old container records. Leases, heartbeats, isolation, journals, recovery coordination and final gate decisions remain in Core.
+- Add CLI regression coverage for retained Podman leases, migration diagnostics and zero engine execution, including human and JSON cleanup output.
+- Prepare the next Core release after PR #183; protocol remains 0.6.0. See [migration and release acceptance](docs/releases/0.14.0.zh-CN.md).
+
+The entries below retain their original release-time scope; they are not the current delivery inventory.
+
 ## 0.11.0 (unreleased)
 
 - Add explicit Linux read-only `podman-capture` with fixed project host mapping and operator trust opt-in.

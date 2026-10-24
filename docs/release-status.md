@@ -1,5 +1,25 @@
 # Published releases and acceptance
 
+## Core 0.14.0 CLI retirement candidate
+
+Unreleased. PR [#183](https://github.com/musutrade/GateHouse/pull/183) retired the
+Core Docker/Podman CLI service backend on main `47d8d86b97fb436d4c34e6e2ce5bfffcb7c196e5`.
+Its exact-head PR CI and merged-main CI passed. This candidate prepares the Core
+version and migration notes; it does not claim a published 0.14.0 binary.
+See [release and acceptance scope](releases/0.14.0.zh-CN.md).
+
+## Published predecessor chain (verified 2026-10-24)
+
+[Core 0.13.0](https://github.com/musutrade/GateHouse/releases/tag/v0.13.0),
+[Podman lifecycle 0.3.0](https://github.com/musutrade/GateProbes/releases/tag/podman-lifecycle-v0.3.0)
+and [runtime importer 0.6.0](https://github.com/musutrade/GateProbes/releases/tag/runtime-importer-v0.6.0)
+are published. Core 0.13.0 predates the CLI retirement. Importer 0.6.0 records
+Core 0.13.0 as its accepted Core version; testing a new candidate must not rewrite
+that published pin or relabel its predecessor receipt.
+
+The dated sections below are historical records; their pending items describe
+the state at that time, not the current publication inventory.
+
 ## Core 0.11.0 read-only Podman candidate
 
 Unreleased. Protocol 0.4.0 must publish or be verified before Core registry
