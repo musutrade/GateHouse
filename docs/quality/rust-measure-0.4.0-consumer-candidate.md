@@ -17,26 +17,33 @@ verified `origin/main` base. Production pin remains `rust-measure-v0.3.1`.
   environment variable, CLI flag or user-controlled switch.
 - `tools/quality/tests/rust_measure_candidate_acceptance.py` is an explicit
   acceptance command, not part of default discovery. It runs the candidate
-  against a real 0.4.0 binary and rejects the old identity, wrong version/rule
-  and wrong target echo.
+  against a real 0.4.0 binary and a real 0.3.1 binary, checks exact excluded
+  spans and target echo, and rejects unknown version, wrong rule and wrong
+  target echo.
 
 ## Acceptance
 
 ```sh
 python3 tools/quality/tests/rust_measure_candidate_acceptance.py \
-  --binary /path/to/harness-gate-rust-measure
+  --binary /path/to/harness-gate-rust-measure \
+  --legacy-binary /path/to/harness-gate-rust-measure-0.3.1
 ```
 
 The command checks:
 
 - recursive `cfg` production view (`any(test, unix)`, `all(test, target_os)`,
   `all(unix, not(test))`, `cfg_attr(test, derive(...))`);
-- symbol names and nonempty excluded spans;
+- symbol names and exactly `[[3,1,4,17]]` excluded spans; a mutated span
+  response is rejected by the same check;
 - exact target configuration echo;
 - candidate series `harness-gate-rust-measure/0.4.0`;
 - production `source_measure.SERIES` remains `0.3.1`;
-- the old 0.3.1 consumer rejects the 0.4.0 binary;
-- candidate rejects a 0.3.1 binary, a wrong rule and a wrong target echo.
+- the old 0.3.1 consumer accepts the real 0.3.1 binary on a plain fixture and
+  rejects the 0.4.0 binary;
+- the candidate accepts the 0.4.0 binary and rejects the real 0.3.1 binary by
+  identity;
+- fake responses with unknown version, wrong rule and wrong target echo are
+  rejected. These are identity/echo negatives, not a schema-validation claim.
 
 ## Compatibility chain
 

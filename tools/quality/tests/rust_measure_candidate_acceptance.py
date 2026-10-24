@@ -2,17 +2,16 @@
 """Explicit Core consumer acceptance for the candidate 0.4.0 measurer.
 
 Not discovered by the default unittest suite: production remains pinned to
-0.3.1. Run with the real candidate binary:
-  python3 tools/quality/tests/rust_measure_candidate_acceptance.py --binary PATH
+0.3.1. Run with the real candidate and legacy binaries:
+  python3 tools/quality/tests/rust_measure_candidate_acceptance.py \
+    --binary PATH --legacy-binary PATH
 """
 from __future__ import annotations
 
 import argparse
 import json
-import os
 from pathlib import Path
 import stat
-import subprocess
 import sys
 import tempfile
 
@@ -21,6 +20,9 @@ sys.path.insert(0, str(ROOT / "tools/quality"))
 import source_measure
 from source_measure_candidate import CANDIDATE_IDENTITY, CANDIDATE_SERIES, ast_040
 
+EXPECTED_SYMBOLS = ['included', 'nested', 'plain']
+EXPECTED_EXCLUDED = [[3, 1, 4, 17]]
+
 
 def write_fake(path: Path, payload: dict) -> Path:
     path.write_text("#!/bin/sh\ncat >/dev/null\nprintf '%s\\n' " + json.dumps(json.dumps(payload)))
@@ -28,13 +30,37 @@ def write_fake(path: Path, payload: dict) -> Path:
     return path
 
 
+def check_candidate(result: dict, configuration: dict) -> None:
+    names = [row['name'] for row in result['symbols']]
+    if names != EXPECTED_SYMBOLS:
+        raise AssertionError(f'unexpected candidate symbols: {names}')
+    if result['excluded'] != EXPECTED_EXCLUDED:
+        raise AssertionError(f'unexpected excluded spans: {result["excluded"]}')
+    if result['configuration'] != configuration:
+        raise AssertionError('candidate target echo mismatch')
+
+
+def expect_rejection(binary: Path, source: Path, configuration: dict, label: str,
+                     identity_only: bool = False) -> None:
+    try:
+        ast_040(source, binary, configuration)
+    except ValueError as error:
+        if identity_only and 'incompatible AST analyzer' not in str(error):
+            raise
+        return
+    raise SystemExit(f'candidate accepted {label}')
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--binary', type=Path, required=True)
+    parser.add_argument('--legacy-binary', type=Path, required=True)
     args = parser.parse_args()
     binary = args.binary.resolve()
-    if not binary.is_file():
-        raise SystemExit(f'candidate measurer missing: {binary}')
+    legacy = args.legacy_binary.resolve()
+    for label, path in (('candidate', binary), ('legacy', legacy)):
+        if not path.is_file():
+            raise SystemExit(f'{label} measurer missing: {path}')
     configuration = {'target': 'x86_64-unknown-linux-gnu',
                      'cfg': ['target_os="linux"', 'unix']}
     source = '''#[cfg(any(test, unix))]
@@ -47,17 +73,14 @@ fn nested() { if true {} }
 struct Config { value: u8 }
 fn plain() {}
 '''
+    plain_source = 'fn plain() -> usize { 1 }\n'
     with tempfile.TemporaryDirectory(prefix='rust-measure-040-') as tmp:
         path = Path(tmp) / 'source.rs'
         path.write_text(source)
+        plain_path = Path(tmp) / 'plain.rs'
+        plain_path.write_text(plain_source)
         result = ast_040(path, binary, configuration)
-        names = [row['name'] for row in result['symbols']]
-        if names != ['included', 'nested', 'plain']:
-            raise SystemExit(f'unexpected candidate symbols: {names}')
-        if not result['excluded']:
-            raise SystemExit('candidate did not report excluded spans')
-        if result['configuration'] != configuration:
-            raise SystemExit('candidate target echo mismatch')
+        check_candidate(result, configuration)
         if CANDIDATE_SERIES['analyzer'] != 'harness-gate-rust-measure/0.4.0':
             raise SystemExit('candidate series identity mismatch')
         if source_measure.SERIES['analyzer'] != 'harness-gate-rust-measure/0.3.1':
@@ -69,11 +92,27 @@ fn plain() {}
                 raise
         else:
             raise SystemExit('old 0.3.1 consumer accepted the 0.4.0 candidate')
+
+        legacy_result = source_measure.ast(plain_path, legacy, configuration)
+        if legacy_result['version'] != '0.3.1' or legacy_result['analyzer'] != 'harness-gate-rust-measure':
+            raise SystemExit(f'unexpected legacy identity: {legacy_result.get("version")}')
+        expect_rejection(legacy, plain_path, configuration, 'the real 0.3.1 binary', identity_only=True)
+
         fake = write_fake(Path(tmp) / 'fake', {
-            'analyzer': 'harness-gate-rust-measure', 'version': '0.3.1',
-            'rule': 'mccabe-rust-3', 'configuration': configuration, 'symbols': [], 'excluded': []})
+            'analyzer': 'harness-gate-rust-measure', 'version': '0.4.0',
+            'rule': 'mccabe-rust-3', 'configuration': configuration,
+            'symbols': result['symbols'], 'excluded': [[9, 9, 9, 9]]})
+        try:
+            check_candidate(ast_040(path, fake, configuration), configuration)
+        except AssertionError:
+            mutated_span_rejected = True
+        else:
+            raise SystemExit('candidate accepted a mutated excluded span')
+
         for payload in (
             {'analyzer': 'harness-gate-rust-measure', 'version': '0.3.1',
+             'rule': 'mccabe-rust-3', 'configuration': configuration, 'symbols': [], 'excluded': []},
+            {'analyzer': 'harness-gate-rust-measure', 'version': '9.9.9',
              'rule': 'mccabe-rust-3', 'configuration': configuration, 'symbols': [], 'excluded': []},
             {'analyzer': 'harness-gate-rust-measure', 'version': '0.4.0',
              'rule': 'mccabe-rust-2', 'configuration': configuration, 'symbols': [], 'excluded': []},
@@ -81,15 +120,18 @@ fn plain() {}
              'rule': 'mccabe-rust-3', 'configuration': {'target': 'wrong', 'cfg': []}, 'symbols': [], 'excluded': []},
         ):
             fake = write_fake(Path(tmp) / ('fake-' + payload['version'] + '-' + payload['rule']), payload)
-            try:
-                ast_040(path, fake, configuration)
-            except ValueError:
-                continue
-            raise SystemExit(f'candidate accepted invalid identity: {payload}')
+            expect_rejection(fake, path, configuration, f'invalid identity {payload}')
         print(json.dumps({'candidate': CANDIDATE_IDENTITY, 'series': CANDIDATE_SERIES,
-                          'symbols': names, 'excluded': result['excluded'],
-                          'configuration': result['configuration'],
-                          'old_consumer_rejected': True, 'invalid_identities_rejected': 3}, sort_keys=True))
+                          'symbols': EXPECTED_SYMBOLS, 'excluded': EXPECTED_EXCLUDED,
+                          'configuration': configuration,
+                          'legacy_identity': {'analyzer': legacy_result['analyzer'],
+                                              'version': legacy_result['version'],
+                                              'rule': legacy_result['rule']},
+                          'legacy_consumer_accepted': True,
+                          'old_consumer_rejected': True,
+                          'candidate_rejected_legacy_binary': True,
+                          'mutated_span_rejected': mutated_span_rejected,
+                          'invalid_identities_rejected': 4}, sort_keys=True))
     return 0
 
 
