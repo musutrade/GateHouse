@@ -252,10 +252,55 @@ def executable_checks() -> dict:
             "quality_checked": quality_checked}
 
 
+def diagnostic_code_failures() -> list[str]:
+    """Bind every ConfigCode variant to its explanation and documentation.
+
+    Runs in the required documentation job, so a missing registry, missing docs
+    file or unreadable source fails the job instead of being skipped.
+    """
+    source = (CRATE / "src" / "config" / "diagnostic.rs").read_text()
+    documentation = (ROOT / "docs" / "failure-codes.md").read_text()
+    enum_match = re.search(r"pub\(crate\) enum ConfigCode \{(.*?)\n\}", source, re.S)
+    table_match = re.search(r"const CONFIG_CODES: &\[ConfigCodeEntry\] = &\[(.*?)\n\];", source, re.S)
+    failures: list[str] = []
+    if enum_match is None:
+        failures.append("cannot find the ConfigCode enum")
+        variants: list[str] = []
+    else:
+        variants = re.findall(r"^    ([A-Z]\w+),$", enum_match.group(1), re.MULTILINE)
+    if table_match is None:
+        failures.append("cannot find the CONFIG_CODES registry")
+        entries: list[tuple[str, str]] = []
+    else:
+        entries = re.findall(r'code: ConfigCode::(\w+),\s*id: "([A-Z0-9-]+)"', table_match.group(1))
+    codes = [code for code, _ in entries]
+    ids = [code_id for _, code_id in entries]
+    if set(variants) != set(codes):
+        failures.append(f"registry variants differ: enum={sorted(set(variants) - set(codes))}, table={sorted(set(codes) - set(variants))}")
+    if len(codes) != len(set(codes)):
+        failures.append("duplicate ConfigCode entries in CONFIG_CODES")
+    if len(ids) != len(set(ids)):
+        failures.append("duplicate configuration diagnostic IDs")
+    lines = set(documentation.splitlines())
+    for code, code_id in entries:
+        heading = f"## {code_id.lower()}"
+        if heading not in lines:
+            failures.append(f"{code}: missing independent documentation heading {heading!r}")
+        if f"**{code_id} — " not in documentation:
+            failures.append(f"{code}: missing documentation entry body for {code_id}")
+        if not (CRATE / "docs" / "errors" / f"{code_id}.md").is_file():
+            failures.append(f"{code}: missing detailed guide docs/errors/{code_id}.md")
+    return failures
+
+
 def run(output: Path, pure: bool = False) -> int:
     link_failures = local_links()
     sandbox_failures = sandbox_wording_failures()
     policy_failures = engineering_policy_failures()
+    try:
+        diagnostic_failures = diagnostic_code_failures()
+    except OSError as error:
+        diagnostic_failures = [f"cannot read the diagnostic registry or documentation: {error}"]
     english_config = ROOT / "docs" / "configuration.md"
     chinese_config = ROOT / "docs" / "configuration.zh-CN.md"
     schema_catalog = ROOT / "schema" / "README.md"
@@ -307,9 +352,12 @@ def run(output: Path, pure: bool = False) -> int:
         registry_schema_valid = False
     sandbox_wording = {"failures": sandbox_failures, "status": "fail" if sandbox_failures else "pass"}
     engineering_policy = {"failures": policy_failures, "status": "fail" if policy_failures else "pass"}
+    diagnostic_codes = {"failures": diagnostic_failures,
+                        "status": "fail" if diagnostic_failures else "pass"}
     status_pass = (not link_failures and language_docs_valid and executable_ok
                    and machine_schema_valid and manifest_schema_valid and registry_schema_valid
-                   and sandbox_wording["status"] == "pass" and engineering_policy["status"] == "pass")
+                   and sandbox_wording["status"] == "pass" and engineering_policy["status"] == "pass"
+                   and diagnostic_codes["status"] == "pass")
     result = {
         **metadata(tool="docs-consistency"), "mode": "pure" if pure else "full",
         "link_failures": link_failures, "examples": executable["examples"],
@@ -319,7 +367,7 @@ def run(output: Path, pure: bool = False) -> int:
         "quality_example_valid": executable["quality_checked"],
         "machine_schema_valid": machine_schema_valid, "manifest_schema_valid": manifest_schema_valid,
         "registry_schema_valid": registry_schema_valid, "sandbox_wording": sandbox_wording,
-        "engineering_policy": engineering_policy,
+        "engineering_policy": engineering_policy, "diagnostic_codes": diagnostic_codes,
         "status": "pass" if status_pass else "fail",
     }
     write_json(output, result)
@@ -328,6 +376,9 @@ def run(output: Path, pure: bool = False) -> int:
             fail("unsupported OS-sandbox or descendant-isolation wording found")
         if policy_failures:
             fail("normative engineering policy anchors are missing or disconnected")
+        if diagnostic_failures:
+            fail("configuration diagnostic registry/documentation check failed: "
+                 + "; ".join(diagnostic_failures))
         fail("documentation, examples, or schema synchronization failed")
     return 0
 

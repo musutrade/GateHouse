@@ -888,11 +888,15 @@ fn human_diagnostic_location_has_one_closing_parenthesis() {
 fn terminal_diagnostics_escape_paths_and_preserve_related_locations() {
     use super::diagnostic::{RelatedDiagnostic, SourceLocation};
     let mut diagnostics = ConfigDiagnostics::empty().with_source("flow\n\u{1b}[2J.toml");
-    let mut diagnostic = ConfigDiagnostic::synthetic(
-        "HGCFG-DUPLICATE-LOG",
+    let mut diagnostic = ConfigDiagnostic::new(
+        ConfigCode::HgcfgDuplicateLog,
+        DiagnosticSeverity::Error,
         "steps[1].log",
         "two steps share a log",
         "choose a unique log filename",
+        None,
+        None,
+        Vec::new(),
     );
     diagnostic.location = Some(SourceLocation {
         line: 12,
@@ -975,11 +979,15 @@ fn terminal_diagnostics_escape_control_characters_independently() {
 fn diagnostics_truncate_at_the_documented_maximum() {
     let mut diagnostics = ConfigDiagnostics::empty();
     for index in 0..51 {
-        diagnostics.push(ConfigDiagnostic::synthetic(
-            format!("HGCFG-TEST-{index}"),
+        diagnostics.push(ConfigDiagnostic::new(
+            ConfigCode::HgcfgCheck,
+            DiagnosticSeverity::Error,
             format!("steps[{index}]"),
             "test diagnostic",
             "test help",
+            None,
+            None,
+            Vec::new(),
         ));
     }
 
@@ -995,11 +1003,15 @@ fn diagnostics_truncate_at_the_documented_maximum() {
 #[test]
 fn diagnostics_serialize_typed_retry_class_without_message_inference() {
     let mut diagnostics = ConfigDiagnostics::empty();
-    let mut diagnostic = ConfigDiagnostic::synthetic(
-        "HGCFG-TEST-RETRY",
+    let mut diagnostic = ConfigDiagnostic::new(
+        ConfigCode::HgcfgCheck,
+        DiagnosticSeverity::Error,
         "steps[0]",
         "transient test diagnostic",
         "retry the validation command",
+        None,
+        None,
+        Vec::new(),
     );
     diagnostic.retry_class = Some(RetryClass::Timeout);
     diagnostics.push(diagnostic);

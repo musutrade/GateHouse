@@ -220,12 +220,18 @@ fn suggest_log(suggestion: &mut Suggestion, view: &SourceView, source: &str) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::ConfigCode;
 
     fn diagnostic(id: &str, field: &str) -> ConfigDiagnostic {
-        ConfigDiagnostics::synthetic(id, field, "invalid field", "repair intended declaration")
-            .report()
-            .diagnostics
-            .remove(0)
+        ConfigDiagnostics::single(
+            ConfigCode::from_id(id).expect("registered test code"),
+            field,
+            "invalid field",
+            "repair intended declaration",
+        )
+        .report()
+        .diagnostics
+        .remove(0)
     }
 
     #[test]
