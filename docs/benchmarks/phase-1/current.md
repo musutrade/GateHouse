@@ -1,18 +1,18 @@
 # Quality Baseline
 
-Serial verification median: **0.769s**
+Serial verification median: **0.689s**
 
-Parallel verification median: **0.451s**
+Parallel verification median: **0.372s**
 
-Comparison speedup: **1.704x**
+Comparison speedup: **1.852x**
 
-Comparison delta: **-41.32%**
+Comparison delta: **-46.02%**
 
-Scope matcher cached median: **5703.1us**; uncached: **10925.4us** (1.92x speedup)
+Scope matcher cached median: **6693.3us**; uncached: **12391.3us** (1.85x speedup)
 
-Series key: `x86_64-unknown-linux-gnu:rustc 1.99.0 (b940084d7 2026-09-28):1:1:cold-and-warm`
+Series key: `x86_64-unknown-linux-gnu:rustc 1.99.1 (58cf8f9c3 2026-10-13):1:1:cold-and-warm`
 
-Test warm median: **116.823s** (cold: 162.193s)
+Test warm median: **155.566s** (cold: 217.577s)
 
-Release-small binary: **10249672 bytes**
-SHA-256: `85ec6cccd1b321ad952709e02beee13e59d8fa7b6d6765f7c0fc040f898e8fa5`
+Release-small binary: **10726280 bytes**
+SHA-256: `f12da96b8603771bbcd5d32b7c67cb008076a303cb20073bb43984ad9e6b33d4`
