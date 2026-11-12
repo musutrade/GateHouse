@@ -48,7 +48,18 @@ pub(crate) fn resolve_excludes(project_root: &Path, entries: &[String]) -> Resul
     entries
         .iter()
         .map(|entry| {
-            resolve_repo_path(project_root, Path::new(entry), "audit excluded path", false)
+            let path = Path::new(entry);
+            let Some(name) = path.file_name() else {
+                return resolve_repo_path(project_root, path, "audit excluded path", false);
+            };
+            // Exclusions name directory entries, not inputs to read. Keep a
+            // final symlink lexical, as the scanner never follows that link.
+            let parent = path
+                .parent()
+                .filter(|parent| !parent.as_os_str().is_empty())
+                .unwrap_or_else(|| Path::new("."));
+            resolve_repo_path(project_root, parent, "audit excluded path", false)
+                .map(|parent| parent.join(name))
         })
         .collect()
 }
