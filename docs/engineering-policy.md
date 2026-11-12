@@ -42,6 +42,12 @@ For ecosystems whose CRAP capability has not been certified, CRAP must remain `u
 
 Thresholds, measurement-series identity, and supported source boundaries are policy. They must not be weakened, widened, or replaced merely to make CI green. Any intentional change requires an explicit policy delta and compatible evidence.
 
+GH-196's bounded selection delta is defined in the
+[audit exclusion measurement review](quality/issue-196/README.md):
+`gh196-audit-exclusions/1` adds `audit/scanner/filter.rs`, retains the full prior
+inventory, and requires fresh paired base/head evidence under that same
+selection. No threshold, requiredness, debt or ratchet rule changes.
+
 ## 4. Debt and no-regression ratchet
 
 - Historical debt may be retained only when the governing policy explicitly permits it and the debt remains visible.

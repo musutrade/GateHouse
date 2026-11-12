@@ -293,10 +293,36 @@ pub fn plain() {}
                                          byte_span(source, original['span']))
 
     def test_plan_selection_refuses_previous_or_mixed_series(self):
-        previous = dict(SERIES, selection='gh315-review-low/1')
-        for old, new in ((previous, SERIES), (SERIES, previous)):
-            with self.assertRaisesRegex(ValueError, 'incompatible base/head series'):
-                compare({'series': old}, {'series': new})
+        for selection in ('gh315-review-low/1', 'gh33-findings/1'):
+            previous = dict(SERIES, selection=selection)
+            for old, new in ((previous, SERIES), (SERIES, previous)):
+                with self.assertRaisesRegex(ValueError, 'incompatible base/head series'):
+                    compare({'series': old}, {'series': new})
+
+    def test_audit_filter_inventory_and_instrumentation_across_targets(self):
+        path = 'audit/scanner/filter.rs'
+        self.assertIn(path, SOURCE_FILES)
+        self.assertEqual(SERIES['selection'], 'gh196-audit-exclusions/1')
+        source = (ROOT / 'tools/harness-gate/src' / path).read_text(encoding='utf-8')
+        for target in ('x86_64-unknown-linux-gnu', 'aarch64-apple-darwin', 'x86_64-pc-windows-msvc'):
+            with self.subTest(target=target):
+                inventory = self.inventory(source, target)
+                names = {row['name'] for row in inventory['symbols'] if row['kind'] == 'function'}
+                self.assertIn('resolve_excludes', names)
+                self.assertIn('resolve_rule_roots', names)
+                self.assertNotIn('is_allowlisted', names)
+                self.assertFalse(any(row['test'] for row in inventory['symbols']))
+                transformed, edits = instrument(source, inventory)
+                reparsed = self.inventory(transformed, target)
+                self.assertEqual([row['kind'] for row in reparsed['symbols']],
+                                 [row['kind'] for row in inventory['symbols']])
+                for original, inserted in zip(inventory['symbols'], reparsed['symbols']):
+                    self.assertEqual(complexity(original['raw']), complexity(inserted['raw']))
+                    for field in ('span', 'body'):
+                        mapped = byte_span(transformed, inserted[field])
+                        self.assertEqual((*original_point(mapped[:2], edits),
+                                          *original_point(mapped[2:], edits)),
+                                         byte_span(source, original[field]))
 
     def test_scope_detection_inventory_and_instrumentation(self):
         path = 'scope/detection.rs'
@@ -574,7 +600,7 @@ pub fn plain() {}
         self.assertEqual(SERIES, {
             'analyzer': 'harness-gate-rust-measure/0.4.0', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
-            'selection': 'gh33-findings/1', 'configuration': 'compiler-target-production/4',
+            'selection': 'gh196-audit-exclusions/1', 'configuration': 'compiler-target-production/4',
         })
         path = 'utils/redaction.rs'
         self.assertIn(path, SOURCE_FILES)
@@ -821,7 +847,7 @@ fn main() {
         self.assertEqual(SERIES, {
             'analyzer': 'harness-gate-rust-measure/0.4.0', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
-            'selection': 'gh33-findings/1', 'configuration': 'compiler-target-production/4',
+            'selection': 'gh196-audit-exclusions/1', 'configuration': 'compiler-target-production/4',
         })
         for label, source in self.process_command_sources().items():
             for target in ('x86_64-unknown-linux-gnu', 'aarch64-apple-darwin', 'x86_64-pc-windows-msvc'):
@@ -2072,7 +2098,7 @@ class StepCacheRiskSelectionTests(unittest.TestCase):
         required = {"verify/cache/mod.rs", "verify/cache/identity.rs", "verify/cache/store.rs",
                     "process/task.rs", "verify/scheduler.rs"}
         self.assertTrue(required <= set(SOURCE_FILES))
-        self.assertEqual(SERIES['selection'], 'gh33-findings/1')
+        self.assertEqual(SERIES['selection'], 'gh196-audit-exclusions/1')
         self.assertTrue(set(HOTSPOTS) <= set(SOURCE_FILES))
         self.assertTrue({f"findings/{name}.rs" for name in ("mod", "model", "history", "sarif")} <= set(SOURCE_FILES))
 
@@ -2101,7 +2127,7 @@ class RetiredSourceLinksSelectionTests(unittest.TestCase):
         self.assertFalse((ROOT / 'tools/harness-gate/src/source_links.rs').exists())
         self.assertNotIn('mod source_links;', (ROOT / 'tools/harness-gate/src/main.rs').read_text(encoding='utf-8'))
         self.assertEqual(inventory['threshold'], 80)
-        self.assertEqual(SERIES['selection'], 'gh33-findings/1')
+        self.assertEqual(SERIES['selection'], 'gh196-audit-exclusions/1')
 
 
 if __name__ == "__main__":
