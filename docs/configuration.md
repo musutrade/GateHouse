@@ -706,10 +706,15 @@ path-prefix or regex allowlists:
     ]
     exclude_patterns = []
 
-Paths must resolve to existing in-project directories. Absolute paths, ..
+Rule paths must resolve to existing in-project directories. Absolute paths, ..
 traversal, symlink escapes, unreadable files, and files larger than 16 MiB fail
 closed. The auditor is a deterministic whole-file regex scanner, not an AST
 parser; use a language-specific linter for AST rules.
+
+Excluded paths identify repository directory entries without following their
+final symlink. An excluded `target` link may therefore point to an external
+build cache. Excluded paths still reject absolute paths, `..` traversal, and
+parent directories that escape through a symlink.
 
 <a id="audit-v2-migration"></a>
 

@@ -22,7 +22,7 @@ from production_coverage import counts, require
 
 SERIES = {"analyzer": "harness-gate-rust-measure/0.4.0", "rule": "mccabe-rust-3/1",
           "instrumentation": "closure-black-box/1", "mapping": "insertions-utf8/1",
-          "selection": "gh33-findings/1", "configuration": "compiler-target-production/4"}
+          "selection": "gh196-audit-exclusions/1", "configuration": "compiler-target-production/4"}
 MEASURER_IDENTITY = {"analyzer": "harness-gate-rust-measure", "version": "0.4.0",
                      "rule": "mccabe-rust-3"}
 PREFIX = "{ ::std::hint::black_box(()); "
@@ -105,7 +105,10 @@ SOURCE_FILES = sorted({"report_history/dashboard.rs", "report_history/dashboard/
     # inventory and recollect both commits; series and thresholds are unchanged.
     # Podman read-only protocol: include all production sources; thresholds unchanged.
     {'../runtime-protocol/src/lifecycle_v2/capture_binding.rs', '../runtime-protocol/src/lifecycle_v2/capture_inputs.rs', '../runtime-protocol/src/lifecycle_v2/capture_wire.rs', '../runtime-protocol/src/lifecycle_v2/encoding.rs', '../runtime-protocol/src/lifecycle_v2/installation.rs', '../runtime-protocol/src/lifecycle_v2/mod.rs', '../runtime-protocol/src/lifecycle_v2/native_create.rs', '../runtime-protocol/src/lifecycle_v2/native_exec.rs', '../runtime-protocol/src/lifecycle_v2/native_image.rs', '../runtime-protocol/src/lifecycle_v2/native_info.rs', '../runtime-protocol/src/lifecycle_v2/native_json.rs', '../runtime-protocol/src/lifecycle_v2/native_status.rs', '../runtime-protocol/src/lifecycle_v2/observation.rs', '../runtime-protocol/src/lifecycle_v2/ownership.rs', '../runtime-protocol/src/lifecycle_v2/plan_record.rs', '../runtime-protocol/src/lifecycle_v2/plan_storage.rs', '../runtime-protocol/src/lifecycle_v2/profile.rs', '../runtime-protocol/src/lifecycle_v2/protected_context.rs', '../runtime-protocol/src/lifecycle_v2/readonly.rs'} |
-    {"compat.rs"})
+    {"compat.rs"} |
+    # GH-196: measure the audit path filter on BOTH commits with this additive
+    # selection; retain the earlier inventory, analyzer and quality thresholds.
+    {"audit/scanner/filter.rs"})
 
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()

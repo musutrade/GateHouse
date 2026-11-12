@@ -77,7 +77,7 @@ class RiskScopeTests(unittest.TestCase):
         self.assertEqual(SERIES, {
             'analyzer': 'harness-gate-rust-measure/0.4.0', 'rule': 'mccabe-rust-3/1',
             'instrumentation': 'closure-black-box/1', 'mapping': 'insertions-utf8/1',
-            'selection': 'gh33-findings/1', 'configuration': 'compiler-target-production/4',
+            'selection': 'gh196-audit-exclusions/1', 'configuration': 'compiler-target-production/4',
         })
         self.assertIn('process/command.rs', SOURCE_FILES)
         self.assertIn('process/task.rs', SOURCE_FILES)
@@ -96,6 +96,10 @@ class RiskScopeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             collector = gate.Collector(Path(temporary) / 'candidate', 'base', 'head', 'scope-test')
             for path, supported in (
+                ('tools/harness-gate/src/audit/scanner/filter.rs', True),
+                ('tools/harness-gate/src/audit/tests.rs', True),
+                ('tools/harness-gate/src/audit/unknown.rs', False),
+                ('tools/harness-gate/src/audit/tests/unknown.rs', False),
                 ('tools/harness-gate/src/process/tests.rs', True),
                 ('tools/harness-gate/src/process/runtime_lifecycle_host/tests.rs', True),
                 ('tools/harness-gate/src/process/podman_capture_host/tests.rs', True),

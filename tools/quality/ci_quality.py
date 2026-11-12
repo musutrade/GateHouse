@@ -1273,6 +1273,8 @@ class Collector:
             and not (
                 p.startswith('tools/harness-gate/quality-core/tests/')
                 or p in (
+                    # Already declared cfg(test)-only by production-source.json.
+                    'tools/harness-gate/src/audit/tests.rs',
                     'tools/harness-gate/quality-core/tests.rs',
                     'tools/harness-gate/quality-core/policy_tests.rs',
                     'tools/harness-gate/src/config/quality/tests.rs',

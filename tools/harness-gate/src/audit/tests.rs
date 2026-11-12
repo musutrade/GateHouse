@@ -601,6 +601,84 @@ fn audit_reports_redact_violation_content_in_json_and_markdown() {
 
 #[test]
 #[cfg(unix)]
+fn excluded_external_symlink_is_not_scanned() {
+    use std::os::unix::fs::symlink;
+
+    let test_dir = TestDir::new("excluded-symlink");
+    let root = test_dir.0.canonicalize().expect("canonicalize test root");
+    let outside = TestDir::new("excluded-outside");
+    let source = test_dir.child("src");
+    fs::write(source.join("actual.rs"), "forbidden").expect("write source fixture");
+    fs::write(outside.0.join("outside.rs"), "forbidden").expect("write outside fixture");
+    symlink(&outside.0.root, root.join("target")).expect("link external target");
+
+    let excludes = super::scanner::resolve_excludes(&root, &["target".into()])
+        .expect("an excluded link does not need to resolve inside the project");
+    assert_eq!(excludes, vec![root.join("target")]);
+    let rule = HardRule {
+        name: "source boundary".into(),
+        severity: "blocker".into(),
+        paths: Vec::new(),
+        extensions: vec!["rs".into()],
+        patterns: vec!["forbidden".into()],
+        exclude_patterns: Vec::new(),
+        allowlist: Vec::new(),
+    };
+    let violations = scan_files(
+        &root,
+        std::slice::from_ref(&root),
+        &excludes,
+        &rule,
+        &configured_audit().engine,
+    )
+    .expect("scan in-project sources without following excluded links");
+    assert_eq!(violations.len(), 1);
+    assert_eq!(violations[0].file, PathBuf::from("src/actual.rs"));
+}
+
+#[test]
+fn excluded_paths_preserve_repository_root_and_optional_missing_entries() {
+    let test_dir = TestDir::new("excluded-optional-paths");
+    let root = test_dir.0.canonicalize().expect("canonicalize test root");
+    let excludes = super::scanner::resolve_excludes(&root, &[".".into(), "missing/nested".into()])
+        .expect("root and absent exclusions retain their existing semantics");
+    assert_eq!(excludes, vec![root.clone(), root.join("missing/nested")]);
+}
+
+#[test]
+#[cfg(unix)]
+fn excluded_symlink_does_not_relax_repository_path_validation() {
+    use std::os::unix::fs::symlink;
+
+    let test_dir = TestDir::new("excluded-path-boundary");
+    let root = test_dir.0.canonicalize().expect("canonicalize test root");
+    let outside = TestDir::new("excluded-path-outside");
+    symlink(&outside.0.root, root.join("target")).expect("link external target");
+    for path in [
+        "",
+        "..",
+        "/",
+        "../outside",
+        "/tmp/outside",
+        "target/child",
+        "target/../src",
+    ] {
+        assert!(
+            super::scanner::resolve_excludes(&root, &[path.into()]).is_err(),
+            "invalid excluded path was accepted: {path}"
+        );
+    }
+    assert!(super::scanner::resolve_rule_roots(
+        &root,
+        &["target".into()],
+        &std::collections::HashMap::new(),
+        "source boundary",
+    )
+    .is_err());
+}
+
+#[test]
+#[cfg(unix)]
 fn audit_skips_file_symlinks() {
     use std::os::unix::fs::symlink;
 

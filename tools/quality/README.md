@@ -92,6 +92,14 @@ The quality model's declaration-only mapping is hash-pinned and AST-tested;
 See [ADR-0041](../../docs/adr/0041-quality-configuration-v1.md) for the bounded
 source-selection delta and its certification evidence requirements.
 
+GH-196 extends risk selection to `gh196-audit-exclusions/1`, adding only
+`audit/scanner/filter.rs` to the prior inventory. Both commits are recollected
+with the same pinned analyzer and expanded selection; prior series reports
+cannot be mixed with these results. The existing production inventory already
+classifies `src/audit/tests.rs` as cfg(test)-only, and risk scope validation now
+recognizes that classification. Thresholds, selected hotspots and debt/ratchet
+rules remain unchanged. See the [selection review](../../docs/quality/issue-196/README.md).
+
 Individual diagnostic commands use the same report formats:
 
 ```bash

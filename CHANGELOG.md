@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Allow audit exclusions such as `target` to name an external build-cache symlink without following it. Source rule roots and parent-directory traversal retain their repository boundary checks.
+- Update the locked rustix dependency to 1.1.6 to address RUSTSEC-2026-0486.
+
 ## 0.14.1 (published 2026-10-24)
 
 - Repair reuse of an already published runtime protocol: verify registry bytes against the registry checksum, then compare packaged inputs allowing only the clean packaging commit SHA to differ. Source, manifests, lockfiles, member paths and other VCS metadata still fail closed on changes.
