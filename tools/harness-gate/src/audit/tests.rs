@@ -625,7 +625,7 @@ fn excluded_external_symlink_is_not_scanned() {
     };
     let violations = scan_files(
         &test_dir.0,
-        &[test_dir.0.root.clone()],
+        std::slice::from_ref(&test_dir.0.root),
         &excludes,
         &rule,
         &configured_audit().engine,
@@ -633,6 +633,15 @@ fn excluded_external_symlink_is_not_scanned() {
     .expect("scan in-project sources without following excluded links");
     assert_eq!(violations.len(), 1);
     assert_eq!(violations[0].file, PathBuf::from("src/actual.rs"));
+}
+
+#[test]
+fn excluded_paths_preserve_repository_root_and_optional_missing_entries() {
+    let test_dir = TestDir::new("excluded-optional-paths");
+    let root = test_dir.0.canonicalize().expect("canonicalize test root");
+    let excludes = super::scanner::resolve_excludes(&root, &[".".into(), "missing/nested".into()])
+        .expect("root and absent exclusions retain their existing semantics");
+    assert_eq!(excludes, vec![root.clone(), root.join("missing/nested")]);
 }
 
 #[test]
@@ -644,6 +653,9 @@ fn excluded_symlink_does_not_relax_repository_path_validation() {
     let outside = TestDir::new("excluded-path-outside");
     symlink(&outside.0.root, test_dir.0.join("target")).expect("link external target");
     for path in [
+        "",
+        "..",
+        "/",
         "../outside",
         "/tmp/outside",
         "target/child",
